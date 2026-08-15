@@ -323,6 +323,34 @@ function Empty({ emoji, title, sub }) {
   );
 }
 
+/* ---------- loading skeleton ---------- */
+function Bone({ w, h, r = 8, style }) {
+  return (
+    <div style={{
+      width: w, height: h, borderRadius: r, flexShrink: 0,
+      background: `linear-gradient(90deg, ${C.card2} 25%, rgba(255,255,255,0.07) 37%, ${C.card2} 63%)`,
+      backgroundSize: "400% 100%", animation: "shimmer 1.4s ease infinite", ...style,
+    }} />
+  );
+}
+function SkeletonScreen() {
+  return (
+    <div style={{ animation: "fadeUp .3s ease" }}>
+      <Bone w={180} h={26} r={7} style={{ marginBottom: 10 }} />
+      <Bone w={230} h={15} r={6} style={{ marginBottom: 20 }} />
+      {[0, 1, 2].map(i => (
+        <Card key={i} style={{ padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 14 }}>
+          <Bone w={56} h={56} r={16} />
+          <div style={{ flex: 1 }}>
+            <Bone w="70%" h={16} r={6} style={{ marginBottom: 8 }} />
+            <Bone w="40%" h={12} r={6} />
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 /* ---------- wish card ---------- */
 function WishRow({ w, right }) {
   return (
@@ -359,6 +387,7 @@ export default function App() {
   const [rooms, setRooms] = useState(() => store.get("wp_rooms", []));
   const [wishes, setWishes] = useState(() => store.get("wp_wishes", []));
   const [reserved, setReserved] = useState(() => store.get("wp_reserved", {}));
+  const [loading, setLoading] = useState(online);
 
   // Persist locally only in single-device (offline) mode. In Telegram the server is the source of truth.
   useEffect(() => { if (!online) store.set("wp_rooms", rooms); }, [rooms, online]);
@@ -379,6 +408,7 @@ export default function App() {
       if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) {} }
       await refreshState();
       if (startId) setOverlay({ type: "room", roomId: startId });
+      setLoading(false);
     })();
   }, []); // eslint-disable-line
 
@@ -482,24 +512,29 @@ export default function App() {
         @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
         @keyframes spinEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
         @keyframes glow{0%,100%{box-shadow:0 0 0 0 ${hex(C.blue,0.0)}}50%{box-shadow:0 0 40px 4px ${hex(C.blue,0.45)}}}
+        @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
         ::-webkit-scrollbar{display:none}
       `}</style>
 
       <div style={{ width: "100%", maxWidth: 440, minHeight: "100vh", background: C.bg, position: "relative", overflow: "hidden" }}>
         <div style={{ padding: "16px 16px 120px" }}>
-          {tab === "pool" && (
-            <PoolScreen wishes={wishes} rooms={rooms}
-              onAdd={() => setOverlay({ type: "add" })}
-              onToggleRoom={toggleWishRoom}
-              onDelete={deleteWish}
-            />
+          {loading ? <SkeletonScreen /> : (
+            <>
+              {tab === "pool" && (
+                <PoolScreen wishes={wishes} rooms={rooms}
+                  onAdd={() => setOverlay({ type: "add" })}
+                  onToggleRoom={toggleWishRoom}
+                  onDelete={deleteWish}
+                />
+              )}
+              {tab === "rooms" && (
+                <RoomsScreen rooms={rooms} wishes={wishes}
+                  onOpen={(id) => setOverlay({ type: "room", roomId: id })}
+                  onCreate={() => setOverlay({ type: "createRoom" })} />
+              )}
+              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
+            </>
           )}
-          {tab === "rooms" && (
-            <RoomsScreen rooms={rooms} wishes={wishes}
-              onOpen={(id) => setOverlay({ type: "room", roomId: id })}
-              onCreate={() => setOverlay({ type: "createRoom" })} />
-          )}
-          {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
         </div>
 
         {!overlay && <TabBar tab={tab} setTab={(x) => { setTab(x); setOverlay(null); }} />}
