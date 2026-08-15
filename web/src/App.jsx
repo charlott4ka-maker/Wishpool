@@ -191,6 +191,7 @@ const STR = {
   deleteRoom: { uk: "Видалити кімнату", ru: "Удалить комнату", en: "Delete room" },
   confirmLeave: { uk: "Вийти з цієї кімнати?", ru: "Выйти из этой комнаты?", en: "Leave this room?" },
   confirmDelete: { uk: "Видалити кімнату для всіх учасників? Це не можна скасувати.", ru: "Удалить комнату для всех участников? Это нельзя отменить.", en: "Delete this room for everyone? This can't be undone." },
+  confirmDeleteWish: { uk: "Видалити це бажання? Це не можна скасувати.", ru: "Удалить это желание? Это нельзя отменить.", en: "Delete this wish? This can't be undone." },
   leftRoom: { uk: "Ти вийшла з кімнати", ru: "Ты вышла из комнаты", en: "You left the room" },
   roomDeleted: { uk: "Кімнату видалено", ru: "Комната удалена", en: "Room deleted" },
   historyEmptyTitle: { uk: "Поки порожньо", ru: "Пока пусто", en: "Nothing yet" },
@@ -667,11 +668,9 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {wishes.map(w => (
-            <Card key={w.id} style={{ padding: "6px 16px 14px" }}>
+            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: "6px 16px 14px", cursor: "pointer" }}>
               <WishRow w={w} right={
-                <button onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ background: "none", border: "none", color: C.t2, cursor: "pointer", display: "flex", alignItems: "center" }}>
-                  <ChevronRight size={20} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
-                </button>
+                <ChevronRight size={20} color={C.t2} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
               } />
               <div style={{ display: "flex", gap: 7, flexWrap: "wrap", paddingTop: 4 }}>
                 {w.rooms.length === 0
@@ -683,7 +682,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                   ))}
               </div>
               {openId === w.id && (
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, animation: "fadeUp .2s ease" }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, animation: "fadeUp .2s ease", cursor: "default" }}>
                   <div style={{ color: C.t2, fontSize: 12.5, marginBottom: 8, fontWeight: 600 }}>{t("showInRooms")}</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {rooms.length === 0
@@ -694,7 +693,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                         </Chip>
                       ))}
                   </div>
-                  <button onClick={() => onDelete(w.id)} style={{ marginTop: 14, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 14, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 6 }}>
                     <Trash2 size={15} /> {t("deleteWish")}
                   </button>
                 </div>
