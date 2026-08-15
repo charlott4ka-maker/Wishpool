@@ -52,7 +52,10 @@ const api = {
   deleteWish: (id) => apiReq("DELETE", "/wishes/" + id),
   toggleWishRoom: (id, roomId) => apiReq("POST", "/wishes/" + id + "/room", { roomId }),
   createRoom: (r) => apiReq("POST", "/rooms", r),
-  joinRoom: (id) => apiReq("POST", "/rooms/" + id + "/join"),
+  joinRoom: (id, inviterId) => apiReq("POST", "/rooms/" + id + "/join", inviterId ? { inviterId } : {}),
+  leaveRoom: (id) => apiReq("POST", "/rooms/" + id + "/leave"),
+  deleteRoom: (id) => apiReq("DELETE", "/rooms/" + id),
+  invites: () => apiReq("GET", "/invites"),
   room: (id) => apiReq("GET", "/rooms/" + id),
   reserve: (id) => apiReq("POST", "/wishes/" + id + "/reserve"),
   runDraw: (id, budget) => apiReq("POST", "/rooms/" + id + "/draw", { budget }),
@@ -83,6 +86,12 @@ function openTgLink(url) {
   const w = tgWebApp();
   if (w && w.openTelegramLink) w.openTelegramLink(url);
   else { try { window.open(url, "_blank"); } catch (e) {} }
+}
+function tgConfirm(message, onYes) {
+  const w = tgWebApp();
+  if (w && w.showConfirm) w.showConfirm(message, (ok) => { if (ok) onYes(); });
+  else if (typeof window !== "undefined" && window.confirm) { if (window.confirm(message)) onYes(); }
+  else onYes();
 }
 
 const STR = {
@@ -171,6 +180,17 @@ const STR = {
   giftingStat: { uk: "дарую друзям", ru: "дарю друзьям", en: "gifting" },
   history: { uk: "Історія подарунків", ru: "История подарков", en: "Gift history" },
   myInvites: { uk: "Мої запрошення", ru: "Мои приглашения", en: "My invites" },
+  invitedByYou: { uk: "запрошений тобою", ru: "приглашён тобой", en: "invited by you" },
+  invitedNobody: { uk: "Ти ще нікого не запросила", ru: "Ты пока никого не пригласила", en: "You haven't invited anyone yet" },
+  invitedNobodySub: { uk: "Поділись кімнатою — і люди зʼявляться тут", ru: "Поделись комнатой — и люди появятся здесь", en: "Share a room and people will show up here" },
+  loadingInv: { uk: "Завантаження…", ru: "Загрузка…", en: "Loading…" },
+  creating: { uk: "Створюємо…", ru: "Создаём…", en: "Creating…" },
+  leaveRoom: { uk: "Вийти з кімнати", ru: "Выйти из комнаты", en: "Leave room" },
+  deleteRoom: { uk: "Видалити кімнату", ru: "Удалить комнату", en: "Delete room" },
+  confirmLeave: { uk: "Вийти з цієї кімнати?", ru: "Выйти из этой комнаты?", en: "Leave this room?" },
+  confirmDelete: { uk: "Видалити кімнату для всіх учасників? Це не можна скасувати.", ru: "Удалить комнату для всех участников? Это нельзя отменить.", en: "Delete this room for everyone? This can't be undone." },
+  leftRoom: { uk: "Ти вийшла з кімнати", ru: "Ты вышла из комнаты", en: "You left the room" },
+  roomDeleted: { uk: "Кімнату видалено", ru: "Комната удалена", en: "Room deleted" },
   historyEmptyTitle: { uk: "Поки порожньо", ru: "Пока пусто", en: "Nothing yet" },
   historyEmptySub: { uk: "Тут з’являться подарунки, які ти подарував і отримав.", ru: "Здесь появятся подарки, которые ты подарил и получил.", en: "Gifts you've given and received will show up here." },
   noRoomsTitle: { uk: "Немає кімнат", ru: "Нет комнат", en: "No rooms" },
@@ -328,6 +348,7 @@ export default function App() {
   const [overlay, setOverlay] = useState(null);
   const [toast, setToast] = useState(null);
   const online = api.online();
+  const [me, setMe] = useState(null);
   const [rooms, setRooms] = useState(() => store.get("wp_rooms", []));
   const [wishes, setWishes] = useState(() => store.get("wp_wishes", []));
   const [reserved, setReserved] = useState(() => store.get("wp_reserved", {}));
@@ -339,14 +360,16 @@ export default function App() {
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 1800); };
 
-  const refreshState = async () => { try { const st = await api.state(); setWishes(st.wishes || []); setRooms(st.rooms || []); } catch (e) {} };
+  const refreshState = async () => { try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms(st.rooms || []); } catch (e) {} };
 
-  // Online: load state from server + auto-join a room from an invite deep-link.
+  // Online: load state from server + auto-join a room from an invite deep-link (room__inviter).
   useEffect(() => {
     if (!online) return;
     (async () => {
-      const startId = api.startRoomId();
-      if (startId) { try { await api.joinRoom(startId); } catch (e) {} }
+      const sp = api.startRoomId();
+      let startId = null, inviterId = null;
+      if (sp) { const p = String(sp).split("__"); startId = p[0]; inviterId = p[1] || null; }
+      if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) {} }
       await refreshState();
       if (startId) setOverlay({ type: "room", roomId: startId });
     })();
@@ -365,7 +388,8 @@ export default function App() {
 
   const shareInvite = (room) => {
     if (!room) return;
-    const link = `https://t.me/wishpool_bot/app?startapp=${room.id}`;
+    const tail = (online && me && me.id) ? `${room.id}__${me.id}` : room.id;
+    const link = `https://t.me/wishpool_bot/app?startapp=${tail}`;
     const text = t("inviteText", { name: room.name });
     const tg = tgWebApp();
     if (tg && tg.openTelegramLink) {
@@ -386,6 +410,17 @@ export default function App() {
       members: [{ id: "you", name: t("you"), color: "#7B61FF", you: true }] };
     setRooms(rs => [...rs, room]);
     setOverlay({ type: "room", roomId: id });
+  };
+
+  const leaveRoom = async (roomId) => {
+    if (online) { try { await api.leaveRoom(roomId); } catch (e) {} setOverlay(null); await refreshState(); }
+    else { setRooms(rs => rs.filter(r => r.id !== roomId)); setOverlay(null); }
+    showToast(t("leftRoom"));
+  };
+  const removeRoom = async (roomId) => {
+    if (online) { try { await api.deleteRoom(roomId); } catch (e) {} setOverlay(null); await refreshState(); }
+    else { setRooms(rs => rs.filter(r => r.id !== roomId)); setOverlay(null); }
+    showToast(t("roomDeleted"));
   };
 
   const reserve = async (wid) => {
@@ -465,6 +500,8 @@ export default function App() {
             onToggleWishRoom={(wid) => toggleWishRoom(wid, overlay.roomId)}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
             onDraw={() => setOverlay({ type: "draw", roomId: overlay.roomId })}
+            onLeave={() => leaveRoom(overlay.roomId)}
+            onDelete={() => removeRoom(overlay.roomId)}
             onBack={() => setOverlay(null)} />
         )}
         {overlay?.type === "draw" && (
@@ -486,28 +523,7 @@ export default function App() {
           </Sheet>
         )}
         {overlay?.type === "invites" && (
-          <Sheet title={t("myInvites")} onClose={() => setOverlay(null)}>
-            {rooms.length === 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-                <div style={{ fontSize: 56, lineHeight: 1 }}>🔗</div>
-                <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("noRoomsTitle")}</div>
-                <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("noRoomsSub")}</div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {rooms.map(r => (
-                  <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px" }}>
-                    <GlossTile emoji={r.emoji} size={44} tint={r.tint} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600 }}>{r.name}</div>
-                      <div style={{ color: C.t2, fontSize: 13 }}>{t("membersColon", { n: r.members.length })}</div>
-                    </div>
-                    <Pill kind="soft" icon={<Share2 size={15} />} onClick={() => shareInvite(r)}>{t("shareBtn")}</Pill>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Sheet>
+          <InvitesSheet online={online} rooms={rooms} onShare={shareInvite} onClose={() => setOverlay(null)} />
         )}
 
         {toast && (
@@ -690,7 +706,14 @@ function CreateRoomSheet({ onClose, onCreate }) {
   const { t } = useT();
   const [preset, setPreset] = useState(ROOM_PRESETS[0]);
   const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
   const title = name.trim() || t(preset.key);
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true);
+    try { await onCreate({ name: title, type: preset.type, emoji: preset.emoji, tint: preset.tint }); }
+    catch (e) { setBusy(false); }
+  };
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
@@ -713,22 +736,83 @@ function CreateRoomSheet({ onClose, onCreate }) {
 
         <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
 
-        <Pill full kind="primary" icon={<Plus size={18} />}
-          onClick={() => onCreate({ name: title, type: preset.type, emoji: preset.emoji, tint: preset.tint })}>
-          {t("createRoom")}
+        <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy} onClick={submit}>
+          {busy ? t("creating") : t("createRoom")}
         </Pill>
       </div>
     </div>
   );
 }
 
+/* ---------- MY INVITES (who you invited) ---------- */
+function InvitesSheet({ online, rooms, onShare, onClose }) {
+  const { t } = useT();
+  const [inv, setInv] = useState(null);
+  useEffect(() => {
+    let live = true;
+    if (online) { api.invites().then(d => { if (live) setInv(d.invites || []); }).catch(() => { if (live) setInv([]); }); }
+    else setInv([]);
+    return () => { live = false; };
+  }, [online]);
+
+  const groups = [];
+  (inv || []).forEach(x => {
+    let g = groups.find(gr => gr.room.id === x.room.id);
+    if (!g) { g = { room: x.room, people: [] }; groups.push(g); }
+    g.people.push(x.invitee);
+  });
+
+  return (
+    <Sheet title={t("myInvites")} onClose={onClose}>
+      {inv === null ? (
+        <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
+      ) : groups.length === 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
+          <div style={{ fontSize: 56, lineHeight: 1 }}>🔗</div>
+          <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("invitedNobody")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
+          {rooms.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {groups.map(g => (
+            <div key={g.room.id}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <GlossTile emoji={g.room.emoji} size={30} tint={g.room.tint} />
+                <div style={{ color: C.t1, fontSize: 15, fontWeight: 700 }}>{g.room.name}</div>
+                <div style={{ marginLeft: "auto" }}>
+                  <Pill kind="soft" icon={<Share2 size={14} />} onClick={() => onShare({ id: g.room.id, name: g.room.name })}>{t("shareBtn")}</Pill>
+                </div>
+              </div>
+              <Card style={{ padding: "4px 14px" }}>
+                {g.people.map((p, i) => (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < g.people.length - 1 ? `1px solid ${C.line}` : "none" }}>
+                    <Avatar m={p} size={34} />
+                    <div style={{ color: C.t1, fontSize: 15, fontWeight: 600 }}>{p.name}</div>
+                    <div style={{ marginLeft: "auto", color: C.t3, fontSize: 12.5 }}>{t("invitedByYou")}</div>
+                  </div>
+                ))}
+              </Card>
+            </div>
+          ))}
+        </div>
+      )}
+    </Sheet>
+  );
+}
+
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onToggleWishRoom, onInvite, onDraw, onBack }) {
+function RoomDetail({ room, wishes, reserved, online, onReserve, onToggleWishRoom, onInvite, onDraw, onLeave, onDelete, onBack }) {
   const { t } = useT();
   const [seg, setSeg] = useState("lists");
   const [showPool, setShowPool] = useState(false);
   const [detail, setDetail] = useState(null);
   const [tick, setTick] = useState(0);
+  const isOwner = online ? !!(detail && detail.room && detail.room.owner) : true;
 
   useEffect(() => {
     let live = true;
@@ -841,9 +925,19 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onToggleWishRoo
             </div>
           </div>
         )}
-      </div>
 
-      {showPool && (
+        <div style={{ marginTop: 30, display: "flex", justifyContent: "center" }}>
+          {isOwner ? (
+            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", padding: "8px 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <Trash2 size={16} /> {t("deleteRoom")}
+            </button>
+          ) : (
+            <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", padding: "8px 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <X size={16} /> {t("leaveRoom")}
+            </button>
+          )}
+        </div>
+      </div>
         <Sheet title={t("addFromPool")} onClose={() => setShowPool(false)}>
           {wishes.length === 0 ? (
             <div style={{ color: C.t2, fontSize: 14, padding: "6px 2px 4px", lineHeight: 1.4 }}>{t("poolEmptyInRoom")}</div>

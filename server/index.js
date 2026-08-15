@@ -81,7 +81,36 @@ api.post("/rooms/:id/join", async (req, res) => {
   const r = await store.getRoom(req.params.id);
   if (!r) return res.status(404).json({ error: "room_not_found" });
   await store.addMember(r.id, req.user.id);
+  const inviterId = req.body && req.body.inviterId;
+  if (inviterId && inviterId !== req.user.id && await store.isMember(r.id, inviterId)) {
+    await store.recordInvite(r.id, inviterId, req.user.id);
+  }
   res.json({ room: { id: r.id } });
+});
+
+api.post("/rooms/:id/leave", async (req, res) => {
+  const r = await store.getRoom(req.params.id);
+  if (!r || !(await store.isMember(r.id, req.user.id))) return res.status(404).json({ error: "not_found" });
+  if (r.ownerId === req.user.id) return res.status(403).json({ error: "owner_cannot_leave" });
+  await store.removeMember(r.id, req.user.id);
+  await store.removeUserSharesInRoom(r.id, req.user.id);
+  res.json({ ok: true });
+});
+
+api.delete("/rooms/:id", async (req, res) => {
+  const r = await store.getRoom(req.params.id);
+  if (!r) return res.status(404).json({ error: "not_found" });
+  if (r.ownerId !== req.user.id) return res.status(403).json({ error: "not_owner" });
+  await store.deleteRoom(r.id);
+  res.json({ ok: true });
+});
+
+api.get("/invites", async (req, res) => {
+  const rows = await store.listInvites(req.user.id);
+  res.json({ invites: rows.map(x => ({
+    room: { id: x.room_id, name: x.rname, emoji: x.emoji, tint: x.tint },
+    invitee: { id: x.invitee_id, name: x.uname, color: x.ucolor },
+  })) });
 });
 
 api.get("/rooms/:id", async (req, res) => {
@@ -98,7 +127,7 @@ api.get("/rooms/:id", async (req, res) => {
   }
   const mine = (await store.wishesSharedTo(me, r.id)).map(pubWish); // owner sees no reservations (surprise-safe)
   res.json({
-    room: { id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint },
+    room: { id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, owner: r.ownerId === me },
     members: members.map(u => ({ id: u.id, name: u.id === me ? "You" : u.name, color: u.color, you: u.id === me })),
     lists, mine,
   });

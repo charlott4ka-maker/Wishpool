@@ -12,6 +12,7 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS wish_rooms(wish_id text, room_id text, primary key(wish_id,room_id))`);
       await q(`CREATE TABLE IF NOT EXISTS reservations(wish_id text primary key, gifter_id text)`);
       await q(`CREATE TABLE IF NOT EXISTS draws(room_id text primary key, assignments jsonb, budget text, at bigint)`);
+      await q(`CREATE TABLE IF NOT EXISTS invites(room_id text, inviter_id text, invitee_id text, at bigint, primary key(room_id, invitee_id))`);
     },
     async ensureUser(u) {
       await q(`INSERT INTO users(id,name,color) VALUES($1,$2,$3) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name`, [u.id, u.name, colorFor(u.id)]);
@@ -43,5 +44,21 @@ export function createPgStore(q) {
     async clearReservation(wishId, gifterId) { await q(`DELETE FROM reservations WHERE wish_id=$1 AND gifter_id=$2`, [wishId, gifterId]); },
     async setDraw(roomId, assignments, budget) { await q(`INSERT INTO draws(room_id,assignments,budget,at) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(room_id) DO UPDATE SET assignments=EXCLUDED.assignments, budget=EXCLUDED.budget, at=EXCLUDED.at`, [roomId, JSON.stringify(assignments), budget, Date.now()]); },
     async getDraw(roomId) { const { rows } = await q(`SELECT assignments,budget FROM draws WHERE room_id=$1`, [roomId]); if (!rows[0]) return null; const a = rows[0].assignments; return { assignments: typeof a === "string" ? JSON.parse(a) : a, budget: rows[0].budget }; },
+    async removeMember(roomId, userId) { await q(`DELETE FROM members WHERE room_id=$1 AND user_id=$2`, [roomId, userId]); },
+    async removeUserSharesInRoom(roomId, userId) { await q(`DELETE FROM wish_rooms WHERE room_id=$1 AND wish_id IN (SELECT id FROM wishes WHERE owner_id=$2)`, [roomId, userId]); },
+    async deleteRoom(roomId) {
+      await q(`DELETE FROM members WHERE room_id=$1`, [roomId]);
+      await q(`DELETE FROM wish_rooms WHERE room_id=$1`, [roomId]);
+      await q(`DELETE FROM draws WHERE room_id=$1`, [roomId]);
+      await q(`DELETE FROM invites WHERE room_id=$1`, [roomId]);
+      await q(`DELETE FROM rooms WHERE id=$1`, [roomId]);
+    },
+    async recordInvite(roomId, inviterId, inviteeId) { await q(`INSERT INTO invites(room_id,inviter_id,invitee_id,at) VALUES($1,$2,$3,$4) ON CONFLICT(room_id,invitee_id) DO NOTHING`, [roomId, inviterId, inviteeId, Date.now()]); },
+    async listInvites(inviterId) {
+      const { rows } = await q(`SELECT i.room_id, i.invitee_id, u.name AS uname, u.color AS ucolor, r.name AS rname, r.emoji, r.tint
+        FROM invites i JOIN users u ON u.id=i.invitee_id JOIN rooms r ON r.id=i.room_id
+        WHERE i.inviter_id=$1 ORDER BY i.at DESC`, [inviterId]);
+      return rows;
+    },
   };
 }

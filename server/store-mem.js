@@ -2,7 +2,7 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {} };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [] };
   return {
     async init() {},
     async ensureUser(u) { if (!D.users[u.id]) D.users[u.id] = { id: u.id, name: u.name, color: colorFor(u.id) }; return D.users[u.id]; },
@@ -31,5 +31,21 @@ export function createMemStore() {
     async clearReservation(wishId, gifterId) { if (D.reservations[wishId] === gifterId) delete D.reservations[wishId]; },
     async setDraw(roomId, assignments, budget) { D.draws[roomId] = { assignments, budget, at: Date.now() }; },
     async getDraw(roomId) { return D.draws[roomId] || null; },
+    async removeMember(roomId, userId) { D.members = D.members.filter(m => !(m.roomId === roomId && m.userId === userId)); },
+    async removeUserSharesInRoom(roomId, userId) { const own = new Set(Object.values(D.wishes).filter(w => w.ownerId === userId).map(w => w.id)); D.wishRooms = D.wishRooms.filter(x => !(x.roomId === roomId && own.has(x.wishId))); },
+    async deleteRoom(roomId) {
+      delete D.rooms[roomId];
+      D.members = D.members.filter(m => m.roomId !== roomId);
+      D.wishRooms = D.wishRooms.filter(x => x.roomId !== roomId);
+      delete D.draws[roomId];
+      D.invites = D.invites.filter(i => i.roomId !== roomId);
+    },
+    async recordInvite(roomId, inviterId, inviteeId) { if (!D.invites.some(i => i.roomId === roomId && i.inviteeId === inviteeId)) D.invites.push({ roomId, inviterId, inviteeId, at: Date.now() }); },
+    async listInvites(inviterId) {
+      return D.invites.filter(i => i.inviterId === inviterId).sort((a, b) => b.at - a.at).map(i => {
+        const u = D.users[i.inviteeId] || {}; const r = D.rooms[i.roomId] || {};
+        return { room_id: i.roomId, invitee_id: i.inviteeId, uname: u.name, ucolor: u.color, rname: r.name, emoji: r.emoji, tint: r.tint };
+      });
+    },
   };
 }
