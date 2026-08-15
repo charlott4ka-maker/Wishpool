@@ -299,8 +299,13 @@ function Sheet({ title, onClose, children }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
       <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{title}</div>
+        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+          <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
+          <button onClick={onClose} style={{ background: C.card2, border: "none", color: C.t2, width: 32, height: 32, borderRadius: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <X size={18} />
+          </button>
+        </div>
         {children}
       </div>
     </div>
@@ -442,7 +447,7 @@ export default function App() {
     let handler;
     if (overlay) {
       handler = () => {
-        if (overlay.type === "draw") setOverlay({ type: "room", roomId: overlay.roomId });
+        if (overlay.type === "draw" || overlay.type === "pool") setOverlay({ type: "room", roomId: overlay.roomId });
         else setOverlay(null);
       };
       bb.onClick(handler);
@@ -483,7 +488,7 @@ export default function App() {
           {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
         </div>
 
-        <TabBar tab={tab} setTab={(x) => { setTab(x); setOverlay(null); }} />
+        {!overlay && <TabBar tab={tab} setTab={(x) => { setTab(x); setOverlay(null); }} />}
 
         {overlay?.type === "add" && (
           <AddSheet rooms={rooms} onClose={() => setOverlay(null)}
@@ -497,12 +502,17 @@ export default function App() {
             reserved={reserved}
             online={online}
             onReserve={reserve}
-            onToggleWishRoom={(wid) => toggleWishRoom(wid, overlay.roomId)}
+            onAddFromPool={() => setOverlay({ type: "pool", roomId: overlay.roomId })}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
             onDraw={() => setOverlay({ type: "draw", roomId: overlay.roomId })}
             onLeave={() => leaveRoom(overlay.roomId)}
             onDelete={() => removeRoom(overlay.roomId)}
             onBack={() => setOverlay(null)} />
+        )}
+        {overlay?.type === "pool" && (
+          <PoolPickerSheet wishes={wishes} roomId={overlay.roomId}
+            onToggle={(wid) => toggleWishRoom(wid, overlay.roomId)}
+            onClose={() => setOverlay({ type: "room", roomId: overlay.roomId })} />
         )}
         {overlay?.type === "draw" && (
           <DrawFlow room={rooms.find(r => r.id === overlay.roomId)}
@@ -805,11 +815,40 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
   );
 }
 
+/* ---------- POOL PICKER (add wishes into a room) ---------- */
+function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
+  const { t } = useT();
+  return (
+    <Sheet title={t("addFromPool")} onClose={onClose}>
+      {wishes.length === 0 ? (
+        <div style={{ color: C.t2, fontSize: 14, padding: "6px 2px 4px", lineHeight: 1.4 }}>{t("poolEmptyInRoom")}</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {wishes.map(w => {
+            const inRoom = w.rooms.includes(roomId);
+            return (
+              <div key={w.id} onClick={() => onToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: "pointer" }}>
+                <GlossTile emoji={w.emoji} image={w.image} size={44} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
+                  {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
+                </div>
+                <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: `2px solid ${inRoom ? C.blue : C.line}`, background: inRoom ? C.blue : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {inRoom && <Check size={16} color="#fff" />}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Sheet>
+  );
+}
+
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onToggleWishRoom, onInvite, onDraw, onLeave, onDelete, onBack }) {
+function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, onInvite, onDraw, onLeave, onDelete, onBack }) {
   const { t } = useT();
   const [seg, setSeg] = useState("lists");
-  const [showPool, setShowPool] = useState(false);
   const [detail, setDetail] = useState(null);
   const [tick, setTick] = useState(0);
   const isOwner = online ? !!(detail && detail.room && detail.room.owner) : true;
@@ -837,7 +876,6 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onToggleWishRoo
   const others = members.filter(m => !m.you);
 
   const doReserve = async (wid) => { await onReserve(wid); setTick(x => x + 1); };
-  const doToggle = async (wid) => { await onToggleWishRoom(wid); setTick(x => x + 1); };
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
@@ -921,7 +959,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onToggleWishRoo
                 ))}
               </Card>}
             <div style={{ marginTop: 14 }}>
-              <Pill full kind="ghost" icon={<Plus size={18} />} onClick={() => setShowPool(true)}>{t("addFromPool")}</Pill>
+              <Pill full kind="ghost" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>
             </div>
           </div>
         )}
@@ -938,30 +976,6 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onToggleWishRoo
           )}
         </div>
       </div>
-        <Sheet title={t("addFromPool")} onClose={() => setShowPool(false)}>
-          {wishes.length === 0 ? (
-            <div style={{ color: C.t2, fontSize: 14, padding: "6px 2px 4px", lineHeight: 1.4 }}>{t("poolEmptyInRoom")}</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {wishes.map(w => {
-                const inRoom = w.rooms.includes(room.id);
-                return (
-                  <div key={w.id} onClick={() => doToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: "pointer" }}>
-                    <GlossTile emoji={w.emoji} image={w.image} size={44} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
-                      {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
-                    </div>
-                    <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: `2px solid ${inRoom ? C.blue : C.line}`, background: inRoom ? C.blue : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {inRoom && <Check size={16} color="#fff" />}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Sheet>
-      )}
     </div>
   );
 }
