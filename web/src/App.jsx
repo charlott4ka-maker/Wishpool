@@ -142,7 +142,7 @@ const STR = {
   take: { uk: "Беру 🎁", ru: "Беру 🎁", en: "I'll get it 🎁" },
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
   reserveNote: { uk: "Резерв бачать дарувальники, але власник бажання — ні", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
-  nothingSharedTitle: { uk: "Ти ще нічого сюди не пошерив", ru: "Ты ещё ничего не пошарил сюда", en: "You haven't shared anything here" },
+  nothingSharedTitle: { uk: "Ти ще нічим сюди не поділився", ru: "Ты ещё ничем сюда не поделился", en: "You haven't shared anything here" },
   nothingSharedSub: { uk: "Відкрий бажання в пулі й увімкни цю кімнату.", ru: "Открой желание в пуле и включи эту комнату.", en: "Open a wish in your pool and enable this room." },
   visibleToAll: { uk: "видно всім", ru: "видно всем", en: "visible to all" },
   addFromPool: { uk: "Додати з пулу", ru: "Добавить из пула", en: "Add from pool" },
@@ -176,7 +176,7 @@ const STR = {
   saveWish: { uk: "Зберегти бажання", ru: "Сохранить желание", en: "Save wish" },
 
   statsLine: { uk: "бажань: {w} · кімнат: {r}", ru: "желаний: {w} · комнат: {r}", en: "{w} wishes · {r} rooms" },
-  sharedStat: { uk: "розшарено", ru: "расшарено", en: "shared" },
+  sharedStat: { uk: "поділився", ru: "поделился", en: "shared" },
   giftingStat: { uk: "дарую друзям", ru: "дарю друзьям", en: "gifting" },
   history: { uk: "Історія подарунків", ru: "История подарков", en: "Gift history" },
   myInvites: { uk: "Мої запрошення", ru: "Мои приглашения", en: "My invites" },
