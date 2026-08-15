@@ -910,12 +910,15 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, 
   const [seg, setSeg] = useState("lists");
   const [detail, setDetail] = useState(null);
   const [tick, setTick] = useState(0);
+  const [loading, setLoading] = useState(online);
   const isOwner = online ? !!(detail && detail.room && detail.room.owner) : true;
+
+  useEffect(() => { if (online) setLoading(true); }, [room.id]); // eslint-disable-line
 
   useEffect(() => {
     let live = true;
     if (online) {
-      api.room(room.id).then(d => { if (live) setDetail(d); }).catch(() => {});
+      api.room(room.id).then(d => { if (live) setDetail(d); }).catch(() => {}).finally(() => { if (live) setLoading(false); });
     } else {
       setDetail({
         members: room.members,
@@ -925,6 +928,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, 
         })),
         mine: wishes.filter(w => w.rooms.includes(room.id)),
       });
+      setLoading(false);
     }
     return () => { live = false; };
   }, [room.id, online, tick, wishes, reserved]);
@@ -974,7 +978,19 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, 
           ))}
         </div>
 
-        {seg === "lists" ? (
+        {loading ? (
+          <Card style={{ padding: "4px 16px" }}>
+            {[0, 1].map(i => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", borderBottom: i === 0 ? `1px solid ${C.line}` : "none" }}>
+                <Bone w={52} h={52} r={16} />
+                <div style={{ flex: 1 }}>
+                  <Bone w="55%" h={16} r={6} style={{ marginBottom: 8 }} />
+                  <Bone w="30%" h={12} r={6} />
+                </div>
+              </div>
+            ))}
+          </Card>
+        ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
               <Empty emoji="🫂" title={t("onlyYouTitle")} sub={t("onlyYouSub")} />
