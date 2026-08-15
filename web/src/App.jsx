@@ -513,6 +513,7 @@ export default function App() {
         @keyframes spinEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
         @keyframes glow{0%,100%{box-shadow:0 0 0 0 ${hex(C.blue,0.0)}}50%{box-shadow:0 0 40px 4px ${hex(C.blue,0.45)}}}
         @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+        @keyframes spin{to{transform:rotate(360deg)}}
         ::-webkit-scrollbar{display:none}
       `}</style>
 
@@ -868,6 +869,12 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
 /* ---------- POOL PICKER (add wishes into a room) ---------- */
 function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
   const { t } = useT();
+  const [pendingId, setPendingId] = useState(null);
+  const handleToggle = async (wid) => {
+    if (pendingId) return;
+    setPendingId(wid);
+    try { await onToggle(wid); } finally { setPendingId(null); }
+  };
   return (
     <Sheet title={t("addFromPool")} onClose={onClose}>
       {wishes.length === 0 ? (
@@ -876,15 +883,18 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {wishes.map(w => {
             const inRoom = w.rooms.includes(roomId);
+            const isPending = pendingId === w.id;
             return (
-              <div key={w.id} onClick={() => onToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: "pointer" }}>
+              <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
                 <GlossTile emoji={w.emoji} image={w.image} size={44} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
                 </div>
                 <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: `2px solid ${inRoom ? C.blue : C.line}`, background: inRoom ? C.blue : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {inRoom && <Check size={16} color="#fff" />}
+                  {isPending
+                    ? <div style={{ width: 12, height: 12, borderRadius: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", animation: "spin .6s linear infinite" }} />
+                    : (inRoom && <Check size={16} color="#fff" />)}
                 </div>
               </div>
             );
