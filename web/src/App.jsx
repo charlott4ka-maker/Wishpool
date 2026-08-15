@@ -40,7 +40,7 @@ function tgStartParam() { try { return (window.Telegram && window.Telegram.WebAp
 async function apiReq(method, path, body) {
   const h = { "Content-Type": "application/json" };
   const d = tgInitData(); if (d) h["X-Init-Data"] = d;
-  const res = await fetch("/api" + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
+  const res = await fetch("/api" + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: "no-store" });
   if (!res.ok) { let e = {}; try { e = await res.json(); } catch (x) {} throw new Error(e.error || ("http_" + res.status)); }
   return res.json();
 }
