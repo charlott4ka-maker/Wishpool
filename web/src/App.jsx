@@ -113,6 +113,7 @@ const STR = {
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
+  noConnection: { uk: "Немає зв'язку. Перевір інтернет і спробуй ще раз", ru: "Нет связи с сервером. Проверь интернет и попробуй ещё раз", en: "Can't reach the server. Check your connection and try again" },
 
   roomsTitle: { uk: "Кімнати", ru: "Комнаты", en: "Rooms" },
   roomsSub: { uk: "Запроси друзів і обмінюйтесь бажаннями.", ru: "Пригласи друзей и обменивайтесь желаниями.", en: "Invite friends and swap wishlists." },
@@ -364,9 +365,9 @@ export default function App() {
   useEffect(() => { if (!online) store.set("wp_wishes", wishes); }, [wishes, online]);
   useEffect(() => { if (!online) store.set("wp_reserved", reserved); }, [reserved, online]);
 
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 1800); };
+  const showToast = (msg, ms = 1800) => { setToast(msg); setTimeout(() => setToast(null), ms); };
 
-  const refreshState = async () => { try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms(st.rooms || []); } catch (e) {} };
+  const refreshState = async () => { try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms(st.rooms || []); } catch (e) { showToast(t("noConnection"), 3000); } };
 
   // Online: load state from server + auto-join a room from an invite deep-link (room__inviter).
   useEffect(() => {
@@ -382,13 +383,17 @@ export default function App() {
   }, []); // eslint-disable-line
 
   const deleteWish = async (wid) => {
-    if (online) { try { await api.deleteWish(wid); } catch (e) {} }
+    if (online) {
+      try { await api.deleteWish(wid); } catch (e) { showToast(t("noConnection"), 3000); return; }
+    }
     setWishes(ws => ws.filter(w => w.id !== wid)); showToast(t("wishDeleted"));
   };
 
   const addWish = async (w) => {
-    if (online) { try { const r = await api.createWish(w); setWishes(ws => [r.wish, ...ws]); } catch (e) {} }
-    else setWishes(ws => [{ ...w, id: "w" + Date.now() }, ...ws]);
+    if (online) {
+      try { const r = await api.createWish(w); setWishes(ws => [r.wish, ...ws]); }
+      catch (e) { showToast(t("noConnection"), 3000); throw e; }
+    } else setWishes(ws => [{ ...w, id: "w" + Date.now() }, ...ws]);
     setOverlay(null); showToast(t("wishAdded"));
   };
 
@@ -409,7 +414,8 @@ export default function App() {
 
   const createRoom = async (data) => {
     if (online) {
-      try { const r = await api.createRoom(data); await refreshState(); setOverlay({ type: "room", roomId: r.room.id }); return; } catch (e) {}
+      try { const r = await api.createRoom(data); await refreshState(); setOverlay({ type: "room", roomId: r.room.id }); return; }
+      catch (e) { showToast(t("noConnection"), 3000); throw e; }
     }
     const id = "r" + Date.now();
     const room = { id, name: data.name, type: data.type, emoji: data.emoji, tint: data.tint,
@@ -419,23 +425,30 @@ export default function App() {
   };
 
   const leaveRoom = async (roomId) => {
-    if (online) { try { await api.leaveRoom(roomId); } catch (e) {} setOverlay(null); await refreshState(); }
-    else { setRooms(rs => rs.filter(r => r.id !== roomId)); setOverlay(null); }
+    if (online) {
+      try { await api.leaveRoom(roomId); } catch (e) { showToast(t("noConnection"), 3000); return; }
+      setOverlay(null); await refreshState();
+    } else { setRooms(rs => rs.filter(r => r.id !== roomId)); setOverlay(null); }
     showToast(t("leftRoom"));
   };
   const removeRoom = async (roomId) => {
-    if (online) { try { await api.deleteRoom(roomId); } catch (e) {} setOverlay(null); await refreshState(); }
-    else { setRooms(rs => rs.filter(r => r.id !== roomId)); setOverlay(null); }
+    if (online) {
+      try { await api.deleteRoom(roomId); } catch (e) { showToast(t("noConnection"), 3000); return; }
+      setOverlay(null); await refreshState();
+    } else { setRooms(rs => rs.filter(r => r.id !== roomId)); setOverlay(null); }
     showToast(t("roomDeleted"));
   };
 
   const reserve = async (wid) => {
-    if (online) { try { await api.reserve(wid); } catch (e) {} }
+    if (online) {
+      try { await api.reserve(wid); } catch (e) { showToast(t("noConnection"), 3000); return; }
+    }
     setReserved(r => ({ ...r, [wid]: "you" })); showToast(t("youGiftHidden"));
   };
   const toggleWishRoom = async (wid, rid) => {
     if (online) {
-      try { const r = await api.toggleWishRoom(wid, rid); setWishes(ws => ws.map(w => w.id === wid ? { ...w, rooms: r.rooms } : w)); return; } catch (e) {}
+      try { const r = await api.toggleWishRoom(wid, rid); setWishes(ws => ws.map(w => w.id === wid ? { ...w, rooms: r.rooms } : w)); return; }
+      catch (e) { showToast(t("noConnection"), 3000); return; }
     }
     setWishes(ws => ws.map(w => w.id === wid
       ? { ...w, rooms: w.rooms.includes(rid) ? w.rooms.filter(r => r !== rid) : [...w.rooms, rid] } : w));
@@ -521,6 +534,7 @@ export default function App() {
             online={online}
             onReserve={reserve}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
+            onError={() => showToast(t("noConnection"), 3000)}
             onClose={() => setOverlay({ type: "room", roomId: overlay.roomId })} />
         )}
 
@@ -982,7 +996,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, 
 }
 
 /* ---------- DRAW / SECRET SANTA ---------- */
-function DrawFlow({ room, reserved, online, onReserve, onInvite, onClose }) {
+function DrawFlow({ room, reserved, online, onReserve, onInvite, onError, onClose }) {
   const { t } = useT();
   const [stage, setStage] = useState("setup");
   const [budget, setBudget] = useState("1 000 ₴");
@@ -998,7 +1012,8 @@ function DrawFlow({ room, reserved, online, onReserve, onInvite, onClose }) {
     const iv = setInterval(() => { setSpin(pool[i++ % pool.length]); }, 110);
     (async () => {
       if (online) {
-        try { await api.runDraw(room.id, budget); const d = await api.draw(room.id); setTarget(d.target); setTargetWishes(d.wishes || []); } catch (e) {}
+        try { await api.runDraw(room.id, budget); const d = await api.draw(room.id); setTarget(d.target); setTargetWishes(d.wishes || []); }
+        catch (e) { if (onError) onError(); }
       } else {
         const tg = room.members.find(m => !m.you) || room.members[0];
         setTarget(tg); setTargetWishes(tg && tg.wishes ? tg.wishes : []);
