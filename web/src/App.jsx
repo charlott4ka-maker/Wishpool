@@ -511,7 +511,7 @@ export default function App() {
         {overlay?.type === "createRoom" && (
           <CreateRoomSheet onClose={() => setOverlay(null)} onCreate={createRoom} />
         )}
-        {overlay?.type === "room" && (
+        {(overlay?.type === "room" || overlay?.type === "pool" || overlay?.type === "draw") && (
           <RoomDetail room={rooms.find(r => r.id === overlay.roomId)} wishes={wishes}
             reserved={reserved}
             online={online}
