@@ -2,8 +2,14 @@
   "name": "wishpool-app",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "build": "npm --prefix web install && npm --prefix web run build",
     "start": "npm --prefix server install && node server/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
   }
 }
