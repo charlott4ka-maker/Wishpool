@@ -9,12 +9,15 @@ export async function createApp() {
   const store = await getStore();
 
   const app = express();
+  app.set("etag", false);
   app.use(cors());
   app.use(express.json({ limit: "6mb" }));
 
   const pubWish = (w) => ({ id: w.id, emoji: w.emoji, image: w.image, link: w.link, title: w.title, price: w.price });
 
   const api = express.Router();
+  // API responses must never be conditionally cached (304) — each call needs a fresh body.
+  api.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
   api.use(authMiddleware(BOT_TOKEN));
   api.use(async (req, _res, next) => { try { await store.ensureUser(req.user); next(); } catch (e) { next(e); } });
 
