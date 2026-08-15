@@ -185,6 +185,7 @@ const STR = {
   invitedNobodySub: { uk: "Поділись кімнатою — і люди зʼявляться тут", ru: "Поделись комнатой — и люди появятся здесь", en: "Share a room and people will show up here" },
   loadingInv: { uk: "Завантаження…", ru: "Загрузка…", en: "Loading…" },
   creating: { uk: "Створюємо…", ru: "Создаём…", en: "Creating…" },
+  savingWish: { uk: "Зберігаємо…", ru: "Сохраняем…", en: "Saving…" },
   leaveRoom: { uk: "Вийти з кімнати", ru: "Выйти из комнаты", en: "Leave room" },
   deleteRoom: { uk: "Видалити кімнату", ru: "Удалить комнату", en: "Delete room" },
   confirmLeave: { uk: "Вийти з цієї кімнати?", ru: "Выйти из этой комнаты?", en: "Leave this room?" },
@@ -1117,10 +1118,17 @@ function AddSheet({ rooms, onClose, onSave }) {
   const [image, setImage] = useState(null);
   const [link, setLink] = useState("");
   const [cover, setCover] = useState("photo");
+  const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
   const pickFile = (e) => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
     const r = new FileReader(); r.onload = () => { setImage(r.result); }; r.readAsDataURL(f);
+  };
+  const submit = async () => {
+    if (busy || !title.trim()) return;
+    setBusy(true);
+    try { await onSave({ emoji, image: cover === "photo" ? image : null, link: link.trim() || null, title: title.trim(), price: price.trim(), rooms: inRooms }); }
+    catch (e) { setBusy(false); }
   };
 
   return (
@@ -1187,9 +1195,8 @@ function AddSheet({ rooms, onClose, onSave }) {
         </div>
         <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20 }}>{t("nothingSelectedPrivate")}</div>
 
-        <Pill full kind="primary" disabled={!title.trim()}
-          onClick={() => onSave({ emoji, image: cover === "photo" ? image : null, link: link.trim() || null, title: title.trim(), price: price.trim(), rooms: inRooms })}>
-          {t("saveWish")}
+        <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
+          {busy ? t("savingWish") : t("saveWish")}
         </Pill>
       </div>
     </div>
