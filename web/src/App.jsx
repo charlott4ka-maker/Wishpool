@@ -58,8 +58,10 @@ const api = {
   invites: () => apiReq("GET", "/invites"),
   room: (id) => apiReq("GET", "/rooms/" + id),
   reserve: (id) => apiReq("POST", "/wishes/" + id + "/reserve"),
+  unreserve: (id) => apiReq("DELETE", "/wishes/" + id + "/reserve"),
   runDraw: (id, budget) => apiReq("POST", "/rooms/" + id + "/draw", { budget }),
   draw: (id) => apiReq("GET", "/rooms/" + id + "/draw"),
+  gifts: () => apiReq("GET", "/gifts"),
 };
 
 /* ---------- i18n ---------- */
@@ -196,6 +198,8 @@ const STR = {
   roomDeleted: { uk: "Кімнату видалено", ru: "Комната удалена", en: "Room deleted" },
   historyEmptyTitle: { uk: "Поки порожньо", ru: "Пока пусто", en: "Nothing yet" },
   historyEmptySub: { uk: "Тут з’являться подарунки, які ти подарував і отримав.", ru: "Здесь появятся подарки, которые ты подарил и получил.", en: "Gifts you've given and received will show up here." },
+  giftingFor: { uk: "даруєш {name}", ru: "даришь {name}", en: "gifting {name}" },
+  giftCancelled: { uk: "Скасовано", ru: "Отменено", en: "Cancelled" },
   noRoomsTitle: { uk: "Немає кімнат", ru: "Нет комнат", en: "No rooms" },
   noRoomsSub: { uk: "Створи кімнату — тоді з’явиться посилання-запрошення.", ru: "Создай комнату — тогда появится ссылка-приглашение.", en: "Create a room to get an invite link." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
@@ -219,15 +223,29 @@ const useT = () => useContext(LangCtx);
 const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
 /* ---------- little ui atoms ---------- */
-function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
+function ImageLightbox({ src, onClose }) {
   return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp .2s ease" }}>
+      <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 38, height: 38, borderRadius: 38, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <X size={18} />
+      </button>
+      <img src={src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92%", maxHeight: "85vh", borderRadius: 16, objectFit: "contain" }} />
+    </div>
+  );
+}
+function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
     <div
+      onClick={image ? (e) => { e.stopPropagation(); setOpen(true); } : undefined}
       style={{
         width: size, height: size, borderRadius: size * 0.26,
         background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.22)} 0%, ${C.card2} 55%, ${C.card} 100%)`,
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
         border: `1px solid ${C.line}`, flexShrink: 0, overflow: "hidden", position: "relative",
+        cursor: image ? "zoom-in" : "default",
       }}
     >
       {image ? (
@@ -238,6 +256,8 @@ function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
         </span>
       )}
     </div>
+    {open && <ImageLightbox src={image} onClose={() => setOpen(false)} />}
+    </>
   );
 }
 function hex(h, a) {
@@ -246,6 +266,26 @@ function hex(h, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 function linkHost(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "link"; } }
+// Downscale + re-encode a picked photo before it's stored as base64, so a multi-MB
+// camera photo doesn't blow past the request body limit or bloat the DB row.
+function compressImage(file, maxDim = 1000, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale) || 1;
+      const h = Math.round(img.height * scale) || 1;
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image_load_failed")); };
+    img.src = url;
+  });
+}
 function Avatar({ m, size = 34 }) {
   return (
     <div style={{
@@ -483,6 +523,12 @@ export default function App() {
     }
     setReserved(r => ({ ...r, [wid]: "you" })); showToast(t("youGiftHidden"));
   };
+  const unreserve = async (wid) => {
+    if (online) {
+      try { await api.unreserve(wid); } catch (e) { showToast(t("noConnection"), 3000); return; }
+    }
+    setReserved(r => { const n = { ...r }; delete n[wid]; return n; }); showToast(t("giftCancelled"));
+  };
   const toggleWishRoom = async (wid, rid) => {
     if (online) {
       try { const r = await api.toggleWishRoom(wid, rid); setWishes(ws => ws.map(w => w.id === wid ? { ...w, rooms: r.rooms } : w)); return; }
@@ -560,6 +606,7 @@ export default function App() {
             reserved={reserved}
             online={online}
             onReserve={reserve}
+            onUnreserve={unreserve}
             onAddFromPool={() => setOverlay({ type: "pool", roomId: overlay.roomId })}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
             onDraw={() => setOverlay({ type: "draw", roomId: overlay.roomId })}
@@ -577,19 +624,14 @@ export default function App() {
             reserved={reserved}
             online={online}
             onReserve={reserve}
+            onUnreserve={unreserve}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
             onError={() => showToast(t("noConnection"), 3000)}
             onClose={() => setOverlay({ type: "room", roomId: overlay.roomId })} />
         )}
 
         {overlay?.type === "history" && (
-          <Sheet title={t("history")} onClose={() => setOverlay(null)}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-              <div style={{ fontSize: 56, lineHeight: 1 }}>🎁</div>
-              <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("historyEmptyTitle")}</div>
-              <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
-            </div>
-          </Sheet>
+          <HistorySheet online={online} onClose={() => setOverlay(null)} />
         )}
         {overlay?.type === "invites" && (
           <InvitesSheet online={online} rooms={rooms} onShare={shareInvite} onClose={() => setOverlay(null)} />
@@ -872,6 +914,40 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
   );
 }
 
+/* ---------- GIFT HISTORY (wishes I'm currently gifting, across all rooms) ---------- */
+function HistorySheet({ online, onClose }) {
+  const { t } = useT();
+  const [gifts, setGifts] = useState(null);
+  useEffect(() => {
+    let live = true;
+    if (online) { api.gifts().then(d => { if (live) setGifts(d.gifts || []); }).catch(() => { if (live) setGifts([]); }); }
+    else setGifts([]);
+    return () => { live = false; };
+  }, [online]);
+
+  return (
+    <Sheet title={t("history")} onClose={onClose}>
+      {gifts === null ? (
+        <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
+      ) : gifts.length === 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
+          <div style={{ fontSize: 56, lineHeight: 1 }}>🎁</div>
+          <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("historyEmptyTitle")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
+        </div>
+      ) : (
+        <Card style={{ padding: "4px 16px" }}>
+          {gifts.map((w, i) => (
+            <div key={w.id} style={{ borderBottom: i < gifts.length - 1 ? `1px solid ${C.line}` : "none" }}>
+              <WishRow w={w} right={w.owner && <span style={{ color: C.t3, fontSize: 12.5 }}>{t("giftingFor", { name: w.owner.name })}</span>} />
+            </div>
+          ))}
+        </Card>
+      )}
+    </Sheet>
+  );
+}
+
 /* ---------- POOL PICKER (add wishes into a room) ---------- */
 function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
   const { t } = useT();
@@ -912,7 +988,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
 }
 
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, onInvite, onDraw, onLeave, onDelete, onBack }) {
+function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onAddFromPool, onInvite, onDraw, onLeave, onDelete, onBack }) {
   const { t } = useT();
   const [seg, setSeg] = useState("lists");
   const [detail, setDetail] = useState(null);
@@ -946,10 +1022,11 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, 
   const others = members.filter(m => !m.you);
 
   const doReserve = async (wid) => { await onReserve(wid); setTick(x => x + 1); };
+  const doUnreserve = async (wid) => { await onUnreserve(wid); setTick(x => x + 1); };
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
-      ? <Pill kind="green" icon={<Check size={16} />}>{t("youGift")}</Pill>
+      ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, padding: "8px 12px" }}>{t("taken")}</span>
         : <Pill kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
   );
@@ -1063,7 +1140,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onAddFromPool, 
 }
 
 /* ---------- DRAW / SECRET SANTA ---------- */
-function DrawFlow({ room, reserved, online, onReserve, onInvite, onError, onClose }) {
+function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, onError, onClose }) {
   const { t } = useT();
   const [stage, setStage] = useState("setup");
   const [budget, setBudget] = useState("1 000 ₴");
@@ -1093,6 +1170,10 @@ function DrawFlow({ room, reserved, online, onReserve, onInvite, onError, onClos
   const doReserve = async (wid) => {
     await onReserve(wid);
     setTargetWishes(ws => ws.map(w => w.id === wid ? { ...w, reservedByMe: true } : w));
+  };
+  const doUnreserve = async (wid) => {
+    await onUnreserve(wid);
+    setTargetWishes(ws => ws.map(w => w.id === wid ? { ...w, reservedByMe: false } : w));
   };
   const isMine = (w) => w.reservedByMe || reserved[w.id] === "you";
 
@@ -1173,7 +1254,7 @@ function DrawFlow({ room, reserved, online, onReserve, onInvite, onError, onClos
                 <div key={w.id} style={{ borderBottom: i < targetWishes.length - 1 ? `1px solid ${C.line}` : "none" }}>
                   <WishRow w={w} right={
                     isMine(w)
-                      ? <Pill kind="green" icon={<Check size={16} />}>{t("youGift")}</Pill>
+                      ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
                       : <Pill kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
                   } />
                 </div>
@@ -1204,7 +1285,9 @@ function AddSheet({ rooms, onClose, onSave }) {
   const fileRef = useRef(null);
   const pickFile = (e) => {
     const f = e.target.files && e.target.files[0]; if (!f) return;
-    const r = new FileReader(); r.onload = () => { setImage(r.result); }; r.readAsDataURL(f);
+    compressImage(f).then(setImage).catch(() => {
+      const r = new FileReader(); r.onload = () => setImage(r.result); r.readAsDataURL(f);
+    });
   };
   const submit = async () => {
     if (busy || !title.trim()) return;
