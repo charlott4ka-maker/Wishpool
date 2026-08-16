@@ -39,6 +39,12 @@ export function createPgStore(q) {
     async addWishRoom(wishId, roomId) { await q(`INSERT INTO wish_rooms(wish_id,room_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, [wishId, roomId]); },
     async userWishes(userId) { const { rows } = await q(`SELECT * FROM wishes WHERE owner_id=$1 ORDER BY created_at DESC`, [userId]); return rows.map(mapWish); },
     async wishesSharedTo(userId, roomId) { const { rows } = await q(`SELECT w.* FROM wishes w JOIN wish_rooms wr ON wr.wish_id=w.id WHERE w.owner_id=$1 AND wr.room_id=$2`, [userId, roomId]); return rows.map(mapWish); },
+    async giftsByMe(userId) {
+      const { rows } = await q(`SELECT w.*, u.name AS owner_name, u.color AS owner_color FROM reservations r
+        JOIN wishes w ON w.id = r.wish_id JOIN users u ON u.id = w.owner_id
+        WHERE r.gifter_id=$1 ORDER BY w.created_at DESC`, [userId]);
+      return rows.map(r => ({ wish: mapWish(r), owner: { id: r.owner_id, name: r.owner_name, color: r.owner_color } }));
+    },
     async getReservation(wishId) { const { rows } = await q(`SELECT gifter_id FROM reservations WHERE wish_id=$1`, [wishId]); return rows[0] ? rows[0].gifter_id : null; },
     async setReservation(wishId, gifterId) { await q(`INSERT INTO reservations(wish_id,gifter_id) VALUES($1,$2) ON CONFLICT(wish_id) DO UPDATE SET gifter_id=EXCLUDED.gifter_id`, [wishId, gifterId]); },
     async clearReservation(wishId, gifterId) { await q(`DELETE FROM reservations WHERE wish_id=$1 AND gifter_id=$2`, [wishId, gifterId]); },

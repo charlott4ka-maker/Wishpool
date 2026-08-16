@@ -159,6 +159,11 @@ export async function createApp() {
     res.json({ ok: true });
   });
 
+  api.get("/gifts", async (req, res) => {
+    const rows = await store.giftsByMe(req.user.id);
+    res.json({ gifts: rows.map(({ wish, owner }) => ({ ...pubWish(wish), owner: owner ? { id: owner.id, name: owner.name, color: owner.color } : null })) });
+  });
+
   api.get("/rooms/:id/draw", async (req, res) => {
     const me = req.user.id;
     const draw = await store.getDraw(req.params.id);

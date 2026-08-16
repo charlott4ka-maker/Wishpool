@@ -26,6 +26,10 @@ export function createMemStore() {
     async addWishRoom(wishId, roomId) { if (!D.wishRooms.some(x => x.wishId === wishId && x.roomId === roomId)) D.wishRooms.push({ wishId, roomId }); },
     async userWishes(userId) { return Object.values(D.wishes).filter(w => w.ownerId === userId).sort((a, b) => b.createdAt - a.createdAt); },
     async wishesSharedTo(userId, roomId) { const ids = new Set(D.wishRooms.filter(x => x.roomId === roomId).map(x => x.wishId)); return Object.values(D.wishes).filter(w => w.ownerId === userId && ids.has(w.id)); },
+    async giftsByMe(userId) {
+      return Object.entries(D.reservations).filter(([, g]) => g === userId).map(([wid]) => D.wishes[wid]).filter(Boolean)
+        .map(w => ({ wish: w, owner: D.users[w.ownerId] || null }));
+    },
     async getReservation(wishId) { return D.reservations[wishId] || null; },
     async setReservation(wishId, gifterId) { D.reservations[wishId] = gifterId; },
     async clearReservation(wishId, gifterId) { if (D.reservations[wishId] === gifterId) delete D.reservations[wishId]; },
