@@ -76,9 +76,23 @@ export async function createApp() {
     res.json({ room: { id: r.id } });
   });
 
+  api.patch("/rooms/:id", async (req, res) => {
+    const r = await store.getRoom(req.params.id);
+    if (!r) return res.status(404).json({ error: "not_found" });
+    if (r.ownerId !== req.user.id) return res.status(403).json({ error: "not_owner" });
+    const { name, emoji } = req.body || {};
+    if (!name || !name.trim()) return res.status(400).json({ error: "name_required" });
+    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji });
+    res.json({ ok: true });
+  });
+
   api.post("/rooms/:id/join", async (req, res) => {
     const r = await store.getRoom(req.params.id);
     if (!r) return res.status(404).json({ error: "room_not_found" });
+    const already = await store.isMember(r.id, req.user.id);
+    if (!already && r.type === "couple" && (await store.roomMembers(r.id)).length >= 2) {
+      return res.status(403).json({ error: "room_full" });
+    }
     await store.addMember(r.id, req.user.id);
     const inviterId = req.body && req.body.inviterId;
     if (inviterId && inviterId !== req.user.id && await store.isMember(r.id, inviterId)) {

@@ -12,6 +12,11 @@ export function createMemStore() {
     async userRoomIds(userId) { return D.members.filter(m => m.userId === userId).map(m => m.roomId); },
     async getRoom(id) { return D.rooms[id] || null; },
     async createRoom(r) { D.rooms[r.id] = { ...r }; },
+    async updateRoom(id, { name, emoji }) {
+      const r = D.rooms[id]; if (!r) return;
+      if (name !== undefined) r.name = name;
+      if (emoji !== undefined) r.emoji = emoji;
+    },
     async addMember(roomId, userId) { if (!D.members.some(m => m.roomId === roomId && m.userId === userId)) D.members.push({ roomId, userId }); },
     async getWish(id) { return D.wishes[id] || null; },
     async createWish(w) { D.wishes[w.id] = { ...w }; },
