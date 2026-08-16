@@ -205,6 +205,7 @@ const STR = {
   editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
   coupleRoomHint: { uk: "У цьому типі кімнати може бути лише двоє учасників.", ru: "В комнате этого типа может быть только два участника.", en: "This room type can only have two members." },
+  coupleFullHint: { uk: "Кімната для двох вже заповнена", ru: "Комната для двоих уже заполнена", en: "This two-person room is full" },
   noRoomsTitle: { uk: "Немає кімнат", ru: "Нет комнат", en: "No rooms" },
   noRoomsSub: { uk: "Створи кімнату — тоді з’явиться посилання-запрошення.", ru: "Создай комнату — тогда появится ссылка-приглашение.", en: "Create a room to get an invite link." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
@@ -1087,6 +1088,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   const lists = (detail && detail.lists) || [];
   const mine = (detail && detail.mine) || [];
   const others = members.filter(m => !m.you);
+  const coupleFull = room.type === "couple" && members.length >= 2;
 
   const doReserve = async (wid) => { await onReserve(wid); setTick(x => x + 1); };
   const doUnreserve = async (wid) => { await onUnreserve(wid); setTick(x => x + 1); };
@@ -1117,16 +1119,22 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
             {members.map((m, i) => (
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
             ))}
-            <button onClick={onInvite} style={{ marginLeft: 8, width: 38, height: 38, borderRadius: 38, border: `1px dashed ${C.blueLine}`, background: C.blueSoft, color: "#7FB0FF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Plus size={18} />
-            </button>
-          </div>
-          <div style={{ marginTop: 14, display: "flex", gap: 10, justifyContent: "center" }}>
-            <Pill kind={room.type === "couple" ? "primary" : "ghost"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
-            {room.type !== "couple" && (
-              <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
+            {!coupleFull && (
+              <button onClick={onInvite} style={{ marginLeft: 8, width: 38, height: 38, borderRadius: 38, border: `1px dashed ${C.blueLine}`, background: C.blueSoft, color: "#7FB0FF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Plus size={18} />
+              </button>
             )}
           </div>
+          {coupleFull ? (
+            <div style={{ marginTop: 14, color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
+          ) : (
+            <div style={{ marginTop: 14, display: "flex", gap: 10, justifyContent: "center" }}>
+              <Pill kind={room.type === "couple" ? "primary" : "ghost"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
+              {room.type !== "couple" && (
+                <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
+              )}
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14, marginBottom: 16 }}>
