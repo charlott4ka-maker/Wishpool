@@ -334,11 +334,18 @@ function Bone({ w, h, r = 8, style }) {
     }} />
   );
 }
-function SkeletonScreen() {
+function SkeletonScreen({ tab }) {
+  const { t } = useT();
+  const header = tab === "rooms" ? { title: t("roomsTitle"), sub: t("roomsSub") }
+    : tab === "pool" ? { title: t("poolTitle"), sub: t("poolSub") } : null;
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
-      <Bone w={180} h={26} r={7} style={{ marginBottom: 10 }} />
-      <Bone w={230} h={15} r={6} style={{ marginBottom: 20 }} />
+      {header && (
+        <div style={{ padding: "6px 4px 14px" }}>
+          <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{header.title}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{header.sub}</div>
+        </div>
+      )}
       {[0, 1, 2].map(i => (
         <Card key={i} style={{ padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 14 }}>
           <Bone w={56} h={56} r={16} />
@@ -520,7 +527,7 @@ export default function App() {
 
       <div style={{ width: "100%", maxWidth: 440, minHeight: "100vh", background: C.bg, position: "relative", overflow: "hidden" }}>
         <div style={{ padding: "16px 16px 120px" }}>
-          {loading ? <SkeletonScreen /> : (
+          {loading ? <SkeletonScreen tab={tab} /> : (
             <>
               {tab === "pool" && (
                 <PoolScreen wishes={wishes} rooms={rooms}
