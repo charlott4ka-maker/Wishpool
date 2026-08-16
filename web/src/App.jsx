@@ -204,6 +204,7 @@ const STR = {
   roomFull: { uk: "У цій кімнаті вже двоє — місць більше немає", ru: "В этой комнате уже двое — мест больше нет", en: "This room already has two people — no room left" },
   editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
+  coupleRoomHint: { uk: "У цьому типі кімнати може бути лише двоє учасників.", ru: "В комнате этого типа может быть только два участника.", en: "This room type can only have two members." },
   noRoomsTitle: { uk: "Немає кімнат", ru: "Нет комнат", en: "No rooms" },
   noRoomsSub: { uk: "Створи кімнату — тоді з’явиться посилання-запрошення.", ru: "Создай комнату — тогда появится ссылка-приглашение.", en: "Create a room to get an invite link." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
@@ -862,6 +863,9 @@ function CreateRoomSheet({ onClose, onCreate }) {
             </Chip>
           ))}
         </div>
+        {preset.type === "couple" && (
+          <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 18 }}>{t("coupleRoomHint")}</div>
+        )}
 
         <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
 
@@ -1118,8 +1122,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
             </button>
           </div>
           <div style={{ marginTop: 14, display: "flex", gap: 10, justifyContent: "center" }}>
-            <Pill kind="ghost" icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
-            <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
+            <Pill kind={room.type === "couple" ? "primary" : "ghost"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
+            {room.type !== "couple" && (
+              <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
+            )}
           </div>
         </div>
 
