@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext, createContext } from "react";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send,
+  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
 } from "lucide-react";
 
 /* ---------- design tokens ---------- */
@@ -52,6 +52,7 @@ const api = {
   deleteWish: (id) => apiReq("DELETE", "/wishes/" + id),
   toggleWishRoom: (id, roomId) => apiReq("POST", "/wishes/" + id + "/room", { roomId }),
   createRoom: (r) => apiReq("POST", "/rooms", r),
+  updateRoom: (id, data) => apiReq("PATCH", "/rooms/" + id, data),
   joinRoom: (id, inviterId) => apiReq("POST", "/rooms/" + id + "/join", inviterId ? { inviterId } : {}),
   leaveRoom: (id) => apiReq("POST", "/rooms/" + id + "/leave"),
   deleteRoom: (id) => apiReq("DELETE", "/rooms/" + id),
@@ -126,7 +127,7 @@ const STR = {
   yourWishesColon: { uk: "твоїх бажань: {n}", ru: "твоих желаний: {n}", en: "{n} of your wishes" },
 
   roomFriends: { uk: "Друзі", ru: "Друзья", en: "Friends" },
-  roomCouple: { uk: "Двоє", ru: "Двое", en: "Couple" },
+  roomCouple: { uk: "Пара", ru: "Пара", en: "Couple" },
   roomFamily: { uk: "Сім’я", ru: "Семья", en: "Family" },
   roomTeam: { uk: "Команда", ru: "Команда", en: "Team" },
   newRoom: { uk: "Нова кімната", ru: "Новая комната", en: "New room" },
@@ -200,6 +201,9 @@ const STR = {
   historyEmptySub: { uk: "Тут з’являться подарунки, які ти подарував і отримав.", ru: "Здесь появятся подарки, которые ты подарил и получил.", en: "Gifts you've given and received will show up here." },
   giftingFor: { uk: "даруєш {name}", ru: "даришь {name}", en: "gifting {name}" },
   giftCancelled: { uk: "Скасовано", ru: "Отменено", en: "Cancelled" },
+  roomFull: { uk: "У цій кімнаті вже двоє — місць більше немає", ru: "В этой комнате уже двое — мест больше нет", en: "This room already has two people — no room left" },
+  editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
+  saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
   noRoomsTitle: { uk: "Немає кімнат", ru: "Нет комнат", en: "No rooms" },
   noRoomsSub: { uk: "Створи кімнату — тоді з’явиться посилання-запрошення.", ru: "Создай комнату — тогда появится ссылка-приглашение.", en: "Create a room to get an invite link." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
@@ -453,9 +457,10 @@ export default function App() {
       const sp = api.startRoomId();
       let startId = null, inviterId = null;
       if (sp) { const p = String(sp).split("__"); startId = p[0]; inviterId = p[1] || null; }
-      if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) {} }
+      let joinFailed = false;
+      if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) { joinFailed = true; if (e.message === "room_full") showToast(t("roomFull"), 3000); } }
       await refreshState();
-      if (startId) setOverlay({ type: "room", roomId: startId });
+      if (startId && !joinFailed) setOverlay({ type: "room", roomId: startId });
       setLoading(false);
     })();
   }, []); // eslint-disable-line
@@ -502,6 +507,15 @@ export default function App() {
     setOverlay({ type: "room", roomId: id });
   };
 
+  const updateRoom = async (roomId, data) => {
+    if (online) {
+      try { await api.updateRoom(roomId, data); await refreshState(); setOverlay({ type: "room", roomId }); return; }
+      catch (e) { showToast(t("noConnection"), 3000); throw e; }
+    }
+    setRooms(rs => rs.map(r => r.id === roomId ? { ...r, ...data } : r));
+    setOverlay({ type: "room", roomId });
+  };
+
   const leaveRoom = async (roomId) => {
     if (online) {
       try { await api.leaveRoom(roomId); } catch (e) { showToast(t("noConnection"), 3000); return; }
@@ -545,7 +559,7 @@ export default function App() {
     let handler;
     if (overlay) {
       handler = () => {
-        if (overlay.type === "draw" || overlay.type === "pool") setOverlay({ type: "room", roomId: overlay.roomId });
+        if (overlay.type === "draw" || overlay.type === "pool" || overlay.type === "editRoom") setOverlay({ type: "room", roomId: overlay.roomId });
         else setOverlay(null);
       };
       bb.onClick(handler);
@@ -601,7 +615,7 @@ export default function App() {
         {overlay?.type === "createRoom" && (
           <CreateRoomSheet onClose={() => setOverlay(null)} onCreate={createRoom} />
         )}
-        {(overlay?.type === "room" || overlay?.type === "pool" || overlay?.type === "draw") && (
+        {(overlay?.type === "room" || overlay?.type === "pool" || overlay?.type === "draw" || overlay?.type === "editRoom") && (
           <RoomDetail room={rooms.find(r => r.id === overlay.roomId)} wishes={wishes}
             reserved={reserved}
             online={online}
@@ -610,6 +624,7 @@ export default function App() {
             onAddFromPool={() => setOverlay({ type: "pool", roomId: overlay.roomId })}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
             onDraw={() => setOverlay({ type: "draw", roomId: overlay.roomId })}
+            onEdit={() => setOverlay({ type: "editRoom", roomId: overlay.roomId })}
             onLeave={() => leaveRoom(overlay.roomId)}
             onDelete={() => removeRoom(overlay.roomId)}
             onBack={() => setOverlay(null)} />
@@ -618,6 +633,11 @@ export default function App() {
           <PoolPickerSheet wishes={wishes} roomId={overlay.roomId}
             onToggle={(wid) => toggleWishRoom(wid, overlay.roomId)}
             onClose={() => setOverlay({ type: "room", roomId: overlay.roomId })} />
+        )}
+        {overlay?.type === "editRoom" && (
+          <EditRoomSheet room={rooms.find(r => r.id === overlay.roomId)}
+            onClose={() => setOverlay({ type: "room", roomId: overlay.roomId })}
+            onSave={(data) => updateRoom(overlay.roomId, data)} />
         )}
         {overlay?.type === "draw" && (
           <DrawFlow room={rooms.find(r => r.id === overlay.roomId)}
@@ -853,6 +873,49 @@ function CreateRoomSheet({ onClose, onCreate }) {
   );
 }
 
+/* ---------- EDIT ROOM (name + icon) ---------- */
+function EditRoomSheet({ room, onClose, onSave }) {
+  const { t } = useT();
+  const [name, setName] = useState(room.name);
+  const [emoji, setEmoji] = useState(room.emoji);
+  const [busy, setBusy] = useState(false);
+  const emojiChoices = Array.from(new Set([room.emoji, ...ROOM_PRESETS.map(p => p.emoji)]));
+  const submit = async () => {
+    if (busy || !name.trim()) return;
+    setBusy(true);
+    try { await onSave({ name: name.trim(), emoji }); }
+    catch (e) { setBusy(false); }
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
+      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
+        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{t("editRoom")}</div>
+
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+          <GlossTile emoji={emoji} size={80} tint={room.tint} />
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
+          {emojiChoices.map(e => (
+            <button key={e} onClick={() => setEmoji(e)} style={{
+              width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
+              background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
+            }}>{e}</button>
+          ))}
+        </div>
+
+        <Field label={t("name")} value={name} onChange={setName} placeholder={t("name")} />
+
+        <Pill full kind="primary" disabled={!name.trim() || busy} onClick={submit}>
+          {busy ? t("savingWish") : t("saveChanges")}
+        </Pill>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- MY INVITES (who you invited) ---------- */
 function InvitesSheet({ online, rooms, onShare, onClose }) {
   const { t } = useT();
@@ -988,7 +1051,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
 }
 
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onAddFromPool, onInvite, onDraw, onLeave, onDelete, onBack }) {
+function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack }) {
   const { t } = useT();
   const [seg, setSeg] = useState("lists");
   const [detail, setDetail] = useState(null);
@@ -1038,7 +1101,14 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
           <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
-          <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 14 }}>{room.name}</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 }}>
+            <div style={{ color: C.t1, fontSize: 24, fontWeight: 800 }}>{room.name}</div>
+            {isOwner && (
+              <button onClick={onEdit} style={{ background: C.card2, border: `1px solid ${C.line}`, color: C.t2, width: 28, height: 28, borderRadius: 28, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Pencil size={13} />
+              </button>
+            )}
+          </div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
             {members.map((m, i) => (
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
