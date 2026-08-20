@@ -228,25 +228,6 @@ const useT = () => useContext(LangCtx);
 
 const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
-// Every emoji actually used in the UI, mapped to a locally vendored Microsoft
-// Fluent Emoji (Flat) SVG — served from web/public/emoji — so glyphs render
-// consistently instead of following the visiting OS's native emoji font
-// (Apple's set on iPhone/iPad, the usual audience for a Telegram Mini App).
-const EMOJI_ASSET = {
-  "🎁": "wrapped_gift", "👟": "running_shoe", "📖": "open_book", "🎧": "headphone",
-  "🌿": "herb", "🧴": "lotion_bottle", "☕": "hot_beverage", "💍": "ring",
-  "🎨": "artist_palette", "🧣": "scarf", "🕹️": "joystick", "🍷": "wine_glass",
-  "🎮": "video_game", "💞": "revolving_hearts", "🏠": "house", "💼": "briefcase",
-  "🎉": "party_popper", "🫂": "people_hugging", "👀": "eyes", "🔗": "link",
-  "🎲": "game_die", "✨": "sparkles", "💝": "heart_with_ribbon", "🎀": "ribbon",
-  "🥳": "partying_face",
-};
-function Emoji({ e, size = "1em", style }) {
-  const slug = EMOJI_ASSET[e];
-  if (!slug) return e; // no local asset for this one — fall back to the native glyph
-  return <img src={`/emoji/${slug}.svg`} alt={e} draggable={false} style={{ width: size, height: size, display: "inline-block", verticalAlign: "-0.15em", ...style }} />;
-}
-
 /* ---------- little ui atoms ---------- */
 function ImageLightbox({ src, onClose }) {
   return (
@@ -276,7 +257,9 @@ function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
       {image ? (
         <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : (
-        <Emoji e={emoji} size={size * 0.56} style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }} />
+        <span style={{ fontSize: size * 0.5, lineHeight: 1, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }}>
+          {emoji}
+        </span>
       )}
     </div>
     {open && <ImageLightbox src={image} onClose={() => setOpen(false)} />}
@@ -380,7 +363,7 @@ function Sheet({ title, onClose, children }) {
 function Empty({ emoji, title, sub }) {
   return (
     <div style={{ padding: "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-      <Emoji e={emoji} size={72} style={{ filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.5))" }} />
+      <div style={{ fontSize: 72, lineHeight: 1, filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.5))" }}>{emoji}</div>
       <div style={{ color: C.t1, fontSize: 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
     </div>
@@ -809,7 +792,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
       </div>
 
       {rooms.length === 0 ? (
-        <Empty emoji="🎉" title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
+        <Empty emoji="👋" title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {rooms.map(r => {
@@ -845,7 +828,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
 
 /* ---------- CREATE ROOM ---------- */
 const ROOM_PRESETS = [
-  { type: "friends", key: "roomFriends", emoji: "🎮", tint: "#F5A623" },
+  { type: "friends", key: "roomFriends", emoji: "🎮", tint: "#38BDF8" },
   { type: "couple", key: "roomCouple", emoji: "💞", tint: "#FF4D8D" },
   { type: "family", key: "roomFamily", emoji: "🏠", tint: "#34C759" },
   { type: "team", key: "roomTeam", emoji: "💼", tint: "#2E7DF6" },
@@ -877,7 +860,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
           {ROOM_PRESETS.map(p => (
             <Chip key={p.type} active={preset.type === p.type} color={p.tint} onClick={() => setPreset(p)}>
-              <Emoji e={p.emoji} size={15} /> {t(p.key)}
+              {p.emoji} {t(p.key)}
             </Chip>
           ))}
         </div>
@@ -922,10 +905,9 @@ function EditRoomSheet({ room, onClose, onSave }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
           {emojiChoices.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
-              width: 44, height: 44, borderRadius: 14, cursor: "pointer",
+              width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
               background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}><Emoji e={e} size={22} /></button>
+            }}>{e}</button>
           ))}
         </div>
 
@@ -963,7 +945,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : groups.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-          <Emoji e="🔗" size={56} />
+          <div style={{ fontSize: 56, lineHeight: 1 }}>🔗</div>
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("invitedNobody")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
           {rooms.length > 0 && (
@@ -1017,7 +999,7 @@ function HistorySheet({ online, onClose }) {
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : gifts.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-          <Emoji e="🎁" size={56} />
+          <div style={{ fontSize: 56, lineHeight: 1 }}>🎁</div>
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("historyEmptyTitle")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
         </div>
@@ -1440,10 +1422,9 @@ function AddSheet({ rooms, onClose, onSave }) {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
             {WISH_EMOJI.map(e => (
               <button key={e} onClick={() => setEmoji(e)} style={{
-                width: 44, height: 44, borderRadius: 14, cursor: "pointer",
+                width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
                 background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}><Emoji e={e} size={22} /></button>
+              }}>{e}</button>
             ))}
           </div>
         )}
