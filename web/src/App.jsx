@@ -206,8 +206,6 @@ const STR = {
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
   coupleRoomHint: { uk: "У цьому типі кімнати може бути лише двоє учасників.", ru: "В комнате этого типа может быть только два участника.", en: "This room type can only have two members." },
   coupleFullHint: { uk: "Кімната для двох вже заповнена", ru: "Комната для двоих уже заполнена", en: "This two-person room is full" },
-  noRoomsTitle: { uk: "Немає кімнат", ru: "Нет комнат", en: "No rooms" },
-  noRoomsSub: { uk: "Створи кімнату — тоді з’явиться посилання-запрошення.", ru: "Создай комнату — тогда появится ссылка-приглашение.", en: "Create a room to get an invite link." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
