@@ -9,10 +9,9 @@
     "preview": "vite preview --host"
   },
   "dependencies": {
-    "@telegram-apps/telegram-ui": "^2.1.13",
-    "lucide-react": "^0.383.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "lucide-react": "^0.383.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

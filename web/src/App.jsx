@@ -3,10 +3,6 @@ import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
   Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
 } from "lucide-react";
-// Experimental Telegram-UI reskin of the wishes screen — see the `designSystem`
-// toggle below. Isolated in its own file and lazy-loaded, so regular users (who
-// never flip the toggle) never pay for its ~40kb of extra JS in their bundle.
-const PoolScreenTelegramUI = React.lazy(() => import("./PoolScreenTelegramUI.jsx"));
 
 /* ---------- design tokens ---------- */
 const C = {
@@ -87,10 +83,6 @@ function detectLang() {
 }
 function tgUserName() {
   try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.first_name) || null; }
-  catch (e) { return null; }
-}
-function tgUsername() {
-  try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.username) || null; }
   catch (e) { return null; }
 }
 function openTgLink(url) {
@@ -449,14 +441,6 @@ export default function App() {
   const [reserved, setReserved] = useState(() => store.get("wp_reserved", {}));
   const [loading, setLoading] = useState(online);
 
-  // Dev-only design-system toggle: lets one specific Telegram account (by @username)
-  // preview the wishes screen rebuilt on @telegram-apps/telegram-ui, without exposing
-  // any switch to regular users. Defaults to the classic look for everyone, including
-  // that account, until it's flipped — and flipping it back is instant (no redeploy).
-  const isDesignDevUser = tgUsername() === "reckliess";
-  const [designSystem, setDesignSystem] = useState(() => store.get("wp_design_system", "classic"));
-  useEffect(() => { store.set("wp_design_system", designSystem); }, [designSystem]);
-
   // Persist locally only in single-device (offline) mode. In Telegram the server is the source of truth.
   useEffect(() => { if (!online) store.set("wp_rooms", rooms); }, [rooms, online]);
   useEffect(() => { if (!online) store.set("wp_wishes", wishes); }, [wishes, online]);
@@ -606,31 +590,18 @@ export default function App() {
           {loading ? <SkeletonScreen tab={tab} /> : (
             <>
               {tab === "pool" && (
-                designSystem === "telegram" ? (
-                  <React.Suspense fallback={<SkeletonScreen tab="pool" />}>
-                    <PoolScreenTelegramUI wishes={wishes} rooms={rooms}
-                      onAdd={() => setOverlay({ type: "add" })}
-                      onToggleRoom={toggleWishRoom}
-                      onDelete={deleteWish}
-                      GlossTile={GlossTile}
-                      t={t}
-                    />
-                  </React.Suspense>
-                ) : (
-                  <PoolScreen wishes={wishes} rooms={rooms}
-                    onAdd={() => setOverlay({ type: "add" })}
-                    onToggleRoom={toggleWishRoom}
-                    onDelete={deleteWish}
-                  />
-                )
+                <PoolScreen wishes={wishes} rooms={rooms}
+                  onAdd={() => setOverlay({ type: "add" })}
+                  onToggleRoom={toggleWishRoom}
+                  onDelete={deleteWish}
+                />
               )}
               {tab === "rooms" && (
                 <RoomsScreen rooms={rooms} wishes={wishes}
                   onOpen={(id) => setOverlay({ type: "room", roomId: id })}
                   onCreate={() => setOverlay({ type: "createRoom" })} />
               )}
-              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })}
-                isDesignDevUser={isDesignDevUser} designSystem={designSystem} setDesignSystem={setDesignSystem} />}
+              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
             </>
           )}
         </div>
@@ -1494,7 +1465,7 @@ function Field({ label, value, onChange, placeholder }) {
 }
 
 /* ---------- PROFILE ---------- */
-function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesignDevUser, designSystem, setDesignSystem }) {
+function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
   const { t, lang, setLang } = useT();
   const me = { name: tgUserName() || t("guest"), color: "#7B61FF" };
   const gifting = Object.values(reserved || {}).filter(v => v === "you").length;
@@ -1530,22 +1501,6 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
           ))}
         </div>
       </div>
-
-      {isDesignDevUser && (
-        <div style={{ marginTop: 18 }}>
-          <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8, textAlign: "left" }}>
-            Design system (dev only)
-          </div>
-          <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14 }}>
-            {[["classic", "Classic"], ["telegram", "Telegram UI"]].map(([k, l]) => (
-              <button key={k} onClick={() => setDesignSystem(k)} style={{
-                flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-                fontSize: 13.5, fontWeight: 600, background: designSystem === k ? C.blue : "transparent", color: designSystem === k ? "#fff" : C.t2,
-              }}>{l}</button>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
         {[[Clock, t("history"), onHistory], [Link2, t("myInvites"), onInvites], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui")]].map(([Icon, l, on], i) => (
