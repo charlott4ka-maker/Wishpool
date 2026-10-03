@@ -287,7 +287,7 @@ const useT = () => useContext(LangCtx);
 
 // Image stickers (web/public/stickers/<name>.png), stored in a wish's `emoji`
 // field as "stk:<name>" and drawn by <Sticker> like any emoji.
-const STICKERS = ["burger", "pizza", "icecream", "cactus", "heel", "globe", "fire", "bulb", "dog", "cat", "alien"];
+const STICKERS = []; // add names here when sticker PNGs are placed in web/public/stickers
 const WISH_EMOJI = [...STICKERS.map(n => "stk:" + n), "🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
 /* ---------- little ui atoms ---------- */
