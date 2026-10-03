@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext, createContext } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useContext, createContext } from "react";
 import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
@@ -517,10 +517,10 @@ function Sheet({ title, onClose, children }) {
 function Empty({ emoji, title, sub, action, compact, tilt = -8 }) {
   return (
     <div style={{ padding: compact ? "8px 8px" : "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-      <div style={{ transform: `rotate(${tilt}deg)` }}><Sticker emoji={emoji} size={compact ? 64 : 88} /></div>
+      <div style={{ transform: `rotate(${tilt}deg)` }}><Sticker emoji={emoji} size={compact ? 56 : 88} /></div>
       <div style={{ color: C.t1, fontSize: compact ? 16 : 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
       {sub && <div style={{ color: C.t2, fontSize: 14.5, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{sub}</div>}
-      {action && <div style={{ marginTop: 24 }}>{action}</div>}
+      {action && <div style={{ marginTop: compact ? 16 : 24 }}>{action}</div>}
     </div>
   );
 }
@@ -1057,6 +1057,11 @@ function RoomFolder({ room, wishes, onOpen }) {
   const { t } = useT();
   const box = useRef(null);
   const [dim, setDim] = useState(null);
+  // Measured before the first paint so the frosted front is there from frame one.
+  useLayoutEffect(() => {
+    const el = box.current; if (!el) return;
+    const r = el.getBoundingClientRect(); setDim({ w: r.width, h: r.height });
+  }, []);
   useEffect(() => {
     const el = box.current; if (!el) return;
     const ro = new ResizeObserver(([e]) => setDim({ w: e.contentRect.width, h: e.contentRect.height }));
@@ -1074,7 +1079,7 @@ function RoomFolder({ room, wishes, onOpen }) {
   const shown = extra ? members.slice(0, FOLDER_MAX_AVATARS - 1) : members;
   const AV = 24, OV = 8;
   return (
-    <div onClick={onOpen} style={{ cursor: "pointer", textAlign: "center", animation: "fadeUp .3s ease" }}>
+    <div onClick={onOpen} style={{ cursor: "pointer", textAlign: "center" }}>
       <div ref={box} style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
         <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: hex(room.tint, 0.22) }} />
         {photos.map((src, i) => {
@@ -1124,7 +1129,7 @@ function RoomFolder({ room, wishes, onOpen }) {
 function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
   const { t } = useT();
   return (
-    <div style={{ animation: "fadeUp .3s ease" }}>
+    <div>
       <div style={{ padding: "6px 4px 24px" }}>
         <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
         <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("roomsSub")}</div>
@@ -1519,7 +1524,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   return (
     <div style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
       {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
-      <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 48px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
+      <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 40px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
           {hasTgBack() ? <span /> : <HeroButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
           {isOwner ? <HeroButton onClick={onEdit} label={t("editRoom")}><Pencil size={17} /></HeroButton> : <span />}
@@ -1573,8 +1578,8 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
-              {/* compact, and no second Invite button (the hero has one): Delete must fit on screen */}
-              <Empty compact emoji="👀" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} />
+              <Empty compact emoji="👀" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
+                action={<Pill kind="primary" icon={<Share2 size={17} />} onClick={onInvite}>{t("inviteFriends")}</Pill>} />
             </div>
           ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -1619,8 +1624,8 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 
         <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", justifyContent: "center" }}>
           {isOwner ? (
-            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ width: "100%", height: H.lg, borderRadius: 999, border: "none", cursor: "pointer", background: "#FF3B30", color: "#fff", fontSize: 15.5, fontWeight: 700, fontFamily: font, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <Trash2 size={18} /> {t("deleteRoom")}
+            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ height: H.sm, padding: "0 16px", borderRadius: 999, border: "none", cursor: "pointer", background: "rgba(255,69,58,0.16)", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Trash2 size={16} /> {t("deleteRoom")}
             </button>
           ) : (
             <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
