@@ -760,7 +760,8 @@ export default function App() {
           )}
         </div>
 
-        {!overlay && <TabBar tab={tab} setTab={(x) => { setTab(x); setOverlay(null); }} />}
+        {!overlay && <TabBar tab={tab} setTab={(x) => { setTab(x); setOverlay(null); }}
+          onAdd={() => setOverlay({ type: tab === "rooms" ? "createRoom" : "add" })} />}
 
         {overlay?.type === "add" && (
           <AddSheet rooms={rooms} onClose={() => setOverlay(null)}
@@ -844,7 +845,7 @@ function FallbackBack({ onBack }) {
     </div>
   );
 }
-function TabBar({ tab, setTab }) {
+function TabBar({ tab, setTab, onAdd }) {
   const { t } = useT();
   const items = [
     { id: "pool", label: t("tabWishes"), icon: Gift },
@@ -852,7 +853,14 @@ function TabBar({ tab, setTab }) {
     { id: "profile", label: t("tabProfile"), icon: User },
   ];
   return (
-    <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+    <div style={{ position: "fixed", bottom: 20, left: 16, right: 16, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+      {/* Separate round "+" to the left of the tabs: new room on Rooms, new wish elsewhere. */}
+      <button onClick={onAdd} aria-label={t(tab === "rooms" ? "createRoom" : "addWish")} style={{
+        width: H.lg + 12, height: H.lg + 12, borderRadius: "50%", border: "none", cursor: "pointer", flexShrink: 0,
+        background: C.blue, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <Plus size={26} strokeWidth={2.4} />
+      </button>
       <div style={{
         display: "flex", gap: 8, background: hex("#1C1C1E", 0.92), backdropFilter: "blur(20px)",
         padding: 6, borderRadius: 999, border: `1px solid ${C.line}`,
@@ -862,7 +870,7 @@ function TabBar({ tab, setTab }) {
           return (
             <button key={it.id} onClick={() => setTab(it.id)} style={{
               display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-              height: H.lg, padding: "0 20px", justifyContent: "center", borderRadius: 999, border: "none", cursor: "pointer",
+              height: H.lg, padding: "0 12px", minWidth: 0, justifyContent: "center", borderRadius: 999, border: "none", cursor: "pointer",
               background: on ? C.blueSoft : "transparent", color: on ? "#7FB0FF" : C.t2, fontFamily: font,
             }}>
               <Icon size={21} />
