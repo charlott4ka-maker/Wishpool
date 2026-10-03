@@ -33,12 +33,17 @@ const GLASS = {
   sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
   rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
 };
-function glass({ on = false } = {}) {
+// `tint` adds a faint inner glow of the block's colour (blue by default) so a
+// block reads as tinted glass rather than fully see-through.
+function glass({ on = false, tint = C.blue } = {}) {
   if (on) return {
     background: "linear-gradient(180deg, #7FA3FF 0%, #4F7FF0 55%, #3C66DA 100%)",
     border: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 22px ${hex(C.blue, 0.5)}`,
   };
-  return { background: `${GLASS.sheen}, ${GLASS.fill}`, border: "none", boxShadow: GLASS.rim };
+  return {
+    background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
+    border: "none", boxShadow: `${GLASS.rim}, inset 0 0 28px ${hex(tint, 0.07)}`,
+  };
 }
 // Floating bars sit over scrolling content, so they get a dark (not grey) tint
 // and a light blur purely for legibility.
@@ -426,8 +431,8 @@ function Chip({ children, active, onClick }) {
     </button>
   );
 }
-function Card({ children, style, onClick }) {
-  return <div onClick={onClick} style={{ ...glass(), borderRadius: S.r, ...style }}>{children}</div>;
+function Card({ children, style, onClick, tint }) {
+  return <div onClick={onClick} style={{ ...glass({ tint }), borderRadius: S.r, ...style }}>{children}</div>;
 }
 function Segmented({ options, value, onChange, style }) {
   return (
@@ -945,8 +950,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
           {rooms.map(r => {
             const shared = wishes.filter(w => w.rooms.includes(r.id)).length;
             return (
-              <Card key={r.id} onClick={() => onOpen(r.id)} style={{ padding: S.pad, cursor: "pointer", overflow: "hidden", position: "relative" }}>
-                <div style={{ position: "absolute", inset: 0, background: `radial-gradient(80% 120% at 100% 0%, ${hex(r.tint, 0.14)} 0%, transparent 60%)`, pointerEvents: "none" }} />
+              <Card key={r.id} tint={r.tint} onClick={() => onOpen(r.id)} style={{ padding: S.pad, cursor: "pointer", overflow: "hidden", position: "relative" }}>
                 <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14 }}>
                   <GlossTile emoji={r.emoji} size={56} tint={r.tint} />
                   <div style={{ flex: 1, minWidth: 0 }}>
