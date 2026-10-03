@@ -1237,12 +1237,12 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       <div style={{ padding: "16px 16px 140px" }}>
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
           <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
-          <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
+          <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} bare /></div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
             <div style={{ color: C.t1, fontSize: 24, fontWeight: 800 }}>{room.name}</div>
             {isOwner && (
-              <button onClick={onEdit} style={{ background: C.card2, border: `1px solid ${C.line}`, color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Pencil size={18} />
+              <button onClick={onEdit} aria-label={t("editRoom")} style={{ background: "none", border: "none", padding: 0, color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, marginLeft: -6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Pencil size={16} />
               </button>
             )}
           </div>
