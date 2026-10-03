@@ -210,7 +210,7 @@ const STR = {
   inviteFriends: { uk: "Запросити друзів", ru: "Пригласить друзей", en: "Invite friends" },
   youGift: { uk: "Ви даруєте", ru: "Вы дарите", en: "You're gifting" },
   taken: { uk: "Зайнято", ru: "Занято", en: "Taken" },
-  take: { uk: "Беру 🎁", ru: "Беру 🎁", en: "I'll get it 🎁" },
+  take: { uk: "Беру", ru: "Беру", en: "I'll get it" },
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
   reserveNote: { uk: "Резерв бачать дарувальники, але не власник бажання", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
   nothingSharedTitle: { uk: "Ти ще нічим сюди не поділився", ru: "Ты ещё ничем сюда не поделился", en: "You haven't shared anything here" },
@@ -228,7 +228,7 @@ const STR = {
   shuffling: { uk: "Перемішуємо…", ru: "Перемешиваем…", en: "Shuffling…" },
   dealing: { uk: "Роздаємо кожному підопічного", ru: "Раздаём каждому подопечного", en: "Assigning everyone a match" },
   youGot: { uk: "Тобі випав(-ла)", ru: "Тебе выпал", en: "You got" },
-  budgetSecret: { uk: "Бюджет {b} · тримаємо в секреті 🤫", ru: "Бюджет {b} · держим в секрете 🤫", en: "Budget {b} · keep it secret 🤫" },
+  budgetSecret: { uk: "Бюджет {b} · тримаємо в секреті", ru: "Бюджет {b} · держим в секрете", en: "Budget {b} · keep it secret" },
   wishesOf: { uk: "Бажання: {name}", ru: "Желания: {name}", en: "{name}'s wishes" },
   emptyLater: { uk: "Список поки порожній. Зазирни пізніше", ru: "Список пока пуст. Загляни позже", en: "The list is empty. Check back later" },
   gotItTake: { uk: "Зрозуміло, беру подарунок", ru: "Понятно, беру подарок", en: "Got it, I'll get the gift" },
@@ -278,7 +278,9 @@ const STR = {
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
 
   linkCopied: { uk: "Посилання скопійовано", ru: "Ссылка скопирована", en: "Link copied" },
-  youGiftHidden: { uk: "Ви даруєте. Власник не бачить 🤫", ru: "Вы дарите. Владелец не видит 🤫", en: "You're gifting. The owner can't see 🤫" },
+  giftTakenTitle: { uk: "Ти даруєш «{name}»", ru: "Ты даришь «{name}»", en: "You're gifting «{name}»" },
+  giftTakenBody: { uk: "Інші учасники не бачать, хто що взяв, а власник бажання не дізнається до свята.", ru: "Другие участники не видят, кто что взял, а владелец желания не узнает до праздника.", en: "Others can't see who took what, and the wish owner won't find out until the big day." },
+  giftTakenOk: { uk: "Супер", ru: "Супер", en: "Great" },
   inviteText: { uk: "Залітай у кімнату «{name}» у Wishpool, зберемо вішлисти й обміняємось подарунками 🎁", ru: "Залетай в комнату «{name}» в Wishpool, соберём вишлисты и обменяемся подарками 🎁", en: "Join the «{name}» room in Wishpool, let's build wishlists and swap gifts 🎁" },
 };
 
@@ -721,11 +723,15 @@ export default function App() {
     showToast(t("roomDeleted"));
   };
 
-  const reserve = async (wid) => {
+  const [celebrate, setCelebrate] = useState(null);
+  const reserve = async (wish) => {
+    const wid = wish.id;
     if (online) {
       try { await api.reserve(wid); } catch (e) { showToast(t("noConnection"), 3000); return; }
     }
-    setReserved(r => ({ ...r, [wid]: "you" })); showToast(t("youGiftHidden"));
+    setReserved(r => ({ ...r, [wid]: "you" }));
+    setCelebrate({ title: wish.title });
+    try { const tg = tgWebApp(); tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred("success"); } catch (e) {}
   };
   const unreserve = async (wid) => {
     if (online) {
@@ -861,6 +867,8 @@ export default function App() {
         {overlay?.type === "invites" && (
           <InvitesSheet online={online} rooms={rooms} onShare={shareInvite} onClose={() => setOverlay(null)} />
         )}
+
+        {celebrate && <GiftTakenModal title={celebrate.title} onClose={() => setCelebrate(null)} />}
 
         {toast && (
           <div style={{
@@ -1282,14 +1290,14 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   const others = members.filter(m => !m.you);
   const coupleFull = room.type === "couple" && members.length >= 2;
 
-  const doReserve = async (wid) => { await onReserve(wid); setTick(x => x + 1); };
+  const doReserve = async (w) => { await onReserve(w); setTick(x => x + 1); };
   const doUnreserve = async (wid) => { await onUnreserve(wid); setTick(x => x + 1); };
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
-        : <Pill size="sm" kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
+        : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
   );
 
   return (
@@ -1404,6 +1412,70 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 }
 
+/* ---------- "YOU TOOK A GIFT" CELEBRATION ---------- */
+// Full-screen canvas fireworks: a few staggered bursts of particles with
+// gravity and fade. Skipped entirely when the user prefers reduced motion.
+function Fireworks() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const cv = ref.current; if (!cv || reduce) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = cv.width = window.innerWidth * dpr, Hh = cv.height = window.innerHeight * dpr;
+    const ctx = cv.getContext("2d");
+    const colors = ["#5A82EA", "#8AA6F2", "#FFD36E", "#FF7AB6", "#7CE0C3"];
+    const parts = [];
+    const burst = (x, y) => {
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      for (let i = 0; i < 60; i++) {
+        const a = (Math.PI * 2 * i) / 60 + Math.random() * 0.2, v = (2.2 + Math.random() * 2.6) * dpr;
+        parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, c: Math.random() < 0.25 ? "#FFFFFF" : col });
+      }
+    };
+    const plan = [[0.3, 0.28, 0], [0.72, 0.22, 260], [0.5, 0.36, 520], [0.22, 0.45, 820], [0.8, 0.42, 1050]];
+    const timers = plan.map(([fx, fy, ms]) => setTimeout(() => burst(W * fx, Hh * fy), ms));
+    let raf, start = performance.now();
+    const tick = (now) => {
+      ctx.clearRect(0, 0, W, Hh);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        const px = p.x, py = p.y;
+        p.vx *= 0.985; p.vy = p.vy * 0.985 + 0.045 * dpr; p.x += p.vx; p.y += p.vy; p.life -= 0.012;
+        if (p.life <= 0) { parts.splice(i, 1); continue; }
+        // short streak from the previous position reads as a firework spark, not a dot
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.strokeStyle = p.c; ctx.lineWidth = 2.6 * dpr; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(px - p.vx * 2, py - p.vy * 2); ctx.lineTo(p.x, p.y); ctx.stroke();
+      }
+      if (now - start < 3200 || parts.length) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); timers.forEach(clearTimeout); };
+  }, []);
+  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />;
+}
+function GiftTakenModal({ title, onClose }) {
+  const { t } = useT();
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", animation: "fadeUp .2s ease" }} />
+      <Fireworks />
+      <div style={{
+        position: "relative", width: "100%", maxWidth: 340, background: SOLID.sheet, borderRadius: S.r,
+        padding: "32px 24px 24px", textAlign: "center", animation: "pop .45s cubic-bezier(.2,.9,.3,1.2)",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+      }}>
+        <Sticker emoji="🎉" size={72} style={{ animation: "spinEmoji 1.6s ease-in-out infinite" }} />
+        <div style={{ ...titleStyle, color: C.t1, fontSize: 22, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
+        <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
+        <div style={{ marginTop: 24 }}>
+          <Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- DRAW / SECRET SANTA ---------- */
 function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, onError, onClose }) {
   const { t } = useT();
@@ -1432,9 +1504,9 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
     return () => { clearInterval(iv); clearTimeout(tm); };
   }, [stage]);
 
-  const doReserve = async (wid) => {
-    await onReserve(wid);
-    setTargetWishes(ws => ws.map(w => w.id === wid ? { ...w, reservedByMe: true } : w));
+  const doReserve = async (wish) => {
+    await onReserve(wish);
+    setTargetWishes(ws => ws.map(w => w.id === wish.id ? { ...w, reservedByMe: true } : w));
   };
   const doUnreserve = async (wid) => {
     await onUnreserve(wid);
@@ -1508,7 +1580,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
             <Avatar m={target} size={96} />
           </div>
           <div style={{ ...titleStyle, color: C.t1, fontSize: 30, marginTop: 16 }}>{target.name}</div>
-          <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("budgetSecret", { b: budget })}</div>
+          <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("budgetSecret", { b: budget })} <Sticker emoji="🤫" size={15} style={{ verticalAlign: -2 }} /></div>
 
           <div style={{ marginTop: 24, textAlign: "left" }}>
             <div style={{ ...labelStyle, marginBottom: 8 }}>{t("wishesOf", { name: target.name })}</div>
@@ -1518,7 +1590,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                   <WishRow w={w} right={
                     isMine(w)
                       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
+                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
                   } />
                 </div>
               )) : <div style={{ padding: 16, color: C.t3, fontSize: 13.5 }}>{t("emptyLater")}</div>}
