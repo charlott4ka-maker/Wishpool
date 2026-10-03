@@ -1624,7 +1624,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 
         <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", justifyContent: "center" }}>
           {isOwner ? (
-            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ height: H.sm, padding: "0 16px", borderRadius: 999, border: "none", cursor: "pointer", background: "rgba(255,69,58,0.16)", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ height: H.sm, padding: "0 12px", border: "none", cursor: "pointer", background: "none", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
               <Trash2 size={16} /> {t("deleteRoom")}
             </button>
           ) : (
