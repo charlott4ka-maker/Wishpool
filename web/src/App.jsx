@@ -27,11 +27,14 @@ const S = { gutter: 12, gap: 12, pad: 20, r: 30, rTile: 0.3 };
 // Every button / control is one of exactly two heights.
 const H = { lg: 52, sm: 40 };
 /* ---------- surfaces ---------- */
-// Blocks are flat iOS blacks (no gradient, no inner glow, no outlines):
-// screen #000 → card / sheet #161618 → field, control #232326.
+// Blocks: iOS blacks, no outlines. screen #000 → card / sheet #161618 →
+// field, control #232326. Cards get a faint inner glow of their colour.
 const SOLID = { card: "#161618", sheet: "#161618", field: "#232326", control: "#232326" };
-function surface({ fill = SOLID.card } = {}) {
-  return { background: fill, border: "none", boxShadow: "none" };
+function surface({ tint, fill = SOLID.card } = {}) {
+  return {
+    background: tint ? `radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.09)} 0%, transparent 60%), ${fill}` : fill,
+    border: "none", boxShadow: "none",
+  };
 }
 // Buttons and floating chrome keep the clear-glass look: diagonal reflection,
 // faint blue tint, bright top rim. Selected / primary = glossy blue.
@@ -69,7 +72,7 @@ function Title({ text, size = 32, style }) {
   );
 }
 // Soft deep-blue glow at the top of an otherwise black screen.
-const SKY = "#000";
+const SKY = "radial-gradient(90% 38% at 30% -4%, rgba(48,74,170,0.55) 0%, rgba(20,30,80,0.25) 45%, transparent 75%), #000";
 
 // Safe persistence: uses localStorage when available (real deploy),
 // silently falls back to in-memory in sandboxes that block it (artifact preview).
@@ -764,7 +767,7 @@ export default function App() {
 
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
-    <div style={{ background: SKY, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500, position: "relative" }}>
+    <div style={{ background: SKY, backgroundAttachment: "fixed", minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500, position: "relative" }}>
       <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1301,6 +1304,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       <FallbackBack onBack={onBack} />
       <div style={{ padding: `16px ${S.gutter}px 140px` }}>
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
+          <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
             <Title text={room.name} size={32} />
