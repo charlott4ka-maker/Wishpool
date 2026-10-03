@@ -472,7 +472,8 @@ function Chip({ children, active, onClick, color }) {
     </button>
   );
 }
-function Segmented({ options, value, onChange, style }) {
+// neutral: the selected segment is a lighter dark grey instead of accent blue.
+function Segmented({ options, value, onChange, style, neutral }) {
   return (
     <div style={{ display: "flex", gap: 4, background: C.card, height: H.lg, padding: (H.lg - H.sm) / 2, borderRadius: 999, ...style }}>
       {options.map(([k, l]) => {
@@ -480,7 +481,7 @@ function Segmented({ options, value, onChange, style }) {
         return (
           <button key={k} onClick={() => onChange(k)} style={{
             flex: 1, padding: "0 10px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font,
-            fontSize: 14, fontWeight: 600, background: on ? C.blue : "transparent", color: on ? "#fff" : C.t2,
+            fontSize: 14, fontWeight: 600, background: on ? (neutral ? "#333336" : C.blue) : "transparent", color: on ? "#fff" : C.t2,
           }}>{l}</button>
         );
       })}
@@ -1532,7 +1533,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       {/* content sheet slides over the hero with rounded corners */}
       <div style={{ position: "relative", marginTop: -28, background: C.bg, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "24px 16px 140px", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
 
-        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} style={{ marginBottom: 16 }} />
+        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral style={{ marginBottom: 16 }} />
 
         {loading ? (
           <Card style={{ padding: `0 ${LIST.pad}px` }}>
