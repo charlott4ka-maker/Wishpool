@@ -132,6 +132,12 @@ const STR = {
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
+  roomLoadFailTitle: { uk: "Кімната не завантажилась", ru: "Комната не загрузилась", en: "Couldn't load the room" },
+  roomLoadFailSub: { uk: "Щось пішло не так. Спробуй ще раз за мить.", ru: "Что-то пошло не так. Попробуй ещё раз через минутку.", en: "Something went wrong. Give it another try in a moment." },
+  roomGone: { uk: "Цієї кімнати вже немає", ru: "Этой комнаты уже нет", en: "This room doesn't exist anymore" },
+  crashTitle: { uk: "Ой, щось зламалось", ru: "Ой, что-то сломалось", en: "Oops, something broke" },
+  crashSub: { uk: "Ми вже знаємо, що так не має бути. Перезапусти, і все повернеться.", ru: "Так быть не должно. Перезапусти, и всё вернётся на место.", en: "That shouldn't happen. Restart and everything will be back in place." },
+  crashRestart: { uk: "Перезапустити", ru: "Перезапустить", en: "Restart" },
   offlineTitle: { uk: "Упс, немає інтернету", ru: "Упс, нет интернета", en: "Oops, no internet" },
   offlineSub: { uk: "Перевір підключення, а ми почекаємо тут", ru: "Проверь подключение, а мы подождём тут", en: "Check your connection, we'll wait right here" },
   offlineRetry: { uk: "Спробувати ще раз", ru: "Попробовать снова", en: "Try again" },
@@ -502,14 +508,40 @@ function Sheet({ title, onClose, children }) {
     </div>
   );
 }
-function Empty({ emoji, title, sub }) {
+// Placeholder for empty lists and errors: a tilted sticker, a title, a line of
+// text and an optional action. `compact` is the smaller version for sheets.
+function Empty({ emoji, title, sub, action, compact, tilt = -8 }) {
   return (
-    <div style={{ padding: "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-      <Sticker emoji={emoji} size={72} />
-      <div style={{ color: C.t1, fontSize: 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
-      <div style={{ color: C.t2, fontSize: 14.5, marginTop: 8, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
+    <div style={{ padding: compact ? "16px 8px 8px" : "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+      <div style={{ transform: `rotate(${tilt}deg)` }}><Sticker emoji={emoji} size={compact ? 64 : 88} /></div>
+      <div style={{ color: C.t1, fontSize: compact ? 16 : 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
+      {sub && <div style={{ color: C.t2, fontSize: 14.5, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{sub}</div>}
+      {action && <div style={{ marginTop: 24 }}>{action}</div>}
     </div>
   );
+}
+
+/* ---------- crash screen ---------- */
+// Last line of defence: a render error shows a friendly screen instead of a black page.
+export class CrashGuard extends React.Component {
+  constructor(p) { super(p); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err) { console.error(err); }
+  render() {
+    if (!this.state.err) return this.props.children;
+    const lang = store.get("wp_lang", null) || detectLang();
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, fontFamily: font, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", textAlign: "center" }}>
+        <StickerDefs />
+        <div style={{ transform: "rotate(-8deg)" }}><Sticker emoji="stk:matcha" size={120} /></div>
+        <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 24 }}>{tr(lang, "crashTitle")}</div>
+        <div style={{ color: C.t2, fontSize: 15, fontWeight: 500, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{tr(lang, "crashSub")}</div>
+        <div style={{ marginTop: 32, width: "100%", maxWidth: 320 }}>
+          <Pill full kind="primary" icon={<RefreshCw size={18} />} onClick={() => window.location.reload()}>{tr(lang, "crashRestart")}</Pill>
+        </div>
+      </div>
+    );
+  }
 }
 
 /* ---------- no internet ---------- */
@@ -664,7 +696,7 @@ export default function App() {
       let startId = null, inviterId = null;
       if (sp) { const p = String(sp).split("__"); startId = p[0]; inviterId = p[1] || null; }
       let joinFailed = false;
-      if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) { joinFailed = true; if (e.message === "room_full") showToast(t("roomFull"), 3000); } }
+      if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) { joinFailed = true; if (e.message === "room_full") showToast(t("roomFull"), 3000); else if (e.message === "not_found") showToast(t("roomGone"), 3000); } }
       const ok = await refreshState({ quiet: true });
       if (!ok) { setNetDown(true); return; }
       if (startId && !joinFailed) setOverlay({ type: "room", roomId: startId });
@@ -955,7 +987,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       </div>
 
       {wishes.length === 0 ? (
-        <Empty emoji="🎁" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
+        <Empty emoji="stk:bag" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {wishes.map(w => (
@@ -1095,7 +1127,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
       </div>
 
       {rooms.length === 0 ? (
-        <Empty emoji="👋" title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
+        <Empty emoji="stk:ghost" tilt={6} title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 12px" }}>
           {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={() => onOpen(r.id)} />)}
@@ -1267,16 +1299,8 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
       {inv === null ? (
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : groups.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-          <div style={{ fontSize: 56, lineHeight: 1 }}>🔗</div>
-          <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("invitedNobody")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
-          {rooms.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>
-            </div>
-          )}
-        </div>
+        <Empty compact emoji="stk:uno" tilt={8} title={t("invitedNobody")} sub={t("invitedNobodySub")}
+          action={rooms.length > 0 && <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {groups.map(g => (
@@ -1321,11 +1345,7 @@ function HistorySheet({ online, onClose }) {
       {gifts === null ? (
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : gifts.length === 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-          <div style={{ fontSize: 56, lineHeight: 1 }}>🎁</div>
-          <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("historyEmptyTitle")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 8, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
-        </div>
+        <Empty compact emoji="stk:candle" title={t("historyEmptyTitle")} sub={t("historyEmptySub")} />
       ) : (
         <Card style={{ padding: `0 ${LIST.pad}px` }}>
           {gifts.map((w, i) => (
@@ -1351,7 +1371,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
   return (
     <Sheet title={t("addFromPool")} onClose={onClose}>
       {wishes.length === 0 ? (
-        <div style={{ color: C.t2, fontSize: 14, padding: "6px 2px 4px", lineHeight: 1.4 }}>{t("poolEmptyInRoom")}</div>
+        <Empty compact emoji="stk:coconut" title={t("poolEmptyTitle")} sub={t("poolEmptyInRoom")} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {wishes.map(w => {
@@ -1436,6 +1456,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   const [detail, setDetail] = useState(null);
   const [tick, setTick] = useState(0);
   const [loading, setLoading] = useState(online);
+  const [failed, setFailed] = useState(false);
   const isOwner = online ? !!(detail && detail.room && detail.room.owner) : true;
 
   useEffect(() => { if (online) setLoading(true); }, [room.id]); // eslint-disable-line
@@ -1443,7 +1464,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   useEffect(() => {
     let live = true;
     if (online) {
-      api.room(room.id).then(d => { if (live) setDetail(d); }).catch(() => {}).finally(() => { if (live) setLoading(false); });
+      api.room(room.id).then(d => { if (live) { setDetail(d); setFailed(false); } }).catch(() => { if (live && !detail) setFailed(true); }).finally(() => { if (live) setLoading(false); });
     } else {
       setDetail({
         members: room.members,
@@ -1525,13 +1546,14 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               </div>
             ))}
           </Card>
+        ) : failed ? (
+          <Empty emoji="stk:plumbob" tilt={0} title={t("roomLoadFailTitle")} sub={t("roomLoadFailSub")}
+            action={<Pill kind="primary" icon={<RefreshCw size={17} />} onClick={() => { setLoading(true); setTick(x => x + 1); }}>{t("offlineRetry")}</Pill>} />
         ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
-              <Empty emoji="🫂" title={t("onlyYouTitle")} sub={t("onlyYouSub")} />
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <Pill kind="primary" icon={<Share2 size={17} />} onClick={onInvite}>{t("inviteFriends")}</Pill>
-              </div>
+              <Empty emoji="stk:bear" tilt={6} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
+                action={<Pill kind="primary" icon={<Share2 size={17} />} onClick={onInvite}>{t("inviteFriends")}</Pill>} />
             </div>
           ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -1560,7 +1582,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : (
           <div>
             {mine.length === 0
-              ? <Empty emoji="👀" title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
+              ? <Empty emoji="stk:qblock" title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
               : <Card style={{ padding: `0 ${LIST.pad}px` }}>
                 {mine.map((w, i) => (
                   <div key={w.id} style={{ ...sepBelow(i < mine.length - 1) }}>
