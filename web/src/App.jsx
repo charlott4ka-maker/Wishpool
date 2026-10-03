@@ -23,7 +23,7 @@ const C = {
 };
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
-const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
+const S = { gutter: 12, gap: 12, pad: 20, r: 30, rTile: 0.3 };
 /* ---------- clear glass ---------- */
 // Clear, not frosted: no backdrop blur and almost no fill (so nothing turns a
 // flat grey), just a diagonal reflection, a bright top rim and faint edges.
@@ -43,6 +43,16 @@ function glass({ on = false, tint = C.blue } = {}) {
   return {
     background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
     border: "none", boxShadow: `${GLASS.rim}, inset 0 0 28px ${hex(tint, 0.07)}`,
+  };
+}
+// Calm solid surface for static content (cards, inputs, unselected controls):
+// glass is kept for things that float or act — tab bar, round buttons, action
+// pills — so it reads as an accent instead of being on everything.
+const SOLID = { card: "#121214", field: "#1A1A1D", control: "#1C1C20" };
+function surface({ tint, fill = SOLID.card } = {}) {
+  return {
+    background: tint ? `radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.09)} 0%, transparent 60%), ${fill}` : fill,
+    border: "none", boxShadow: "none",
   };
 }
 // Floating bars sit over scrolling content, so they get a dark (not grey) tint
@@ -324,7 +334,7 @@ function IconBadge({ icon: Icon, emoji, color = "#FFFFFF", size = 24, style }) {
 function TagChip({ icon: Icon, emoji, color = "#FFFFFF", children }) {
   return (
     <span style={{
-      display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px 5px 8px", borderRadius: 999,
+      display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px 7px 11px", borderRadius: 999,
       background: hex(color, 0.14), boxShadow: `inset 0 0 0 1px ${hex(color, 0.45)}`,
       color: tintToWhite(color, 0.6), fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap",
     }}>
@@ -454,9 +464,9 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
 function Chip({ children, active, onClick }) {
   return (
     <button onClick={onClick} style={{
-      padding: "9px 15px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
-      cursor: "pointer", whiteSpace: "nowrap",
-      ...glass({ on: active }),
+      padding: "11px 18px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
+      cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+      ...(active ? glass({ on: true }) : surface({ fill: SOLID.control })),
       // selected chips stay flat: keep the top highlight, no outer glow
       ...(active ? { boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)" } : null),
       color: active ? "#fff" : C.t2,
@@ -467,11 +477,11 @@ function Chip({ children, active, onClick }) {
   );
 }
 function Card({ children, style, onClick, tint }) {
-  return <div onClick={onClick} style={{ ...glass({ tint }), borderRadius: S.r, ...style }}>{children}</div>;
+  return <div onClick={onClick} style={{ ...surface({ tint: tint || C.blue }), borderRadius: S.r, ...style }}>{children}</div>;
 }
 function Segmented({ options, value, onChange, style }) {
   return (
-    <div style={{ display: "flex", gap: 4, ...glass(), padding: 4, borderRadius: 999, ...style }}>
+    <div style={{ display: "flex", gap: 4, ...surface(), padding: 4, borderRadius: 999, ...style }}>
       {options.map(([k, l]) => {
         const on = value === k;
         return (
@@ -505,7 +515,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(2,4,12,0.55)" }} />
-      <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(6,6,8,0.94)`, backdropFilter: "blur(40px) saturate(170%)", WebkitBackdropFilter: "blur(40px) saturate(170%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -10px 40px rgba(0,0,0,0.4)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div style={{ position: "relative", background: "#0E0E10", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "0 -10px 40px rgba(0,0,0,0.5)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <Title text={title} size={22} />
@@ -920,7 +930,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
               <WishRow w={w} right={
                 <IconBadge icon={ChevronRight} color="#8A8A8E" size={28} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
               } />
-              <div style={{ display: "flex", gap: 7, flexWrap: "wrap", paddingTop: 4 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 10 }}>
                 {w.rooms.length === 0
                   ? <TagChip icon={Lock} color="#FFFFFF">{t("privateNote")}</TagChip>
                   : rooms.filter(r => w.rooms.includes(r.id)).map(r => (
@@ -930,7 +940,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
               {openId === w.id && (
                 <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, animation: "fadeUp .2s ease", cursor: "default" }}>
                   <div style={{ ...labelStyle, marginBottom: 8 }}>{t("showInRooms")}</div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 8, overflowX: "auto", margin: `0 -${S.pad}px`, padding: `0 ${S.pad}px` }}>
                     {rooms.length === 0
                       ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
                       : rooms.map(r => (
@@ -1075,7 +1085,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
         {emojiChoices.map(e => (
           <button key={e} onClick={() => setEmoji(e)} style={{
             width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
-            ...glass({ on: emoji === e }),
+            ...(emoji === e ? glass({ on: true }) : surface({ fill: SOLID.control })),
           }}><Sticker emoji={e} size={22} /></button>
         ))}
       </div>
@@ -1553,7 +1563,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           ) : (
             <button onClick={() => fileRef.current && fileRef.current.click()} style={{
               width: "100%", padding: "26px", borderRadius: 22, cursor: "pointer",
-              ...glass(), color: C.t2, fontFamily: font,
+              ...surface({ fill: SOLID.field }), color: C.t2, fontFamily: font,
               display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
             }}>
               <ImageIcon size={26} color={C.t2} />
@@ -1566,7 +1576,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           {WISH_EMOJI.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
               width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
-              ...glass({ on: emoji === e }),
+              ...(emoji === e ? glass({ on: true }) : surface({ fill: SOLID.control })),
             }}><Sticker emoji={e} size={22} /></button>
           ))}
         </div>
@@ -1577,7 +1587,7 @@ function AddSheet({ rooms, onClose, onSave }) {
       <Field label={t("linkOpt")} value={link} onChange={setLink} placeholder="https://…" />
 
       <div style={{ ...labelStyle, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", margin: "0 -20px 8px", padding: "0 20px" }}>
         {rooms.map(r => (
           <Chip key={r.id} active={inRooms.includes(r.id)}
             onClick={() => setInRooms(x => x.includes(r.id) ? x.filter(i => i !== r.id) : [...x, r.id])}>
@@ -1599,11 +1609,11 @@ function Field({ label, value, onChange, placeholder }) {
       <div style={{ ...labelStyle, marginBottom: 8 }}>{label}</div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
-          width: "100%", ...glass(), borderRadius: 18,
+          width: "100%", ...surface({ fill: SOLID.field }), borderRadius: 18,
           padding: "14px 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
-        onFocus={e => e.target.style.boxShadow = `${GLASS.rim}, 0 0 0 2px ${hex(C.blue, 0.65)}`}
-        onBlur={e => e.target.style.boxShadow = GLASS.rim} />
+        onFocus={e => e.target.style.boxShadow = `0 0 0 2px ${hex(C.blue, 0.65)}`}
+        onBlur={e => e.target.style.boxShadow = "none"} />
     </div>
   );
 }
