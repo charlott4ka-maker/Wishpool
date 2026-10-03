@@ -151,9 +151,9 @@ const STR = {
   youGift: { uk: "Ви даруєте", ru: "Вы дарите", en: "You're gifting" },
   taken: { uk: "Зайнято", ru: "Занято", en: "Taken" },
   take: { uk: "Беру", ru: "Беру", en: "I'll get it" },
-  giftTakenTitle: { uk: "Ти даруєш «{name}»", ru: "Ты даришь «{name}»", en: "You're gifting «{name}»" },
-  giftTakenBody: { uk: "Інші учасники не бачать, хто що взяв, а власник бажання не дізнається до свята.", ru: "Другие участники не видят, кто что взял, а владелец желания не узнает до праздника.", en: "Others can't see who took what, and the wish owner won't find out until the big day." },
-  giftTakenOk: { uk: "Супер", ru: "Супер", en: "Great" },
+  giftTakenTitle: { uk: "Подарунок у кошику!", ru: "Подарок в корзине!", en: "Gift's in the basket!" },
+  giftTakenBody: { uk: "«{name}» тепер твоя місія. Тсс, ніхто не дізнається, хто що взяв, а іменинник побачить сюрприз лише на святі", ru: "«{name}» теперь твоя миссия. Тсс, никто не узнает, кто что взял, а виновник торжества увидит сюрприз только на празднике", en: "«{name}» is your mission now. Shh, nobody will know who took what, and the lucky one only sees the surprise on the big day" },
+  giftTakenOk: { uk: "Беру на себе", ru: "Беру на себя", en: "On it" },
   photosHint: { uk: "До 3 фото", ru: "До 3 фото", en: "Up to 3 photos" },
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
   reserveNote: { uk: "Резерв бачать дарувальники, але не власник бажання", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
@@ -711,6 +711,7 @@ export default function App() {
         body,input,button,textarea,select{font-weight:500;font-family:inherit}
         input::placeholder{font-weight:500}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+        @keyframes basketDrop{0%{transform:translateY(-40px) rotate(-12deg) scale(.6);opacity:0}60%{transform:translateY(6px) rotate(4deg) scale(1.05);opacity:1}80%{transform:translateY(-2px) rotate(-2deg)}100%{transform:none}}
         @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
         @keyframes spinEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -1227,7 +1228,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
     (w.reservedByMe || reserved[w.id] === "you")
       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
-        : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<span style={{ fontSize: 17, lineHeight: 1 }}>🎉</span></Pill>
+        : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 22, width: "auto", display: "block" }} /></Pill>
   );
 
   return (
@@ -1368,6 +1369,7 @@ function Confetti() {
     };
     shoot(W * 0.08, 1); shoot(W * 0.92, -1);
     const t2 = setTimeout(() => { shoot(W * 0.2, 1); shoot(W * 0.8, -1); }, 350);
+    const t3 = setTimeout(() => { shoot(W * 0.5, 0.35); shoot(W * 0.5, -0.35); }, 700);
     let raf;
     const tick = () => {
       ctx.clearRect(0, 0, W, Hh);
@@ -1383,7 +1385,7 @@ function Confetti() {
       if (parts.length) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); clearTimeout(t2); };
+    return () => { cancelAnimationFrame(raf); clearTimeout(t2); clearTimeout(t3); };
   }, []);
   return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 75 }} />;
 }
@@ -1393,9 +1395,9 @@ function GiftTakenSheet({ title, onClose }) {
     <>
       <Sheet onClose={onClose}>
         <div style={{ textAlign: "center", paddingTop: 4 }}>
-          <div style={{ fontSize: 72, lineHeight: 1, animation: "pop .5s cubic-bezier(.2,.9,.3,1.2)" }}>🎉</div>
-          <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
-          <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
+          <img src="/stickers/basket.webp" alt="" style={{ width: 168, height: "auto", display: "block", margin: "0 auto", animation: "basketDrop .7s cubic-bezier(.2,.9,.3,1.25)" }} />
+          <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle")}</div>
+          <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody", { name: title })}</div>
           <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill></div>
         </div>
       </Sheet>
@@ -1520,7 +1522,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                   <WishRow w={w} right={
                     isMine(w)
                       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<span style={{ fontSize: 17, lineHeight: 1 }}>🎉</span></Pill>
+                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 22, width: "auto", display: "block" }} /></Pill>
                   } />
                 </div>
               )) : <div style={{ padding: 16, color: C.t3, fontSize: 13.5 }}>{t("emptyLater")}</div>}
