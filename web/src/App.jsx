@@ -15,8 +15,8 @@ const C = {
   card2: "rgba(255,255,255,0.11)",
   line: "rgba(255,255,255,0.08)",
   t1: "#FFFFFF",
-  t2: "#8A8A8E",
-  t3: "#5A5A5E",
+  t2: "#98989F",
+  t3: "#6E6E75",
   blue: "#3563D8",
   blueLight: "#8AA6F2",
   accent: "#3563D8",
@@ -31,7 +31,7 @@ const H = { lg: 52, sm: 40 };
 // flat grey), just a diagonal reflection, a bright top rim and faint edges.
 // No outlines.
 const GLASS = {
-  fill: "rgba(255,255,255,0.02)",
+  fill: "rgba(255,255,255,0.08)",
   sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
   rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
 };
@@ -50,7 +50,9 @@ function glass({ on = false, tint = C.blue } = {}) {
 // Calm solid surface for static content (cards, inputs, unselected controls):
 // glass is kept for things that float or act — tab bar, round buttons, action
 // pills — so it reads as an accent instead of being on everything.
-const SOLID = { card: "#121214", field: "#1A1A1D", control: "#1C1C20" };
+// Elevation steps on black — each level is clearly lighter than the one under it:
+// screen #000 → card / sheet → field & control.
+const SOLID = { card: "#1A1A1E", sheet: "#18181C", field: "#2A2A30", control: "#2C2C32" };
 function surface({ tint, fill = SOLID.card } = {}) {
   return {
     background: tint ? `radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.09)} 0%, transparent 60%), ${fill}` : fill,
@@ -173,10 +175,10 @@ const STR = {
   poolTitle: { uk: "Мої бажання", ru: "Мои желания", en: "My wishes" },
   poolSub: { uk: "Спільний пул. Звідси шериш у кімнати.", ru: "Общий пул. Отсюда шеришь в комнаты.", en: "Your pool. Share items into rooms from here." },
   poolEmptyTitle: { uk: "Пул поки порожній", ru: "Пул пока пустой", en: "Your pool is empty" },
-  poolEmptySub: { uk: "Додай перше бажання — потім вирішиш, кому його показати.", ru: "Добавь первое желание — потом решишь, кому его показать.", en: "Add your first wish — decide who sees it later." },
-  privateNote: { uk: "Приватне — не бачить ніхто", ru: "Приватное — не видит никто", en: "Private — nobody sees it" },
+  poolEmptySub: { uk: "Додай перше бажання, а потім вирішиш, кому його показати.", ru: "Добавь первое желание, а потом решишь, кому его показать.", en: "Add your first wish. Decide who sees it later." },
+  privateNote: { uk: "Приватне, не бачить ніхто", ru: "Приватное, не видит никто", en: "Private, nobody sees it" },
   showInRooms: { uk: "Показати в кімнатах", ru: "Показать в комнатах", en: "Show in rooms" },
-  noRoomsHint: { uk: "Поки немає кімнат — створи на вкладці «Кімнати».", ru: "Пока нет комнат — создай на вкладке «Комнаты».", en: "No rooms yet — create one on the Rooms tab." },
+  noRoomsHint: { uk: "Поки немає кімнат. Створи на вкладці «Кімнати».", ru: "Пока нет комнат. Создай на вкладке «Комнаты».", en: "No rooms yet. Create one on the Rooms tab." },
   deleteWish: { uk: "Видалити бажання", ru: "Удалить желание", en: "Delete wish" },
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
@@ -186,7 +188,7 @@ const STR = {
   roomsTitle: { uk: "Кімнати", ru: "Комнаты", en: "Rooms" },
   roomsSub: { uk: "Запроси друзів і обмінюйтесь бажаннями.", ru: "Пригласи друзей и обменивайтесь желаниями.", en: "Invite friends and swap wishlists." },
   roomsEmptyTitle: { uk: "Поки немає кімнат", ru: "Пока нет комнат", en: "No rooms yet" },
-  roomsEmptySub: { uk: "Створи кімнату й поклич друзів — тут з’являться їхні вішлисти.", ru: "Создай комнату и позови друзей — здесь появятся их вишлисты.", en: "Create a room and invite friends — their wishlists show up here." },
+  roomsEmptySub: { uk: "Створи кімнату й поклич друзів. Тут з’являться їхні вішлисти.", ru: "Создай комнату и позови друзей. Здесь появятся их вишлисты.", en: "Create a room and invite friends. Their wishlists show up here." },
   createRoom: { uk: "Створити кімнату", ru: "Создать комнату", en: "Create a room" },
   membersColon: { uk: "Учасники: {n}", ru: "Участники: {n}", en: "{n} members" },
   yourWishesColon: { uk: "твоїх бажань: {n}", ru: "твоих желаний: {n}", en: "{n} of your wishes" },
@@ -204,21 +206,21 @@ const STR = {
   segLists: { uk: "Списки друзів", ru: "Списки друзей", en: "Friends' lists" },
   segMine: { uk: "Моє в кімнаті", ru: "Моё в комнате", en: "My items here" },
   onlyYouTitle: { uk: "Тут поки лише ти", ru: "Здесь пока только ты", en: "It's just you so far" },
-  onlyYouSub: { uk: "Запроси друзів — їхні вішлисти з’являться тут, і можна буде дарувати.", ru: "Пригласи друзей — их вишлисты появятся тут, и можно будет дарить.", en: "Invite friends — their wishlists appear here and you can start gifting." },
+  onlyYouSub: { uk: "Запроси друзів. Їхні вішлисти з’являться тут, і можна буде дарувати.", ru: "Пригласи друзей. Их вишлисты появятся тут, и можно будет дарить.", en: "Invite friends. Their wishlists appear here and you can start gifting." },
   inviteFriends: { uk: "Запросити друзів", ru: "Пригласить друзей", en: "Invite friends" },
   youGift: { uk: "Ви даруєте", ru: "Вы дарите", en: "You're gifting" },
   taken: { uk: "Зайнято", ru: "Занято", en: "Taken" },
   take: { uk: "Беру 🎁", ru: "Беру 🎁", en: "I'll get it 🎁" },
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
-  reserveNote: { uk: "Резерв бачать дарувальники, але власник бажання — ні", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
+  reserveNote: { uk: "Резерв бачать дарувальники, але не власник бажання", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
   nothingSharedTitle: { uk: "Ти ще нічим сюди не поділився", ru: "Ты ещё ничем сюда не поделился", en: "You haven't shared anything here" },
   nothingSharedSub: { uk: "Відкрий бажання в пулі й увімкни цю кімнату.", ru: "Открой желание в пуле и включи эту комнату.", en: "Open a wish in your pool and enable this room." },
   visibleToAll: { uk: "видно всім", ru: "видно всем", en: "visible to all" },
   addFromPool: { uk: "Додати з пулу", ru: "Добавить из пула", en: "Add from pool" },
-  poolEmptyInRoom: { uk: "У пулі поки немає бажань. Додай їх на вкладці «Бажання» — потім відзначиш тут.", ru: "В пуле пока нет желаний. Добавь их на вкладке «Желания» — потом отметишь здесь.", en: "Your pool is empty. Add wishes on the Wishes tab, then check them here." },
+  poolEmptyInRoom: { uk: "У пулі поки немає бажань. Додай їх на вкладці «Бажання», потім відзначиш тут.", ru: "В пуле пока нет желаний. Добавь их на вкладке «Желания», потом отметишь здесь.", en: "Your pool is empty. Add wishes on the Wishes tab, then check them here." },
 
   secretExchange: { uk: "Таємний обмін", ru: "Тайный обмен", en: "Secret exchange" },
-  drawIntro: { uk: "Кожному випадково випаде один учасник. Ти побачиш лише свого — і його бажання.", ru: "Каждому случайно выпадет один участник. Ты увидишь только своего — и его желания.", en: "Everyone is randomly assigned one person. You'll see only yours — and their wishes." },
+  drawIntro: { uk: "Кожному випадково випаде один учасник. Ти побачиш лише свого та його бажання.", ru: "Каждому случайно выпадет один участник. Ты увидишь только своего и его желания.", en: "Everyone is randomly assigned one person. You'll see only yours and their wishes." },
   needThree: { uk: "Для жеребкування потрібно щонайменше 3 учасники. Зараз у кімнаті {n}.", ru: "Для жеребьёвки нужно минимум 3 участника. Сейчас в комнате {n}.", en: "A draw needs at least 3 people. The room has {n} now." },
   giftBudget: { uk: "Бюджет подарунка", ru: "Бюджет подарка", en: "Gift budget" },
   participants: { uk: "Учасники ({n})", ru: "Участники ({n})", en: "Participants ({n})" },
@@ -228,8 +230,8 @@ const STR = {
   youGot: { uk: "Тобі випав(-ла)", ru: "Тебе выпал", en: "You got" },
   budgetSecret: { uk: "Бюджет {b} · тримаємо в секреті 🤫", ru: "Бюджет {b} · держим в секрете 🤫", en: "Budget {b} · keep it secret 🤫" },
   wishesOf: { uk: "Бажання: {name}", ru: "Желания: {name}", en: "{name}'s wishes" },
-  emptyLater: { uk: "Список поки порожній — зазирни пізніше", ru: "Список пока пуст — загляни позже", en: "The list is empty — check back later" },
-  gotItTake: { uk: "Зрозуміло, беру подарунок", ru: "Понятно, беру подарок", en: "Got it — I'll get the gift" },
+  emptyLater: { uk: "Список поки порожній. Зазирни пізніше", ru: "Список пока пуст. Загляни позже", en: "The list is empty. Check back later" },
+  gotItTake: { uk: "Зрозуміло, беру подарунок", ru: "Понятно, беру подарок", en: "Got it, I'll get the gift" },
 
   newWish: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   photo: { uk: "Фото", ru: "Фото", en: "Photo" },
@@ -241,7 +243,7 @@ const STR = {
   whatYouWantPh: { uk: "Напр., бездротові навушники", ru: "Например, беспроводные наушники", en: "e.g. wireless headphones" },
   priceOpt: { uk: "Ціна (необов’язково)", ru: "Цена (необязательно)", en: "Price (optional)" },
   linkOpt: { uk: "Посилання на товар (необов’язково)", ru: "Ссылка на товар (необязательно)", en: "Product link (optional)" },
-  nothingSelectedPrivate: { uk: "Нічого не вибрано — залишиться приватним", ru: "Ничего не выбрано — останется приватным", en: "Nothing selected — it stays private" },
+  nothingSelectedPrivate: { uk: "Без кімнат бажання залишиться приватним", ru: "Без комнат желание останется приватным", en: "With no rooms picked, it stays private" },
   saveWish: { uk: "Зберегти бажання", ru: "Сохранить желание", en: "Save wish" },
 
   statsLine: { uk: "бажань: {w} · кімнат: {r}", ru: "желаний: {w} · комнат: {r}", en: "{w} wishes · {r} rooms" },
@@ -251,7 +253,7 @@ const STR = {
   myInvites: { uk: "Мої запрошення", ru: "Мои приглашения", en: "My invites" },
   invitedByYou: { uk: "запрошений тобою", ru: "приглашён тобой", en: "invited by you" },
   invitedNobody: { uk: "Ти ще нікого не запросила", ru: "Ты пока никого не пригласила", en: "You haven't invited anyone yet" },
-  invitedNobodySub: { uk: "Поділись кімнатою — і люди зʼявляться тут", ru: "Поделись комнатой — и люди появятся здесь", en: "Share a room and people will show up here" },
+  invitedNobodySub: { uk: "Поділись кімнатою, і люди зʼявляться тут", ru: "Поделись комнатой, и люди появятся здесь", en: "Share a room and people will show up here" },
   loadingInv: { uk: "Завантаження…", ru: "Загрузка…", en: "Loading…" },
   creating: { uk: "Створюємо…", ru: "Создаём…", en: "Creating…" },
   savingWish: { uk: "Зберігаємо…", ru: "Сохраняем…", en: "Saving…" },
@@ -266,7 +268,7 @@ const STR = {
   historyEmptySub: { uk: "Тут з’являться подарунки, які ти подарував і отримав.", ru: "Здесь появятся подарки, которые ты подарил и получил.", en: "Gifts you've given and received will show up here." },
   giftingFor: { uk: "даруєш {name}", ru: "даришь {name}", en: "gifting {name}" },
   giftCancelled: { uk: "Скасовано", ru: "Отменено", en: "Cancelled" },
-  roomFull: { uk: "У цій кімнаті вже двоє — місць більше немає", ru: "В этой комнате уже двое — мест больше нет", en: "This room already has two people — no room left" },
+  roomFull: { uk: "У цій кімнаті вже двоє, місць більше немає", ru: "В этой комнате уже двое, мест больше нет", en: "This room already has two people, no room left" },
   editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
   coupleRoomHint: { uk: "У цьому типі кімнати може бути лише двоє учасників.", ru: "В комнате этого типа может быть только два участника.", en: "This room type can only have two members." },
@@ -277,7 +279,7 @@ const STR = {
 
   linkCopied: { uk: "Посилання скопійовано", ru: "Ссылка скопирована", en: "Link copied" },
   youGiftHidden: { uk: "Ви даруєте. Власник не бачить 🤫", ru: "Вы дарите. Владелец не видит 🤫", en: "You're gifting. The owner can't see 🤫" },
-  inviteText: { uk: "Залітай у кімнату «{name}» у Wishpool — зберемо вішлисти й обміняємось подарунками 🎁", ru: "Залетай в комнату «{name}» в Wishpool — соберём вишлисты и обменяемся подарками 🎁", en: "Join the «{name}» room in Wishpool — let's build wishlists and swap gifts 🎁" },
+  inviteText: { uk: "Залітай у кімнату «{name}» у Wishpool, зберемо вішлисти й обміняємось подарунками 🎁", ru: "Залетай в комнату «{name}» в Wishpool, соберём вишлисты и обменяемся подарками 🎁", en: "Join the «{name}» room in Wishpool, let's build wishlists and swap gifts 🎁" },
 };
 
 function tr(lang, id, params) {
@@ -336,7 +338,7 @@ function IconBadge({ icon: Icon, emoji, color = "#FFFFFF", size = 24, style }) {
 function TagChip({ icon: Icon, emoji, color = "#FFFFFF", children }) {
   return (
     <span style={{
-      display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px 7px 11px", borderRadius: 999,
+      display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 14px 7px 11px", borderRadius: 999,
       background: hex(color, 0.14), boxShadow: `inset 0 0 0 1px ${hex(color, 0.45)}`,
       color: tintToWhite(color, 0.6), fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap",
     }}>
@@ -470,7 +472,7 @@ function Chip({ children, active, onClick }) {
       cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
       ...(active ? glass({ on: true }) : surface({ fill: SOLID.control })),
       color: active ? "#fff" : C.t2,
-      display: "inline-flex", alignItems: "center", gap: 6,
+      display: "inline-flex", alignItems: "center", gap: 8,
     }}>
       {children}
     </button>
@@ -481,7 +483,7 @@ function Card({ children, style, onClick, tint }) {
 }
 function Segmented({ options, value, onChange, style }) {
   return (
-    <div style={{ display: "flex", gap: 4, ...surface(), height: H.lg, padding: (H.lg - H.sm) / 2, borderRadius: 999, ...style }}>
+    <div style={{ display: "flex", gap: 4, ...surface({ fill: SOLID.control }), height: H.lg, padding: (H.lg - H.sm) / 2, borderRadius: 999, ...style }}>
       {options.map(([k, l]) => {
         const on = value === k;
         return (
@@ -514,7 +516,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(2,4,12,0.55)" }} />
-      <div style={{ position: "relative", background: "#0E0E10", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "0 -10px 40px rgba(0,0,0,0.5)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div style={{ position: "relative", background: SOLID.sheet, borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "0 -10px 40px rgba(0,0,0,0.5)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <Title text={title} size={22} />
@@ -530,7 +532,7 @@ function Empty({ emoji, title, sub }) {
     <div style={{ padding: "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
       <Sticker emoji={emoji} size={72} />
       <div style={{ ...titleStyle, color: C.t1, fontSize: 18, marginTop: 16 }}>{title}</div>
-      <div style={{ color: C.t2, fontSize: 14.5, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
+      <div style={{ color: C.t2, fontSize: 14.5, marginTop: 8, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
     </div>
   );
 }
@@ -554,11 +556,11 @@ function SkeletonScreen({ tab }) {
       {header && (
         <div style={{ padding: "6px 4px 14px" }}>
           <Title text={header.title} />
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{header.sub}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{header.sub}</div>
         </div>
       )}
       {[0, 1, 2].map(i => (
-        <Card key={i} style={{ padding: `14px ${S.pad}px`, marginBottom: S.gap, display: "flex", alignItems: "center", gap: 14 }}>
+        <Card key={i} style={{ padding: `14px ${S.pad}px`, marginBottom: S.gap, display: "flex", alignItems: "center", gap: 12 }}>
           <Bone w={56} h={56} r={16} />
           <div style={{ flex: 1 }}>
             <Bone w="70%" h={16} r={6} style={{ marginBottom: 8 }} />
@@ -573,14 +575,14 @@ function SkeletonScreen({ tab }) {
 /* ---------- wish card ---------- */
 function WishRow({ w, right }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px" }}>
       <GlossTile emoji={w.emoji} image={w.image} size={52} round bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
-        {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{w.price}</div>}
+        {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{w.price}</div>}
         {w.link && (
           <button onClick={(e) => { e.stopPropagation(); window.open(w.link, "_blank"); }}
-            style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: C.t1, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, fontFamily: font, maxWidth: "100%" }}>
+            style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: C.t1, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 8, fontFamily: font, maxWidth: "100%" }}>
             <IconBadge icon={Link2} color={C.blue} size={20} /> <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{linkHost(w.link)}</span>
           </button>
         )}
@@ -915,7 +917,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 14px" }}>
         <div>
           <Title text={t("poolTitle")} />
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("poolSub")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8 }}>{t("poolSub")}</div>
         </div>
         <GlassButton onClick={onAdd} label={t("addWish")}><Plus size={22} /></GlassButton>
       </div>
@@ -959,7 +961,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       )}
 
       {wishes.length === 0 && (
-        <div style={{ marginTop: 18 }}>
+        <div style={{ marginTop: 24 }}>
           <Pill full kind="primary" icon={<Plus size={19} />} onClick={onAdd}>{t("addWish")}</Pill>
         </div>
       )}
@@ -975,7 +977,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 18px" }}>
         <div>
           <Title text={t("roomsTitle")} />
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("roomsSub")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8 }}>{t("roomsSub")}</div>
         </div>
         <GlassButton onClick={onCreate} label={t("createRoom")}><Plus size={22} /></GlassButton>
       </div>
@@ -983,7 +985,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
       {rooms.length === 0 ? (
         <>
           <Empty emoji="👋" title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
-          <div style={{ marginTop: 18 }}>
+          <div style={{ marginTop: 24 }}>
             <Pill full kind="primary" icon={<Plus size={19} />} onClick={onCreate}>{t("createRoom")}</Pill>
           </div>
         </>
@@ -993,11 +995,11 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
             const shared = wishes.filter(w => w.rooms.includes(r.id)).length;
             return (
               <Card key={r.id} tint={r.tint} onClick={() => onOpen(r.id)} style={{ padding: S.pad, cursor: "pointer", overflow: "hidden", position: "relative" }}>
-                <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
                   <GlossTile emoji={r.emoji} size={56} bare />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: C.t1, fontSize: 17.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                    <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
+                    <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
                   </div>
                   <div style={{ display: "flex", marginRight: 4 }}>
                     {r.members.slice(0, 3).map((m, i) => (
@@ -1041,7 +1043,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
       </div>
 
       <div style={{ ...labelStyle, marginBottom: 8 }}>{t("roomType")}</div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         {ROOM_PRESETS.map(p => (
           <Chip key={p.type} active={preset.type === p.type} onClick={() => setPreset(p)}>
             <Sticker emoji={p.emoji} size={15} />{t(p.key)}
@@ -1049,7 +1051,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
         ))}
       </div>
       {preset.type === "couple" && (
-        <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 18 }}>{t("coupleRoomHint")}</div>
+        <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 16 }}>{t("coupleRoomHint")}</div>
       )}
 
       <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
@@ -1080,7 +1082,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
         <GlossTile emoji={emoji} size={80} tint={room.tint} />
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 16 }}>
         {emojiChoices.map(e => (
           <button key={e} onClick={() => setEmoji(e)} style={{
             width: H.lg, height: H.lg, borderRadius: H.lg * S.rTile, fontSize: 22, cursor: "pointer",
@@ -1124,7 +1126,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
           <Sticker emoji="🔗" size={56} />
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("invitedNobody")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
           {rooms.length > 0 && (
             <div style={{ marginTop: 16 }}>
               <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>
@@ -1132,10 +1134,10 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
           )}
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {groups.map(g => (
             <div key={g.room.id}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                 <GlossTile emoji={g.room.emoji} size={30} tint={g.room.tint} />
                 <div style={{ color: C.t1, fontSize: 15, fontWeight: 700 }}>{g.room.name}</div>
                 <div style={{ marginLeft: "auto" }}>
@@ -1178,7 +1180,7 @@ function HistorySheet({ online, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
           <Sticker emoji="🎁" size={56} />
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("historyEmptyTitle")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
         </div>
       ) : (
         <Card style={{ padding: `4px ${S.pad}px` }}>
@@ -1207,12 +1209,12 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
       {wishes.length === 0 ? (
         <div style={{ color: C.t2, fontSize: 14, padding: "6px 2px 4px", lineHeight: 1.4 }}>{t("poolEmptyInRoom")}</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {wishes.map(w => {
             const inRoom = w.rooms.includes(roomId);
             const isPending = pendingId === w.id;
             return (
-              <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
+              <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
                 <GlossTile emoji={w.emoji} image={w.image} size={44} round bare />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
@@ -1284,7 +1286,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
           <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
             <Title text={room.name} size={32} />
             {isOwner && (
               <GlassButton onClick={onEdit} label={t("editRoom")}><Pencil size={13} /></GlassButton>
@@ -1299,9 +1301,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
             )}
           </div>
           {coupleFull ? (
-            <div style={{ marginTop: 14, color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
+            <div style={{ marginTop: 16, color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
           ) : (
-            <div style={{ marginTop: 14, display: "flex", gap: 10, justifyContent: "center" }}>
+            <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
               <Pill kind={room.type === "couple" ? "primary" : "ghost"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
               {room.type !== "couple" && (
                 <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
@@ -1315,7 +1317,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         {loading ? (
           <Card style={{ padding: `4px ${S.pad}px` }}>
             {[0, 1].map(i => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", borderBottom: i === 0 ? `1px solid ${C.line}` : "none" }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: i === 0 ? `1px solid ${C.line}` : "none" }}>
                 <Bone w={52} h={52} r={16} />
                 <div style={{ flex: 1 }}>
                   <Bone w="55%" h={16} r={6} style={{ marginBottom: 8 }} />
@@ -1333,10 +1335,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               </div>
             </div>
           ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             {lists.map(({ member: m, wishes: mws }) => (
               <div key={m.id}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
                   <Avatar m={m} size={28} /><span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700 }}>{m.name}</span>
                 </div>
                 <Card style={{ padding: `4px ${S.pad}px` }}>
@@ -1367,19 +1369,19 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                   </div>
                 ))}
               </Card>}
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 16 }}>
               <Pill full kind="ghost" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>
             </div>
           </div>
         )}
 
-        <div style={{ marginTop: 30, display: "flex", justifyContent: "center" }}>
+        <div style={{ marginTop: 32, display: "flex", justifyContent: "center" }}>
           {isOwner ? (
-            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
               <Trash2 size={16} /> {t("deleteRoom")}
             </button>
           ) : (
-            <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
               <X size={16} /> {t("leaveRoom")}
             </button>
           )}
@@ -1442,7 +1444,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
           </div>
 
           {!canDraw ? (
-            <div style={{ marginTop: 26 }}>
+            <div style={{ marginTop: 24 }}>
               <div style={{ color: C.t2, fontSize: 14.5, marginBottom: 16, lineHeight: 1.4 }}>
                 {t("needThree", { n: room.members.length })}
               </div>
@@ -1451,20 +1453,20 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
           ) : (
           <>
           <Card style={{ padding: S.pad, marginTop: 24, textAlign: "left" }}>
-            <div style={{ ...labelStyle, marginBottom: 10 }}>{t("giftBudget")}</div>
+            <div style={{ ...labelStyle, marginBottom: 12 }}>{t("giftBudget")}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {["500 ₴", "1 000 ₴", "2 000 ₴"].map(b => (
                 <Chip key={b} active={budget === b} onClick={() => setBudget(b)}>{b}</Chip>
               ))}
             </div>
             <div style={{ height: 16 }} />
-            <div style={{ ...labelStyle, marginBottom: 6 }}>{t("participants", { n: room.members.length })}</div>
+            <div style={{ ...labelStyle, marginBottom: 8 }}>{t("participants", { n: room.members.length })}</div>
             <div style={{ display: "flex" }}>
               {room.members.map((m, i) => <div key={m.id} style={{ marginLeft: i ? -8 : 0 }}><Avatar m={m} size={34} /></div>)}
             </div>
           </Card>
 
-          <div style={{ marginTop: 22 }}>
+          <div style={{ marginTop: 24 }}>
             <Pill full kind="primary" icon={<Sparkles size={18} />} onClick={() => setStage("drawing")}>{t("runDraw")}</Pill>
           </div>
           </>
@@ -1481,21 +1483,21 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
               </div>
             </div>
           </div>
-          <div style={{ color: C.t1, fontSize: 20, fontWeight: 700, marginTop: 28 }}>{t("shuffling")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("dealing")}</div>
+          <div style={{ color: C.t1, fontSize: 20, fontWeight: 700, marginTop: 32 }}>{t("shuffling")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8 }}>{t("dealing")}</div>
         </div>
       )}
 
       {stage === "reveal" && target && (
         <div style={{ padding: "20px 22px", textAlign: "center" }}>
           <div style={{ color: C.blueLight, fontSize: 14, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{t("youGot")}</div>
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 18, animation: "pop .5s ease" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 24, animation: "pop .5s ease" }}>
             <Avatar m={target} size={96} />
           </div>
           <div style={{ ...titleStyle, color: C.t1, fontSize: 30, marginTop: 16 }}>{target.name}</div>
           <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("budgetSecret", { b: budget })}</div>
 
-          <div style={{ marginTop: 26, textAlign: "left" }}>
+          <div style={{ marginTop: 24, textAlign: "left" }}>
             <div style={{ ...labelStyle, marginBottom: 8 }}>{t("wishesOf", { name: target.name })}</div>
             <Card style={{ padding: `4px ${S.pad}px` }}>
               {targetWishes.length ? targetWishes.map((w, i) => (
@@ -1510,7 +1512,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
             </Card>
           </div>
 
-          <div style={{ marginTop: 22 }}>
+          <div style={{ marginTop: 24 }}>
             <Pill full kind="primary" icon={<Check size={18} />} onClick={onClose}>{t("gotItTake")}</Pill>
           </div>
         </div>
@@ -1546,13 +1548,13 @@ function AddSheet({ rooms, onClose, onSave }) {
 
   return (
     <Sheet title={t("newWish")} onClose={onClose} maxHeight="90vh">
-      <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} style={{ marginBottom: 14 }} />
+      <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} style={{ marginBottom: 16 }} />
 
       {cover === "photo" ? (
         <div style={{ marginBottom: 16 }}>
           <input ref={fileRef} type="file" accept="image/*" onChange={pickFile} style={{ display: "none" }} />
           {image ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <GlossTile image={image} size={72} />
               <div style={{ flex: 1, display: "flex", gap: 8 }}>
                 <Pill size="sm" kind="ghost" onClick={() => fileRef.current && fileRef.current.click()}>{t("replace")}</Pill>
@@ -1571,10 +1573,10 @@ function AddSheet({ rooms, onClose, onSave }) {
           )}
         </div>
       ) : (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, marginBottom: 16 }}>
           {WISH_EMOJI.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
-              width: H.lg, height: H.lg, borderRadius: H.lg * S.rTile, fontSize: 22, cursor: "pointer",
+              width: "100%", height: H.lg, borderRadius: H.lg * S.rTile, fontSize: 22, cursor: "pointer",
               ...(emoji === e ? glass({ on: true }) : surface({ fill: SOLID.control })),
             }}><Sticker emoji={e} size={22} /></button>
           ))}
@@ -1594,7 +1596,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           </Chip>
         ))}
       </div>
-      <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><Lock size={13} color="#FFFFFF" strokeWidth={2.4} />{t("nothingSelectedPrivate")}</div>
+      <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} color="#FFFFFF" strokeWidth={2.4} />{t("nothingSelectedPrivate")}</div>
 
       <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
         {busy ? t("savingWish") : t("saveWish")}
@@ -1625,10 +1627,10 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
   return (
     <div style={{ animation: "fadeUp .3s ease", textAlign: "center", paddingTop: 12 }}>
       <div style={{ display: "flex", justifyContent: "center" }}><Avatar m={me} size={92} /></div>
-      <div style={{ ...titleStyle, color: C.t1, fontSize: 26, marginTop: 14 }}>{me.name}</div>
+      <div style={{ ...titleStyle, color: C.t1, fontSize: 26, marginTop: 16 }}>{me.name}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("statsLine", { w: wishes.length, r: rooms.length })}</div>
 
-      <div style={{ display: "flex", gap: S.gap, marginTop: 22 }}>
+      <div style={{ display: "flex", gap: S.gap, marginTop: 24 }}>
         <Card style={{ flex: 1, padding: S.pad, textAlign: "left" }}>
           <Gift size={22} color={C.blueLight} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{wishes.reduce((n, w) => n + w.rooms.length, 0)}</div>
@@ -1641,15 +1643,15 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
         </Card>
       </div>
 
-      <div style={{ marginTop: 18 }}>
-        <div style={{ ...labelStyle, marginBottom: 8, textAlign: "left", display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ marginTop: 24 }}>
+        <div style={{ ...labelStyle, marginBottom: 8, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
           <Globe size={15} /> {t("language")}
         </div>
         <Segmented options={LANGS.map(l => [l, LANG_SHORT[l]])} value={lang} onChange={setLang} />
       </div>
 
       {isDesignDevUser && (
-        <div style={{ marginTop: 18 }}>
+        <div style={{ marginTop: 24 }}>
           <div style={{ ...labelStyle, marginBottom: 8, textAlign: "left" }}>
             Design system (dev only)
           </div>
@@ -1657,9 +1659,9 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
         </div>
       )}
 
-      <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: S.gap }}>
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: S.gap }}>
         {[[Clock, t("history"), onHistory], [Link2, t("myInvites"), onInvites], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui")]].map(([Icon, l, on], i) => (
-          <Card key={i} onClick={on} style={{ padding: S.pad, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
+          <Card key={i} onClick={on} style={{ padding: S.pad, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
             <Icon size={20} color={C.t2} />
             <span style={{ flex: 1, textAlign: "left", color: C.t1, fontSize: 15.5, fontWeight: 600 }}>{l}</span>
             <ChevronRight size={19} color={C.t3} />
