@@ -931,16 +931,21 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
 }
 
 /* ---------- ROOMS ---------- */
-// Room as a frosted folder: wish photos shared into the room peek out from
-// behind a translucent folder front (tab on the left), the room sticker is
-// stuck on the front, name + member count sit underneath.
 // One continuous folder-front outline (tab on the left, smooth step down to
 // the body) for a box of w×h px, so the frosted front is a single element with
 // no seam between tab and body.
 function folderPath(w, h) {
-  const x0 = w * 0.04, x1 = w * 0.96, yT = h * 0.28, yB = h * 0.37, y1 = h * 0.96, xt = w * 0.5, r = 18, rt = 14;
+  // Snap edges to whole pixels so the 1px outline renders equally crisp on every side.
+  const R0 = Math.round;
+  const x0 = R0(w * 0.04), x1 = R0(w * 0.96), yT = R0(h * 0.28), yB = R0(h * 0.37), y1 = R0(h * 0.96), xt = R0(w * 0.5), r = 18, rt = 14;
   const top = `M ${x0} ${yT + rt} Q ${x0} ${yT} ${x0 + rt} ${yT} L ${xt - 10} ${yT} C ${xt} ${yT} ${xt} ${yB} ${xt + 12} ${yB} L ${x1 - r} ${yB} Q ${x1} ${yB} ${x1} ${yB + r}`;
   return { top, full: `${top} L ${x1} ${y1 - r} Q ${x1} ${y1} ${x1 - r} ${y1} L ${x0 + r} ${y1} Q ${x0} ${y1} ${x0} ${y1 - r} Z` };
+}
+// Opaque outline colour (room tint lifted towards white): a translucent line
+// reads brighter over the photos than over the black page, an opaque one doesn't.
+function folderLine(tint) {
+  const n = tint.replace("#", ""); const c = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16));
+  return `rgb(${c.map(v => Math.round(v * 0.45 + 255 * 0.3 + 6)).join(",")})`;
 }
 // Room as a frosted folder: wish photos shared into the room peek out from
 // behind the translucent front, the room sticker and the members' avatars are
@@ -988,7 +993,10 @@ function RoomFolder({ room, wishes, onOpen }) {
               backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)",
             }} />
             <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
-              <path d={fp.full} fill="none" stroke="rgba(255,255,255,0.24)" strokeWidth="1" />
+              {/* 2px stroke clipped to the shape = an even 1px line fully inside the edge,
+                  so whatever sits behind the folder can't make one side look heavier. */}
+              <defs><clipPath id={"fc-" + room.id}><path d={fp.full} /></clipPath></defs>
+              <path d={fp.full} fill="none" stroke={folderLine(room.tint)} strokeWidth="2" clipPath={`url(#fc-${room.id})`} />
             </svg>
           </>
         )}
