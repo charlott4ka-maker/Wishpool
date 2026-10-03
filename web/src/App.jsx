@@ -11,8 +11,8 @@ const PoolScreenGlass = React.lazy(() => import("./PoolScreenGlass.jsx"));
 /* ---------- design tokens ---------- */
 const C = {
   bg: "#000000",
-  card: "rgba(255,255,255,0.07)",
-  card2: "rgba(255,255,255,0.11)",
+  card: "#161618",
+  card2: "#232326",
   line: "rgba(255,255,255,0.08)",
   t1: "#FFFFFF",
   t2: "#98989F",
@@ -26,43 +26,23 @@ const C = {
 const S = { gutter: 12, gap: 12, pad: 20, r: 30, rTile: 0.3 };
 // Every button / control is one of exactly two heights.
 const H = { lg: 52, sm: 40 };
-/* ---------- clear glass ---------- */
-// Clear, not frosted: no backdrop blur and almost no fill (so nothing turns a
-// flat grey), just a diagonal reflection, a bright top rim and faint edges.
-// No outlines.
-const GLASS = {
-  fill: "rgba(255,255,255,0.08)",
-  sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
-  rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
-};
-// `tint` adds a faint fill of the block's colour (blue by default) so a
-// block reads as tinted glass rather than fully see-through.
-function glass({ on = false, tint = C.blue } = {}) {
-  if (on) return {
-    background: "linear-gradient(180deg, #5A82EA 0%, #3563D8 55%, #2850BE 100%)",
-    border: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
-  };
-  return {
-    background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
-    border: "none", boxShadow: GLASS.rim,
-  };
+/* ---------- flat dark surfaces ---------- */
+// Flat iOS-style blacks: no gradients, no inner glow, no outlines.
+// screen #000 → card / sheet #161618 → field, control, round button #232326.
+const SOLID = { card: "#161618", sheet: "#161618", field: "#232326", control: "#232326" };
+function surface({ fill = SOLID.card } = {}) {
+  return { background: fill, border: "none", boxShadow: "none" };
 }
-// Calm solid surface for static content (cards, inputs, unselected controls):
-// glass is kept for things that float or act — tab bar, round buttons, action
-// pills — so it reads as an accent instead of being on everything.
-// Elevation steps on black — each level is clearly lighter than the one under it:
-// screen #000 → card / sheet → field & control.
-const SOLID = { card: "#1A1A1E", sheet: "#18181C", field: "#2A2A30", control: "#2C2C32" };
-function surface({ tint, fill = SOLID.card } = {}) {
-  return {
-    background: tint ? `radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.09)} 0%, transparent 60%), ${fill}` : fill,
-    border: "none", boxShadow: "none",
-  };
+// Kept under its old name so every interactive control shares one look:
+// `on` = selected / primary (flat blue), otherwise a flat raised dark grey.
+function glass({ on = false } = {}) {
+  return on
+    ? { background: C.blue, border: "none", boxShadow: "none" }
+    : { background: SOLID.control, border: "none", boxShadow: "none" };
 }
-// Floating bars sit over scrolling content, so they get a dark (not grey) tint
-// and a light blur purely for legibility.
+// Floating bars sit over scrolling content: near-opaque dark + light blur.
 function glassFloat() {
-  return { ...glass(), background: `${GLASS.sheen}, rgba(0,0,0,0.55)`, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" };
+  return { background: "rgba(28,28,30,0.92)", border: "none", boxShadow: "none", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" };
 }
 const font =
   '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
@@ -79,7 +59,7 @@ function Title({ text, size = 32, style }) {
   );
 }
 // Soft deep-blue glow at the top of an otherwise black screen.
-const SKY = "radial-gradient(90% 38% at 30% -4%, rgba(48,74,170,0.55) 0%, rgba(20,30,80,0.25) 45%, transparent 75%), #000";
+const SKY = "#000";
 
 // Safe persistence: uses localStorage when available (real deploy),
 // silently falls back to in-memory in sandboxes that block it (artifact preview).
@@ -378,10 +358,10 @@ function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false, bare
         width: size, height: size, borderRadius: round ? "50%" : size * S.rTile,
         // round = bullet-style glass: translucent tint, thin same-hue ring
         background: image ? C.card2 : round
-          ? `${GLASS.sheen}, ${hex(tint, 0.18)}`
-          : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.45)} 0%, rgba(255,255,255,0.07) 60%, rgba(255,255,255,0.04) 100%)`,
+          ? hex(tint, 0.18)
+          : C.card2,
         display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: round ? `inset 0 0 0 1px ${hex(tint, 0.45)}, ${GLASS.rim}` : GLASS.rim, flexShrink: 0, overflow: "hidden", position: "relative",
+        boxShadow: "none", flexShrink: 0, overflow: "hidden", position: "relative",
         cursor: image ? "zoom-in" : "default",
       }}
     >
@@ -451,7 +431,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
     primary: { ...glass({ on: true }), color: "#fff" },
     ghost: { ...glass(), color: C.t1 },
     soft: { ...glass(), color: C.t1 },
-    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.blue, 0.32)}`, color: C.blueLight },
+    green: { ...glass(), background: hex(C.blue, 0.24), color: C.blueLight },
   }[kind];
   return (
     <button
@@ -768,7 +748,7 @@ export default function App() {
 
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
-    <div style={{ background: SKY, backgroundAttachment: "fixed", minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500, position: "relative" }}>
+    <div style={{ background: SKY, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500, position: "relative" }}>
       <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -904,8 +884,6 @@ function TabBar({ tab, setTab }) {
   ];
   return (
     <>
-      {/* fade content out under the bar, like iOS */}
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)" }} />
       <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
         <div style={{ display: "flex", gap: 4, padding: 6, borderRadius: 999, ...glassFloat() }}>
           {items.map(it => {
@@ -1305,7 +1283,6 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       <FallbackBack onBack={onBack} />
       <div style={{ padding: `16px ${S.gutter}px 140px` }}>
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
-          <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
             <Title text={room.name} size={32} />
