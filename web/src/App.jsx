@@ -516,7 +516,7 @@ function Sheet({ title, onClose, children }) {
 // text and an optional action. `compact` is the smaller version for sheets.
 function Empty({ emoji, title, sub, action, compact, tilt = -8 }) {
   return (
-    <div style={{ padding: compact ? "16px 8px 8px" : "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+    <div style={{ padding: compact ? "8px 8px" : "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
       <div style={{ transform: `rotate(${tilt}deg)` }}><Sticker emoji={emoji} size={compact ? 64 : 88} /></div>
       <div style={{ color: C.t1, fontSize: compact ? 16 : 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
       {sub && <div style={{ color: C.t2, fontSize: 14.5, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{sub}</div>}
@@ -1510,13 +1510,13 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   return (
     <div style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
       {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
-      <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 52px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
+      <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 48px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
           {hasTgBack() ? <span /> : <HeroButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
           {isOwner ? <HeroButton onClick={onEdit} label={t("editRoom")}><Pencil size={17} /></HeroButton> : <span />}
         </div>
         <div style={{ position: "relative" }}>
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}><GlossTile emoji={room.emoji} size={96} tint={room.tint} bare /></div>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}><GlossTile emoji={room.emoji} size={80} tint={room.tint} bare /></div>
           <div style={{ color: "#fff", fontSize: 26, fontWeight: 800, marginTop: 12, textShadow: "0 1px 12px rgba(0,0,0,0.25)" }}>{room.name}</div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
             {members.map((m, i) => (
@@ -1542,7 +1542,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       </div>
       {/* content sheet slides over the hero with rounded corners */}
       {/* fills the rest of the screen so Delete/Leave sits at the very bottom */}
-      <div style={{ position: "relative", marginTop: -28, flex: "1 0 auto", display: "flex", flexDirection: "column", background: C.bg, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "24px 16px calc(24px + env(safe-area-inset-bottom))", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
+      <div style={{ position: "relative", marginTop: -28, flex: "1 0 auto", display: "flex", flexDirection: "column", background: C.bg, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "16px 16px calc(16px + env(safe-area-inset-bottom))", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
 
         <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral style={{ marginBottom: 16 }} />
 
@@ -1564,8 +1564,8 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
-              <Empty emoji="👀" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
-                action={<Pill kind="primary" icon={<Share2 size={17} />} onClick={onInvite}>{t("inviteFriends")}</Pill>} />
+              {/* compact, and no second Invite button (the hero has one): Delete must fit on screen */}
+              <Empty compact emoji="👀" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} />
             </div>
           ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -1608,10 +1608,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           </div>
         )}
 
-        <div style={{ marginTop: "auto", paddingTop: 32, display: "flex", justifyContent: "center" }}>
+        <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", justifyContent: "center" }}>
           {isOwner ? (
-            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
-              <Trash2 size={16} /> {t("deleteRoom")}
+            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ width: "100%", height: H.lg, borderRadius: 999, border: "none", cursor: "pointer", background: "#FF3B30", color: "#fff", fontSize: 15.5, fontWeight: 700, fontFamily: font, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Trash2 size={18} /> {t("deleteRoom")}
             </button>
           ) : (
             <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
