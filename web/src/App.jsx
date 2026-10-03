@@ -1304,7 +1304,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
             ))}
             {!coupleFull && (
-              <button onClick={onInvite} aria-label={t("invite")} style={{ marginLeft: 8, width: H.sm, height: H.sm, borderRadius: H.sm, border: "1.5px dashed rgba(127,176,255,0.85)", background: "rgba(8,18,40,0.55)", color: "#7FB0FF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+              <button onClick={onInvite} aria-label={t("invite")} style={{ marginLeft: 8, width: H.sm, height: H.sm, borderRadius: H.sm, border: "1.5px dashed rgba(255,255,255,0.85)", background: "rgba(255,255,255,0.12)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                 <Plus size={18} />
               </button>
             )}
