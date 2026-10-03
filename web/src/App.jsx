@@ -271,11 +271,31 @@ const useT = () => useContext(LangCtx);
 const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
 /* ---------- little ui atoms ---------- */
-// Emoji drawn as a die-cut sticker: a white outline built from stacked hard
-// drop-shadows (they compound, so 4 offsets give a solid rim), plus a soft shadow.
+// Emoji drawn as a die-cut sticker with a crisp, evenly rounded white outline.
+// An SVG filter blurs the emoji's silhouette and then thresholds it back to a
+// hard edge: the result is the shape grown by the same distance in every
+// direction with round corners (offset drop-shadows leave spiky, uneven rims).
+// One filter per outline width; <StickerDefs/> mounts them once.
+const STICKER_WIDTHS = [1.5, 2, 2.5, 3, 3.5, 4, 5];
+function StickerDefs() {
+  return (
+    <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+      {STICKER_WIDTHS.map(w => (
+        <filter key={w} id={`stk-${w * 10}`} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation={w / 1.64} result="b" />
+          <feComponentTransfer in="b" result="m"><feFuncA type="linear" slope="30" intercept="-1" /></feComponentTransfer>
+          <feFlood floodColor="#fff" />
+          <feComposite in2="m" operator="in" result="rim" />
+          <feMerge><feMergeNode in="rim" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      ))}
+    </svg>
+  );
+}
 function stickerFilter(size) {
-  const o = Math.max(1, Math.round(size * 0.065 * 2) / 2);
-  return `drop-shadow(${o}px 0 0 #fff) drop-shadow(-${o}px 0 0 #fff) drop-shadow(0 ${o}px 0 #fff) drop-shadow(0 -${o}px 0 #fff) drop-shadow(0 ${o * 2}px ${o * 3}px rgba(0,0,0,0.45))`;
+  const want = size * 0.07;
+  const w = STICKER_WIDTHS.reduce((a, b) => Math.abs(b - want) < Math.abs(a - want) ? b : a);
+  return `url(#stk-${w * 10}) drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`;
 }
 // Bullet-style icon: a small circle tinted with `color`, a thin ring of the same
 // hue and a light icon (lucide component) or emoji inside.
@@ -679,6 +699,7 @@ export default function App() {
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
     <div style={{ background: SKY, backgroundAttachment: "fixed", minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, position: "relative" }}>
+      <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
