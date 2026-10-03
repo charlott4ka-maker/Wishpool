@@ -866,6 +866,7 @@ export default function App() {
       ? { ...w, rooms: w.rooms.includes(rid) ? w.rooms.filter(r => r !== rid) : [...w.rooms, rid] } : w));
   };
 
+  const roomCloser = useRef(null); // set by RoomDetail: shrink back into the folder, then close
   useEffect(() => {
     const tg = tgWebApp();
     const bb = tg && tg.BackButton;
@@ -874,6 +875,7 @@ export default function App() {
     if (overlay) {
       handler = () => {
         if (overlay.type === "draw" || overlay.type === "pool" || overlay.type === "editRoom") setOverlay({ type: "room", roomId: overlay.roomId });
+        else if (overlay.type === "room" && roomCloser.current) roomCloser.current();
         else setOverlay(null);
       };
       bb.onClick(handler);
@@ -916,7 +918,7 @@ export default function App() {
               )}
               {tab === "rooms" && (
                 <RoomsScreen rooms={rooms} wishes={wishes}
-                  onOpen={(id) => setOverlay({ type: "room", roomId: id })}
+                  onOpen={(id, rect) => setOverlay({ type: "room", roomId: id, from: rect ? { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom } : null })}
                   onCreate={() => setOverlay({ type: "createRoom" })} />
               )}
               {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
@@ -947,6 +949,7 @@ export default function App() {
             onEdit={() => setOverlay({ type: "editRoom", roomId: overlay.roomId })}
             onLeave={() => leaveRoom(overlay.roomId)}
             onDelete={() => removeRoom(overlay.roomId)}
+            from={overlay.from} closerRef={roomCloser}
             onBack={() => setOverlay(null)} />
         )}
         {overlay?.type === "pool" && (
@@ -1152,7 +1155,7 @@ function RoomFolder({ room, wishes, onOpen }) {
   const shown = extra ? members.slice(0, FOLDER_MAX_AVATARS - 1) : members;
   const AV = 24, OV = 8;
   return (
-    <div onClick={onOpen} style={{ cursor: "pointer", textAlign: "center" }}>
+    <div onClick={() => { haptic("light"); onOpen(box.current && box.current.getBoundingClientRect()); }} style={{ cursor: "pointer", textAlign: "center" }}>
       <div ref={box} style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
         <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: hex(room.tint, 0.22) }} />
         {photos.map((src, i) => {
@@ -1225,7 +1228,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
         <Empty emoji="stk:ghost" tilt={6} title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 12px" }}>
-          {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={() => onOpen(r.id)} />)}
+          {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={(rect) => onOpen(r.id, rect)} />)}
         </div>
       )}
 
@@ -1592,8 +1595,33 @@ function HeroButton({ onClick, label, children, style }) {
   );
 }
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onChip, onUnchip, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack }) {
+function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onChip, onUnchip, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack, from, closerRef }) {
   const { lang, t } = useT();
+  // Opened from a folder: the room grows out of the folder's rectangle
+  // (clip-path inset animation) and shrinks back into it on Back.
+  const rootRef = useRef(null);
+  const insetFrom = () => {
+    const el = rootRef.current; if (!el || !from) return null;
+    const d = el.getBoundingClientRect();
+    return `inset(${from.top - d.top}px ${d.right - from.right}px ${d.bottom - from.bottom}px ${from.left - d.left}px round 24px)`;
+  };
+  useLayoutEffect(() => {
+    const el = rootRef.current, start = insetFrom();
+    if (!el || !start || !el.animate) return;
+    el.animate([{ clipPath: start, WebkitClipPath: start }, { clipPath: "inset(0px 0px 0px 0px round 0px)", WebkitClipPath: "inset(0px 0px 0px 0px round 0px)" }],
+      { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" });
+  }, []); // eslint-disable-line
+  const closing = useRef(false);
+  const close = () => {
+    const el = rootRef.current, end = insetFrom();
+    if (closing.current) return;
+    if (!el || !end || !el.animate) return onBack();
+    closing.current = true;
+    const a = el.animate([{ clipPath: "inset(0px 0px 0px 0px round 0px)", WebkitClipPath: "inset(0px 0px 0px 0px round 0px)", opacity: 1 }, { clipPath: end, WebkitClipPath: end, opacity: 0.6 }],
+      { duration: 320, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" });
+    a.onfinish = () => onBack();
+  };
+  useEffect(() => { if (closerRef) closerRef.current = close; return () => { if (closerRef) closerRef.current = null; }; });
   const heroCd = countdownLabel(lang, t, room.eventDate);
   // Telegram's own top bar takes the hero colour while the room is open.
   useEffect(() => {
@@ -1653,11 +1681,11 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 
   return (
-    <div style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
+    <div ref={rootRef} style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: from ? "none" : "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
       {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
       <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 40px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
-          {hasTgBack() ? <span /> : <HeroButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
+          {hasTgBack() ? <span /> : <HeroButton onClick={close} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
           {isOwner ? <HeroButton onClick={onEdit} label={t("editRoom")}><Pencil size={17} /></HeroButton> : <span />}
         </div>
         <div style={{ position: "relative" }}>
@@ -1859,28 +1887,46 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
   const { t } = useT();
   const [stage, setStage] = useState("setup");
   const [budget, setBudget] = useState("1 000 ₴");
-  const [spin, setSpin] = useState("🎁");
   const [target, setTarget] = useState(null);
   const [targetWishes, setTargetWishes] = useState([]);
   const canDraw = room.members.length >= 3;
+  // The show: face-down cards (one per other member) shuffle around, then the
+  // drawn person's card flies to the centre and flips over.
+  const others = room.members.filter(m => !m.you);
+  const [order, setOrder] = useState(() => others.map((_, i) => i));
+  const [picked, setPicked] = useState(null); // index into `cards` once the shuffle ends
+  const [flipped, setFlipped] = useState(false);
+  const cards = (() => {
+    let c = others.slice(0, 5);
+    if (target && !c.some(m => m.id === target.id)) c = [...c.slice(0, 4), target];
+    return c;
+  })();
 
   useEffect(() => {
     if (stage !== "drawing") return;
-    const pool = ["🎁", "🎲", "✨", "💝", "🎀", "🥳"];
-    let i = 0;
-    const iv = setInterval(() => { setSpin(pool[i++ % pool.length]); }, 110);
+    let done = false, ready = false, elapsed = false;
+    const finish = () => {
+      if (!ready || !elapsed || done) return;
+      done = true; clearInterval(iv);
+      setPicked(true);
+      setTimeout(() => { setFlipped(true); haptic("success"); }, 650);
+      setTimeout(() => setStage("reveal"), 2100);
+    };
+    const shuffle = () => setOrder(o => { const a = [...o]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; });
+    const iv = setInterval(() => { shuffle(); haptic("light"); }, 260);
     (async () => {
       if (online) {
         try { await api.runDraw(room.id, budget); const d = await api.draw(room.id); setTarget(d.target); setTargetWishes(d.wishes || []); }
-        catch (e) { if (onError) onError(); }
+        catch (e) { if (onError) onError(); return; }
       } else {
-        const tg = room.members.find(m => !m.you) || room.members[0];
+        const tg = others[Math.floor(Math.random() * others.length)] || room.members[0];
         setTarget(tg); setTargetWishes(tg && tg.wishes ? tg.wishes : []);
       }
+      ready = true; finish();
     })();
-    const tm = setTimeout(() => { clearInterval(iv); setStage("reveal"); }, 1700);
+    const tm = setTimeout(() => { elapsed = true; finish(); }, 2200);
     return () => { clearInterval(iv); clearTimeout(tm); };
-  }, [stage]);
+  }, [stage]); // eslint-disable-line
 
   const doReserve = async (wish) => {
     await onReserve(wish);
@@ -1940,16 +1986,40 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
       )}
 
       {stage === "drawing" && (
-        <div style={{ padding: "80px 22px", textAlign: "center" }}>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ animation: "glow 1.2s ease-in-out infinite", borderRadius: 30 }}>
-              <div style={{ animation: "spinEmoji .5s ease-in-out infinite" }}>
-                <GlossTile emoji={spin} size={128} tint={C.blue} />
-              </div>
-            </div>
+        <div style={{ padding: "48px 16px", textAlign: "center" }}>
+          <div style={{ position: "relative", height: 300, perspective: 900 }}>
+            {cards.map((m, i) => {
+              const n = cards.length, slot = order.indexOf(i) < 0 ? i : order.indexOf(i), off = slot - (n - 1) / 2;
+              const isT = picked && target && m.id === target.id;
+              const tf = picked
+                ? (isT ? "translate(-50%, -50%) translate(0px, 0px) scale(1.55)" : `translate(-50%, -50%) translate(${off * 90}px, 260px) rotate(${off * 20}deg) scale(.7)`)
+                : `translate(-50%, -50%) translate(${off * 52}px, ${Math.abs(off) * 10}px) rotate(${off * 9}deg)`;
+              return (
+                <div key={m.id} style={{
+                  position: "absolute", left: "50%", top: "50%", width: 92, height: 128, transform: tf, zIndex: isT ? 10 : slot,
+                  opacity: picked && !isT ? 0 : 1, transition: "transform .45s cubic-bezier(.2,.8,.2,1), opacity .4s ease",
+                }}>
+                  <div style={{ position: "relative", width: "100%", height: "100%", transformStyle: "preserve-3d", transition: "transform .6s cubic-bezier(.3,.7,.2,1)", transform: isT && flipped ? "rotateY(180deg)" : "none" }}>
+                    {/* back: blue card with a "?" sticker */}
+                    <div style={{ position: "absolute", inset: 0, borderRadius: 18, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+                      background: `radial-gradient(120% 90% at 30% 20%, #6FA8FF 0%, ${C.blue} 45%, #3B2BB8 100%)`, boxShadow: "0 10px 30px rgba(0,0,0,0.45)",
+                      display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Sticker emoji="stk:qblock" size={40} />
+                    </div>
+                    {/* front: who you drew */}
+                    <div style={{ position: "absolute", inset: 0, borderRadius: 18, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)",
+                      background: "#fff", boxShadow: "0 10px 30px rgba(0,0,0,0.45)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 8 }}>
+                      <Avatar m={m} size={48} />
+                      <div style={{ color: "#111", fontSize: 13, fontWeight: 800, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div style={{ color: C.t1, fontSize: 20, fontWeight: 700, marginTop: 32 }}>{t("shuffling")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 8 }}>{t("dealing")}</div>
+          <div style={{ color: C.t1, fontSize: 20, fontWeight: 700, marginTop: 24 }}>{flipped ? t("youGot") : t("shuffling")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8 }}>{flipped ? target && target.name : t("dealing")}</div>
+          {flipped && <Confetti />}
         </div>
       )}
 
