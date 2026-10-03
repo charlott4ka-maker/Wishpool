@@ -1424,11 +1424,17 @@ function hueShift(tint, deg) {
 }
 // Mesh-like hero: soft light behind the sticker, two neighbouring hues
 // drifting in from the corners, over the room tint.
+// Hue of a colour in degrees (0..360).
+const hueOf = (c) => { const n = c.replace("#", ""); const [r, g, b] = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16)); return (Math.atan2(Math.sqrt(3) * (g - b), 2 * r - g - b) * 180 / Math.PI + 360) % 360; };
 function roomHeroBg(tint) {
+  // Top-left gets the neighbour that reads lighter: for blues/purples/pinks
+  // (hue 180..360) that's the one turning back towards cyan/magenta.
+  const cool = hueOf(tint) >= 180;
+  const a = hueShift(tint, cool ? -40 : 40), b = hueShift(tint, cool ? 40 : -40);
   return [
     `radial-gradient(42% 34% at 50% 30%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%)`,
-    `radial-gradient(70% 60% at 0% 10%, ${hex(hueShift(tint, 40), 0.75)} 0%, ${hex(hueShift(tint, 40), 0)} 100%)`,
-    `radial-gradient(75% 65% at 100% 95%, ${hex(hueShift(tint, -40), 0.7)} 0%, ${hex(hueShift(tint, -40), 0)} 100%)`,
+    `radial-gradient(70% 60% at 0% 10%, ${hex(a, 0.75)} 0%, ${hex(a, 0)} 100%)`,
+    `radial-gradient(75% 65% at 100% 95%, ${hex(b, 0.7)} 0%, ${hex(b, 0)} 100%)`,
     `radial-gradient(120% 90% at 50% 30%, ${hex(tint, 0.9)} 0%, ${hex(tint, 0.6)} 55%, ${hex(tint, 0.35)} 100%)`,
     "#0d0d10",
   ].join(", ");
