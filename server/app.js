@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
-import { uid, pubUser } from "./util.js";
+import { uid, pubUser, cleanImages } from "./util.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -13,7 +13,10 @@ export async function createApp() {
   app.use(cors());
   app.use(express.json({ limit: "6mb" }));
 
-  const pubWish = (w) => ({ id: w.id, emoji: w.emoji, image: w.image, link: w.link, title: w.title, price: w.price });
+  const pubWish = (w) => {
+    const images = w.images && w.images.length ? w.images : (w.image ? [w.image] : []);
+    return { id: w.id, emoji: w.emoji, image: images[0] || null, images, link: w.link, title: w.title, price: w.price };
+  };
 
   const api = express.Router();
   // API responses must never be conditionally cached (304) — each call needs a fresh body.
@@ -44,9 +47,10 @@ export async function createApp() {
   });
 
   api.post("/wishes", async (req, res) => {
-    const { emoji, image, link, title, price, rooms = [] } = req.body || {};
+    const { emoji, image, images: rawImages, link, title, price, rooms = [] } = req.body || {};
+    const images = cleanImages(rawImages && rawImages.length ? rawImages : (image ? [image] : []));
     if (!title) return res.status(400).json({ error: "title_required" });
-    const w = { id: uid("w"), ownerId: req.user.id, emoji: emoji || "🎁", image: image || null, link: link || null, title, price: price || "", createdAt: Date.now() };
+    const w = { id: uid("w"), ownerId: req.user.id, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", createdAt: Date.now() };
     await store.createWish(w);
     for (const rid of rooms) if (await store.isMember(rid, req.user.id)) await store.addWishRoom(w.id, rid);
     res.json({ wish: { ...pubWish(w), rooms: await store.wishRoomIds(w.id) } });

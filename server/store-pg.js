@@ -10,6 +10,7 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS rooms(id text primary key, name text, type text, emoji text, tint text, owner_id text, created_at bigint)`);
       await q(`CREATE TABLE IF NOT EXISTS members(room_id text, user_id text, primary key(room_id,user_id))`);
       await q(`CREATE TABLE IF NOT EXISTS wishes(id text primary key, owner_id text, emoji text, image text, link text, title text, price text, created_at bigint)`);
+      await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS images text`);
       await q(`CREATE TABLE IF NOT EXISTS wish_rooms(wish_id text, room_id text, primary key(wish_id,room_id))`);
       await q(`CREATE TABLE IF NOT EXISTS reservations(wish_id text primary key, gifter_id text)`);
       await q(`CREATE TABLE IF NOT EXISTS draws(room_id text primary key, assignments jsonb, budget text, at bigint)`);
@@ -30,7 +31,7 @@ export function createPgStore(q) {
     async updateRoom(id, { name, emoji }) { await q(`UPDATE rooms SET name=COALESCE($2,name), emoji=COALESCE($3,emoji) WHERE id=$1`, [id, name ?? null, emoji ?? null]); },
     async addMember(roomId, userId) { await q(`INSERT INTO members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, [roomId, userId]); },
     async getWish(id) { const { rows } = await q(`SELECT * FROM wishes WHERE id=$1`, [id]); return mapWish(rows[0]); },
-    async createWish(w) { await q(`INSERT INTO wishes(id,owner_id,emoji,image,link,title,price,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, [w.id, w.ownerId, w.emoji, w.image, w.link, w.title, w.price, w.createdAt]); },
+    async createWish(w) { await q(`INSERT INTO wishes(id,owner_id,emoji,image,images,link,title,price,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [w.id, w.ownerId, w.emoji, w.image, JSON.stringify(w.images || []), w.link, w.title, w.price, w.createdAt]); },
     async deleteWish(id) { await q(`DELETE FROM wishes WHERE id=$1`, [id]); await q(`DELETE FROM wish_rooms WHERE wish_id=$1`, [id]); await q(`DELETE FROM reservations WHERE wish_id=$1`, [id]); },
     async wishRoomIds(wishId) { const { rows } = await q(`SELECT room_id FROM wish_rooms WHERE wish_id=$1`, [wishId]); return rows.map(r => r.room_id); },
     async toggleWishRoom(wishId, roomId) {

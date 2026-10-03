@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useContext, createContext } from "react";
+import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
   Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
@@ -233,6 +234,7 @@ const STR = {
   newWish: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   photo: { uk: "Фото", ru: "Фото", en: "Photo" },
   emojiTab: { uk: "Емодзі", ru: "Эмодзи", en: "Emoji" },
+  photosHint: { uk: "До 3 фото", ru: "До 3 фото", en: "Up to 3 photos" },
   uploadPhoto: { uk: "Завантажити фото з телефона", ru: "Загрузить фото с телефона", en: "Upload a photo from your phone" },
   replace: { uk: "Замінити", ru: "Заменить", en: "Replace" },
   remove: { uk: "Прибрати", ru: "Убрать", en: "Remove" },
@@ -349,15 +351,62 @@ function TagChip({ icon: Icon, emoji, color = "#FFFFFF", children }) {
 function Sticker({ emoji, size, style }) {
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
 }
-function ImageLightbox({ src, onClose }) {
-  return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp .2s ease" }}>
-      <GlassButton onClick={onClose} label="Close" style={{ position: "absolute", top: 16, right: 16 }}><X size={18} /></GlassButton>
-      <img src={src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92%", maxHeight: "85vh", borderRadius: 16, objectFit: "contain" }} />
-    </div>
+const wishImages = (w) => (w && w.images && w.images.length ? w.images : (w && w.image ? [w.image] : []));
+// Full-screen photo viewer. Rendered into <body> through a portal: a card with
+// backdrop-filter / transform would otherwise trap `position: fixed` inside it.
+// With several photos: swipe or arrows to flip, counter at the top.
+function ImageLightbox({ src, images, start = 0, onClose }) {
+  const list = images && images.length ? images : [src];
+  const [i, setI] = useState(Math.min(start, list.length - 1));
+  const touch = useRef(null);
+  const go = (d) => setI(x => (x + d + list.length) % list.length);
+  const stop = (e) => e.stopPropagation();
+  const arrow = (d) => list.length > 1 && (
+    <GlassButton onClick={(e) => { stop(e); go(d); }} label={d < 0 ? "Previous" : "Next"}
+      style={{ position: "absolute", top: "50%", [d < 0 ? "left" : "right"]: 12, transform: "translateY(-50%)" }}>
+      {d < 0 ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+    </GlassButton>
+  );
+  return createPortal(
+    <div onClick={(e) => { stop(e); onClose(); }}
+      onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => { if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; touch.current = null; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); }}
+      style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.94)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp .2s ease", fontFamily: font }}>
+      {list.length > 1 && <div style={{ position: "absolute", top: 26, left: 0, right: 0, textAlign: "center", color: C.t2, fontSize: 14, fontWeight: 600 }}>{i + 1} / {list.length}</div>}
+      <GlassButton onClick={(e) => { stop(e); onClose(); }} label="Close" style={{ position: "absolute", top: 16, right: 16 }}><X size={18} /></GlassButton>
+      <img src={list[i]} alt="" onClick={stop} style={{ maxWidth: "92%", maxHeight: "80vh", borderRadius: 16, objectFit: "contain" }} />
+      {arrow(-1)}{arrow(1)}
+    </div>,
+    document.body
   );
 }
-function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false, bare = false }) {
+// Wish photos across the top of a card, edge to edge, at a fixed height
+// (cropped to fill); tap any photo to open the full viewer.
+// 1 photo: full width · 2: halves · 3: large left + two stacked right.
+function PhotoHeader({ images, height = 176 }) {
+  const [open, setOpen] = useState(null);
+  const n = images.length;
+  const cell = (src, idx, extra) => (
+    <div key={idx} onClick={(e) => { e.stopPropagation(); setOpen(idx); }}
+      style={{ background: `${C.card2} center / cover no-repeat url("${src}")`, cursor: "zoom-in", minHeight: 0, ...extra }} />
+  );
+  return (
+    <>
+      <div style={{
+        display: "grid", gap: 2, height, borderRadius: `${S.r}px ${S.r}px 0 0`, overflow: "hidden",
+        margin: `0 -${S.pad}px 4px`,
+        gridTemplateColumns: n === 1 ? "1fr" : n === 2 ? "1fr 1fr" : "2fr 1fr",
+        gridTemplateRows: n === 3 ? "1fr 1fr" : "1fr",
+      }}>
+        {n === 3
+          ? [cell(images[0], 0, { gridRow: "1 / 3" }), cell(images[1], 1), cell(images[2], 2)]
+          : images.map((src, idx) => cell(src, idx))}
+      </div>
+      {open != null && <ImageLightbox images={images} start={open} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+function GlossTile({ emoji, image, images, size = 92, tint = C.blue, round = false, bare = false }) {
   const [open, setOpen] = useState(false);
   // bare: an emoji shown as a free-standing sticker, without a tile behind it
   if (bare && !image) {
@@ -388,7 +437,7 @@ function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false, bare
         <Sticker emoji={emoji} size={size * 0.5} />
       )}
     </div>
-    {open && <ImageLightbox src={image} onClose={() => setOpen(false)} />}
+    {open && <ImageLightbox src={image} images={images} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -591,10 +640,11 @@ function sepBelow(show, inset = ROW_INSET, pad = S.pad) {
     backgroundPosition: "right bottom", backgroundSize: `calc(100% - ${inset}px) 1px`,
   };
 }
-function WishRow({ w, right }) {
+function WishRow({ w, right, noPhoto }) {
+  const imgs = wishImages(w);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px" }}>
-      <GlossTile emoji={w.emoji} image={w.image} size={52} round bare />
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 4px" }}>
+      <GlossTile emoji={w.emoji} image={noPhoto ? null : imgs[0]} images={imgs} size={52} round bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{w.price}</div>}
@@ -951,8 +1001,9 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: S.gap }}>
           {wishes.map(w => (
-            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `6px ${S.pad}px ${S.pad - 2}px`, cursor: "pointer" }}>
-              <WishRow w={w} right={
+            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `${wishImages(w).length ? 0 : 8}px ${S.pad}px ${S.pad}px`, cursor: "pointer" }}>
+              {wishImages(w).length > 0 && <PhotoHeader images={wishImages(w)} />}
+              <WishRow w={w} noPhoto={wishImages(w).length > 0} right={
                 <IconBadge icon={ChevronRight} color="#8A8A8E" size={28} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
               } />
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 10 }}>
@@ -1239,7 +1290,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
             const isPending = pendingId === w.id;
             return (
               <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
-                <GlossTile emoji={w.emoji} image={w.image} size={44} round bare />
+                <GlossTile emoji={w.emoji} image={wishImages(w)[0]} images={wishImages(w)} size={44} round bare />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
@@ -1615,21 +1666,24 @@ function AddSheet({ rooms, onClose, onSave }) {
   const [price, setPrice] = useState("");
   const [emoji, setEmoji] = useState("🎁");
   const [inRooms, setInRooms] = useState([]);
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const [link, setLink] = useState("");
   const [cover, setCover] = useState("photo");
   const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
+  const MAX_PHOTOS = 3;
   const pickFile = (e) => {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
-    compressImage(f).then(setImage).catch(() => {
-      const r = new FileReader(); r.onload = () => setImage(r.result); r.readAsDataURL(f);
+    const files = Array.from(e.target.files || []).slice(0, MAX_PHOTOS - images.length);
+    e.target.value = ""; // allow picking the same file again after removing it
+    files.forEach(f => {
+      const add = (url) => setImages(xs => xs.length < MAX_PHOTOS ? [...xs, url] : xs);
+      compressImage(f).then(add).catch(() => { const r = new FileReader(); r.onload = () => add(r.result); r.readAsDataURL(f); });
     });
   };
   const submit = async () => {
     if (busy || !title.trim()) return;
     setBusy(true);
-    try { await onSave({ emoji, image: cover === "photo" ? image : null, link: link.trim() || null, title: title.trim(), price: price.trim(), rooms: inRooms }); }
+    try { await onSave({ emoji, images: cover === "photo" ? images : [], image: cover === "photo" ? (images[0] || null) : null, link: link.trim() || null, title: title.trim(), price: price.trim(), rooms: inRooms }); }
     catch (e) { setBusy(false); }
   };
 
@@ -1639,14 +1693,26 @@ function AddSheet({ rooms, onClose, onSave }) {
 
       {cover === "photo" ? (
         <div style={{ marginBottom: 16 }}>
-          <input ref={fileRef} type="file" accept="image/*" onChange={pickFile} style={{ display: "none" }} />
-          {image ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <GlossTile image={image} size={72} />
-              <div style={{ flex: 1, display: "flex", gap: 8 }}>
-                <Pill size="sm" kind="ghost" onClick={() => fileRef.current && fileRef.current.click()}>{t("replace")}</Pill>
-                <Pill size="sm" kind="ghost" onClick={() => setImage(null)}>{t("remove")}</Pill>
+          <input ref={fileRef} type="file" accept="image/*" multiple onChange={pickFile} style={{ display: "none" }} />
+          {images.length ? (
+            <div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {images.map((src, i) => (
+                  <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: 18, background: `${C.card2} center / cover no-repeat url("${src}")` }}>
+                    <button onClick={() => setImages(xs => xs.filter((_, j) => j !== i))} aria-label={t("remove")} style={{
+                      position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 28, border: "none", cursor: "pointer",
+                      background: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                    }}><X size={15} /></button>
+                  </div>
+                ))}
+                {images.length < MAX_PHOTOS && (
+                  <button onClick={() => fileRef.current && fileRef.current.click()} aria-label={t("uploadPhoto")} style={{
+                    aspectRatio: "1", borderRadius: 18, cursor: "pointer", ...surface({ fill: SOLID.field }), color: C.t2,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}><Plus size={24} /></button>
+                )}
               </div>
+              <div style={{ color: C.t3, fontSize: 12.5, marginTop: 8 }}>{t("photosHint")} · {images.length}/{MAX_PHOTOS}</div>
             </div>
           ) : (
             <button onClick={() => fileRef.current && fileRef.current.click()} style={{
@@ -1656,6 +1722,7 @@ function AddSheet({ rooms, onClose, onSave }) {
             }}>
               <ImageIcon size={26} color={C.t2} />
               {t("uploadPhoto")}
+              <span style={{ color: C.t3, fontSize: 12.5, fontWeight: 500 }}>{t("photosHint")}</span>
             </button>
           )}
         </div>
