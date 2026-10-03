@@ -1157,7 +1157,7 @@ function RoomFolder({ room, wishes, onOpen }) {
   return (
     <div onClick={() => { haptic("light"); onOpen(box.current && box.current.getBoundingClientRect()); }} style={{ cursor: "pointer", textAlign: "center" }}>
       <div ref={box} style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
-        <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: tone(room.tint, 0.16) }} />
+        <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: deep(room.tint, 0.3) }} />
         {photos.map((src, i) => {
           const sp = spots[i];
           return (
@@ -1186,7 +1186,7 @@ function RoomFolder({ room, wishes, onOpen }) {
             </svg>
             <div style={{
               position: "absolute", inset: 0, zIndex: 3, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
-              background: `radial-gradient(70% 60% at 25% 0%, ${tone(room.tint, 0.5, 0.8)} 0%, ${tone(room.tint, 0.3, 0.82)} 60%, ${tone(room.tint, 0.2, 0.9)} 100%)`,
+              background: `radial-gradient(90% 70% at 30% 0%, ${hex(deep(room.tint, 0.85), 0.75)} 0%, ${hex(deep(room.tint, 0.5), 0.8)} 60%, ${hex(deep(room.tint, 0.32), 0.88)} 100%)`,
               backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)",
             }} />
           </>
@@ -1273,7 +1273,7 @@ function RoomColorPicker({ value, onChange }) {
         const on = value.toLowerCase() === c.toLowerCase();
         return (
           <button key={c} onClick={() => { haptic("select"); onChange(c); }} aria-label={c} style={{
-            width: H.sm, height: H.sm, borderRadius: "50%", cursor: "pointer", padding: 0, background: `radial-gradient(circle at 35% 30%, ${tone(c, 0.58)} 0%, ${tone(c, 0.24)} 100%)`,
+            width: H.sm, height: H.sm, borderRadius: "50%", cursor: "pointer", padding: 0, background: `radial-gradient(circle at 35% 30%, ${c} 0%, ${deep(c, 0.5)} 100%)`,
             border: "none", boxShadow: on ? `0 0 0 3px ${C.card}, 0 0 0 5px ${c}` : "none",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>{on && <Check size={18} color="#fff" strokeWidth={3} />}</button>
@@ -1546,24 +1546,13 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
 const hasTgBack = () => typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton;
 // Solid colour of the hero's top edge (room tint over the dark base): used for
 // Telegram's header and for the area revealed when the page bounces at the top.
-// Room colour as HSL, so we can keep its hue, push saturation up and set the
-// lightness: deep but still vivid tones (a rich navy, not a grey-black).
-function toHsl(tint) {
-  const n = tint.replace("#", ""); const [r, g, b] = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16) / 255);
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
-  if (!d) return [0, 0, l];
-  const s = d / (1 - Math.abs(2 * l - 1));
-  let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  return [(h * 60 + 360) % 360, s, l];
+// Room colour pushed towards black, keeping its hue and saturation: the deep,
+// glowing tones of the room hero and folders (k = how much colour is left).
+function deep(tint, k = 0.45) {
+  const n = tint.replace("#", ""); const c = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16));
+  return "#" + c.map(v => Math.round(v * k).toString(16).padStart(2, "0")).join("");
 }
-// tone(tint, 0.24) = the room colour at 24% lightness, fully saturated.
-function tone(tint, l, a = 1, hueShift = 0) {
-  const [h, s] = toHsl(tint);
-  return `hsla(${Math.round((h + hueShift + 360) % 360)}, ${Math.round(Math.min(1, s * 1.1) * 100)}%, ${Math.round(l * 100)}%, ${a})`;
-}
-function heroTop(tint) { return tone(tint, 0.2); }
-// Fine film grain over the room colour (like printed gradient posters).
-const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>")}")`;
+function heroTop(tint) { return deep(tint, 0.42); }
 // Room tint rotated around the colour wheel, for the hero's mesh blobs.
 function hueShift(tint, deg) {
   const n = tint.replace("#", ""); let [r, g, b] = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16) / 255);
@@ -1587,15 +1576,14 @@ function roomHeroBg(tint) {
   // Top-left gets the neighbour that reads lighter: for blues/purples/pinks
   // (hue 180..360) that's the one turning back towards cyan/magenta.
   const cool = hueOf(tint) >= 180;
-  // Deep, saturated room colour with bright soft glows in the corners and a
-  // fine grain, like a printed gradient poster.
-  const sh = cool ? -18 : 18;
+  const a = hueShift(tint, cool ? -40 : 40), b = hueShift(tint, cool ? 40 : -40);
+  // Dark and saturated: colour glows in from the top and sinks into near-black.
   return [
-    GRAIN,
-    `radial-gradient(50% 38% at 15% 32%, ${tone(tint, 0.62, 0.95, sh)} 0%, ${tone(tint, 0.5, 0, sh)} 100%)`,
-    `radial-gradient(42% 34% at 100% 92%, ${tone(tint, 0.6, 0.85, -sh)} 0%, ${tone(tint, 0.45, 0, -sh)} 100%)`,
-    `radial-gradient(40% 35% at 0% 100%, ${tone(tint, 0.5, 0.45)} 0%, ${tone(tint, 0.4, 0)} 100%)`,
-    `radial-gradient(120% 90% at 50% 40%, ${tone(tint, 0.22)} 0%, ${tone(tint, 0.15)} 100%)`,
+    `radial-gradient(40% 32% at 50% 30%, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%)`,
+    `radial-gradient(70% 60% at 0% 0%, ${hex(a, 0.5)} 0%, ${hex(a, 0)} 100%)`,
+    `radial-gradient(70% 60% at 100% 100%, ${hex(b, 0.28)} 0%, ${hex(b, 0)} 100%)`,
+    `radial-gradient(120% 90% at 50% 15%, ${hex(tint, 0.55)} 0%, ${deep(tint, 0.38)} 55%, ${deep(tint, 0.16)} 100%)`,
+    "#08080c",
   ].join(", ");
 }
 // Round frosted-glass button that sits on the coloured hero.
