@@ -18,8 +18,7 @@ export function createPgStore(q) {
     },
     async ensureUser(u) {
       // name and photo are refreshed on every visit (photo goes null if the user hides it)
-      await q(`INSERT INTO users(id,name,color,photo) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, photo=EXCLUDED.photo`, [u.id, u.name, colorFor(u.id), u.photo || null]);
-      const { rows } = await q(`SELECT id,name,color,photo FROM users WHERE id=$1`, [u.id]);
+      const { rows } = await q(`INSERT INTO users(id,name,color,photo) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, photo=EXCLUDED.photo RETURNING id,name,color,photo`, [u.id, u.name, colorFor(u.id), u.photo || null]);
       return rows[0];
     },
     async getUser(id) { const { rows } = await q(`SELECT id,name,color,photo FROM users WHERE id=$1`, [id]); return rows[0] || null; },

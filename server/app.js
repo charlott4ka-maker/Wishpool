@@ -14,10 +14,33 @@ export async function createApp() {
   app.use(cors());
   app.use(express.json({ limit: "6mb" }));
 
+  // Photos stored inline (data: URLs) are served as separate, long-cached URLs
+  // instead of being inlined into every JSON response: lists stay tiny and the
+  // phone/CDN download each photo only once. Wish photos never change after
+  // creation, so the URL can be cached forever.
+  const imgUrls = (w, list) => list.map((x, i) => x.startsWith("data:") ? `/api/img/${w.id}/${i}` : x);
   const pubWish = (w) => {
-    const images = w.images && w.images.length ? w.images : (w.image ? [w.image] : []);
+    const images = imgUrls(w, w.images && w.images.length ? w.images : (w.image ? [w.image] : []));
     return { id: w.id, emoji: w.emoji, image: images[0] || null, images, link: w.link, title: w.title, price: w.price };
   };
+  const withReservations = (ws, me) => Promise.all(ws.map(async w => {
+    const g = await store.getReservation(w.id);
+    return { ...pubWish(w), reservedByMe: g === me, taken: !!g && g !== me };
+  }));
+
+  // Public: <img> tags can't send the initData header. Wish ids are random.
+  app.get("/api/img/:wid/:i", async (req, res, next) => {
+    try {
+      const w = await store.getWish(req.params.wid);
+      const list = w ? (w.images && w.images.length ? w.images : (w.image ? [w.image] : [])) : [];
+      const src = list[Number(req.params.i)];
+      const m = typeof src === "string" && src.match(/^data:(image\/(?:jpeg|png|webp|gif));base64,(.*)$/s);
+      if (!m) return res.status(404).end();
+      res.set("Content-Type", m[1]);
+      res.set("Cache-Control", "public, max-age=31536000, s-maxage=31536000, immutable");
+      res.send(Buffer.from(m[2], "base64"));
+    } catch (e) { next(e); }
+  });
 
   // Bot webhook (Telegram -> us): before the initData auth, it has its own secret.
   app.post("/api/tg-webhook", botRoute(BOT_TOKEN));
@@ -33,22 +56,20 @@ export async function createApp() {
 
   api.get("/state", async (req, res) => {
     const me = req.user.id;
-    const raw = await store.userWishes(me);
-    const wishes = [];
-    for (const w of raw) wishes.push({ ...pubWish(w), rooms: await store.wishRoomIds(w.id) });
-    const roomIds = await store.userRoomIds(me);
-    const rooms = [];
-    for (const id of roomIds) {
-      const r = await store.getRoom(id);
-      if (!r) continue;
-      const members = await store.roomMembers(id);
-      rooms.push({
-        id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint,
-        members: members.map(u => pubUser(u, me)),
-        sharedCount: (await store.wishesSharedTo(me, id)).length,
-      });
-    }
-    res.json({ me: await store.getUser(me), wishes, rooms });
+    // Independent lookups run in parallel instead of one round trip after another.
+    const [raw, roomIds, meUser] = await Promise.all([store.userWishes(me), store.userRoomIds(me), store.getUser(me)]);
+    const [wishes, rooms] = await Promise.all([
+      Promise.all(raw.map(async w => ({ ...pubWish(w), rooms: await store.wishRoomIds(w.id) }))),
+      Promise.all(roomIds.map(async id => {
+        const [r, members, shared] = await Promise.all([store.getRoom(id), store.roomMembers(id), store.wishesSharedTo(me, id)]);
+        return r && {
+          id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint,
+          members: members.map(u => pubUser(u, me)),
+          sharedCount: shared.length,
+        };
+      })),
+    ]);
+    res.json({ me: meUser, wishes, rooms: rooms.filter(Boolean) });
   });
 
   api.post("/wishes", async (req, res) => {
@@ -141,14 +162,11 @@ export async function createApp() {
     const r = await store.getRoom(req.params.id);
     if (!r || !(await store.isMember(r.id, me))) return res.status(404).json({ error: "not_found" });
     const members = await store.roomMembers(r.id);
-    const lists = [];
-    for (const u of members.filter(x => x.id !== me)) {
-      const ws = await store.wishesSharedTo(u.id, r.id);
-      const wishes = [];
-      for (const w of ws) { const g = await store.getReservation(w.id); wishes.push({ ...pubWish(w), reservedByMe: g === me, taken: !!g && g !== me }); }
-      lists.push({ member: pubUser(u), wishes });
-    }
-    const mine = (await store.wishesSharedTo(me, r.id)).map(pubWish); // owner sees no reservations (surprise-safe)
+    const [lists, mineRaw] = await Promise.all([
+      Promise.all(members.filter(x => x.id !== me).map(async u => ({ member: pubUser(u), wishes: await withReservations(await store.wishesSharedTo(u.id, r.id), me) }))),
+      store.wishesSharedTo(me, r.id),
+    ]);
+    const mine = mineRaw.map(pubWish); // owner sees no reservations (surprise-safe)
     res.json({
       room: { id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, owner: r.ownerId === me },
       members: members.map(u => pubUser(u, me)),
@@ -193,9 +211,7 @@ export async function createApp() {
     const draw = await store.getDraw(req.params.id);
     if (!draw || !draw.assignments[me]) return res.json({ target: null });
     const u = await store.getUser(draw.assignments[me]);
-    const ws = await store.wishesSharedTo(u.id, req.params.id);
-    const wishes = [];
-    for (const w of ws) { const g = await store.getReservation(w.id); wishes.push({ ...pubWish(w), reservedByMe: g === me, taken: !!g && g !== me }); }
+    const wishes = await withReservations(await store.wishesSharedTo(u.id, req.params.id), me);
     res.json({ budget: draw.budget, target: pubUser(u), wishes });
   });
 

@@ -593,6 +593,12 @@ function WishRow({ w, right, noPhoto }) {
 /* =======================================================================
    APP
 ======================================================================= */
+// Per Telegram account, so two accounts on one phone never see each other's cache.
+const CACHE_KEY = () => {
+  let id = "";
+  try { const u = window.Telegram.WebApp.initDataUnsafe.user; id = u && u.id ? String(u.id) : ""; } catch (e) {}
+  return "wp_cache_" + id;
+};
 export default function App() {
   const [lang, setLang] = useState(() => store.get("wp_lang", null) || detectLang());
   useEffect(() => { store.set("wp_lang", lang); }, [lang]);
@@ -603,10 +609,13 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const online = api.online();
   const [me, setMe] = useState(null);
-  const [rooms, setRooms] = useState(() => store.get("wp_rooms", []));
-  const [wishes, setWishes] = useState(() => store.get("wp_wishes", []));
+  // Online: start from the last state we got from the server (shown instantly),
+  // then refresh in the background. Offline/local mode keeps its own keys.
+  const [cached] = useState(() => online ? store.get(CACHE_KEY(), null) : null);
+  const [rooms, setRooms] = useState(() => online ? (cached ? cached.rooms : []) : store.get("wp_rooms", []));
+  const [wishes, setWishes] = useState(() => online ? (cached ? cached.wishes : []) : store.get("wp_wishes", []));
   const [reserved, setReserved] = useState(() => store.get("wp_reserved", {}));
-  const [loading, setLoading] = useState(online);
+  const [loading, setLoading] = useState(online && !cached);
 
   // The old dev-only "Glass" preview is gone; drop its saved choice.
   useEffect(() => { try { window.localStorage.removeItem("wp_design_system"); } catch (e) {} }, []);
@@ -615,6 +624,7 @@ export default function App() {
   useEffect(() => { if (!online) store.set("wp_rooms", rooms); }, [rooms, online]);
   useEffect(() => { if (!online) store.set("wp_wishes", wishes); }, [wishes, online]);
   useEffect(() => { if (!online) store.set("wp_reserved", reserved); }, [reserved, online]);
+  useEffect(() => { if (online && !loading) store.set(CACHE_KEY(), { wishes, rooms }); }, [wishes, rooms, online, loading]);
 
   const showToast = (msg, ms = 1800) => { setToast(msg); setTimeout(() => setToast(null), ms); };
 
