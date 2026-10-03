@@ -423,7 +423,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
       style={{
         ...styles, opacity: disabled ? 0.45 : 1, width: full ? "100%" : "auto",
         display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-        height: H[size], padding: size === "lg" ? "0 24px" : "0 16px", borderRadius: 999, fontSize: size === "lg" ? 16 : 14.5, fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap",
+        height: H[size], padding: size === "lg" && !full ? "0 24px" : "0 16px", minWidth: 0, borderRadius: 999, fontSize: size === "lg" ? 16 : 14.5, fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap",
         fontFamily: font, cursor: disabled ? "default" : "pointer",
       }}
     >
@@ -469,7 +469,7 @@ function Sheet({ title, onClose, children }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title || ""}</div>
@@ -979,7 +979,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
         <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newRoom")}</div>
 
@@ -1025,7 +1025,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
         <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("editRoom")}</div>
 
@@ -1300,10 +1300,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           {coupleFull ? (
             <div style={{ marginTop: 16, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>{t("coupleFullHint")}</div>
           ) : (
-            <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center" }}>
-              <Pill kind={room.type === "couple" ? "primary" : "glass"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
+            <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
+              <div style={{ flex: 1, display: "flex" }}><Pill full kind={room.type === "couple" ? "primary" : "glass"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill></div>
               {room.type !== "couple" && (
-                <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
+                <div style={{ flex: 1, display: "flex" }}><Pill full kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill></div>
               )}
             </div>
           )}
@@ -1613,7 +1613,7 @@ function AddSheet({ rooms, onClose, onSave }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
         <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newWish")}</div>
 
