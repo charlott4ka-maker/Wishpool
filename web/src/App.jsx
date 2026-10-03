@@ -235,6 +235,15 @@ const useT = () => useContext(LangCtx);
 const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
 /* ---------- little ui atoms ---------- */
+// Emoji drawn as a die-cut sticker: a white outline built from stacked hard
+// drop-shadows (they compound, so 4 offsets give a solid rim), plus a soft shadow.
+function stickerFilter(size) {
+  const o = Math.max(1, Math.round(size * 0.065 * 2) / 2);
+  return `drop-shadow(${o}px 0 0 #fff) drop-shadow(-${o}px 0 0 #fff) drop-shadow(0 ${o}px 0 #fff) drop-shadow(0 -${o}px 0 #fff) drop-shadow(0 ${o * 2}px ${o * 3}px rgba(0,0,0,0.45))`;
+}
+function Sticker({ emoji, size, style }) {
+  return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
+}
 function ImageLightbox({ src, onClose }) {
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp .2s ease" }}>
@@ -261,9 +270,7 @@ function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
       {image ? (
         <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : (
-        <span style={{ fontSize: size * 0.5, lineHeight: 1, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }}>
-          {emoji}
-        </span>
+        <Sticker emoji={emoji} size={size * 0.5} />
       )}
     </div>
     {open && <ImageLightbox src={image} onClose={() => setOpen(false)} />}
@@ -383,7 +390,7 @@ function FolderCover({ w, size }) {
     }}>
       {w.image
         ? <img src={w.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        : <span style={{ fontSize: size * 0.5, lineHeight: 1 }}>{w.emoji}</span>}
+        : <Sticker emoji={w.emoji} size={size * 0.5} />}
     </div>
   );
 }
@@ -435,7 +442,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
 function Empty({ emoji, title, sub }) {
   return (
     <div style={{ padding: "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-      <div style={{ fontSize: 72, lineHeight: 1, filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.5))" }}>{emoji}</div>
+      <Sticker emoji={emoji} size={72} />
       <div style={{ color: C.t1, fontSize: 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
     </div>
@@ -996,7 +1003,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
           <button key={e} onClick={() => setEmoji(e)} style={{
             width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
             background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-          }}>{e}</button>
+          }}><Sticker emoji={e} size={22} /></button>
         ))}
       </div>
 
@@ -1033,7 +1040,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : groups.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-          <div style={{ fontSize: 56, lineHeight: 1 }}>🔗</div>
+          <Sticker emoji="🔗" size={56} />
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("invitedNobody")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
           {rooms.length > 0 && (
@@ -1087,7 +1094,7 @@ function HistorySheet({ online, onClose }) {
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : gifts.length === 0 ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
-          <div style={{ fontSize: 56, lineHeight: 1 }}>🎁</div>
+          <Sticker emoji="🎁" size={56} />
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("historyEmptyTitle")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
         </div>
@@ -1505,7 +1512,7 @@ function AddSheet({ rooms, onClose, onSave }) {
             <button key={e} onClick={() => setEmoji(e)} style={{
               width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
               background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-            }}>{e}</button>
+            }}><Sticker emoji={e} size={22} /></button>
           ))}
         </div>
       )}
