@@ -1,11 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
-// Montserrat, self-hosted (Latin + Cyrillic) so it works without Google Fonts.
-import "@fontsource/montserrat/500.css";
-import "@fontsource/montserrat/600.css";
-import "@fontsource/montserrat/700.css";
-import "@fontsource/montserrat/800.css";
 
 // --- Telegram Mini App bootstrap ---
 const tg = window.Telegram && window.Telegram.WebApp;
