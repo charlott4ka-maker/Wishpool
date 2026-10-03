@@ -413,7 +413,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
   const styles = {
     primary: { background: C.blue, color: "#fff", border: "none" },
     glass: { background: "rgba(255,255,255,0.18)", color: "#fff", border: "1px solid rgba(255,255,255,0.28)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" },
-    ghost: { background: "transparent", color: C.t1, border: `1px solid ${C.line}` },
+    ghost: { background: "rgba(255,255,255,0.10)", color: C.t1, border: "none", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" },
     soft: { background: C.blueSoft, color: "#7FB0FF", border: `1px solid ${C.blueLine}` },
     green: { background: C.greenSoft, color: "#7EE29A", border: `1px solid rgba(52,199,89,0.4)` },
   }[kind];
