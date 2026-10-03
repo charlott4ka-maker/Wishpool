@@ -46,7 +46,13 @@ function tgStartParam() { try { return (window.Telegram && window.Telegram.WebAp
 async function apiReq(method, path, body) {
   const h = { "Content-Type": "application/json" };
   const d = tgInitData(); if (d) h["X-Init-Data"] = d;
-  const res = await fetch("/api" + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: "no-store" });
+  // Without a timeout a request made in airplane mode can hang forever (endless loading).
+  const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctl && setTimeout(() => ctl.abort(), method === "GET" ? 10000 : 30000);
+  let res;
+  try { res = await fetch("/api" + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: "no-store", signal: ctl ? ctl.signal : undefined }); }
+  catch (x) { try { window.dispatchEvent(new Event("wp-net-fail")); } catch (y) {} const e = new Error("network"); e.net = true; throw e; }
+  finally { if (timer) clearTimeout(timer); }
   if (!res.ok) { let e = {}; try { e = await res.json(); } catch (x) {} throw new Error(e.error || ("http_" + res.status)); }
   return res.json();
 }
@@ -613,13 +619,14 @@ export default function App() {
   const showToast = (msg, ms = 1800) => { setToast(msg); setTimeout(() => setToast(null), ms); };
 
   // netDown: the server can't be reached (no internet), so show the full-screen stub.
-  const [netDown, setNetDown] = useState(() => online && typeof navigator !== "undefined" && navigator.onLine === false);
+  const [netDown, setNetDown] = useState(() => typeof navigator !== "undefined" && navigator.onLine === false);
   const refreshState = async ({ quiet } = {}) => {
     try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms(st.rooms || []); setNetDown(false); return true; }
     catch (e) { if (!quiet) showToast(t("noConnection"), 3000); return false; }
   };
   const [retrying, setRetrying] = useState(false);
   const retryNet = async () => {
+    if (!online) { setNetDown(typeof navigator !== "undefined" && navigator.onLine === false); return; }
     if (retrying) return;
     setRetrying(true);
     const ok = await refreshState({ quiet: true });
@@ -627,12 +634,17 @@ export default function App() {
     if (ok) setLoading(false); else setNetDown(true);
   };
   useEffect(() => {
-    if (!online) return;
     const off = () => setNetDown(true);
     const on = () => { retryNet(); };
-    window.addEventListener("offline", off); window.addEventListener("online", on);
-    return () => { window.removeEventListener("offline", off); window.removeEventListener("online", on); };
+    window.addEventListener("offline", off); window.addEventListener("online", on); window.addEventListener("wp-net-fail", off);
+    return () => { window.removeEventListener("offline", off); window.removeEventListener("online", on); window.removeEventListener("wp-net-fail", off); };
   }, []); // eslint-disable-line
+  // While the stub is up, quietly retry every few seconds so it goes away by itself.
+  useEffect(() => {
+    if (!netDown) return;
+    const id = setInterval(() => { if (typeof navigator === "undefined" || navigator.onLine !== false) retryNet(); }, 5000);
+    return () => clearInterval(id);
+  }, [netDown]); // eslint-disable-line
 
   // Online: load state from server + auto-join a room from an invite deep-link (room__inviter).
   useEffect(() => {
