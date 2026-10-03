@@ -22,6 +22,9 @@ const C = {
 };
 // Every button / control is one of exactly two heights.
 const H = { lg: 52, sm: 40 };
+// Corner radii in Telegram's iOS style: grouped cards 26, tiles 18, sheets 32,
+// everything control-like is a full pill.
+const R = { card: 26, tile: 18, sheet: 32, pill: 999 };
 const font =
   '"Montserrat",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
 
@@ -311,7 +314,7 @@ function PhotoHeader({ images, height = 200, inset = 16 }) {
   const onScroll = (e) => { const el = e.currentTarget; setCur(Math.round(el.scrollLeft / el.clientWidth)); };
   return (
     <>
-      <div style={{ position: "relative", height, margin: `0 -${inset}px 4px`, borderRadius: "22px 22px 0 0", overflow: "hidden" }}>
+      <div style={{ position: "relative", height, margin: `0 -${inset}px 4px`, borderRadius: `${R.card}px ${R.card}px 0 0`, overflow: "hidden" }}>
         <div onScroll={onScroll} style={{ display: "flex", height: "100%", overflowX: n > 1 ? "auto" : "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
           {images.map((src, idx) => (
             <div key={idx} onClick={(e) => { e.stopPropagation(); setOpen(idx); }}
@@ -462,14 +465,14 @@ function Segmented({ options, value, onChange, style }) {
   );
 }
 function Card({ children, style, onClick }) {
-  return <div onClick={onClick} style={{ background: C.card, borderRadius: 22, ...style }}>{children}</div>;
+  return <div onClick={onClick} style={{ background: C.card, borderRadius: R.card, ...style }}>{children}</div>;
 }
 function Sheet({ title, onClose, children }) {
   // title may be omitted (just a close button), e.g. the "gift taken" sheet
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title || ""}</div>
@@ -798,7 +801,7 @@ export default function App() {
         {toast && (
           <div style={{
             position: "fixed", bottom: 108, left: "50%", transform: "translateX(-50%)",
-            background: C.card2, color: C.t1, padding: "12px 18px", borderRadius: 16,
+            background: C.card2, color: C.t1, padding: "12px 18px", borderRadius: R.pill,
             fontSize: 14.5, fontWeight: 600, border: `1px solid ${C.line}`, zIndex: 60,
             animation: "fadeUp .25s ease", maxWidth: 320, textAlign: "center",
           }}>{toast}</div>
@@ -979,7 +982,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
         <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newRoom")}</div>
 
@@ -1025,7 +1028,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
         <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("editRoom")}</div>
 
@@ -1036,7 +1039,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 16 }}>
           {emojiChoices.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
-              width: H.lg, height: H.lg, borderRadius: 16, fontSize: 22, cursor: "pointer",
+              width: H.lg, height: H.lg, borderRadius: R.tile, fontSize: 22, cursor: "pointer",
               background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
             }}><Sticker emoji={e} size={22} /></button>
           ))}
@@ -1312,7 +1315,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         </div>
       </div>
       {/* content sheet slides over the hero with rounded corners */}
-      <div style={{ position: "relative", marginTop: -28, background: C.bg, borderRadius: "28px 28px 0 0", padding: "24px 16px 140px", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
+      <div style={{ position: "relative", marginTop: -28, background: C.bg, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "24px 16px 140px", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
 
         <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} style={{ marginBottom: 16 }} />
 
@@ -1615,7 +1618,7 @@ function AddSheet({ rooms, onClose, onSave }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
         <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newWish")}</div>
 
@@ -1628,7 +1631,7 @@ function AddSheet({ rooms, onClose, onSave }) {
               <div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                   {images.map((src, i) => (
-                    <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: 16, background: `${C.card2} center / cover no-repeat url("${src}")` }}>
+                    <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: R.tile, background: `${C.card2} center / cover no-repeat url("${src}")` }}>
                       <button onClick={() => setImages(xs => xs.filter((_, j) => j !== i))} aria-label={t("remove")} style={{
                         position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 28, border: "none", cursor: "pointer",
                         background: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
@@ -1637,7 +1640,7 @@ function AddSheet({ rooms, onClose, onSave }) {
                   ))}
                   {images.length < MAX_PHOTOS && (
                     <button onClick={() => fileRef.current && fileRef.current.click()} aria-label={t("uploadPhoto")} style={{
-                      aspectRatio: "1", borderRadius: 16, cursor: "pointer", background: C.card2, border: "none", color: C.t2,
+                      aspectRatio: "1", borderRadius: R.tile, cursor: "pointer", background: C.card2, border: "none", color: C.t2,
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}><Plus size={24} /></button>
                   )}
@@ -1646,7 +1649,7 @@ function AddSheet({ rooms, onClose, onSave }) {
               </div>
             ) : (
               <button onClick={() => fileRef.current && fileRef.current.click()} style={{
-                width: "100%", padding: "26px", borderRadius: 16, cursor: "pointer",
+                width: "100%", padding: "26px", borderRadius: R.card, cursor: "pointer",
                 background: C.card2, border: "none", color: C.t2, fontFamily: font,
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
               }}>
@@ -1660,7 +1663,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(WISH_EMOJI.length, 7)}, 1fr)`, gap: 8, marginBottom: 16 }}>
             {WISH_EMOJI.map(e => (
               <button key={e} onClick={() => setEmoji(e)} style={{
-                width: "100%", height: H.lg, borderRadius: 14, fontSize: 22, cursor: "pointer",
+                width: "100%", height: H.lg, borderRadius: R.tile, fontSize: 22, cursor: "pointer",
                 background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
               }}><Sticker emoji={e} size={22} /></button>
             ))}
@@ -1695,11 +1698,11 @@ function Field({ label, value, onChange, placeholder }) {
       <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{label}</div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
-          width: "100%", background: C.card2, border: `1px solid ${C.line}`, borderRadius: 14,
+          width: "100%", background: C.card2, border: "1px solid transparent", borderRadius: R.pill,
           height: H.lg, padding: "0 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
         onFocus={e => e.target.style.borderColor = C.blueLine}
-        onBlur={e => e.target.style.borderColor = C.line} />
+        onBlur={e => e.target.style.borderColor = "transparent"} />
     </div>
   );
 }
