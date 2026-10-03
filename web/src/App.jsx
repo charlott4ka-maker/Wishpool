@@ -705,7 +705,7 @@ export default function App() {
   // Online: start from the last state we got from the server (shown instantly),
   // then refresh in the background. Offline/local mode keeps its own keys.
   const [cached] = useState(() => online ? store.get(CACHE_KEY(), null) : null);
-  const [rooms, setRooms] = useState(() => online ? (cached ? cached.rooms : []) : store.get("wp_rooms", []));
+  const [rooms, setRooms] = useState(() => (online ? (cached ? cached.rooms : []) : store.get("wp_rooms", [])).map(fixRoom));
   const [wishes, setWishes] = useState(() => online ? (cached ? cached.wishes : []) : store.get("wp_wishes", []));
   const [reserved, setReserved] = useState(() => store.get("wp_reserved", {}));
   const [loading, setLoading] = useState(online && !cached);
@@ -724,7 +724,7 @@ export default function App() {
   // netDown: the server can't be reached (no internet), so show the full-screen stub.
   const [netDown, setNetDown] = useState(() => typeof navigator !== "undefined" && navigator.onLine === false);
   const refreshState = async ({ quiet } = {}) => {
-    try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms(st.rooms || []); setNetDown(false); return true; }
+    try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms((st.rooms || []).map(fixRoom)); setNetDown(false); return true; }
     catch (e) { if (!quiet) showToast(t("noConnection"), 3000); return false; }
   };
   const [retrying, setRetrying] = useState(false);
@@ -1249,7 +1249,9 @@ const ROOM_PRESETS = [
   { type: "team", key: "roomTeam" },
 ];
 const ROOM_STICKERS = STICKERS.map(n => "stk:" + n);
-const ROOM_COLORS = ["#2E7DF6", "#38BDF8", "#34C759", "#FFB020", "#FF7A45", "#FF4D8D", "#AF52DE"];
+const ROOM_COLORS = ["#2E7DF6", "#38BDF8", "#34C759", "#FF7A45", "#FF4D8D", "#AF52DE"];
+// Yellow was dropped from the palette: rooms that still have it show as orange.
+const fixRoom = (r) => r && String(r.tint).toUpperCase() === "#FFB020" ? { ...r, tint: "#FF7A45" } : r;
 
 const sheetLabel = { color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 };
 function RoomStickerPicker({ value, onChange }) {
