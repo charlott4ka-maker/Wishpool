@@ -397,12 +397,18 @@ function compressImage(file, maxDim = 1000, quality = 0.82) {
 }
 // Telegram profile photo when we have one; coloured initial otherwise (no photo,
 // hidden by the user's privacy settings, or the image failed to load).
-function Avatar({ m, size = 34 }) {
+// `cut` = how much the next avatar in a stack overlaps this one: a crescent is
+// masked out of this avatar's right side (a gap, not a painted ring), so the
+// stack reads cleanly on any background.
+function Avatar({ m, size = 34, cut = 0 }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => { setFailed(false); }, [m.photo]);
+  const gap = Math.max(2, size * 0.07);
+  const mask = cut ? `radial-gradient(circle at ${size * 1.5 - cut}px 50%, transparent ${size / 2 + gap}px, #000 ${size / 2 + gap + 0.5}px)` : undefined;
   return (
     <div style={{
       width: size, height: size, borderRadius: size, background: m.color, overflow: "hidden",
+      ...(mask ? { maskImage: mask, WebkitMaskImage: mask } : null),
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0,
     }}>
@@ -948,8 +954,8 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
                     <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
                   </div>
                   <div style={{ display: "flex", marginRight: 6 }}>
-                    {r.members.slice(0, 3).map((m, i) => (
-                      <div key={m.id} style={{ marginLeft: i ? -10 : 0 }}><Avatar m={m} size={30} /></div>
+                    {r.members.slice(0, 3).map((m, i, a) => (
+                      <div key={m.id} style={{ marginLeft: i ? -10 : 0 }}><Avatar m={m} size={30} cut={i < a.length - 1 ? 10 : 0} /></div>
                     ))}
                   </div>
                   <ChevronRight size={20} color={C.t3} />
@@ -1301,7 +1307,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           <div style={{ color: "#fff", fontSize: 26, fontWeight: 800, marginTop: 12, textShadow: "0 1px 12px rgba(0,0,0,0.25)" }}>{room.name}</div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
             {members.map((m, i) => (
-              <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
+              <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} cut={i < members.length - 1 ? 10 : 0} /></div>
             ))}
             {!coupleFull && (
               <button onClick={onInvite} aria-label={t("invite")} style={{ marginLeft: 8, width: H.sm, height: H.sm, borderRadius: H.sm, border: "1.5px dashed rgba(255,255,255,0.85)", background: "rgba(255,255,255,0.12)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
@@ -1535,7 +1541,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
             <div style={{ height: 16 }} />
             <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("participants", { n: room.members.length })}</div>
             <div style={{ display: "flex" }}>
-              {room.members.map((m, i) => <div key={m.id} style={{ marginLeft: i ? -8 : 0 }}><Avatar m={m} size={34} /></div>)}
+              {room.members.map((m, i) => <div key={m.id} style={{ marginLeft: i ? -8 : 0 }}><Avatar m={m} size={34} cut={i < room.members.length - 1 ? 8 : 0} /></div>)}
             </div>
           </Card>
 
