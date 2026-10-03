@@ -237,7 +237,7 @@ const useT = () => useContext(LangCtx);
 // Wish icons are image stickers (web/public/stickers/<name>.webp), stored in
 // the wish's `emoji` field as "stk:<name>" and drawn by <Sticker> with the
 // same white outline as emoji. Older wishes keep their plain emoji.
-const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha"];
+const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock"];
 const WISH_EMOJI = STICKERS.map(n => "stk:" + n);
 
 /* ---------- little ui atoms ---------- */
