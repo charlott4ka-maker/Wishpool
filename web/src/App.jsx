@@ -967,7 +967,7 @@ function RoomFolder({ room, wishes, onOpen }) {
   return (
     <div onClick={onOpen} style={{ cursor: "pointer", textAlign: "center", animation: "fadeUp .3s ease" }}>
       <div ref={box} style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
-        <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: "rgba(255,255,255,0.10)" }} />
+        <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: hex(room.tint, 0.22) }} />
         {photos.map((src, i) => {
           const sp = spots[i];
           return (
@@ -982,11 +982,11 @@ function RoomFolder({ room, wishes, onOpen }) {
           <>
             <div style={{
               position: "absolute", inset: 0, zIndex: 3, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
-              background: "linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.12) 100%)",
+              background: `linear-gradient(180deg, ${hex(room.tint, 0.42)} 0%, ${hex(room.tint, 0.26)} 100%)`,
               backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)",
             }} />
             <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
-              <path d={fp.top} fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1" />
+              <path d={fp.top} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
             </svg>
           </>
         )}
