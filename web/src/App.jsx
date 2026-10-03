@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useContext, createContext } from "react";
+import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
   Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
@@ -117,7 +118,7 @@ const STR = {
   poolSub: { uk: "Спільний пул. Звідси шериш у кімнати.", ru: "Общий пул. Отсюда шеришь в комнаты.", en: "Your pool. Share items into rooms from here." },
   poolEmptyTitle: { uk: "Пул поки порожній", ru: "Пул пока пустой", en: "Your pool is empty" },
   poolEmptySub: { uk: "Додай перше бажання — потім вирішиш, кому його показати.", ru: "Добавь первое желание — потом решишь, кому его показать.", en: "Add your first wish — decide who sees it later." },
-  privateNote: { uk: "🔒 Приватне — не бачить ніхто", ru: "🔒 Приватное — не видит никто", en: "🔒 Private — nobody sees it" },
+  privateNote: { uk: "Приватне — не бачить ніхто", ru: "Приватное — не видит никто", en: "Private — nobody sees it" },
   showInRooms: { uk: "Показати в кімнатах", ru: "Показать в комнатах", en: "Show in rooms" },
   noRoomsHint: { uk: "Поки немає кімнат — створи на вкладці «Кімнати».", ru: "Пока нет комнат — создай на вкладке «Комнаты».", en: "No rooms yet — create one on the Rooms tab." },
   deleteWish: { uk: "Видалити бажання", ru: "Удалить желание", en: "Delete wish" },
@@ -151,7 +152,11 @@ const STR = {
   inviteFriends: { uk: "Запросити друзів", ru: "Пригласить друзей", en: "Invite friends" },
   youGift: { uk: "Ви даруєте", ru: "Вы дарите", en: "You're gifting" },
   taken: { uk: "Зайнято", ru: "Занято", en: "Taken" },
-  take: { uk: "Беру 🎁", ru: "Беру 🎁", en: "I'll get it 🎁" },
+  take: { uk: "Беру", ru: "Беру", en: "I'll get it" },
+  giftTakenTitle: { uk: "Ти даруєш «{name}»", ru: "Ты даришь «{name}»", en: "You're gifting «{name}»" },
+  giftTakenBody: { uk: "Інші учасники не бачать, хто що взяв, а власник бажання не дізнається до свята.", ru: "Другие участники не видят, кто что взял, а владелец желания не узнает до праздника.", en: "Others can't see who took what, and the wish owner won't find out until the big day." },
+  giftTakenOk: { uk: "Супер", ru: "Супер", en: "Great" },
+  photosHint: { uk: "До 3 фото", ru: "До 3 фото", en: "Up to 3 photos" },
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
   reserveNote: { uk: "Резерв бачать дарувальники, але власник бажання — ні", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
   nothingSharedTitle: { uk: "Ти ще нічим сюди не поділився", ru: "Ты ещё ничем сюда не поделился", en: "You haven't shared anything here" },
@@ -184,7 +189,7 @@ const STR = {
   whatYouWantPh: { uk: "Напр., бездротові навушники", ru: "Например, беспроводные наушники", en: "e.g. wireless headphones" },
   priceOpt: { uk: "Ціна (необов’язково)", ru: "Цена (необязательно)", en: "Price (optional)" },
   linkOpt: { uk: "Посилання на товар (необов’язково)", ru: "Ссылка на товар (необязательно)", en: "Product link (optional)" },
-  nothingSelectedPrivate: { uk: "Нічого не вибрано — залишиться приватним 🔒", ru: "Ничего не выбрано — останется приватным 🔒", en: "Nothing selected — it stays private 🔒" },
+  nothingSelectedPrivate: { uk: "Нічого не вибрано — залишиться приватним", ru: "Ничего не выбрано — останется приватным", en: "Nothing selected — it stays private" },
   saveWish: { uk: "Зберегти бажання", ru: "Сохранить желание", en: "Save wish" },
 
   statsLine: { uk: "бажань: {w} · кімнат: {r}", ru: "желаний: {w} · комнат: {r}", en: "{w} wishes · {r} rooms" },
@@ -219,7 +224,6 @@ const STR = {
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
 
   linkCopied: { uk: "Посилання скопійовано", ru: "Ссылка скопирована", en: "Link copied" },
-  youGiftHidden: { uk: "Ви даруєте. Власник не бачить 🤫", ru: "Вы дарите. Владелец не видит 🤫", en: "You're gifting. The owner can't see 🤫" },
   inviteText: { uk: "Залітай у кімнату «{name}» у Wishpool — зберемо вішлисти й обміняємось подарунками 🎁", ru: "Залетай в комнату «{name}» в Wishpool — соберём вишлисты и обменяемся подарками 🎁", en: "Join the «{name}» room in Wishpool — let's build wishlists and swap gifts 🎁" },
 };
 
@@ -235,18 +239,108 @@ const useT = () => useContext(LangCtx);
 const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
 /* ---------- little ui atoms ---------- */
-function ImageLightbox({ src, onClose }) {
+// Emoji drawn as a die-cut sticker with a crisp, evenly rounded white outline.
+// An SVG filter blurs the silhouette and thresholds it back to a hard edge, so
+// the rim is the same width all round. <StickerDefs/> mounts the filters once.
+const STICKER_WIDTHS = [1.5, 2, 2.5, 3, 3.5, 4, 5];
+function StickerDefs() {
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp .2s ease" }}>
-      <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 38, height: 38, borderRadius: 38, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <X size={18} />
-      </button>
-      <img src={src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92%", maxHeight: "85vh", borderRadius: 16, objectFit: "contain" }} />
-    </div>
+    <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+      {STICKER_WIDTHS.map(w => (
+        <filter key={w} id={`stk-${w * 10}`} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation={w / 1.64} result="b" />
+          <feComponentTransfer in="b" result="m"><feFuncA type="linear" slope="30" intercept="-1" /></feComponentTransfer>
+          <feFlood floodColor="#fff" />
+          <feComposite in2="m" operator="in" result="rim" />
+          <feMerge><feMergeNode in="rim" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      ))}
+    </svg>
   );
 }
-function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
+function stickerFilter(size) {
+  const want = size * 0.07;
+  const w = STICKER_WIDTHS.reduce((a, b) => Math.abs(b - want) < Math.abs(a - want) ? b : a);
+  return `url(#stk-${w * 10}) drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`;
+}
+// Image stickers (web/public/stickers/<name>.png) are stored as "stk:<name>".
+function Sticker({ emoji, size, style }) {
+  if (typeof emoji === "string" && emoji.startsWith("stk:")) {
+    return <img src={`/stickers/${emoji.slice(4)}.png`} alt="" draggable={false}
+      style={{ height: size * 1.1, width: size * 1.1, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: stickerFilter(size), ...style }} />;
+  }
+  return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
+}
+const wishImages = (w) => (w && w.images && w.images.length ? w.images : (w && w.image ? [w.image] : []));
+// Full-screen photo viewer, rendered into <body> so no ancestor can trap it.
+// With several photos: swipe or arrows to flip, counter at the top.
+function ImageLightbox({ src, images, start = 0, onClose }) {
+  const list = images && images.length ? images : [src];
+  const [i, setI] = useState(Math.min(start, list.length - 1));
+  const touch = useRef(null);
+  const go = (d) => setI(x => (x + d + list.length) % list.length);
+  const stop = (e) => e.stopPropagation();
+  const roundBtn = { background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: 40, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+  const arrow = (d) => list.length > 1 && (
+    <button onClick={(e) => { stop(e); go(d); }} aria-label={d < 0 ? "Previous" : "Next"}
+      style={{ ...roundBtn, position: "absolute", top: "50%", [d < 0 ? "left" : "right"]: 12, transform: "translateY(-50%)" }}>
+      {d < 0 ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+    </button>
+  );
+  return createPortal(
+    <div onClick={(e) => { stop(e); onClose(); }}
+      onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => { if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; touch.current = null; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); }}
+      style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.94)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp .2s ease", fontFamily: font }}>
+      {list.length > 1 && <div style={{ position: "absolute", top: 26, left: 0, right: 0, textAlign: "center", color: C.t2, fontSize: 14, fontWeight: 600 }}>{i + 1} / {list.length}</div>}
+      <button onClick={(e) => { stop(e); onClose(); }} aria-label="Close" style={{ ...roundBtn, position: "absolute", top: 16, right: 16 }}><X size={18} /></button>
+      <img src={list[i]} alt="" onClick={stop} style={{ maxWidth: "92%", maxHeight: "80vh", borderRadius: 16, objectFit: "contain" }} />
+      {arrow(-1)}{arrow(1)}
+    </div>,
+    document.body
+  );
+}
+// Wish photos across the top of a card, one at a time: swipe in the card,
+// dots + "1/3" badge show there are more, tap opens the full viewer.
+function PhotoHeader({ images, height = 200, inset = 16 }) {
+  const [open, setOpen] = useState(null);
+  const [cur, setCur] = useState(0);
+  const n = images.length;
+  const onScroll = (e) => { const el = e.currentTarget; setCur(Math.round(el.scrollLeft / el.clientWidth)); };
+  return (
+    <>
+      <div style={{ position: "relative", height, margin: `0 -${inset}px 4px`, borderRadius: "22px 22px 0 0", overflow: "hidden" }}>
+        <div onScroll={onScroll} style={{ display: "flex", height: "100%", overflowX: n > 1 ? "auto" : "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+          {images.map((src, idx) => (
+            <div key={idx} onClick={(e) => { e.stopPropagation(); setOpen(idx); }}
+              style={{ flex: "0 0 100%", height: "100%", scrollSnapAlign: "start", cursor: "zoom-in", background: `${C.card2} center / cover no-repeat url("${src}")` }} />
+          ))}
+        </div>
+        {n > 1 && (
+          <>
+            <div style={{ position: "absolute", top: 12, right: 12, padding: "4px 10px", borderRadius: 999, background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 12.5, fontWeight: 600, pointerEvents: "none" }}>{cur + 1}/{n}</div>
+            <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6, pointerEvents: "none" }}>
+              {images.map((_, idx) => (
+                <span key={idx} style={{ width: idx === cur ? 18 : 6, height: 6, borderRadius: 6, background: idx === cur ? "#fff" : "rgba(255,255,255,0.5)", transition: "width .25s, background .25s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      {open != null && <ImageLightbox images={images} start={open} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+function GlossTile({ emoji, image, images, size = 92, tint = "#2E7DF6", bare = false }) {
   const [open, setOpen] = useState(false);
+  // bare: an emoji as a free-standing sticker, no tile behind it
+  if (bare && !image) {
+    return (
+      <div style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Sticker emoji={emoji} size={size * 0.56} />
+      </div>
+    );
+  }
   return (
     <>
     <div
@@ -256,19 +350,17 @@ function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
         background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.22)} 0%, ${C.card2} 55%, ${C.card} 100%)`,
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-        border: `1px solid ${C.line}`, flexShrink: 0, overflow: "hidden", position: "relative",
+        flexShrink: 0, overflow: "hidden", position: "relative",
         cursor: image ? "zoom-in" : "default",
       }}
     >
       {image ? (
         <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : (
-        <span style={{ fontSize: size * 0.5, lineHeight: 1, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }}>
-          {emoji}
-        </span>
+        <Sticker emoji={emoji} size={size * 0.5} />
       )}
     </div>
-    {open && <ImageLightbox src={image} onClose={() => setOpen(false)} />}
+    {open && <ImageLightbox src={image} images={images} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -347,16 +439,17 @@ function Chip({ children, active, onClick, color }) {
   );
 }
 function Card({ children, style, onClick }) {
-  return <div onClick={onClick} style={{ background: C.card, borderRadius: 22, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
+  return <div onClick={onClick} style={{ background: C.card, borderRadius: 22, ...style }}>{children}</div>;
 }
 function Sheet({ title, onClose, children }) {
+  // title may be omitted (just a close button), e.g. the "gift taken" sheet
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-          <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
+          <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title || ""}</div>
           <button onClick={onClose} style={{ background: C.card2, border: "none", color: C.t2, width: 32, height: 32, borderRadius: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <X size={18} />
           </button>
@@ -369,7 +462,7 @@ function Sheet({ title, onClose, children }) {
 function Empty({ emoji, title, sub }) {
   return (
     <div style={{ padding: "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-      <div style={{ fontSize: 72, lineHeight: 1, filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.5))" }}>{emoji}</div>
+      <Sticker emoji={emoji} size={72} />
       <div style={{ color: C.t1, fontSize: 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
     </div>
@@ -412,10 +505,11 @@ function SkeletonScreen({ tab }) {
 }
 
 /* ---------- wish card ---------- */
-function WishRow({ w, right }) {
+function WishRow({ w, right, noPhoto }) {
+  const imgs = wishImages(w);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px" }}>
-      <GlossTile emoji={w.emoji} image={w.image} size={52} />
+      <GlossTile emoji={w.emoji} image={noPhoto ? null : imgs[0]} images={imgs} size={52} bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{w.price}</div>}
@@ -547,11 +641,15 @@ export default function App() {
     showToast(t("roomDeleted"));
   };
 
-  const reserve = async (wid) => {
+  const [celebrate, setCelebrate] = useState(null);
+  const reserve = async (wish) => {
+    const wid = wish.id;
     if (online) {
       try { await api.reserve(wid); } catch (e) { showToast(t("noConnection"), 3000); return; }
     }
-    setReserved(r => ({ ...r, [wid]: "you" })); showToast(t("youGiftHidden"));
+    setReserved(r => ({ ...r, [wid]: "you" }));
+    setCelebrate({ title: wish.title });
+    try { const tg = tgWebApp(); tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred("success"); } catch (e) {}
   };
   const unreserve = async (wid) => {
     if (online) {
@@ -589,6 +687,7 @@ export default function App() {
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
     <div style={{ background: C.bg, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font }}>
+      <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -686,6 +785,8 @@ export default function App() {
           <InvitesSheet online={online} rooms={rooms} onShare={shareInvite} onClose={() => setOverlay(null)} />
         )}
 
+        {celebrate && <GiftTakenSheet title={celebrate.title} onClose={() => setCelebrate(null)} />}
+
         {toast && (
           <div style={{
             position: "fixed", bottom: 108, left: "50%", transform: "translateX(-50%)",
@@ -766,19 +867,11 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {wishes.map(w => (
-            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: "6px 16px 14px", cursor: "pointer" }}>
-              <WishRow w={w} right={
+            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `${wishImages(w).length ? 0 : 6}px 16px ${openId === w.id ? 14 : 6}px`, cursor: "pointer" }}>
+              {wishImages(w).length > 0 && <PhotoHeader images={wishImages(w)} />}
+              <WishRow w={w} noPhoto={wishImages(w).length > 0} right={
                 <ChevronRight size={20} color={C.t2} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
               } />
-              <div style={{ display: "flex", gap: 7, flexWrap: "wrap", paddingTop: 4 }}>
-                {w.rooms.length === 0
-                  ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("privateNote")}</span>
-                  : rooms.filter(r => w.rooms.includes(r.id)).map(r => (
-                    <span key={r.id} style={{ fontSize: 12.5, color: C.t2, display: "inline-flex", gap: 5, alignItems: "center" }}>
-                      <span style={{ width: 7, height: 7, borderRadius: 7, background: r.tint }} />{r.emoji} {r.name}
-                    </span>
-                  ))}
-              </div>
               {openId === w.id && (
                 <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, animation: "fadeUp .2s ease", cursor: "default" }}>
                   <div style={{ color: C.t2, fontSize: 12.5, marginBottom: 8, fontWeight: 600 }}>{t("showInRooms")}</div>
@@ -787,10 +880,13 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                       ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
                       : rooms.map(r => (
                         <Chip key={r.id} active={w.rooms.includes(r.id)} color={r.tint} onClick={() => onToggleRoom(w.id, r.id)}>
-                          {r.emoji} {r.name}
+                          <Sticker emoji={r.emoji} size={15} />{r.name}
                         </Chip>
                       ))}
                   </div>
+                  {w.rooms.length === 0 && rooms.length > 0 && (
+                    <div style={{ color: C.t3, fontSize: 12.5, marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}><Lock size={13} />{t("privateNote")}</div>
+                  )}
                   <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 14, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 6 }}>
                     <Trash2 size={15} /> {t("deleteWish")}
                   </button>
@@ -828,7 +924,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
               <Card key={r.id} style={{ padding: 16, cursor: "pointer", overflow: "hidden", position: "relative" }}>
                 <div onClick={() => onOpen(r.id)} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ position: "absolute", inset: 0, background: `radial-gradient(80% 120% at 100% 0%, ${hex(r.tint, 0.14)} 0%, transparent 60%)`, pointerEvents: "none" }} />
-                  <GlossTile emoji={r.emoji} size={56} tint={r.tint} />
+                  <GlossTile emoji={r.emoji} size={56} tint={r.tint} bare />
                   <div style={{ flex: 1 }}>
                     <div style={{ color: C.t1, fontSize: 17.5, fontWeight: 700 }}>{r.name}</div>
                     <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
@@ -887,7 +983,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
           {ROOM_PRESETS.map(p => (
             <Chip key={p.type} active={preset.type === p.type} color={p.tint} onClick={() => setPreset(p)}>
-              {p.emoji} {t(p.key)}
+              <Sticker emoji={p.emoji} size={15} />{t(p.key)}
             </Chip>
           ))}
         </div>
@@ -934,7 +1030,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
             <button key={e} onClick={() => setEmoji(e)} style={{
               width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
               background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-            }}>{e}</button>
+            }}><Sticker emoji={e} size={22} /></button>
           ))}
         </div>
 
@@ -1063,7 +1159,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
             const isPending = pendingId === w.id;
             return (
               <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
-                <GlossTile emoji={w.emoji} image={w.image} size={44} />
+                <GlossTile emoji={w.emoji} image={wishImages(w)[0]} images={wishImages(w)} size={44} bare />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
@@ -1117,14 +1213,14 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   const others = members.filter(m => !m.you);
   const coupleFull = room.type === "couple" && members.length >= 2;
 
-  const doReserve = async (wid) => { await onReserve(wid); setTick(x => x + 1); };
+  const doReserve = async (w) => { await onReserve(w); setTick(x => x + 1); };
   const doUnreserve = async (wid) => { await onUnreserve(wid); setTick(x => x + 1); };
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
       ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, padding: "8px 12px" }}>{t("taken")}</span>
-        : <Pill kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
+        : <Pill kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
   );
 
   return (
@@ -1250,6 +1346,64 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 }
 
+/* ---------- "YOU TOOK A GIFT" CELEBRATION ---------- */
+// 🎉 party-popper confetti: two bursts from the bottom corners, tumbling down.
+// Skipped when the user prefers reduced motion.
+function Confetti() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const cv = ref.current; if (!cv || reduce) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = cv.width = window.innerWidth * dpr, Hh = cv.height = window.innerHeight * dpr;
+    const ctx = cv.getContext("2d");
+    const colors = ["#2E7DF6", "#7FB0FF", "#FFD36E", "#FF7AB6", "#7CE0C3", "#FFFFFF"];
+    const parts = [];
+    const shoot = (x, dir) => {
+      for (let i = 0; i < 70; i++) {
+        const a = -Math.PI / 2 + dir * (0.15 + Math.random() * 0.55), v = (9 + Math.random() * 9) * dpr;
+        parts.push({ x, y: Hh + 10, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4,
+          w: (6 + Math.random() * 6) * dpr, h: (3 + Math.random() * 4) * dpr, c: colors[Math.floor(Math.random() * colors.length)], life: 1 });
+      }
+    };
+    shoot(W * 0.08, 1); shoot(W * 0.92, -1);
+    const t2 = setTimeout(() => { shoot(W * 0.2, 1); shoot(W * 0.8, -1); }, 350);
+    let raf;
+    const tick = () => {
+      ctx.clearRect(0, 0, W, Hh);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.vx *= 0.985; p.vy = p.vy * 0.985 + 0.32 * dpr; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        if (p.vy > 0) p.life -= 0.006;
+        if (p.life <= 0 || p.y > Hh + 40) { parts.splice(i, 1); continue; }
+        ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.5));
+        ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.scale(1, Math.cos(p.r * 2));
+        ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      }
+      if (parts.length) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t2); };
+  }, []);
+  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 75 }} />;
+}
+function GiftTakenSheet({ title, onClose }) {
+  const { t } = useT();
+  return (
+    <>
+      <Sheet onClose={onClose}>
+        <div style={{ textAlign: "center", paddingTop: 4 }}>
+          <Sticker emoji="🎉" size={72} style={{ animation: "pop .5s cubic-bezier(.2,.9,.3,1.2)" }} />
+          <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
+          <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
+          <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill></div>
+        </div>
+      </Sheet>
+      <Confetti />
+    </>
+  );
+}
+
 /* ---------- DRAW / SECRET SANTA ---------- */
 function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, onError, onClose }) {
   const { t } = useT();
@@ -1278,9 +1432,9 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
     return () => { clearInterval(iv); clearTimeout(tm); };
   }, [stage]);
 
-  const doReserve = async (wid) => {
-    await onReserve(wid);
-    setTargetWishes(ws => ws.map(w => w.id === wid ? { ...w, reservedByMe: true } : w));
+  const doReserve = async (wish) => {
+    await onReserve(wish);
+    setTargetWishes(ws => ws.map(w => w.id === wish.id ? { ...w, reservedByMe: true } : w));
   };
   const doUnreserve = async (wid) => {
     await onUnreserve(wid);
@@ -1366,7 +1520,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                   <WishRow w={w} right={
                     isMine(w)
                       ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-                      : <Pill kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
+                      : <Pill kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
                   } />
                 </div>
               )) : <div style={{ padding: 16, color: C.t3, fontSize: 13.5 }}>{t("emptyLater")}</div>}
@@ -1389,21 +1543,24 @@ function AddSheet({ rooms, onClose, onSave }) {
   const [price, setPrice] = useState("");
   const [emoji, setEmoji] = useState("🎁");
   const [inRooms, setInRooms] = useState([]);
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const [link, setLink] = useState("");
   const [cover, setCover] = useState("photo");
   const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
+  const MAX_PHOTOS = 3;
   const pickFile = (e) => {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
-    compressImage(f).then(setImage).catch(() => {
-      const r = new FileReader(); r.onload = () => setImage(r.result); r.readAsDataURL(f);
+    const files = Array.from(e.target.files || []).slice(0, MAX_PHOTOS - images.length);
+    e.target.value = ""; // allow re-picking the same file after removing it
+    files.forEach(f => {
+      const add = (url) => setImages(xs => xs.length < MAX_PHOTOS ? [...xs, url] : xs);
+      compressImage(f).then(add).catch(() => { const r = new FileReader(); r.onload = () => add(r.result); r.readAsDataURL(f); });
     });
   };
   const submit = async () => {
     if (busy || !title.trim()) return;
     setBusy(true);
-    try { await onSave({ emoji, image: cover === "photo" ? image : null, link: link.trim() || null, title: title.trim(), price: price.trim(), rooms: inRooms }); }
+    try { await onSave({ emoji, images: cover === "photo" ? images : [], image: cover === "photo" ? (images[0] || null) : null, link: link.trim() || null, title: title.trim(), price: price.trim(), rooms: inRooms }); }
     catch (e) { setBusy(false); }
   };
 
@@ -1425,23 +1582,36 @@ function AddSheet({ rooms, onClose, onSave }) {
 
         {cover === "photo" ? (
           <div style={{ marginBottom: 16 }}>
-            <input ref={fileRef} type="file" accept="image/*" onChange={pickFile} style={{ display: "none" }} />
-            {image ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <GlossTile image={image} size={72} />
-                <div style={{ flex: 1, display: "flex", gap: 8 }}>
-                  <Pill kind="ghost" onClick={() => fileRef.current && fileRef.current.click()}>{t("replace")}</Pill>
-                  <Pill kind="ghost" onClick={() => setImage(null)}>{t("remove")}</Pill>
+            <input ref={fileRef} type="file" accept="image/*" multiple onChange={pickFile} style={{ display: "none" }} />
+            {images.length ? (
+              <div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                  {images.map((src, i) => (
+                    <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: 16, background: `${C.card2} center / cover no-repeat url("${src}")` }}>
+                      <button onClick={() => setImages(xs => xs.filter((_, j) => j !== i))} aria-label={t("remove")} style={{
+                        position: "absolute", top: 6, right: 6, width: 28, height: 28, borderRadius: 28, border: "none", cursor: "pointer",
+                        background: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                      }}><X size={15} /></button>
+                    </div>
+                  ))}
+                  {images.length < MAX_PHOTOS && (
+                    <button onClick={() => fileRef.current && fileRef.current.click()} aria-label={t("uploadPhoto")} style={{
+                      aspectRatio: "1", borderRadius: 16, cursor: "pointer", background: C.card2, border: "none", color: C.t2,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}><Plus size={24} /></button>
+                  )}
                 </div>
+                <div style={{ color: C.t3, fontSize: 12.5, marginTop: 8 }}>{t("photosHint")} · {images.length}/{MAX_PHOTOS}</div>
               </div>
             ) : (
               <button onClick={() => fileRef.current && fileRef.current.click()} style={{
                 width: "100%", padding: "26px", borderRadius: 16, cursor: "pointer",
-                background: C.card2, border: `1px dashed ${C.line}`, color: C.t2, fontFamily: font,
+                background: C.card2, border: "none", color: C.t2, fontFamily: font,
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
               }}>
                 <ImageIcon size={26} color={C.t2} />
                 {t("uploadPhoto")}
+                <span style={{ color: C.t3, fontSize: 12.5, fontWeight: 500 }}>{t("photosHint")}</span>
               </button>
             )}
           </div>
@@ -1451,7 +1621,7 @@ function AddSheet({ rooms, onClose, onSave }) {
               <button key={e} onClick={() => setEmoji(e)} style={{
                 width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
                 background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-              }}>{e}</button>
+              }}><Sticker emoji={e} size={22} /></button>
             ))}
           </div>
         )}
@@ -1465,11 +1635,11 @@ function AddSheet({ rooms, onClose, onSave }) {
           {rooms.map(r => (
             <Chip key={r.id} active={inRooms.includes(r.id)} color={r.tint}
               onClick={() => setInRooms(x => x.includes(r.id) ? x.filter(i => i !== r.id) : [...x, r.id])}>
-              {r.emoji} {r.name}
+              <Sticker emoji={r.emoji} size={15} />{r.name}
             </Chip>
           ))}
         </div>
-        <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20 }}>{t("nothingSelectedPrivate")}</div>
+        <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><Lock size={13} />{t("nothingSelectedPrivate")}</div>
 
         <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
           {busy ? t("savingWish") : t("saveWish")}
