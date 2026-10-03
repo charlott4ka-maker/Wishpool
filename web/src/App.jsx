@@ -1223,6 +1223,12 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
 
 /* ---------- ROOM HERO ---------- */
 const hasTgBack = () => typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton;
+// Solid colour of the hero's top edge (room tint over the dark base): used for
+// Telegram's header and for the area revealed when the page bounces at the top.
+function heroTop(tint) {
+  const n = tint.replace("#", ""); const c = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16));
+  return "#" + c.map(v => Math.round(13 + (v - 13) * 0.72).toString(16).padStart(2, "0")).join("");
+}
 function roomHeroBg(tint) {
   return `radial-gradient(120% 90% at 50% 30%, ${hex(tint, 0.85)} 0%, ${hex(tint, 0.55)} 55%, ${hex(tint, 0.3)} 100%), #0d0d10`;
 }
@@ -1265,8 +1271,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   // Telegram's own top bar takes the hero colour while the room is open.
   useEffect(() => {
     const tg = tgWebApp(); if (!tg || !tg.setHeaderColor) return;
-    const n = room.tint.replace("#", ""); const c = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16));
-    const top = "#" + c.map(v => Math.round(13 + (v - 13) * 0.62).toString(16).padStart(2, "0")).join("");
+    const top = heroTop(room.tint);
     try { tg.setHeaderColor(top); } catch (e) {}
     return () => { try { tg.setHeaderColor("#000000"); } catch (e) {} };
   }, [room.tint]);
@@ -1313,9 +1318,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 
   return (
-    <div style={{ position: "absolute", inset: 0, top: 0, background: C.bg, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
+    <div style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
       {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
-      <div style={{ position: "relative", overflow: "hidden", padding: "16px 16px 52px", textAlign: "center", background: roomHeroBg(room.tint) }}>
+      <div style={{ position: "relative", overflow: "hidden", padding: "16px 16px 52px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
         <StickerPattern emoji={room.emoji} />
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
           {hasTgBack() ? <span /> : <HeroButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
