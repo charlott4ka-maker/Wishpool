@@ -30,10 +30,14 @@ const H = { lg: 52, sm: 40 };
 // Blocks: iOS blacks, no outlines. screen #000 → card / sheet #161618 →
 // field, control #232326. Cards get a faint inner glow of their colour.
 const SOLID = { card: "#161618", sheet: "#161618", field: "#232326", control: "#232326" };
-function surface({ tint, fill = SOLID.card } = {}) {
+// Every block is iOS-style glass too: same reflection, tint and rim as the
+// buttons. Fields and controls sit one step lighter so they read inside cards
+// and sheets.
+function surface({ tint = C.blue, fill = SOLID.card } = {}) {
+  const lift = fill === SOLID.card ? 0.05 : 0.10;
   return {
-    background: tint ? `radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.09)} 0%, transparent 60%), ${fill}` : fill,
-    border: "none", boxShadow: "none",
+    background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), rgba(255,255,255,${lift})`,
+    border: "none", boxShadow: GLASS.rim,
   };
 }
 // Buttons and floating chrome keep the clear-glass look: diagonal reflection,
@@ -511,7 +515,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(2,4,12,0.55)" }} />
-      <div style={{ position: "relative", background: SOLID.sheet, borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "0 -10px 40px rgba(0,0,0,0.5)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(24,24,28,0.78)`, backdropFilter: "blur(30px) saturate(160%)", WebkitBackdropFilter: "blur(30px) saturate(160%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: `${GLASS.rim}, 0 -10px 40px rgba(0,0,0,0.5)`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         {title != null ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
@@ -1696,8 +1700,8 @@ function Field({ label, value, onChange, placeholder }) {
           width: "100%", ...surface({ fill: SOLID.field }), borderRadius: 18,
           height: H.lg, padding: "0 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
-        onFocus={e => e.target.style.boxShadow = `0 0 0 2px ${hex(C.blue, 0.65)}`}
-        onBlur={e => e.target.style.boxShadow = "none"} />
+        onFocus={e => e.target.style.boxShadow = `${GLASS.rim}, 0 0 0 2px ${hex(C.blue, 0.65)}`}
+        onBlur={e => e.target.style.boxShadow = GLASS.rim} />
     </div>
   );
 }
