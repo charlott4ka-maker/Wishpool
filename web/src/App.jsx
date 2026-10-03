@@ -26,26 +26,36 @@ const C = {
 const S = { gutter: 12, gap: 12, pad: 20, r: 30, rTile: 0.3 };
 // Every button / control is one of exactly two heights.
 const H = { lg: 52, sm: 40 };
-/* ---------- flat dark surfaces ---------- */
-// Flat iOS-style blacks: no gradients, no inner glow, no outlines.
-// screen #000 → card / sheet #161618 → field, control, round button #232326.
+/* ---------- surfaces ---------- */
+// Blocks are flat iOS blacks (no gradient, no inner glow, no outlines):
+// screen #000 → card / sheet #161618 → field, control #232326.
 const SOLID = { card: "#161618", sheet: "#161618", field: "#232326", control: "#232326" };
 function surface({ fill = SOLID.card } = {}) {
   return { background: fill, border: "none", boxShadow: "none" };
 }
-// Kept under its old name so every interactive control shares one look:
-// `on` = selected / primary (flat blue), otherwise a flat raised dark grey.
-function glass({ on = false } = {}) {
-  return on
-    ? { background: C.blue, border: "none", boxShadow: "none" }
-    : { background: SOLID.control, border: "none", boxShadow: "none" };
+// Buttons and floating chrome keep the clear-glass look: diagonal reflection,
+// faint blue tint, bright top rim. Selected / primary = glossy blue.
+const GLASS = {
+  fill: "rgba(255,255,255,0.08)",
+  sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
+  rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
+};
+function glass({ on = false, tint = C.blue } = {}) {
+  if (on) return {
+    background: "linear-gradient(180deg, #5A82EA 0%, #3563D8 55%, #2850BE 100%)",
+    border: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
+  };
+  return {
+    background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
+    border: "none", boxShadow: GLASS.rim,
+  };
 }
-// Floating bars sit over scrolling content: near-opaque dark + light blur.
+// Floating bars sit over scrolling content: dark tint + light blur for legibility.
 function glassFloat() {
-  return { background: "rgba(28,28,30,0.92)", border: "none", boxShadow: "none", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" };
+  return { ...glass(), background: `${GLASS.sheen}, rgba(0,0,0,0.55)`, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" };
 }
 const font =
-  '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
+  '"Montserrat",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
 const titleStyle = { fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.1 };
 const labelStyle = { fontSize: 13, fontWeight: 600, color: C.t2 };
 // Bold title; with more than one word the last one is set in blue.
@@ -431,7 +441,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
     primary: { ...glass({ on: true }), color: "#fff" },
     ghost: { ...glass(), color: C.t1 },
     soft: { ...glass(), color: C.t1 },
-    green: { ...glass(), background: hex(C.blue, 0.24), color: C.blueLight },
+    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.blue, 0.32)}`, color: C.blueLight },
   }[kind];
   return (
     <button
@@ -500,10 +510,16 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(2,4,12,0.55)" }} />
       <div style={{ position: "relative", background: SOLID.sheet, borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "0 -10px 40px rgba(0,0,0,0.5)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-          <Title text={title} size={22} />
-          <GlassButton onClick={onClose} label="Close"><X size={18} /></GlassButton>
-        </div>
+        {title != null ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+            <Title text={title} size={22} />
+            <GlassButton onClick={onClose} label="Close"><X size={18} /></GlassButton>
+          </div>
+        ) : (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: -8 }}>
+            <GlassButton onClick={onClose} label="Close"><X size={18} /></GlassButton>
+          </div>
+        )}
         {children}
       </div>
     </div>
@@ -884,6 +900,8 @@ function TabBar({ tab, setTab }) {
   ];
   return (
     <>
+      {/* fade content out under the bar, like iOS */}
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)" }} />
       <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
         <div style={{ display: "flex", gap: 4, padding: 6, borderRadius: 999, ...glassFloat() }}>
           {items.map(it => {
@@ -1390,9 +1408,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 }
 
 /* ---------- "YOU TOOK A GIFT" CELEBRATION ---------- */
-// Full-screen canvas fireworks: a few staggered bursts of particles with
-// gravity and fade. Skipped entirely when the user prefers reduced motion.
-function Fireworks() {
+// Party-popper confetti (🎉): two bursts of paper pieces shot up from the
+// bottom corners, tumbling and falling with gravity. Skipped when the user
+// prefers reduced motion.
+function Confetti() {
   const ref = useRef(null);
   useEffect(() => {
     const reduce = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1400,56 +1419,54 @@ function Fireworks() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = cv.width = window.innerWidth * dpr, Hh = cv.height = window.innerHeight * dpr;
     const ctx = cv.getContext("2d");
-    const colors = ["#5A82EA", "#8AA6F2", "#FFD36E", "#FF7AB6", "#7CE0C3"];
+    const colors = ["#5A82EA", "#8AA6F2", "#FFD36E", "#FF7AB6", "#7CE0C3", "#FFFFFF"];
     const parts = [];
-    const burst = (x, y) => {
-      const col = colors[Math.floor(Math.random() * colors.length)];
-      for (let i = 0; i < 60; i++) {
-        const a = (Math.PI * 2 * i) / 60 + Math.random() * 0.2, v = (2.2 + Math.random() * 2.6) * dpr;
-        parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, c: Math.random() < 0.25 ? "#FFFFFF" : col });
+    const shoot = (x, dir) => {
+      for (let i = 0; i < 70; i++) {
+        const a = -Math.PI / 2 + dir * (0.15 + Math.random() * 0.55), v = (9 + Math.random() * 9) * dpr;
+        parts.push({
+          x, y: Hh + 10, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4,
+          w: (6 + Math.random() * 6) * dpr, h: (3 + Math.random() * 4) * dpr, c: colors[Math.floor(Math.random() * colors.length)], life: 1,
+        });
       }
     };
-    const plan = [[0.3, 0.28, 0], [0.72, 0.22, 260], [0.5, 0.36, 520], [0.22, 0.45, 820], [0.8, 0.42, 1050]];
-    const timers = plan.map(([fx, fy, ms]) => setTimeout(() => burst(W * fx, Hh * fy), ms));
-    let raf, start = performance.now();
-    const tick = (now) => {
+    shoot(W * 0.08, 1); shoot(W * 0.92, -1);
+    const t2 = setTimeout(() => { shoot(W * 0.2, 1); shoot(W * 0.8, -1); }, 350);
+    let raf;
+    const tick = () => {
       ctx.clearRect(0, 0, W, Hh);
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
-        const px = p.x, py = p.y;
-        p.vx *= 0.985; p.vy = p.vy * 0.985 + 0.045 * dpr; p.x += p.vx; p.y += p.vy; p.life -= 0.012;
-        if (p.life <= 0) { parts.splice(i, 1); continue; }
-        // short streak from the previous position reads as a firework spark, not a dot
-        ctx.globalAlpha = Math.max(0, p.life);
-        ctx.strokeStyle = p.c; ctx.lineWidth = 2.6 * dpr; ctx.lineCap = "round";
-        ctx.beginPath(); ctx.moveTo(px - p.vx * 2, py - p.vy * 2); ctx.lineTo(p.x, p.y); ctx.stroke();
+        p.vx *= 0.985; p.vy = p.vy * 0.985 + 0.32 * dpr; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        if (p.vy > 0) p.life -= 0.006;
+        if (p.life <= 0 || p.y > Hh + 40) { parts.splice(i, 1); continue; }
+        ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.5));
+        ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.scale(1, Math.cos(p.r * 2)); // flutter
+        ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
       }
-      if (now - start < 3200 || parts.length) raf = requestAnimationFrame(tick);
+      if (parts.length) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); timers.forEach(clearTimeout); };
+    return () => { cancelAnimationFrame(raf); clearTimeout(t2); };
   }, []);
-  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} />;
+  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 75 }} />;
 }
 function GiftTakenModal({ title, onClose }) {
   const { t } = useT();
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 80, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", animation: "fadeUp .2s ease" }} />
-      <Fireworks />
-      <div style={{
-        position: "relative", width: "100%", maxWidth: 340, background: SOLID.sheet, borderRadius: S.r,
-        padding: "32px 24px 24px", textAlign: "center", animation: "pop .45s cubic-bezier(.2,.9,.3,1.2)",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
-      }}>
-        <Sticker emoji="🎉" size={72} style={{ animation: "spinEmoji 1.6s ease-in-out infinite" }} />
-        <div style={{ ...titleStyle, color: C.t1, fontSize: 22, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
-        <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
-        <div style={{ marginTop: 24 }}>
-          <Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill>
+    <>
+      <Sheet onClose={onClose}>
+        <div style={{ textAlign: "center", paddingTop: 8 }}>
+          <Sticker emoji="🎉" size={72} style={{ animation: "pop .5s cubic-bezier(.2,.9,.3,1.2)" }} />
+          <div style={{ ...titleStyle, color: C.t1, fontSize: 22, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
+          <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
+          <div style={{ marginTop: 24 }}>
+            <Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill>
+          </div>
         </div>
-      </div>
-    </div>
+      </Sheet>
+      <Confetti />
+    </>
   );
 }
 
