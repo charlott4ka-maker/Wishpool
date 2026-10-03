@@ -4,10 +4,6 @@ import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
   Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
 } from "lucide-react";
-// Experimental dark-glass reskin of the wishes screen — see the `designSystem`
-// toggle below. Isolated in its own file and lazy-loaded, so regular users (who
-// never flip the toggle) never pay for its extra JS in their bundle.
-const PoolScreenGlass = React.lazy(() => import("./PoolScreenGlass.jsx"));
 
 /* ---------- design tokens ---------- */
 const C = {
@@ -37,7 +33,7 @@ const SOLID = { card: "#161618", sheet: "#161618", field: "#232326", control: "#
 function surface({ tint = C.blue, fill = SOLID.card } = {}) {
   const lift = fill === SOLID.card ? 0.012 : 0.035;
   return {
-    background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), rgba(255,255,255,${lift})`,
+    background: `${GLASS.sheen}, radial-gradient(420px 260px at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), rgba(255,255,255,${lift})`,
     border: "none", boxShadow: GLASS.rim,
   };
 }
@@ -45,7 +41,9 @@ function surface({ tint = C.blue, fill = SOLID.card } = {}) {
 // faint blue tint, bright top rim. Selected / primary = glossy blue.
 const GLASS = {
   fill: "rgba(255,255,255,0.03)",
-  sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
+  // Fixed-size layers (px, anchored top-left) so the light doesn't stretch or
+  // shift when a block changes height, e.g. a wish card expanding.
+  sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%) 0 0 / 100% 220px no-repeat",
   rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
 };
 function glass({ on = false, tint = C.blue } = {}) {
@@ -54,7 +52,7 @@ function glass({ on = false, tint = C.blue } = {}) {
     border: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
   };
   return {
-    background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
+    background: `${GLASS.sheen}, radial-gradient(420px 260px at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
     border: "none", boxShadow: GLASS.rim,
   };
 }
@@ -144,10 +142,6 @@ function tgUserName() {
 }
 function tgUserPhoto() {
   try { const w = tgWebApp(); const url = w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.photo_url; return url && /^https:\/\//.test(url) ? url : null; }
-  catch (e) { return null; }
-}
-function tgUsername() {
-  try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.username) || null; }
   catch (e) { return null; }
 }
 function openTgLink(url) {
@@ -687,13 +681,8 @@ export default function App() {
   const [reserved, setReserved] = useState(() => store.get("wp_reserved", {}));
   const [loading, setLoading] = useState(online);
 
-  // Dev-only design-system toggle: lets one specific Telegram account (by @username)
-  // preview alternate looks for the wishes screen without exposing any switch to
-  // regular users. Defaults to classic for everyone, including that account, until
-  // it's flipped — and flipping it back is instant (no redeploy).
-  const isDesignDevUser = tgUsername() === "reckliess";
-  const [designSystem, setDesignSystem] = useState(() => store.get("wp_design_system", "classic"));
-  useEffect(() => { store.set("wp_design_system", designSystem); }, [designSystem]);
+  // The old dev-only "Glass" preview is gone; drop its saved choice.
+  useEffect(() => { try { window.localStorage.removeItem("wp_design_system"); } catch (e) {} }, []);
 
   // Persist locally only in single-device (offline) mode. In Telegram the server is the source of truth.
   useEffect(() => { if (!online) store.set("wp_rooms", rooms); }, [rooms, online]);
@@ -850,31 +839,18 @@ export default function App() {
           {loading ? <SkeletonScreen tab={tab} /> : (
             <>
               {tab === "pool" && (
-                designSystem === "glass" ? (
-                  <React.Suspense fallback={<SkeletonScreen tab="pool" />}>
-                    <PoolScreenGlass wishes={wishes} rooms={rooms}
-                      onAdd={() => setOverlay({ type: "add" })}
-                      onToggleRoom={toggleWishRoom}
-                      onDelete={deleteWish}
-                      GlossTile={GlossTile}
-                      t={t}
-                    />
-                  </React.Suspense>
-                ) : (
-                  <PoolScreen wishes={wishes} rooms={rooms}
-                    onAdd={() => setOverlay({ type: "add" })}
-                    onToggleRoom={toggleWishRoom}
-                    onDelete={deleteWish}
-                  />
-                )
+                <PoolScreen wishes={wishes} rooms={rooms}
+                  onAdd={() => setOverlay({ type: "add" })}
+                  onToggleRoom={toggleWishRoom}
+                  onDelete={deleteWish}
+                />
               )}
               {tab === "rooms" && (
                 <RoomsScreen rooms={rooms} wishes={wishes}
                   onOpen={(id) => setOverlay({ type: "room", roomId: id })}
                   onCreate={() => setOverlay({ type: "createRoom" })} />
               )}
-              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })}
-                isDesignDevUser={isDesignDevUser} designSystem={designSystem} setDesignSystem={setDesignSystem} />}
+              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
             </>
           )}
         </div>
@@ -1783,7 +1759,7 @@ function Field({ label, value, onChange, placeholder }) {
 }
 
 /* ---------- PROFILE ---------- */
-function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesignDevUser, designSystem, setDesignSystem }) {
+function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
   const { t, lang, setLang } = useT();
   const me = { name: tgUserName() || t("guest"), color: "#7B61FF", photo: tgUserPhoto() };
   const gifting = Object.values(reserved || {}).filter(v => v === "you").length;
@@ -1812,15 +1788,6 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
         </div>
         <Segmented options={LANGS.map(l => [l, LANG_SHORT[l]])} value={lang} onChange={setLang} />
       </div>
-
-      {isDesignDevUser && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ ...labelStyle, marginBottom: 8, textAlign: "left" }}>
-            Design system (dev only)
-          </div>
-          <Segmented options={[["classic", "Classic"], ["glass", "Glass"]]} value={designSystem} onChange={setDesignSystem} />
-        </div>
-      )}
 
       <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: S.gap }}>
         {[[Clock, t("history"), onHistory], [Link2, t("myInvites"), onInvites], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui")]].map(([Icon, l, on], i) => (
