@@ -929,6 +929,43 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
 }
 
 /* ---------- ROOMS ---------- */
+// Room as a frosted folder: wish photos shared into the room peek out from
+// behind a translucent folder front (tab on the left), the room sticker is
+// stuck on the front, name + member count sit underneath.
+function RoomFolder({ room, wishes, onOpen }) {
+  const { t } = useT();
+  const photos = wishes.filter(w => w.rooms.includes(room.id)).map(w => wishImages(w)[0]).filter(Boolean).slice(0, 3);
+  const spots = [
+    { left: "33%", top: "2%", rot: 0, z: 2 },
+    { left: "9%", top: "16%", rot: -10, z: 1 },
+    { left: "57%", top: "12%", rot: 9, z: 1 },
+  ];
+  const frost = { background: "linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.12) 100%)", backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)" };
+  return (
+    <div onClick={onOpen} style={{ cursor: "pointer", textAlign: "center", animation: "fadeUp .3s ease" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
+        <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: "rgba(255,255,255,0.10)" }} />
+        {photos.map((src, i) => {
+          const sp = spots[i];
+          return (
+            <div key={i} style={{
+              position: "absolute", left: sp.left, top: sp.top, width: "34%", aspectRatio: "0.82", zIndex: sp.z,
+              transform: `rotate(${sp.rot}deg)`, borderRadius: 10, border: "3px solid #fff",
+              background: `${C.card2} center / cover no-repeat url("${src}")`, boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
+            }} />
+          );
+        })}
+        <div style={{ position: "absolute", left: "4%", top: "28%", width: "46%", height: "9%", zIndex: 3, borderRadius: "14px 14px 0 0", ...frost, background: "rgba(255,255,255,0.20)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)" }} />
+        <div style={{ position: "absolute", left: "4%", right: "4%", top: "37%", bottom: "4%", zIndex: 3, borderRadius: "0 18px 18px 18px", ...frost, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 24px rgba(0,0,0,0.35)" }} />
+        <div style={{ position: "absolute", left: "16%", top: "50%", zIndex: 4, transform: "rotate(-8deg)" }}>
+          <Sticker emoji={room.emoji} size={38} />
+        </div>
+      </div>
+      <div style={{ color: C.t1, fontSize: 15, fontWeight: 700, marginTop: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
+      <div style={{ display: "inline-block", marginTop: 8, padding: "4px 12px", borderRadius: R.pill, background: C.card2, color: C.t2, fontSize: 12.5 }}>{t("membersColon", { n: room.members.length })}</div>
+    </div>
+  );
+}
 function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
   const { t } = useT();
   return (
@@ -941,28 +978,8 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
       {rooms.length === 0 ? (
         <Empty emoji="👋" title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {rooms.map(r => {
-            const shared = wishes.filter(w => w.rooms.includes(r.id)).length;
-            return (
-              <Card key={r.id} style={{ padding: 16, cursor: "pointer", overflow: "hidden", position: "relative" }}>
-                <div onClick={() => onOpen(r.id)} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ position: "absolute", inset: 0, background: `radial-gradient(80% 120% at 100% 0%, ${hex(r.tint, 0.14)} 0%, transparent 60%)`, pointerEvents: "none" }} />
-                  <GlossTile emoji={r.emoji} size={56} tint={r.tint} bare />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: C.t1, fontSize: 17.5, fontWeight: 700 }}>{r.name}</div>
-                    <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
-                  </div>
-                  <div style={{ display: "flex", marginRight: 6 }}>
-                    {r.members.slice(0, 3).map((m, i, a) => (
-                      <div key={m.id} style={{ marginLeft: i ? -10 : 0 }}><Avatar m={m} size={30} cut={i < a.length - 1 ? 10 : 0} /></div>
-                    ))}
-                  </div>
-                  <ChevronRight size={20} color={C.t3} />
-                </div>
-              </Card>
-            );
-          })}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 12px" }}>
+          {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={() => onOpen(r.id)} />)}
         </div>
       )}
 
