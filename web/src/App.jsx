@@ -324,7 +324,7 @@ function TagChip({ icon: Icon, emoji, color = "#FFFFFF", children }) {
       background: hex(color, 0.14), boxShadow: `inset 0 0 0 1px ${hex(color, 0.45)}`,
       color: tintToWhite(color, 0.6), fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap",
     }}>
-      {Icon ? <Icon size={13} strokeWidth={2.4} /> : <span style={{ fontSize: 14, lineHeight: 1 }}>{emoji}</span>}
+      {Icon ? <Icon size={13} strokeWidth={2.4} /> : <Sticker emoji={emoji} size={14} />}
       {children}
     </span>
   );
@@ -922,7 +922,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                       ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
                       : rooms.map(r => (
                         <Chip key={r.id} active={w.rooms.includes(r.id)} onClick={() => onToggleRoom(w.id, r.id)}>
-                          {r.emoji} {r.name}
+                          <Sticker emoji={r.emoji} size={15} />{r.name}
                         </Chip>
                       ))}
                   </div>
@@ -1022,7 +1022,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
         {ROOM_PRESETS.map(p => (
           <Chip key={p.type} active={preset.type === p.type} onClick={() => setPreset(p)}>
-            {p.emoji} {t(p.key)}
+            <Sticker emoji={p.emoji} size={15} />{t(p.key)}
           </Chip>
         ))}
       </div>
@@ -1568,7 +1568,7 @@ function AddSheet({ rooms, onClose, onSave }) {
         {rooms.map(r => (
           <Chip key={r.id} active={inRooms.includes(r.id)}
             onClick={() => setInRooms(x => x.includes(r.id) ? x.filter(i => i !== r.id) : [...x, r.id])}>
-            {r.emoji} {r.name}
+            <Sticker emoji={r.emoji} size={15} />{r.name}
           </Chip>
         ))}
       </div>
