@@ -1887,6 +1887,15 @@ function GiftTakenSheet({ title, onClose }) {
 }
 
 /* ---------- DRAW / SECRET SANTA ---------- */
+// Face-down Secret Santa card: blue with a "?" block sticker.
+function CardBack({ sticker = 40 }) {
+  return (
+    <div style={{ width: "100%", height: "100%", borderRadius: 18, background: `radial-gradient(120% 90% at 30% 20%, #6FA8FF 0%, ${C.blue} 45%, #3B2BB8 100%)`,
+      boxShadow: "0 10px 30px rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Sticker emoji="stk:qblock" size={sticker} />
+    </div>
+  );
+}
 function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, onError, onClose }) {
   const { t } = useT();
   const [stage, setStage] = useState("setup");
@@ -1952,7 +1961,14 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
       {stage === "setup" && (
         <div style={{ padding: "20px 22px", textAlign: "center", animation: "fadeUp .3s ease" }}>
-          <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji="🎲" size={104} tint={C.blue} /></div>
+          {/* same face-down cards as in the shuffle, fanned out */}
+          <div style={{ position: "relative", height: 132, marginTop: 8 }}>
+            {[-1, 1, 0].map(o => (
+              <div key={o} style={{ position: "absolute", left: "50%", top: "50%", width: 80, height: 112, transform: `translate(-50%, -50%) translate(${o * 40}px, ${Math.abs(o) * 8}px) rotate(${o * 12}deg)` }}>
+                <CardBack sticker={o === 0 ? 36 : 30} />
+              </div>
+            ))}
+          </div>
           <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 16 }}>{t("secretExchange")}</div>
           <div style={{ color: C.t2, fontSize: 15, marginTop: 8, maxWidth: 300, marginInline: "auto", lineHeight: 1.45 }}>
             {t("drawIntro")}
@@ -2004,12 +2020,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                   opacity: picked && !isT ? 0 : 1, transition: "transform .45s cubic-bezier(.2,.8,.2,1), opacity .4s ease",
                 }}>
                   <div style={{ position: "relative", width: "100%", height: "100%", transformStyle: "preserve-3d", transition: "transform .6s cubic-bezier(.3,.7,.2,1)", transform: isT && flipped ? "rotateY(180deg)" : "none" }}>
-                    {/* back: blue card with a "?" sticker */}
-                    <div style={{ position: "absolute", inset: 0, borderRadius: 18, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-                      background: `radial-gradient(120% 90% at 30% 20%, #6FA8FF 0%, ${C.blue} 45%, #3B2BB8 100%)`, boxShadow: "0 10px 30px rgba(0,0,0,0.45)",
-                      display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Sticker emoji="stk:qblock" size={40} />
-                    </div>
+                    <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}><CardBack sticker={40} /></div>
                     {/* front: who you drew */}
                     <div style={{ position: "absolute", inset: 0, borderRadius: 18, backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)",
                       background: "#fff", boxShadow: "0 10px 30px rgba(0,0,0,0.45)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 8 }}>
