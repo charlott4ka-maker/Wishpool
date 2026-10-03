@@ -278,7 +278,11 @@ function tr(lang, id, params) {
 const LangCtx = createContext({ lang: "en", setLang: () => {}, t: (id) => id });
 const useT = () => useContext(LangCtx);
 
-const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
+// Wish icons are image stickers (web/public/stickers/<name>.webp), stored in
+// the wish's `emoji` field as "stk:<name>" and drawn by <Sticker> with the
+// same white outline as emoji. Older wishes keep their plain emoji.
+const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha"];
+const WISH_EMOJI = STICKERS.map(n => "stk:" + n);
 
 /* ---------- little ui atoms ---------- */
 // Emoji drawn as a die-cut sticker with a crisp, evenly rounded white outline.
@@ -305,10 +309,10 @@ function stickerFilter(size) {
   const w = STICKER_WIDTHS.reduce((a, b) => Math.abs(b - want) < Math.abs(a - want) ? b : a);
   return `url(#stk-${w * 10}) drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`;
 }
-// Image stickers (web/public/stickers/<name>.png) are stored as "stk:<name>".
+// Image stickers (web/public/stickers/<name>.webp) are stored as "stk:<name>".
 function Sticker({ emoji, size, style }) {
   if (typeof emoji === "string" && emoji.startsWith("stk:")) {
-    return <img src={`/stickers/${emoji.slice(4)}.png`} alt="" draggable={false}
+    return <img src={`/stickers/${emoji.slice(4)}.webp`} alt="" draggable={false}
       style={{ height: size * 1.1, width: size * 1.1, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: stickerFilter(size), ...style }} />;
   }
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
@@ -1581,7 +1585,7 @@ function AddSheet({ rooms, onClose, onSave }) {
   const { t } = useT();
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
-  const [emoji, setEmoji] = useState("🎁");
+  const [emoji, setEmoji] = useState(WISH_EMOJI[0]);
   const [inRooms, setInRooms] = useState([]);
   const [images, setImages] = useState([]);
   const [link, setLink] = useState("");
@@ -1649,10 +1653,10 @@ function AddSheet({ rooms, onClose, onSave }) {
             )}
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(WISH_EMOJI.length, 7)}, 1fr)`, gap: 8, marginBottom: 16 }}>
             {WISH_EMOJI.map(e => (
               <button key={e} onClick={() => setEmoji(e)} style={{
-                width: "100%", height: H.lg, borderRadius: 16, fontSize: 22, cursor: "pointer",
+                width: "100%", height: H.lg, borderRadius: 14, fontSize: 22, cursor: "pointer",
                 background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
               }}><Sticker emoji={e} size={22} /></button>
             ))}
