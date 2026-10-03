@@ -7,7 +7,6 @@
 - No outlines on blocks (cards, sheets, icon tiles).
 - Emoji are rendered as outlined stickers (`Sticker`), never as plain text; image
   stickers are "stk:<name>" PNGs in web/public/stickers.
-- One-colour icons: Framework7 Icons (SF Symbols look-alike, MIT). Real SF Symbols
-  can't be shipped on the web (Apple licence).
+- Icons: lucide-react (the user prefers these over SF-style icons).
 - Modals are bottom sheets (`Sheet`).
 - No em/en dashes in UI copy (uk/ru/en).

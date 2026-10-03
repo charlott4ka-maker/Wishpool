@@ -1,53 +1,9 @@
 import React, { useState, useEffect, useRef, useContext, createContext } from "react";
 import { createPortal } from "react-dom";
-import F7ArrowshapeTurnUpRightFill from "framework7-icons/react/esm/ArrowshapeTurnUpRightFill.js";
-import F7Checkmark from "framework7-icons/react/esm/Checkmark.js";
-import F7ChevronLeft from "framework7-icons/react/esm/ChevronLeft.js";
-import F7ChevronRight from "framework7-icons/react/esm/ChevronRight.js";
-import F7ClockFill from "framework7-icons/react/esm/ClockFill.js";
-import F7CubeFill from "framework7-icons/react/esm/CubeFill.js";
-import F7Ellipsis from "framework7-icons/react/esm/Ellipsis.js";
-import F7GiftFill from "framework7-icons/react/esm/GiftFill.js";
-import F7Globe from "framework7-icons/react/esm/Globe.js";
-import F7HeartFill from "framework7-icons/react/esm/HeartFill.js";
-import F7Link from "framework7-icons/react/esm/Link.js";
-import F7LockFill from "framework7-icons/react/esm/LockFill.js";
-import F7PaperplaneFill from "framework7-icons/react/esm/PaperplaneFill.js";
-import F7Pencil from "framework7-icons/react/esm/Pencil.js";
-import F7Person2Fill from "framework7-icons/react/esm/Person2Fill.js";
-import F7PersonFill from "framework7-icons/react/esm/PersonFill.js";
-import F7PhotoFill from "framework7-icons/react/esm/PhotoFill.js";
-import F7Plus from "framework7-icons/react/esm/Plus.js";
-import F7Sparkles from "framework7-icons/react/esm/Sparkles.js";
-import F7TrashFill from "framework7-icons/react/esm/TrashFill.js";
-import F7Xmark from "framework7-icons/react/esm/Xmark.js";
-// One-colour icons drawn after Apple's SF Symbols (Framework7 Icons, MIT; SF
-// Symbols themselves may only be used on Apple platforms). Wrapped to keep the
-// size / color / style API the call sites already use.
-const sf = (I) => function Icon({ size = 20, color = "currentColor", style }) {
-  return <I width={size} height={size} style={{ color, flexShrink: 0, display: "block", ...style }} />;
-};
-const Gift = sf(F7GiftFill);
-const Users = sf(F7Person2Fill);
-const User = sf(F7PersonFill);
-const Plus = sf(F7Plus);
-const Check = sf(F7Checkmark);
-const ChevronLeft = sf(F7ChevronLeft);
-const ChevronRight = sf(F7ChevronRight);
-const X = sf(F7Xmark);
-const Share2 = sf(F7ArrowshapeTurnUpRightFill);
-const Lock = sf(F7LockFill);
-const Dices = sf(F7CubeFill);
-const Sparkles = sf(F7Sparkles);
-const Clock = sf(F7ClockFill);
-const MoreHorizontal = sf(F7Ellipsis);
-const Link2 = sf(F7Link);
-const Heart = sf(F7HeartFill);
-const ImageIcon = sf(F7PhotoFill);
-const Trash2 = sf(F7TrashFill);
-const Globe = sf(F7Globe);
-const Send = sf(F7PaperplaneFill);
-const Pencil = sf(F7Pencil);
+import {
+  Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
+  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
+} from "lucide-react";
 
 /* ---------- design tokens ---------- */
 const C = {
@@ -1271,7 +1227,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
     (w.reservedByMe || reserved[w.id] === "you")
       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
-        : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
+        : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<span style={{ fontSize: 17, lineHeight: 1 }}>🎉</span></Pill>
   );
 
   return (
@@ -1437,7 +1393,7 @@ function GiftTakenSheet({ title, onClose }) {
     <>
       <Sheet onClose={onClose}>
         <div style={{ textAlign: "center", paddingTop: 4 }}>
-          <Sticker emoji="🎉" size={72} style={{ animation: "pop .5s cubic-bezier(.2,.9,.3,1.2)" }} />
+          <div style={{ fontSize: 72, lineHeight: 1, animation: "pop .5s cubic-bezier(.2,.9,.3,1.2)" }}>🎉</div>
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
           <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
           <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill></div>
@@ -1564,7 +1520,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                   <WishRow w={w} right={
                     isMine(w)
                       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
+                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<span style={{ fontSize: 17, lineHeight: 1 }}>🎉</span></Pill>
                   } />
                 </div>
               )) : <div style={{ padding: 16, color: C.t3, fontSize: 13.5 }}>{t("emptyLater")}</div>}
@@ -1712,12 +1668,12 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("statsLine", { w: wishes.length, r: rooms.length })}</div>
 
       <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
-        <Card style={{ flex: 1, padding: 20 }}>
+        <Card style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
           <Gift size={22} color={C.blue} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{wishes.reduce((n, w) => n + w.rooms.length, 0)}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("sharedStat")}</div>
         </Card>
-        <Card style={{ flex: 1, padding: 20 }}>
+        <Card style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
           <Heart size={22} color="#FF4D8D" />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{gifting}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("giftingStat")}</div>
