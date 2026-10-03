@@ -10,39 +10,69 @@ const PoolScreenGlass = React.lazy(() => import("./PoolScreenGlass.jsx"));
 
 /* ---------- design tokens ---------- */
 const C = {
-  bg: "#000000",
-  card: "#161618",
-  card2: "#232326",
-  line: "rgba(255,255,255,0.08)",
+  bg: "#5A7FA6",
+  card: "rgba(255,255,255,0.10)",
+  card2: "rgba(255,255,255,0.16)",
+  line: "rgba(255,255,255,0.16)",
   t1: "#FFFFFF",
-  t2: "#8A8A8E",
-  t3: "#5A5A5E",
-  blue: "#2E7DF6",
-  blueSoft: "rgba(46,125,246,0.16)",
-  blueLine: "rgba(46,125,246,0.45)",
-  green: "#34C759",
-  greenSoft: "rgba(52,199,89,0.16)",
+  t2: "rgba(255,255,255,0.75)",
+  t3: "rgba(255,255,255,0.52)",
+  ink: "#17171B",          // dark text on solid-white selected pills
+  accent: "#E8F24E",       // lime highlight (status dots, reveal, glow)
+  accentSoft: "rgba(232,242,78,0.20)",
 };
+// Soft blurred colour-field backgrounds: four big radial blobs over a vertical
+// base gradient, with a light scrim at the bottom so white text stays readable.
+const MESH = {
+  pool: { blobs: ["#3E7FC4", "#B4CBE0", "#CDB97E", "#7C6C43"], base: ["#5A8FC6", "#8E7F57"] },
+  rooms: { blobs: ["#9AA3AC", "#C47A62", "#D2643A", "#2F2B2E"], base: ["#87909A", "#3B3235"] },
+  profile: { blobs: ["#6A76BC", "#B9A6CC", "#D8917F", "#46385A"], base: ["#6C75B2", "#4A3B5C"] },
+};
+function roomMesh(tint) {
+  return { blobs: ["#8E969F", hex(tint, 0.75), hex(tint, 0.5), "#2E2B30"], base: ["#7F8790", "#36313A"] };
+}
+function mesh(m) {
+  const [a, b, c, d] = m.blobs;
+  return [
+    "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.22) 100%)",
+    `radial-gradient(70% 45% at 12% 6%, ${a} 0%, transparent 70%)`,
+    `radial-gradient(60% 40% at 88% 34%, ${b} 0%, transparent 70%)`,
+    `radial-gradient(80% 45% at 22% 74%, ${c} 0%, transparent 70%)`,
+    `radial-gradient(70% 45% at 92% 100%, ${d} 0%, transparent 72%)`,
+    `linear-gradient(180deg, ${m.base[0]} 0%, ${m.base[1]} 100%)`,
+  ].join(", ");
+}
+// Fixed full-screen background; one layer per tab, cross-faded on switch.
+function AppBackground({ tab }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+      {Object.keys(MESH).map(k => (
+        <div key={k} style={{ position: "absolute", inset: 0, background: mesh(MESH[k]), opacity: tab === k ? 1 : 0, transition: "opacity .6s ease" }} />
+      ))}
+    </div>
+  );
+}
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
 const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
 /* ---------- iOS-style frosted glass ---------- */
 const GLASS = {
-  fill: "rgba(28,28,30,0.55)",
-  border: "rgba(255,255,255,0.13)",
+  fill: "rgba(255,255,255,0.12)",
+  border: "rgba(255,255,255,0.24)",
   blur: "blur(24px) saturate(180%)",
   // top rim highlight + faint bottom rim, like light catching the edge of glass
-  rim: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04)",
+  rim: "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(255,255,255,0.06)",
 };
 // Shared glass surfaces. `blur` only where content actually scrolls underneath
 // (floating controls, sheets) — on static cards over black it costs GPU for nothing.
 function glass({ blur = false, on = false } = {}) {
   return {
+    // selected = solid white pill (pair with color: C.ink), like iOS
     background: on
-      ? `radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.14) 75%), ${GLASS.fill}`
-      : `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.025) 100%), ${GLASS.fill}`,
-    border: `1px solid ${on ? "rgba(255,255,255,0.38)" : GLASS.border}`,
-    boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.4), 0 0 16px rgba(255,255,255,0.08)" : GLASS.rim,
+      ? "rgba(255,255,255,0.96)"
+      : `linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 100%), ${GLASS.fill}`,
+    border: `1px solid ${on ? "#FFFFFF" : GLASS.border}`,
+    boxShadow: on ? "0 4px 16px rgba(0,0,0,0.16)" : GLASS.rim,
     ...(blur ? { backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur } : null),
   };
 }
@@ -275,7 +305,7 @@ function ImageLightbox({ src, onClose }) {
     </div>
   );
 }
-function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
+function GlossTile({ emoji, image, size = 92, tint = "#FFFFFF" }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -283,10 +313,10 @@ function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
       onClick={image ? (e) => { e.stopPropagation(); setOpen(true); } : undefined}
       style={{
         width: size, height: size, borderRadius: size * S.rTile,
-        background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.22)} 0%, ${C.card2} 55%, ${C.card} 100%)`,
+        background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.4)} 0%, rgba(255,255,255,0.14) 60%, rgba(255,255,255,0.08) 100%)`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-        border: `1px solid ${C.line}`, flexShrink: 0, overflow: "hidden", position: "relative",
+        boxShadow: `${GLASS.rim}, 0 6px 18px rgba(0,0,0,0.12)`,
+        border: `1px solid ${GLASS.border}`, flexShrink: 0, overflow: "hidden", position: "relative",
         cursor: image ? "zoom-in" : "default",
       }}
     >
@@ -332,7 +362,7 @@ function Avatar({ m, size = 34 }) {
       width: size, height: size, borderRadius: size, background: m.color,
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0,
-      border: `2px solid ${C.bg}`,
+      border: "2px solid rgba(255,255,255,0.75)",
     }}>
       {m.name.slice(0, 1)}
     </div>
@@ -340,10 +370,10 @@ function Avatar({ m, size = 34 }) {
 }
 function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
   const styles = {
-    primary: { background: `linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%), ${C.blue}`, color: "#fff", border: "1px solid rgba(255,255,255,0.18)", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.3), 0 6px 22px ${hex(C.blue, 0.35)}` },
+    primary: { background: "#FFFFFF", color: C.ink, border: "1px solid #FFFFFF", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" },
     ghost: { ...glass({ blur: true }), color: C.t1 },
-    soft: { ...glass({ blur: true }), background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%), ${C.blueSoft}`, color: "#7FB0FF", border: `1px solid ${C.blueLine}` },
-    green: { ...glass({ blur: true }), background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%), ${C.greenSoft}`, color: "#7EE29A", border: "1px solid rgba(52,199,89,0.4)" },
+    soft: { ...glass({ blur: true }), color: C.t1 },
+    green: { ...glass({ blur: true }), background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%), ${C.accentSoft}`, color: C.accent, border: "1px solid rgba(232,242,78,0.5)" },
   }[kind];
   return (
     <button
@@ -365,7 +395,7 @@ function Chip({ children, active, onClick }) {
       padding: "9px 15px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
       cursor: "pointer", whiteSpace: "nowrap",
       ...glass({ on: active }),
-      color: active ? C.t1 : "rgba(255,255,255,0.55)",
+      color: active ? C.ink : C.t2,
       display: "inline-flex", alignItems: "center", gap: 6,
     }}>
       {children}
@@ -385,7 +415,7 @@ function Segmented({ options, value, onChange, style }) {
             flex: 1, padding: "11px 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
             ...(on ? glass({ on: true }) : { background: "transparent", border: "1px solid transparent" }),
-            color: on ? C.t1 : C.t2,
+            color: on ? C.ink : C.t2,
           }}>{l}</button>
         );
       })}
@@ -457,8 +487,8 @@ function RoomFolder({ room, wishes, onOpen, width = 152 }) {
 function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 30%), rgba(22,22,24,0.78)", backdropFilter: "blur(30px) saturate(180%)", WebkitBackdropFilter: "blur(30px) saturate(180%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", border: `1px solid ${GLASS.border}`, boxShadow: GLASS.rim, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />
+      <div style={{ position: "relative", background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 40%), rgba(52,54,62,0.78)", backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", border: `1px solid ${GLASS.border}`, boxShadow: GLASS.rim, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
@@ -497,7 +527,7 @@ function SkeletonScreen({ tab }) {
     <div style={{ animation: "fadeUp .3s ease" }}>
       {header && (
         <div style={{ padding: "6px 4px 14px" }}>
-          <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{header.title}</div>
+          <div style={{ color: C.t1, fontSize: 32, fontWeight: 800, letterSpacing: -0.8 }}>{header.title}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{header.sub}</div>
         </div>
       )}
@@ -524,7 +554,7 @@ function WishRow({ w, right }) {
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{w.price}</div>}
         {w.link && (
           <button onClick={(e) => { e.stopPropagation(); window.open(w.link, "_blank"); }}
-            style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#7FB0FF", fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, fontFamily: font, maxWidth: "100%" }}>
+            style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: C.t1, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, fontFamily: font, maxWidth: "100%" }}>
             <Link2 size={12} /> <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{linkHost(w.link)}</span>
           </button>
         )}
@@ -671,6 +701,15 @@ export default function App() {
       ? { ...w, rooms: w.rooms.includes(rid) ? w.rooms.filter(r => r !== rid) : [...w.rooms, rid] } : w));
   };
 
+  // Keep Telegram's header/background in step with the colour field on screen.
+  useEffect(() => {
+    const tg = tgWebApp(); if (!tg) return;
+    const room = overlay && overlay.roomId && rooms.find(r => r.id === overlay.roomId);
+    const top = room ? roomMesh(room.tint).base[0] : MESH[tab].base[0];
+    try { tg.setHeaderColor(top); } catch (e) {}
+    try { tg.setBackgroundColor(top); } catch (e) {}
+  }, [tab, overlay, rooms]);
+
   useEffect(() => {
     const tg = tgWebApp();
     const bb = tg && tg.BackButton;
@@ -691,20 +730,22 @@ export default function App() {
 
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
-    <div style={{ background: C.bg, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font }}>
+    <div style={{ background: C.bg, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, position: "relative" }}>
+      <AppBackground tab={tab} />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
         @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
         @keyframes spinEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-        @keyframes glow{0%,100%{box-shadow:0 0 0 0 ${hex(C.blue,0.0)}}50%{box-shadow:0 0 40px 4px ${hex(C.blue,0.45)}}}
+        @keyframes glow{0%,100%{box-shadow:0 0 0 0 ${hex(C.accent,0.0)}}50%{box-shadow:0 0 40px 4px ${hex(C.accent,0.55)}}}
         @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
         @keyframes spin{to{transform:rotate(360deg)}}
         ::-webkit-scrollbar{display:none}
+        input::placeholder{color:rgba(255,255,255,0.45)}
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 440, minHeight: "100vh", background: C.bg, position: "relative", overflow: "hidden" }}>
+      <div style={{ width: "100%", maxWidth: 440, minHeight: "100vh", position: "relative", zIndex: 1, overflow: "hidden" }}>
         <div style={{ padding: `16px ${S.gutter}px 120px` }}>
           {loading ? <SkeletonScreen tab={tab} /> : (
             <>
@@ -827,14 +868,14 @@ function TabBar({ tab, setTab }) {
   return (
     <>
       {/* fade content out under the bar, like iOS */}
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%)" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.28) 100%)" }} />
       <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
         <div style={{
           position: "relative", display: "flex", padding: 5, borderRadius: 999,
           background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%), ${GLASS.fill}`,
           backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
           border: `1px solid ${GLASS.border}`,
-          boxShadow: `${GLASS.rim}, 0 12px 34px rgba(0,0,0,0.55)`,
+          boxShadow: `${GLASS.rim}, 0 12px 34px rgba(0,0,0,0.25)`,
         }}>
           {/* sliding active bubble with a soft glow underneath */}
           <div style={{
@@ -842,9 +883,9 @@ function TabBar({ tab, setTab }) {
             transform: `translateX(${idx * W}px)`, transition: "transform .38s cubic-bezier(.3,1.3,.5,1)",
             background: "radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.07) 70%)",
             border: "1px solid rgba(255,255,255,0.16)",
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.28), 0 0 22px ${hex(C.blue, 0.35)}`,
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.45), 0 0 22px rgba(255,255,255,0.35)",
           }}>
-            <div style={{ position: "absolute", left: "20%", right: "20%", bottom: -6, height: 14, borderRadius: "50%", background: hex(C.blue, 0.7), filter: "blur(10px)" }} />
+            <div style={{ position: "absolute", left: "20%", right: "20%", bottom: -6, height: 14, borderRadius: "50%", background: "rgba(255,255,255,0.85)", filter: "blur(10px)" }} />
           </div>
           {items.map(it => {
             const on = tab === it.id; const Icon = it.icon;
@@ -854,7 +895,7 @@ function TabBar({ tab, setTab }) {
                 padding: "8px 0", borderRadius: 999, border: "none", cursor: "pointer", background: "transparent",
                 color: on ? "#FFFFFF" : C.t2, fontFamily: font, transition: "color .25s",
               }}>
-                <Icon size={21} style={{ filter: on ? `drop-shadow(0 0 6px ${hex("#7FB0FF", 0.9)})` : "none", transition: "filter .25s" }} />
+                <Icon size={21} style={{ filter: on ? `drop-shadow(0 0 6px rgba(255,255,255,0.95))` : "none", transition: "filter .25s" }} />
                 <span style={{ fontSize: 11, fontWeight: 600 }}>{it.label}</span>
               </button>
             );
@@ -873,14 +914,14 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
     <div style={{ animation: "fadeUp .3s ease" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 14px" }}>
         <div>
-          <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("poolTitle")}</div>
+          <div style={{ color: C.t1, fontSize: 32, fontWeight: 800, letterSpacing: -0.8 }}>{t("poolTitle")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{t("poolSub")}</div>
         </div>
         <GlassButton onClick={onAdd} size={44} label={t("addWish")}><Plus size={22} /></GlassButton>
       </div>
 
       {rooms.length > 0 && (
-        <div style={{ display: "flex", gap: S.gap, overflowX: "auto", margin: `0 -${S.gutter}px 14px`, padding: `2px ${S.gutter}px 4px` }}>
+        <div style={{ display: "flex", gap: S.gap, overflowX: "auto", margin: `-16px -${S.gutter}px -18px`, padding: `18px ${S.gutter}px 32px` }}>
           {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={() => onOpenRoom(r.id)} />)}
         </div>
       )}
@@ -941,7 +982,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
     <div style={{ animation: "fadeUp .3s ease" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 18px" }}>
         <div>
-          <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
+          <div style={{ color: C.t1, fontSize: 32, fontWeight: 800, letterSpacing: -0.8 }}>{t("roomsTitle")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{t("roomsSub")}</div>
         </div>
         <GlassButton onClick={onCreate} size={44} label={t("createRoom")}><Plus size={22} /></GlassButton>
@@ -1166,10 +1207,10 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
                 </div>
-                <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: `2px solid ${inRoom ? C.blue : C.line}`, background: inRoom ? C.blue : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: `2px solid ${inRoom ? "#FFFFFF" : C.line}`, background: inRoom ? "#FFFFFF" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {isPending
                     ? <div style={{ width: 12, height: 12, borderRadius: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", animation: "spin .6s linear infinite" }} />
-                    : (inRoom && <Check size={16} color="#fff" />)}
+                    : (inRoom && <Check size={16} color={C.ink} strokeWidth={3} />)}
                 </div>
               </div>
             );
@@ -1226,14 +1267,14 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 
   return (
-    <div style={{ position: "absolute", inset: 0, top: 0, background: C.bg, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
+    <div style={{ position: "absolute", inset: 0, top: 0, background: mesh(roomMesh(room.tint)), zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
       <FallbackBack onBack={onBack} />
       <div style={{ padding: `16px ${S.gutter}px 140px` }}>
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
           <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 }}>
-            <div style={{ color: C.t1, fontSize: 24, fontWeight: 800 }}>{room.name}</div>
+            <div style={{ color: C.t1, fontSize: 32, fontWeight: 800, letterSpacing: -0.8 }}>{room.name}</div>
             {isOwner && (
               <GlassButton onClick={onEdit} size={30} label={t("editRoom")}><Pencil size={13} /></GlassButton>
             )}
@@ -1376,14 +1417,14 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
   const isMine = (w) => w.reservedByMe || reserved[w.id] === "you";
 
   return (
-    <div style={{ position: "absolute", inset: 0, background: C.bg, zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
+    <div style={{ position: "absolute", inset: 0, background: mesh(roomMesh(room.tint)), zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
       <div style={{ padding: "16px 18px", display: "flex", justifyContent: "flex-end" }}>
         <GlassButton onClick={onClose} label="Close"><X size={18} /></GlassButton>
       </div>
 
       {stage === "setup" && (
         <div style={{ padding: "20px 22px", textAlign: "center", animation: "fadeUp .3s ease" }}>
-          <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji="🎲" size={104} tint={C.blue} /></div>
+          <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji="🎲" size={104} tint={C.accent} /></div>
           <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 16 }}>{t("secretExchange")}</div>
           <div style={{ color: C.t2, fontSize: 15, marginTop: 8, maxWidth: 300, marginInline: "auto", lineHeight: 1.45 }}>
             {t("drawIntro")}
@@ -1425,7 +1466,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div style={{ animation: "glow 1.2s ease-in-out infinite", borderRadius: 30 }}>
               <div style={{ animation: "spinEmoji .5s ease-in-out infinite" }}>
-                <GlossTile emoji={spin} size={128} tint={C.blue} />
+                <GlossTile emoji={spin} size={128} tint={C.accent} />
               </div>
             </div>
           </div>
@@ -1436,7 +1477,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
       {stage === "reveal" && target && (
         <div style={{ padding: "20px 22px", textAlign: "center" }}>
-          <div style={{ color: C.blue, fontSize: 14, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{t("youGot")}</div>
+          <div style={{ color: C.accent, fontSize: 14, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{t("youGot")}</div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 18, animation: "pop .5s ease" }}>
             <Avatar m={target} size={96} />
           </div>
@@ -1578,7 +1619,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
 
       <div style={{ display: "flex", gap: S.gap, marginTop: 22 }}>
         <Card style={{ flex: 1, padding: S.pad, textAlign: "left" }}>
-          <Gift size={22} color={C.blue} />
+          <Gift size={22} color={C.accent} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{wishes.reduce((n, w) => n + w.rooms.length, 0)}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("sharedStat")}</div>
         </Card>
