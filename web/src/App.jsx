@@ -518,7 +518,7 @@ function SkeletonScreen({ tab }) {
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
       {header && (
-        <div style={{ padding: "6px 4px 14px" }}>
+        <div style={{ padding: "6px 4px 24px" }}>
           <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{header.title}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{header.sub}</div>
         </div>
@@ -879,7 +879,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
   const [openId, setOpenId] = useState(null);
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "6px 4px 14px" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "6px 4px 24px" }}>
         <div>
           <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("poolTitle")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("poolSub")}</div>
@@ -891,7 +891,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {wishes.map(w => (
-            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `${wishImages(w).length ? 0 : 4}px 16px ${openId === w.id ? 16 : 4}px`, cursor: "pointer" }}>
+            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `${wishImages(w).length ? 0 : 4}px 16px ${openId === w.id ? 16 : 4}px`, cursor: "pointer", border: "1px solid rgba(255,255,255,0.14)", overflow: "hidden" }}>
               {wishImages(w).length > 0 && <PhotoHeader images={wishImages(w)} />}
               <WishRow w={w} noPhoto={wishImages(w).length > 0} right={
                 <ChevronRight size={20} color={C.t2} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
@@ -1014,7 +1014,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
   const { t } = useT();
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
-      <div style={{ padding: "6px 4px 14px" }}>
+      <div style={{ padding: "6px 4px 24px" }}>
         <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
         <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("roomsSub")}</div>
       </div>
