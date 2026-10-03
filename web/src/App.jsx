@@ -1552,7 +1552,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
-              <Empty emoji="stk:bear" tilt={6} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
+              <Empty emoji="👀" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
                 action={<Pill kind="primary" icon={<Share2 size={17} />} onClick={onInvite}>{t("inviteFriends")}</Pill>} />
             </div>
           ) : (
