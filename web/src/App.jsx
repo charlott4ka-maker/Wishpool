@@ -9,56 +9,18 @@ import {
 const PoolScreenGlass = React.lazy(() => import("./PoolScreenGlass.jsx"));
 
 /* ---------- design tokens ---------- */
-// Accent pairing for the dark-navy theme. "raspberry" = blue + raspberry,
-// "blue" = everything blue. One switch, nothing else needs to change.
-const THEME = "raspberry";
-const ACC = THEME === "blue"
-  ? { main: "#5B8CFF", light: "#A9C1FF", deep: "#1C3A9E" }
-  : { main: "#E8336F", light: "#FF8AB0", deep: "#6E1640" };
 const C = {
-  bg: "#070B1C",
-  card: "rgba(255,255,255,0.06)",
-  card2: "rgba(255,255,255,0.10)",
+  bg: "#000000",
+  card: "rgba(255,255,255,0.07)",
+  card2: "rgba(255,255,255,0.11)",
   line: "rgba(255,255,255,0.08)",
   t1: "#FFFFFF",
-  t2: "rgba(255,255,255,0.62)",
-  t3: "rgba(255,255,255,0.40)",
-  blue: "#3D6BFF",
-  blueLight: "#8FAEFF",
-  accent: ACC.main,
-  accentLight: ACC.light,
+  t2: "#8A8A8E",
+  t3: "#5A5A5E",
+  blue: "#2E7DF6",
+  blueLight: "#8FB8FF",
+  accent: "#2E7DF6",
 };
-// Dark navy colour fields: four big blurred blobs (blues + accent) over a
-// near-black navy base, with a darker scrim at the bottom.
-const MESH = {
-  pool: { blobs: ["#1F3FB8", "#0E1A5C", ACC.deep, "#0B1E6E"], base: ["#0A1030", "#05070F"] },
-  rooms: { blobs: ["#15257A", ACC.deep, "#1C3CA8", "#060914"], base: ["#0B0F2A", "#05060E"] },
-  profile: { blobs: ["#2A2F9E", "#0F1A55", ACC.deep, "#1A3A9C"], base: ["#0B0E2C", "#05060F"] },
-};
-function roomMesh(tint) {
-  return { blobs: [hex(tint, 0.45), "#14206A", hex(tint, 0.22), "#05070F"], base: ["#0A0F2A", "#05060E"] };
-}
-function mesh(m) {
-  const [a, b, c, d] = m.blobs;
-  return [
-    "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.35) 100%)",
-    `radial-gradient(70% 45% at 12% 6%, ${a} 0%, transparent 70%)`,
-    `radial-gradient(60% 40% at 88% 34%, ${b} 0%, transparent 70%)`,
-    `radial-gradient(80% 45% at 22% 74%, ${c} 0%, transparent 70%)`,
-    `radial-gradient(70% 45% at 92% 100%, ${d} 0%, transparent 72%)`,
-    `linear-gradient(180deg, ${m.base[0]} 0%, ${m.base[1]} 100%)`,
-  ].join(", ");
-}
-// Fixed full-screen background; one layer per tab, cross-faded on switch.
-function AppBackground({ tab }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-      {Object.keys(MESH).map(k => (
-        <div key={k} style={{ position: "absolute", inset: 0, background: mesh(MESH[k]), opacity: tab === k ? 1 : 0, transition: "opacity .6s ease" }} />
-      ))}
-    </div>
-  );
-}
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
 const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
@@ -66,7 +28,7 @@ const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
 // No outlines anywhere: glass reads through the frosted blur, a soft sheen in
 // the top-left (same as the round buttons), a light top rim and a drop shadow.
 const GLASS = {
-  fill: "rgba(255,255,255,0.055)",
+  fill: "rgba(255,255,255,0.07)",
   sheen: "radial-gradient(120% 120% at 30% 0%, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.02) 60%)",
   blur: "blur(22px) saturate(160%)",
   rim: "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.25), 0 10px 30px rgba(0,0,0,0.28)",
@@ -364,7 +326,7 @@ function Avatar({ m, size = 34 }) {
       width: size, height: size, borderRadius: size, background: m.color,
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0,
-      boxShadow: "0 0 0 2px #0A0F26",
+      boxShadow: "0 0 0 2px #000",
     }}>
       {m.name.slice(0, 1)}
     </div>
@@ -375,7 +337,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
     primary: { ...glass({ on: true }), color: "#fff" },
     ghost: { ...glass(), color: C.t1 },
     soft: { ...glass(), color: C.t1 },
-    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.accent, 0.24)}`, color: C.accentLight, boxShadow: `${GLASS.rim}, 0 0 18px ${hex(C.accent, 0.3)}` },
+    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.blue, 0.32)}`, color: C.blueLight, boxShadow: `${GLASS.rim}, 0 0 18px ${hex(C.blue, 0.35)}` },
   }[kind];
   return (
     <button
@@ -495,7 +457,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(2,4,12,0.55)" }} />
-      <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(14,18,42,0.84)`, backdropFilter: "blur(40px) saturate(170%)", WebkitBackdropFilter: "blur(40px) saturate(170%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -10px 40px rgba(0,0,0,0.4)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(22,22,24,0.88)`, backdropFilter: "blur(40px) saturate(170%)", WebkitBackdropFilter: "blur(40px) saturate(170%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -10px 40px rgba(0,0,0,0.4)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
@@ -708,15 +670,6 @@ export default function App() {
       ? { ...w, rooms: w.rooms.includes(rid) ? w.rooms.filter(r => r !== rid) : [...w.rooms, rid] } : w));
   };
 
-  // Keep Telegram's header/background in step with the colour field on screen.
-  useEffect(() => {
-    const tg = tgWebApp(); if (!tg) return;
-    const room = overlay && overlay.roomId && rooms.find(r => r.id === overlay.roomId);
-    const top = room ? roomMesh(room.tint).base[0] : MESH[tab].base[0];
-    try { tg.setHeaderColor(top); } catch (e) {}
-    try { tg.setBackgroundColor(top); } catch (e) {}
-  }, [tab, overlay, rooms]);
-
   useEffect(() => {
     const tg = tgWebApp();
     const bb = tg && tg.BackButton;
@@ -738,7 +691,6 @@ export default function App() {
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
     <div style={{ background: C.bg, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, position: "relative" }}>
-      <AppBackground tab={tab} />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -1270,7 +1222,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 
   return (
-    <div style={{ position: "absolute", inset: 0, top: 0, background: mesh(roomMesh(room.tint)), zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
+    <div style={{ position: "absolute", inset: 0, top: 0, background: C.bg, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
       <FallbackBack onBack={onBack} />
       <div style={{ padding: `16px ${S.gutter}px 140px` }}>
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
@@ -1420,7 +1372,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
   const isMine = (w) => w.reservedByMe || reserved[w.id] === "you";
 
   return (
-    <div style={{ position: "absolute", inset: 0, background: mesh(roomMesh(room.tint)), zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
+    <div style={{ position: "absolute", inset: 0, background: C.bg, zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
       <div style={{ padding: "16px 18px", display: "flex", justifyContent: "flex-end" }}>
         <GlassButton onClick={onClose} label="Close"><X size={18} /></GlassButton>
       </div>
