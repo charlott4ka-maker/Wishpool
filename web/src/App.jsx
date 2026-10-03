@@ -342,7 +342,7 @@ function GlossTile({ emoji, image, images, size = 92, tint = "#2E7DF6", bare = f
   if (bare && !image) {
     return (
       <div style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Sticker emoji={emoji} size={size * 0.56} />
+        <Sticker emoji={emoji} size={size <= 36 ? size * 0.82 : size * 0.56} />
       </div>
     );
   }
@@ -531,11 +531,18 @@ function SkeletonScreen({ tab }) {
 }
 
 /* ---------- wish card ---------- */
+// Telegram-style list rows: 16px side padding, 30px icon, 16px to the text,
+// separators start at the text and stop at the right padding.
+const LIST = { pad: 16, icon: 30, gap: 16 };
+const sepBelow = (show, inset = LIST.icon + LIST.gap) => show ? {
+  backgroundImage: `linear-gradient(${C.line}, ${C.line})`, backgroundRepeat: "no-repeat",
+  backgroundPosition: "right bottom", backgroundSize: `calc(100% - ${inset}px) 1px`,
+} : null;
 function WishRow({ w, right, noPhoto }) {
   const imgs = wishImages(w);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px" }}>
-      <GlossTile emoji={w.emoji} image={noPhoto ? null : imgs[0]} images={imgs} size={52} bare />
+    <div style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "12px 0", minHeight: 56 }}>
+      <GlossTile emoji={w.emoji} image={noPhoto ? null : imgs[0]} images={imgs} size={LIST.icon} bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{w.price}</div>}
@@ -1099,10 +1106,10 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
                   <Pill size="sm" kind="soft" icon={<Share2 size={14} />} onClick={() => onShare({ id: g.room.id, name: g.room.name })}>{t("shareBtn")}</Pill>
                 </div>
               </div>
-              <Card style={{ padding: "4px 14px" }}>
+              <Card style={{ padding: `0 ${LIST.pad}px` }}>
                 {g.people.map((p, i) => (
-                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < g.people.length - 1 ? `1px solid ${C.line}` : "none" }}>
-                    <Avatar m={p} size={34} />
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "11px 0", ...sepBelow(i < g.people.length - 1) }}>
+                    <Avatar m={p} size={LIST.icon} />
                     <div style={{ color: C.t1, fontSize: 15, fontWeight: 600 }}>{p.name}</div>
                     <div style={{ marginLeft: "auto", color: C.t3, fontSize: 12.5 }}>{t("invitedByYou")}</div>
                   </div>
@@ -1138,9 +1145,9 @@ function HistorySheet({ online, onClose }) {
           <div style={{ color: C.t2, fontSize: 14, marginTop: 8, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
         </div>
       ) : (
-        <Card style={{ padding: "4px 20px" }}>
+        <Card style={{ padding: `0 ${LIST.pad}px` }}>
           {gifts.map((w, i) => (
-            <div key={w.id} style={{ borderBottom: i < gifts.length - 1 ? `1px solid ${C.line}` : "none" }}>
+            <div key={w.id} style={{ ...sepBelow(i < gifts.length - 1) }}>
               <WishRow w={w} right={w.owner && <span style={{ color: C.t3, fontSize: 12.5 }}>{t("giftingFor", { name: w.owner.name })}</span>} />
             </div>
           ))}
@@ -1320,10 +1327,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} style={{ marginBottom: 16 }} />
 
         {loading ? (
-          <Card style={{ padding: "4px 20px" }}>
+          <Card style={{ padding: `0 ${LIST.pad}px` }}>
             {[0, 1].map(i => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: i === 0 ? `1px solid ${C.line}` : "none" }}>
-                <Bone w={52} h={52} r={16} />
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "12px 0", ...sepBelow(i === 0) }}>
+                <Bone w={LIST.icon} h={LIST.icon} r={8} />
                 <div style={{ flex: 1 }}>
                   <Bone w="55%" h={16} r={6} style={{ marginBottom: 8 }} />
                   <Bone w="30%" h={12} r={6} />
@@ -1346,9 +1353,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
                   <Avatar m={m} size={28} /><span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700 }}>{m.name}</span>
                 </div>
-                <Card style={{ padding: "4px 20px" }}>
+                <Card style={{ padding: `0 ${LIST.pad}px` }}>
                   {mws.map((w, i, arr) => (
-                    <div key={w.id} style={{ borderBottom: i < arr.length - 1 ? `1px solid ${C.line}` : "none" }}>
+                    <div key={w.id} style={{ ...sepBelow(i < arr.length - 1) }}>
                       <WishRow w={w} right={reserveRight(w)} />
                     </div>
                   ))}
@@ -1367,9 +1374,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           <div>
             {mine.length === 0
               ? <Empty emoji="👀" title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
-              : <Card style={{ padding: "4px 20px" }}>
+              : <Card style={{ padding: `0 ${LIST.pad}px` }}>
                 {mine.map((w, i) => (
-                  <div key={w.id} style={{ borderBottom: i < mine.length - 1 ? `1px solid ${C.line}` : "none" }}>
+                  <div key={w.id} style={{ ...sepBelow(i < mine.length - 1) }}>
                     <WishRow w={w} right={<span style={{ color: C.t3, fontSize: 12.5 }}>{t("visibleToAll")}</span>} />
                   </div>
                 ))}
@@ -1565,9 +1572,9 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
           <div style={{ marginTop: 24, textAlign: "left" }}>
             <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("wishesOf", { name: target.name })}</div>
-            <Card style={{ padding: "4px 20px" }}>
+            <Card style={{ padding: `0 ${LIST.pad}px` }}>
               {targetWishes.length ? targetWishes.map((w, i) => (
-                <div key={w.id} style={{ borderBottom: i < targetWishes.length - 1 ? `1px solid ${C.line}` : "none" }}>
+                <div key={w.id} style={{ ...sepBelow(i < targetWishes.length - 1) }}>
                   <WishRow w={w} right={
                     isMine(w)
                       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
@@ -1738,15 +1745,17 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
         <Segmented options={LANGS.map(l => [l, LANG_SHORT[l]])} value={lang} onChange={setLang} />
       </div>
 
-      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-        {[[Clock, t("history"), onHistory], [Link2, t("myInvites"), onInvites], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui")]].map(([Icon, l, on], i) => (
-          <Card key={i} onClick={on} style={{ padding: 20, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-            <Icon size={20} color={C.t2} />
-            <span style={{ flex: 1, textAlign: "left", color: C.t1, fontSize: 15.5, fontWeight: 600 }}>{l}</span>
-            <ChevronRight size={19} color={C.t3} />
-          </Card>
+      <Card style={{ marginTop: 16, padding: `0 ${LIST.pad}px` }}>
+        {[[Clock, t("history"), onHistory, "#FF9F0A"], [Link2, t("myInvites"), onInvites, "#5E5CE6"], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui"), "#2E7DF6"]].map(([Icon, l, on, bg], i, arr) => (
+          <div key={i} onClick={on} style={{ height: 52, display: "flex", alignItems: "center", gap: LIST.gap, cursor: "pointer", ...sepBelow(i < arr.length - 1) }}>
+            <div style={{ width: LIST.icon, height: LIST.icon, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon size={18} color="#fff" strokeWidth={2.4} />
+            </div>
+            <span style={{ flex: 1, textAlign: "left", color: C.t1, fontSize: 16, fontWeight: 500 }}>{l}</span>
+            <ChevronRight size={20} color={C.t3} />
+          </div>
         ))}
-      </div>
+      </Card>
     </div>
   );
 }
