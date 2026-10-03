@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext, createContext } from "react";
 import { createPortal } from "react-dom";
 import {
-  Gift as PhGift, House as PhHouse, Briefcase as PhBriefcase, Users as PhUsers, User as PhUser, Plus as PhPlus, Check as PhCheck, CaretLeft as PhCaretLeft, CaretRight as PhCaretRight, X as PhX, ShareNetwork as PhShareNetwork, LockSimple as PhLockSimple, DiceFive as PhDiceFive, Sparkle as PhSparkle, Clock as PhClock, Link as PhLink, Heart as PhHeart, Image as PhImage, Trash as PhTrash, Globe as PhGlobe, PaperPlaneTilt as PhPaperPlaneTilt, PencilSimple as PhPencilSimple,
+  Gift as PhGift, Users as PhUsers, User as PhUser, Plus as PhPlus, Check as PhCheck, CaretLeft as PhCaretLeft, CaretRight as PhCaretRight, X as PhX, ShareNetwork as PhShareNetwork, LockSimple as PhLockSimple, DiceFive as PhDiceFive, Sparkle as PhSparkle, Clock as PhClock, Link as PhLink, Heart as PhHeart, Image as PhImage, Trash as PhTrash, Globe as PhGlobe, PaperPlaneTilt as PhPaperPlaneTilt, PencilSimple as PhPencilSimple,
 } from "@phosphor-icons/react";
 
 // Phosphor icons in the reference's chunky style: solid ("fill") glyphs for
@@ -10,7 +10,6 @@ import {
 const icon = (P, w) => function Icon({ size = 20, color = "currentColor", style, weight }) {
   return <P size={size} color={color} weight={weight || w} style={style} />;
 };
-const House = icon(PhHouse, "fill"), Briefcase = icon(PhBriefcase, "fill");
 const Gift = icon(PhGift, "fill"), Users = icon(PhUsers, "fill"), User = icon(PhUser, "fill");
 const Plus = icon(PhPlus, "bold"), Check = icon(PhCheck, "bold"), X = icon(PhX, "bold");
 const ChevronLeft = icon(PhCaretLeft, "bold"), ChevronRight = icon(PhCaretRight, "bold");
@@ -33,29 +32,12 @@ const C = {
   t1: "#FFFFFF",
   t2: "#8A8A8E",
   t3: "#6E6E73",
-  blue: "#3A8BD9",        // accent fill (reference "Send" blue)
-  blueLight: "#8CC4FF",   // accent text / links / icons
+  blue: "#2E7DF6",        // accent fill
+  blueLight: "#7FB0FF",   // accent text / links / icons
   onBlue: "#FFFFFF",      // text on accent fill
-  blueDeep: "rgba(58,139,217,0.18)", // secondary pill / selected tab fill
-  purple: "#8E4FD6",
-  green: "#3FAE3F",
-  accent: "#3A8BD9",
+  blueDeep: "rgba(46,125,246,0.16)", // secondary pill / selected tab fill
+  accent: "#2E7DF6",
 };
-// Glossy "jelly" fill from the reference: light top highlight, colour body,
-// darker bottom, bright rim and an inner shadow — all inside the shape.
-function shade(h, amt) { // amt > 0 lightens toward white, < 0 darkens toward black
-  const n = h.replace("#", ""); const c = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16));
-  const t = amt > 0 ? 255 : 0, a = Math.abs(amt);
-  return "#" + c.map(v => Math.round(v + (t - v) * a).toString(16).padStart(2, "0")).join("");
-}
-function jelly(color) {
-  return {
-    background: `radial-gradient(120% 85% at 50% 0%, ${shade(color, 0.32)} 0%, ${color} 48%, ${shade(color, -0.28)} 100%)`,
-    border: "none",
-    boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.5), inset 0 0 0 1px ${shade(color, 0.22)}, inset 0 -4px 8px ${shade(color, -0.45)}`,
-  };
-}
-const JELLY_GREY = "#4A4A50";
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
 const S = { gutter: 12, gap: 12, pad: 20, r: 30, rTile: 0.3 };
@@ -70,9 +52,10 @@ function surface({ fill = SOLID.card } = {}) {
 }
 const GLASS = { rim: "none" };
 // `on` = selected / primary: solid accent; otherwise a flat raised control.
-// `on` = selected / primary: blue jelly; otherwise a flat raised control.
 function glass({ on = false } = {}) {
-  return on ? jelly(C.blue) : { background: SOLID.control, border: "none", boxShadow: "none" };
+  return on
+    ? { background: C.blue, border: "none", boxShadow: "none" }
+    : { background: SOLID.control, border: "none", boxShadow: "none" };
 }
 // Floating bars sit over scrolling content: dark tint + light blur for legibility.
 function glassFloat() {
@@ -356,7 +339,7 @@ function TagChip({ icon: Icon, emoji, color = "#FFFFFF", children }) {
       background: hex(color, 0.14), boxShadow: `inset 0 0 0 1px ${hex(color, 0.45)}`,
       color: tintToWhite(color, 0.6), fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap",
     }}>
-      {Icon ? <Icon size={15} /> : <Sticker emoji={emoji} size={14} />}
+      {Icon ? <Icon size={13} strokeWidth={2.4} /> : <Sticker emoji={emoji} size={14} />}
       {children}
     </span>
   );
@@ -524,8 +507,8 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
   const styles = {
     primary: { ...glass({ on: true }), color: C.onBlue },
     ghost: { ...glass(), color: C.t1 },
-    soft: { background: C.blueDeep, border: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08)`, color: C.blueLight },
-    green: { ...jelly(C.blue), color: C.onBlue },
+    soft: { background: C.blueDeep, border: "none", boxShadow: "none", color: C.blueLight },
+    green: { background: C.blue, border: "none", boxShadow: "none", color: C.onBlue },
   }[kind];
   return (
     <button
@@ -566,8 +549,8 @@ function Segmented({ options, value, onChange, style }) {
           <button key={k} onClick={() => onChange(k)} style={{
             flex: 1, padding: "0 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
-            // tab switch: the selected tab is a glossy grey pill on the dark track
-            ...(on ? jelly(JELLY_GREY) : { background: "transparent", border: "none", boxShadow: "none" }),
+            // tab switch: the selected tab is a black pill on the grey track
+            background: on ? "#000000" : "transparent", border: "none", boxShadow: "none",
             color: on ? C.t1 : C.t2,
           }}>{l}</button>
         );
@@ -582,7 +565,7 @@ function GlassButton({ onClick, children, size = H.sm, label, style }) {
     <button onClick={onClick} aria-label={label} style={{
       width: size, height: size, borderRadius: size, flexShrink: 0, cursor: "pointer", padding: 0,
       display: "flex", alignItems: "center", justifyContent: "center", color: C.t1,
-      ...jelly(JELLY_GREY),
+      ...glass(),
       ...style,
     }}>
       {children}
@@ -979,7 +962,7 @@ function TabBar({ tab, setTab }) {
               <button key={it.id} onClick={() => setTab(it.id)} aria-label={it.label} style={{
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
                 width: 92, height: 58, borderRadius: 999, cursor: "pointer", fontFamily: font, border: "none",
-                ...(on ? jelly(JELLY_GREY) : { background: "transparent" }), color: on ? C.t1 : C.t2, transition: "background .2s",
+                background: on ? C.blueDeep : "transparent", color: on ? C.blueLight : C.t2, transition: "background .2s",
               }}>
                 <Icon size={24} weight={on ? "fill" : "regular"} />
                 <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{it.label}</span>
@@ -1020,7 +1003,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                 {w.rooms.length === 0
                   ? <TagChip icon={Lock} color="#FFFFFF">{t("privateNote")}</TagChip>
                   : rooms.filter(r => w.rooms.includes(r.id)).map(r => (
-                    <TagChip key={r.id} icon={roomIcon(r)} color={r.tint}>{r.name}</TagChip>
+                    <TagChip key={r.id} emoji={r.emoji} color={r.tint}>{r.name}</TagChip>
                   ))}
               </div>
               {openId === w.id && (
@@ -1031,7 +1014,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                       ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
                       : rooms.map(r => (
                         <Chip key={r.id} active={w.rooms.includes(r.id)} onClick={() => onToggleRoom(w.id, r.id)}>
-                          {React.createElement(roomIcon(r), { size: 16 })}{r.name}
+                          <Sticker emoji={r.emoji} size={15} />{r.name}
                         </Chip>
                       ))}
                   </div>
@@ -1103,13 +1086,11 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
 }
 
 /* ---------- CREATE ROOM ---------- */
-const ROOM_ICON = { friends: Users, couple: Heart, family: House, team: Briefcase };
-const roomIcon = (r) => ROOM_ICON[r && r.type] || Users;
 const ROOM_PRESETS = [
-  { type: "friends", key: "roomFriends", emoji: "🎮", tint: "#3A8BD9" },
-  { type: "couple", key: "roomCouple", emoji: "💞", tint: "#8E4FD6" },
-  { type: "family", key: "roomFamily", emoji: "🏠", tint: "#3FAE3F" },
-  { type: "team", key: "roomTeam", emoji: "💼", tint: "#5A6BE0" },
+  { type: "friends", key: "roomFriends", emoji: "🎮", tint: "#38BDF8" },
+  { type: "couple", key: "roomCouple", emoji: "💞", tint: "#FF4D8D" },
+  { type: "family", key: "roomFamily", emoji: "🏠", tint: "#34C759" },
+  { type: "team", key: "roomTeam", emoji: "💼", tint: "#2E7DF6" },
 ];
 function CreateRoomSheet({ onClose, onCreate }) {
   const { t } = useT();
