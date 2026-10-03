@@ -408,21 +408,18 @@ function FolderCover({ w, size }) {
   return (
     <div style={{
       width: size, height: size * 1.35, borderRadius: size * 0.2, overflow: "hidden",
-      background: w.blank ? "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))" : C.card2,
+      background: C.card2,
       boxShadow: "0 8px 18px rgba(0,0,0,0.5)",
-      display: "flex", alignItems: "center", justifyContent: "center",
     }}>
-      {w.blank ? null : w.image
-        ? <img src={w.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        : <Sticker emoji={w.emoji} size={size * 0.48} />}
+      <img src={w.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
     </div>
   );
 }
 const FAN = { 1: [[0, -3]], 2: [[-17, -6], [17, 5]], 3: [[-26, -8], [26, 7], [0, -1]] };
 function RoomFolder({ room, wishes, onOpen, width = 152 }) {
   const { t } = useT();
-  const shared = wishes.filter(w => w.rooms.includes(room.id));
-  const covers = shared.length ? shared.slice(0, 3) : [{ id: "b1", blank: true }, { id: "b2", blank: true }];
+  // only real photos go inside; no photos → an empty folder
+  const covers = wishes.filter(w => w.rooms.includes(room.id) && w.image).slice(0, 3);
   const H = 168, POCKET = 78, TILE = 78;
   return (
     <div onClick={onOpen} style={{ position: "relative", width, height: H, flexShrink: 0, cursor: "pointer", animation: "fadeUp .3s ease" }}>
