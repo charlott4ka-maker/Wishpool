@@ -748,10 +748,11 @@ export default function App() {
 
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
-    <div style={{ background: SKY, backgroundAttachment: "fixed", minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, position: "relative" }}>
+    <div style={{ background: SKY, backgroundAttachment: "fixed", minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500, position: "relative" }}>
       <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+        body,input,button,textarea{font-weight:500}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
         @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
