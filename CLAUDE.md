@@ -1,5 +1,10 @@
 # Wishpool
 
+## Talking to the user
+- Reply in Russian, always using masculine forms for yourself ("сделал", "понял").
+- Don't push to `main` on your own: commit to the work branch and ship to `main`
+  only when the user says "в прод" (Vercel Hobby allows 100 deploys a day).
+
 ## UI rules (web/src/App.jsx)
 - Font: Montserrat everywhere. Never use Regular (400); the lightest weight is Medium (500).
 - Buttons and controls come in exactly two heights: `H.lg` (52) and `H.sm` (40).
