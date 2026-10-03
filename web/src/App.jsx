@@ -986,8 +986,7 @@ function RoomFolder({ room, wishes, onOpen }) {
               backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)",
             }} />
             <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
-              <path d={fp.full} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1" />
-              <path d={fp.top} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
+              <path d={fp.full} fill="none" stroke="rgba(255,255,255,0.24)" strokeWidth="1" />
             </svg>
           </>
         )}
