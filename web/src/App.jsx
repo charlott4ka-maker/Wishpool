@@ -43,26 +43,15 @@ function glass({ on = false } = {}) {
 }
 const font =
   '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
-// Editorial italic serif for titles + small caps mono for labels (both have Cyrillic).
-const serif = '"Cormorant Garamond","Times New Roman",serif';
-const mono = '"JetBrains Mono",ui-monospace,Menlo,monospace';
-const serifTitle = { fontFamily: serif, fontStyle: "italic", fontWeight: 600, letterSpacing: -0.3, lineHeight: 1.05 };
-const monoLabel = { fontFamily: mono, fontSize: 11, fontWeight: 500, letterSpacing: 1.2, textTransform: "uppercase", color: C.t2 };
-// Serif italic title; with more than one word the last one is set in blue.
-function Title({ text, size = 40, style }) {
+const titleStyle = { fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.1 };
+const labelStyle = { fontSize: 13, fontWeight: 600, color: C.t2 };
+// Bold title; with more than one word the last one is set in blue.
+function Title({ text, size = 32, style }) {
   const words = String(text).split(" ");
   const tail = words.length > 1 ? words.pop() : null;
   return (
-    <div style={{ ...serifTitle, color: C.t1, fontSize: size, ...style }}>
+    <div style={{ ...titleStyle, color: C.t1, fontSize: size, ...style }}>
       {words.join(" ")}{tail && <> <span style={{ color: C.blueLight }}>{tail}</span></>}
-    </div>
-  );
-}
-// "— WELCOME BACK" eyebrow.
-function Eyebrow({ children, style }) {
-  return (
-    <div style={{ ...monoLabel, display: "flex", alignItems: "center", gap: 8, ...style }}>
-      <span style={{ width: 16, height: 1, background: C.blue }} />{children}
     </div>
   );
 }
@@ -156,8 +145,6 @@ const STR = {
   you: { uk: "Ти", ru: "Вы", en: "You" },
   guest: { uk: "Гість", ru: "Гость", en: "Guest" },
 
-  eyebrowPool: { uk: "З поверненням", ru: "С возвращением", en: "Welcome back" },
-  eyebrowRooms: { uk: "Разом веселіше", ru: "Вместе веселее", en: "Better together" },
   poolTitle: { uk: "Мої бажання", ru: "Мои желания", en: "My wishes" },
   poolSub: { uk: "Спільний пул. Звідси шериш у кімнати.", ru: "Общий пул. Отсюда шеришь в комнаты.", en: "Your pool. Share items into rooms from here." },
   poolEmptyTitle: { uk: "Пул поки порожній", ru: "Пул пока пустой", en: "Your pool is empty" },
@@ -310,17 +297,21 @@ function ImageLightbox({ src, onClose }) {
     </div>
   );
 }
-function GlossTile({ emoji, image, size = 92, tint = C.blue }) {
+function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false }) {
   const [open, setOpen] = useState(false);
   return (
     <>
     <div
       onClick={image ? (e) => { e.stopPropagation(); setOpen(true); } : undefined}
       style={{
-        width: size, height: size, borderRadius: size * S.rTile,
-        background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.45)} 0%, rgba(255,255,255,0.07) 60%, rgba(255,255,255,0.04) 100%)`,
+        width: size, height: size, borderRadius: round ? "50%" : size * S.rTile,
+        // round = bullet-style glass: translucent tint, thin same-hue ring, frosted
+        background: image ? C.card2 : round
+          ? `${GLASS.sheen}, ${hex(tint, 0.18)}`
+          : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.45)} 0%, rgba(255,255,255,0.07) 60%, rgba(255,255,255,0.04) 100%)`,
+        ...(round ? frost : null),
         display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: GLASS.rim, flexShrink: 0, overflow: "hidden", position: "relative",
+        boxShadow: round ? `inset 0 0 0 1px ${hex(tint, 0.45)}, ${GLASS.rim}` : GLASS.rim, flexShrink: 0, overflow: "hidden", position: "relative",
         cursor: image ? "zoom-in" : "default",
       }}
     >
@@ -489,8 +480,8 @@ function RoomFolder({ room, wishes, onOpen, width = 152 }) {
         padding: "0 12px 14px", display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", textAlign: "center",
       }}>
         <Sticker emoji={room.emoji} size={30} style={{ position: "absolute", top: -16, right: 10, transform: "rotate(10deg)" }} />
-        <div style={{ ...serifTitle, color: C.t1, fontSize: 21, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 2 }}>{room.name}</div>
-        <div style={{ ...monoLabel, fontSize: 9.5, marginTop: 4, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
+        <div style={{ color: C.t1, fontSize: 15, fontWeight: 700, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
+        <div style={{ ...labelStyle, fontSize: 11.5, fontWeight: 500, marginTop: 2, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
       </div>
     </div>
   );
@@ -502,7 +493,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
       <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(22,22,24,0.88)`, backdropFilter: "blur(40px) saturate(170%)", WebkitBackdropFilter: "blur(40px) saturate(170%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -10px 40px rgba(0,0,0,0.4)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-          <Title text={title} size={28} />
+          <Title text={title} size={22} />
           <GlassButton onClick={onClose} size={36} label="Close"><X size={18} /></GlassButton>
         </div>
         {children}
@@ -514,7 +505,7 @@ function Empty({ emoji, title, sub }) {
   return (
     <div style={{ padding: "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
       <Sticker emoji={emoji} size={72} />
-      <div style={{ ...serifTitle, color: C.t1, fontSize: 26, marginTop: 16 }}>{title}</div>
+      <div style={{ ...titleStyle, color: C.t1, fontSize: 18, marginTop: 16 }}>{title}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
     </div>
   );
@@ -559,9 +550,9 @@ function SkeletonScreen({ tab }) {
 function WishRow({ w, right }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px" }}>
-      <GlossTile emoji={w.emoji} image={w.image} size={52} />
+      <GlossTile emoji={w.emoji} image={w.image} size={52} round />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ ...serifTitle, color: C.t1, fontSize: 22, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 2 }}>{w.title}</div>
+        <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{w.price}</div>}
         {w.link && (
           <button onClick={(e) => { e.stopPropagation(); window.open(w.link, "_blank"); }}
@@ -899,8 +890,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
     <div style={{ animation: "fadeUp .3s ease" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 14px" }}>
         <div>
-          <Eyebrow>{t("eyebrowPool")}</Eyebrow>
-          <Title text={t("poolTitle")} style={{ marginTop: 8 }} />
+          <Title text={t("poolTitle")} />
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("poolSub")}</div>
         </div>
         <GlassButton onClick={onAdd} size={44} label={t("addWish")}><Plus size={22} /></GlassButton>
@@ -932,7 +922,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
               </div>
               {openId === w.id && (
                 <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, animation: "fadeUp .2s ease", cursor: "default" }}>
-                  <div style={{ ...monoLabel, marginBottom: 8 }}>{t("showInRooms")}</div>
+                  <div style={{ ...labelStyle, marginBottom: 8 }}>{t("showInRooms")}</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {rooms.length === 0
                       ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
@@ -968,8 +958,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
     <div style={{ animation: "fadeUp .3s ease" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 18px" }}>
         <div>
-          <Eyebrow>{t("eyebrowRooms")}</Eyebrow>
-          <Title text={t("roomsTitle")} style={{ marginTop: 8 }} />
+          <Title text={t("roomsTitle")} />
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("roomsSub")}</div>
         </div>
         <GlassButton onClick={onCreate} size={44} label={t("createRoom")}><Plus size={22} /></GlassButton>
@@ -1016,7 +1005,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
         <GlossTile emoji={preset.emoji} size={80} tint={preset.tint} />
       </div>
 
-      <div style={{ ...monoLabel, marginBottom: 8 }}>{t("roomType")}</div>
+      <div style={{ ...labelStyle, marginBottom: 8 }}>{t("roomType")}</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
         {ROOM_PRESETS.map(p => (
           <Chip key={p.type} active={preset.type === p.type} onClick={() => setPreset(p)}>
@@ -1189,7 +1178,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
             const isPending = pendingId === w.id;
             return (
               <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
-                <GlossTile emoji={w.emoji} image={w.image} size={44} />
+                <GlossTile emoji={w.emoji} image={w.image} size={44} round />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
@@ -1261,7 +1250,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 }}>
-            <Title text={room.name} size={40} />
+            <Title text={room.name} size={32} />
             {isOwner && (
               <GlassButton onClick={onEdit} size={30} label={t("editRoom")}><Pencil size={13} /></GlassButton>
             )}
@@ -1412,7 +1401,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
       {stage === "setup" && (
         <div style={{ padding: "20px 22px", textAlign: "center", animation: "fadeUp .3s ease" }}>
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji="🎲" size={104} tint={C.accent} /></div>
-          <Title text={t("secretExchange")} size={36} style={{ marginTop: 16 }} />
+          <Title text={t("secretExchange")} size={26} style={{ marginTop: 16 }} />
           <div style={{ color: C.t2, fontSize: 15, marginTop: 8, maxWidth: 300, marginInline: "auto", lineHeight: 1.45 }}>
             {t("drawIntro")}
           </div>
@@ -1427,14 +1416,14 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
           ) : (
           <>
           <Card style={{ padding: S.pad, marginTop: 24, textAlign: "left" }}>
-            <div style={{ ...monoLabel, marginBottom: 10 }}>{t("giftBudget")}</div>
+            <div style={{ ...labelStyle, marginBottom: 10 }}>{t("giftBudget")}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {["500 ₴", "1 000 ₴", "2 000 ₴"].map(b => (
                 <Chip key={b} active={budget === b} onClick={() => setBudget(b)}>{b}</Chip>
               ))}
             </div>
             <div style={{ height: 16 }} />
-            <div style={{ ...monoLabel, marginBottom: 6 }}>{t("participants", { n: room.members.length })}</div>
+            <div style={{ ...labelStyle, marginBottom: 6 }}>{t("participants", { n: room.members.length })}</div>
             <div style={{ display: "flex" }}>
               {room.members.map((m, i) => <div key={m.id} style={{ marginLeft: i ? -8 : 0 }}><Avatar m={m} size={34} /></div>)}
             </div>
@@ -1464,15 +1453,15 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
       {stage === "reveal" && target && (
         <div style={{ padding: "20px 22px", textAlign: "center" }}>
-          <Eyebrow style={{ justifyContent: "center", color: C.blueLight }}>{t("youGot")}</Eyebrow>
+          <div style={{ color: C.blueLight, fontSize: 14, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{t("youGot")}</div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 18, animation: "pop .5s ease" }}>
             <Avatar m={target} size={96} />
           </div>
-          <div style={{ ...serifTitle, color: C.t1, fontSize: 40, marginTop: 16 }}>{target.name}</div>
+          <div style={{ ...titleStyle, color: C.t1, fontSize: 30, marginTop: 16 }}>{target.name}</div>
           <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("budgetSecret", { b: budget })}</div>
 
           <div style={{ marginTop: 26, textAlign: "left" }}>
-            <div style={{ ...monoLabel, marginBottom: 8 }}>{t("wishesOf", { name: target.name })}</div>
+            <div style={{ ...labelStyle, marginBottom: 8 }}>{t("wishesOf", { name: target.name })}</div>
             <Card style={{ padding: `4px ${S.pad}px` }}>
               {targetWishes.length ? targetWishes.map((w, i) => (
                 <div key={w.id} style={{ borderBottom: i < targetWishes.length - 1 ? `1px solid ${C.line}` : "none" }}>
@@ -1561,7 +1550,7 @@ function AddSheet({ rooms, onClose, onSave }) {
       <Field label={t("priceOpt")} value={price} onChange={setPrice} placeholder="4 200 ₴" />
       <Field label={t("linkOpt")} value={link} onChange={setLink} placeholder="https://…" />
 
-      <div style={{ ...monoLabel, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
+      <div style={{ ...labelStyle, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
         {rooms.map(r => (
           <Chip key={r.id} active={inRooms.includes(r.id)}
@@ -1581,7 +1570,7 @@ function AddSheet({ rooms, onClose, onSave }) {
 function Field({ label, value, onChange, placeholder }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ ...monoLabel, marginBottom: 8 }}>{label}</div>
+      <div style={{ ...labelStyle, marginBottom: 8 }}>{label}</div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
           width: "100%", ...glass(), borderRadius: 18,
@@ -1601,7 +1590,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
   return (
     <div style={{ animation: "fadeUp .3s ease", textAlign: "center", paddingTop: 12 }}>
       <div style={{ display: "flex", justifyContent: "center" }}><Avatar m={me} size={92} /></div>
-      <div style={{ ...serifTitle, color: C.t1, fontSize: 38, marginTop: 14 }}>{me.name}</div>
+      <div style={{ ...titleStyle, color: C.t1, fontSize: 26, marginTop: 14 }}>{me.name}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("statsLine", { w: wishes.length, r: rooms.length })}</div>
 
       <div style={{ display: "flex", gap: S.gap, marginTop: 22 }}>
@@ -1618,7 +1607,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
       </div>
 
       <div style={{ marginTop: 18 }}>
-        <div style={{ ...monoLabel, marginBottom: 8, textAlign: "left", display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ ...labelStyle, marginBottom: 8, textAlign: "left", display: "flex", alignItems: "center", gap: 6 }}>
           <Globe size={15} /> {t("language")}
         </div>
         <Segmented options={LANGS.map(l => [l, LANG_SHORT[l]])} value={lang} onChange={setLang} />
@@ -1626,7 +1615,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
 
       {isDesignDevUser && (
         <div style={{ marginTop: 18 }}>
-          <div style={{ ...monoLabel, marginBottom: 8, textAlign: "left" }}>
+          <div style={{ ...labelStyle, marginBottom: 8, textAlign: "left" }}>
             Design system (dev only)
           </div>
           <Segmented options={[["classic", "Classic"], ["glass", "Glass"]]} value={designSystem} onChange={setDesignSystem} />
