@@ -345,8 +345,8 @@ function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false, bare
   // bare: an emoji shown as a free-standing sticker, without a tile behind it
   if (bare && !image) {
     return (
-      <div style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Sticker emoji={emoji} size={size * 0.74} />
+      <div style={{ width: size * 0.8, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Sticker emoji={emoji} size={size * 0.56} />
       </div>
     );
   }
