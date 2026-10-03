@@ -44,7 +44,11 @@ function glass({ on = false } = {}) {
 }
 // Floating bars sit over scrolling content: dark tint + light blur for legibility.
 function glassFloat() {
-  return { background: "#24262B", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 30px rgba(0,0,0,0.45)" };
+  // The only glass in the app (Wise-like): translucent dark bar over content.
+  return {
+    background: "rgba(36,38,43,0.72)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 30px rgba(0,0,0,0.45)",
+    backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)",
+  };
 }
 const font =
   '"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
@@ -805,7 +809,8 @@ export default function App() {
       <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-        body,input,button,textarea{font-weight:500}
+        body,input,button,textarea,select{font-weight:500}
+        input::placeholder,textarea::placeholder{font-weight:500}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
         @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
