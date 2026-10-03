@@ -17,9 +17,9 @@ const C = {
   t1: "#FFFFFF",
   t2: "#8A8A8E",
   t3: "#5A5A5E",
-  blue: "#4F7FF0",
-  blueLight: "#9DB7FF",
-  accent: "#4F7FF0",
+  blue: "#3563D8",
+  blueLight: "#8AA6F2",
+  accent: "#3563D8",
 };
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
@@ -37,7 +37,7 @@ const GLASS = {
 // block reads as tinted glass rather than fully see-through.
 function glass({ on = false, tint = C.blue } = {}) {
   if (on) return {
-    background: "linear-gradient(180deg, #7FA3FF 0%, #4F7FF0 55%, #3C66DA 100%)",
+    background: "linear-gradient(180deg, #5A82EA 0%, #3563D8 55%, #2850BE 100%)",
     border: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 22px ${hex(C.blue, 0.5)}`,
   };
   return {
