@@ -381,26 +381,35 @@ function ImageLightbox({ src, images, start = 0, onClose }) {
   );
 }
 // Wish photos across the top of a card, edge to edge, at a fixed height
-// (cropped to fill); tap any photo to open the full viewer.
-// 1 photo: full width · 2: halves · 3: large left + two stacked right.
-function PhotoHeader({ images, height = 176 }) {
+// (cropped to fill). One photo at a time: with several, swipe through them
+// right in the card (scroll-snap), dots + a "1/3" badge show there are more,
+// and a tap opens the full-screen viewer on the current one.
+function PhotoHeader({ images, height = 200 }) {
   const [open, setOpen] = useState(null);
+  const [cur, setCur] = useState(0);
   const n = images.length;
-  const cell = (src, idx, extra) => (
-    <div key={idx} onClick={(e) => { e.stopPropagation(); setOpen(idx); }}
-      style={{ background: `${C.card2} center / cover no-repeat url("${src}")`, cursor: "zoom-in", minHeight: 0, ...extra }} />
-  );
+  const onScroll = (e) => { const el = e.currentTarget; setCur(Math.round(el.scrollLeft / el.clientWidth)); };
   return (
     <>
-      <div style={{
-        display: "grid", gap: 2, height, borderRadius: `${S.r}px ${S.r}px 0 0`, overflow: "hidden",
-        margin: `0 -${S.pad}px 4px`,
-        gridTemplateColumns: n === 1 ? "1fr" : n === 2 ? "1fr 1fr" : "2fr 1fr",
-        gridTemplateRows: n === 3 ? "1fr 1fr" : "1fr",
-      }}>
-        {n === 3
-          ? [cell(images[0], 0, { gridRow: "1 / 3" }), cell(images[1], 1), cell(images[2], 2)]
-          : images.map((src, idx) => cell(src, idx))}
+      <div style={{ position: "relative", height, margin: `0 -${S.pad}px 4px`, borderRadius: `${S.r}px ${S.r}px 0 0`, overflow: "hidden" }}>
+        <div onScroll={onScroll} style={{ display: "flex", height: "100%", overflowX: n > 1 ? "auto" : "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+          {images.map((src, idx) => (
+            <div key={idx} onClick={(e) => { e.stopPropagation(); setOpen(idx); }}
+              style={{ flex: "0 0 100%", height: "100%", scrollSnapAlign: "start", cursor: "zoom-in", background: `${C.card2} center / cover no-repeat url("${src}")` }} />
+          ))}
+        </div>
+        {n > 1 && (
+          <>
+            <div style={{ position: "absolute", top: 12, right: 12, padding: "4px 10px", borderRadius: 999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", color: "#fff", fontSize: 12.5, fontWeight: 600, pointerEvents: "none" }}>
+              {cur + 1}/{n}
+            </div>
+            <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6, pointerEvents: "none" }}>
+              {images.map((_, idx) => (
+                <span key={idx} style={{ width: idx === cur ? 18 : 6, height: 6, borderRadius: 6, background: idx === cur ? "#fff" : "rgba(255,255,255,0.5)", transition: "width .25s, background .25s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
       {open != null && <ImageLightbox images={images} start={open} onClose={() => setOpen(null)} />}
     </>
