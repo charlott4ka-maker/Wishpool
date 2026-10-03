@@ -446,6 +446,8 @@ function Chip({ children, active, onClick }) {
       padding: "9px 15px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
       cursor: "pointer", whiteSpace: "nowrap",
       ...glass({ on: active }),
+      // selected chips stay flat: keep the top highlight, no outer glow
+      ...(active ? { boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)" } : null),
       color: active ? "#fff" : C.t2,
       display: "inline-flex", alignItems: "center", gap: 6,
     }}>
