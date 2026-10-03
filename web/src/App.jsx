@@ -259,6 +259,19 @@ function stickerFilter(size) {
   const o = Math.max(1, Math.round(size * 0.065 * 2) / 2);
   return `drop-shadow(${o}px 0 0 #fff) drop-shadow(-${o}px 0 0 #fff) drop-shadow(0 ${o}px 0 #fff) drop-shadow(0 -${o}px 0 #fff) drop-shadow(0 ${o * 2}px ${o * 3}px rgba(0,0,0,0.45))`;
 }
+// Bullet-style icon: a small circle tinted with `color`, a thin ring of the same
+// hue and a light icon (lucide component) or emoji inside.
+function IconBadge({ icon: Icon, emoji, color = "#FFFFFF", size = 24, style }) {
+  const light = tintToWhite(color, 0.45);
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: size, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center",
+      background: hex(color, 0.2), boxShadow: `inset 0 0 0 1px ${hex(color, 0.45)}`, color: light, ...style,
+    }}>
+      {Icon ? <Icon size={Math.round(size * 0.5)} strokeWidth={2.4} /> : <span style={{ fontSize: size * 0.52, lineHeight: 1 }}>{emoji}</span>}
+    </span>
+  );
+}
 function Sticker({ emoji, size, style }) {
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
 }
@@ -298,6 +311,12 @@ function hex(h, a) {
   const n = h.replace("#", "");
   const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${a})`;
+}
+// Mix a #rrggbb colour toward white by `amt` (0..1).
+function tintToWhite(h, amt) {
+  const n = h.replace("#", "");
+  const c = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16));
+  return `rgb(${c.map(v => Math.round(v + (255 - v) * amt)).join(",")})`;
 }
 function linkHost(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "link"; } }
 // Downscale + re-encode a picked photo before it's stored as base64, so a multi-MB
@@ -519,8 +538,8 @@ function WishRow({ w, right }) {
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{w.price}</div>}
         {w.link && (
           <button onClick={(e) => { e.stopPropagation(); window.open(w.link, "_blank"); }}
-            style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: C.t1, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, fontFamily: font, maxWidth: "100%" }}>
-            <Link2 size={12} /> <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{linkHost(w.link)}</span>
+            style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: C.t1, fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6, fontFamily: font, maxWidth: "100%" }}>
+            <IconBadge icon={Link2} color={C.blue} size={20} /> <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{linkHost(w.link)}</span>
           </button>
         )}
       </div>
@@ -884,14 +903,14 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
           {wishes.map(w => (
             <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `6px ${S.pad}px ${S.pad - 2}px`, cursor: "pointer" }}>
               <WishRow w={w} right={
-                <ChevronRight size={20} color={C.t2} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
+                <IconBadge icon={ChevronRight} color="#8A8A8E" size={28} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
               } />
               <div style={{ display: "flex", gap: 7, flexWrap: "wrap", paddingTop: 4 }}>
                 {w.rooms.length === 0
-                  ? <span style={{ color: C.t2, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 6 }}><Lock size={13} color="#FFFFFF" strokeWidth={2.4} />{t("privateNote")}</span>
+                  ? <span style={{ color: C.t2, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 7 }}><IconBadge icon={Lock} color="#FFFFFF" size={22} />{t("privateNote")}</span>
                   : rooms.filter(r => w.rooms.includes(r.id)).map(r => (
-                    <span key={r.id} style={{ fontSize: 12.5, color: C.t2, display: "inline-flex", gap: 5, alignItems: "center" }}>
-                      {r.emoji} {r.name}
+                    <span key={r.id} style={{ fontSize: 12.5, color: C.t2, display: "inline-flex", gap: 7, alignItems: "center", marginRight: 6 }}>
+                      <IconBadge emoji={r.emoji} color={r.tint} size={22} />{r.name}
                     </span>
                   ))}
               </div>
@@ -907,8 +926,8 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
                         </Chip>
                       ))}
                   </div>
-                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 14, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <Trash2 size={15} /> {t("deleteWish")}
+                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 14, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <IconBadge icon={Trash2} color="#FF5A5A" size={26} /> {t("deleteWish")}
                   </button>
                 </div>
               )}
