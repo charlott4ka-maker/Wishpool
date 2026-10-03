@@ -857,7 +857,8 @@ function TabBar({ tab, setTab, onAdd }) {
       {/* Separate round "+" to the left of the tabs: new room on Rooms, new wish elsewhere. */}
       <button onClick={onAdd} aria-label={t(tab === "rooms" ? "createRoom" : "addWish")} style={{
         width: H.lg + 12, height: H.lg + 12, borderRadius: "50%", border: "none", cursor: "pointer", flexShrink: 0,
-        background: C.blue, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+        background: hex(C.blue, 0.72), backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)",
+        color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         <Plus size={26} strokeWidth={2.4} />
       </button>
@@ -1045,7 +1046,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
       )}
 
       <div style={{ marginTop: 24 }}>
-        <Pill full kind={rooms.length === 0 ? "primary" : "ghost"} icon={<Plus size={19} />} onClick={onCreate}>{t("createRoom")}</Pill>
+        <Pill full kind="primary" icon={<Plus size={19} />} onClick={onCreate}>{t("createRoom")}</Pill>
       </div>
     </div>
   );
