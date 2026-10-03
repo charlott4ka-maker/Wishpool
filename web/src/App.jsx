@@ -1052,12 +1052,6 @@ function folderPath(w, h) {
   const top = `M ${x0} ${yT + rt} Q ${x0} ${yT} ${x0 + rt} ${yT} L ${xt - 10} ${yT} C ${xt} ${yT} ${xt} ${yB} ${xt + 12} ${yB} L ${x1 - r} ${yB} Q ${x1} ${yB} ${x1} ${yB + r}`;
   return { top, full: `${top} L ${x1} ${y1 - r} Q ${x1} ${y1} ${x1 - r} ${y1} L ${x0 + r} ${y1} Q ${x0} ${y1} ${x0} ${y1 - r} Z` };
 }
-// Opaque outline colour (room tint lifted towards white): a translucent line
-// reads brighter over the photos than over the black page, an opaque one doesn't.
-function folderLine(tint) {
-  const n = tint.replace("#", ""); const c = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16));
-  return `rgb(${c.map(v => Math.round(v * 0.45 + 255 * 0.3 + 6)).join(",")})`;
-}
 // Room as a frosted folder: wish photos shared into the room peek out from
 // behind the translucent front, the room sticker and the members' avatars are
 // on the front, name + member count sit underneath.
@@ -1103,17 +1097,25 @@ function RoomFolder({ room, wishes, onOpen }) {
         })}
         {fp && (
           <>
+            {/* No outline: instead a soft shadow cast by the front's top edge onto
+                the photos behind it (only outside the front), so a photo in the
+                same colour as the folder still reads as tucked inside. */}
+            <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
+              <defs>
+                <filter id={"fs-" + room.id} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="5" /></filter>
+                <mask id={"fm-" + room.id} maskUnits="userSpaceOnUse" x="0" y="0" width={dim.w} height={dim.h}>
+                  <rect width={dim.w} height={dim.h} fill="#fff" /><path d={fp.full} fill="#000" />
+                </mask>
+              </defs>
+              <g mask={`url(#fm-${room.id})`}>
+                <path d={fp.top} fill="none" stroke="rgba(0,0,0,0.75)" strokeWidth="12" transform="translate(0,-3)" filter={`url(#fs-${room.id})`} />
+              </g>
+            </svg>
             <div style={{
               position: "absolute", inset: 0, zIndex: 3, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
               background: `linear-gradient(180deg, ${hex(room.tint, 0.42)} 0%, ${hex(room.tint, 0.26)} 100%)`,
               backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)",
             }} />
-            <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
-              {/* 2px stroke clipped to the shape = an even 1px line fully inside the edge,
-                  so whatever sits behind the folder can't make one side look heavier. */}
-              <defs><clipPath id={"fc-" + room.id}><path d={fp.full} /></clipPath></defs>
-              <path d={fp.full} fill="none" stroke={folderLine(room.tint)} strokeWidth="2" clipPath={`url(#fc-${room.id})`} />
-            </svg>
           </>
         )}
         <div style={{ position: "absolute", left: "14%", top: "46%", zIndex: 4, transform: "rotate(-8deg)" }}>
