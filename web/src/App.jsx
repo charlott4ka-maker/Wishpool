@@ -1186,9 +1186,55 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
   );
 }
 
+/* ---------- ROOM HERO ---------- */
+const hasTgBack = () => typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton;
+function roomHeroBg(tint) {
+  return `radial-gradient(120% 90% at 50% 30%, ${hex(tint, 0.85)} 0%, ${hex(tint, 0.55)} 55%, ${hex(tint, 0.3)} 100%), #0d0d10`;
+}
+// Round frosted-glass button that sits on the coloured hero.
+function HeroButton({ onClick, label, children, style }) {
+  return (
+    <button onClick={onClick} aria-label={label} style={{
+      width: H.sm, height: H.sm, borderRadius: H.sm, flexShrink: 0, cursor: "pointer", padding: 0, color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.28)",
+      backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)",
+      ...style,
+    }}>{children}</button>
+  );
+}
+// Faint one-colour copies of the room sticker in rings around the centre,
+// like Telegram's profile pattern.
+const PATTERN = [
+  [50, 22, 30, .9], [26, 40, 26, .8], [74, 40, 26, .8], [18, 78, 24, .7], [82, 78, 24, .7],
+  [34, 12, 20, .55], [66, 12, 20, .55], [10, 30, 18, .5], [90, 30, 18, .5], [30, 108, 22, .6],
+  [70, 108, 22, .6], [6, 112, 18, .45], [94, 112, 18, .45], [42, 150, 18, .45], [58, 150, 18, .45],
+  [16, 158, 16, .4], [84, 158, 16, .4], [50, 195, 18, .4], [26, 205, 16, .35], [74, 205, 16, .35],
+];
+function StickerPattern({ emoji }) {
+  return (
+    <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", maskImage: "radial-gradient(90% 80% at 50% 40%, #000 30%, transparent 100%)", WebkitMaskImage: "radial-gradient(90% 80% at 50% 40%, #000 30%, transparent 100%)" }}>
+      {PATTERN.map(([x, y, sz, o], i) => {
+        const st = { position: "absolute", left: `${x}%`, top: y, transform: "translate(-50%,-50%)", filter: "brightness(0)", opacity: 0.16 * o };
+        return typeof emoji === "string" && emoji.startsWith("stk:")
+          ? <img key={i} src={`/stickers/${emoji.slice(4)}.webp`} alt="" style={{ ...st, width: sz * 1.2, height: sz * 1.2, objectFit: "contain" }} />
+          : <span key={i} style={{ ...st, fontSize: sz, lineHeight: 1 }}>{emoji}</span>;
+      })}
+    </div>
+  );
+}
+
 /* ---------- ROOM DETAIL ---------- */
 function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack }) {
   const { t } = useT();
+  // Telegram's own top bar takes the hero colour while the room is open.
+  useEffect(() => {
+    const tg = tgWebApp(); if (!tg || !tg.setHeaderColor) return;
+    const n = room.tint.replace("#", ""); const c = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16));
+    const top = "#" + c.map(v => Math.round(13 + (v - 13) * 0.62).toString(16).padStart(2, "0")).join("");
+    try { tg.setHeaderColor(top); } catch (e) {}
+    return () => { try { tg.setHeaderColor("#000000"); } catch (e) {} };
+  }, [room.tint]);
   const [seg, setSeg] = useState("lists");
   const [detail, setDetail] = useState(null);
   const [tick, setTick] = useState(0);
@@ -1233,33 +1279,33 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 
   return (
     <div style={{ position: "absolute", inset: 0, top: 0, background: C.bg, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
-      <FallbackBack onBack={onBack} />
-      <div style={{ padding: "16px 16px 140px" }}>
-        <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
-          <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
-          <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} bare /></div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
-            <div style={{ color: C.t1, fontSize: 24, fontWeight: 800 }}>{room.name}</div>
-            {isOwner && (
-              <button onClick={onEdit} aria-label={t("editRoom")} style={{ background: "none", border: "none", padding: 0, color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, marginLeft: -6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Pencil size={16} />
-              </button>
-            )}
-          </div>
+      {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
+      <div style={{ position: "relative", overflow: "hidden", padding: "16px 16px 52px", textAlign: "center", background: roomHeroBg(room.tint) }}>
+        <StickerPattern emoji={room.emoji} />
+        <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
+          {hasTgBack() ? <span /> : <HeroButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
+          {isOwner ? <HeroButton onClick={onEdit} label={t("editRoom")}><Pencil size={17} /></HeroButton> : <span />}
+        </div>
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}><GlossTile emoji={room.emoji} size={96} tint={room.tint} bare /></div>
+          <div style={{ color: "#fff", fontSize: 26, fontWeight: 800, marginTop: 12, textShadow: "0 1px 12px rgba(0,0,0,0.25)" }}>{room.name}</div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
             {members.map((m, i) => (
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
             ))}
             {!coupleFull && (
-              <button onClick={onInvite} style={{ marginLeft: 8, width: H.sm, height: H.sm, borderRadius: H.sm, border: `1px dashed ${C.blueLine}`, background: C.blueSoft, color: "#7FB0FF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Plus size={18} />
-              </button>
+              <HeroButton onClick={onInvite} label={t("invite")} style={{ marginLeft: 8 }}><Plus size={18} /></HeroButton>
             )}
           </div>
+        </div>
+      </div>
+      {/* content sheet slides over the hero with rounded corners */}
+      <div style={{ position: "relative", marginTop: -28, background: C.bg, borderRadius: "28px 28px 0 0", padding: "24px 16px 140px", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
           {coupleFull ? (
-            <div style={{ marginTop: 16, color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
+            <div style={{ color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
           ) : (
-            <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <Pill kind={room.type === "couple" ? "primary" : "ghost"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
               {room.type !== "couple" && (
                 <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
