@@ -272,7 +272,10 @@ function tr(lang, id, params) {
 const LangCtx = createContext({ lang: "en", setLang: () => {}, t: (id) => id });
 const useT = () => useContext(LangCtx);
 
-const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
+// Image stickers (web/public/stickers/<name>.png), stored in a wish's `emoji`
+// field as "stk:<name>" and drawn by <Sticker> like any emoji.
+const STICKERS = ["burger", "pizza", "icecream", "cactus", "heel", "globe", "fire", "bulb", "tent", "dog", "cat", "alien"];
+const WISH_EMOJI = [...STICKERS.map(n => "stk:" + n), "🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
 /* ---------- little ui atoms ---------- */
 // Emoji drawn as a die-cut sticker with a crisp, evenly rounded white outline.
@@ -329,6 +332,12 @@ function TagChip({ icon: Icon, emoji, color = "#FFFFFF", children }) {
   );
 }
 function Sticker({ emoji, size, style }) {
+  if (typeof emoji === "string" && emoji.startsWith("stk:")) {
+    return (
+      <img src={`/stickers/${emoji.slice(4)}.png`} alt="" draggable={false}
+        style={{ height: size * 1.1, width: size * 1.1, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: stickerFilter(size), ...style }} />
+    );
+  }
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
 }
 const wishImages = (w) => (w && w.images && w.images.length ? w.images : (w && w.image ? [w.image] : []));
