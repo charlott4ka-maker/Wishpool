@@ -23,6 +23,9 @@ const C = {
   green: "#34C759",
   greenSoft: "rgba(52,199,89,0.16)",
 };
+// Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
+// inside them, big soft corners.
+const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
 const font =
   '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
 
@@ -259,7 +262,7 @@ function GlossTile({ emoji, image, size = 92, tint = "#2E7DF6" }) {
     <div
       onClick={image ? (e) => { e.stopPropagation(); setOpen(true); } : undefined}
       style={{
-        width: size, height: size, borderRadius: size * 0.26,
+        width: size, height: size, borderRadius: size * S.rTile,
         background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.22)} 0%, ${C.card2} 55%, ${C.card} 100%)`,
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
@@ -339,11 +342,12 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
 function Chip({ children, active, onClick, color }) {
   return (
     <button onClick={onClick} style={{
-      padding: "7px 13px", borderRadius: 14, fontSize: 13.5, fontWeight: 600, fontFamily: font,
+      padding: "9px 15px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
       cursor: "pointer", whiteSpace: "nowrap",
-      background: active ? C.blueSoft : "transparent",
-      color: active ? "#7FB0FF" : C.t2,
-      border: `1px solid ${active ? C.blueLine : C.line}`,
+      background: active ? "rgba(255,255,255,0.10)" : C.card2,
+      color: active ? C.t1 : "rgba(255,255,255,0.78)",
+      border: `1px solid ${active ? "rgba(255,255,255,0.22)" : "transparent"}`,
+      boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,0.12)" : "none",
       display: "inline-flex", alignItems: "center", gap: 6,
     }}>
       {color && <span style={{ width: 7, height: 7, borderRadius: 7, background: color }} />}
@@ -352,7 +356,25 @@ function Chip({ children, active, onClick, color }) {
   );
 }
 function Card({ children, style, onClick }) {
-  return <div onClick={onClick} style={{ background: C.card, borderRadius: 22, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
+  return <div onClick={onClick} style={{ background: C.card, borderRadius: S.r, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
+}
+function Segmented({ options, value, onChange, style }) {
+  return (
+    <div style={{ display: "flex", gap: 4, background: C.card, padding: 4, borderRadius: 999, border: `1px solid ${C.line}`, ...style }}>
+      {options.map(([k, l]) => {
+        const on = value === k;
+        return (
+          <button key={k} onClick={() => onChange(k)} style={{
+            flex: 1, padding: "11px 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
+            fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
+            background: on ? "rgba(255,255,255,0.12)" : "transparent", color: on ? C.t1 : C.t2,
+            border: `1px solid ${on ? "rgba(255,255,255,0.16)" : "transparent"}`,
+            boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.14)" : "none",
+          }}>{l}</button>
+        );
+      })}
+    </div>
+  );
 }
 
 /* ---------- iOS-style frosted glass ---------- */
@@ -428,7 +450,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
@@ -472,7 +494,7 @@ function SkeletonScreen({ tab }) {
         </div>
       )}
       {[0, 1, 2].map(i => (
-        <Card key={i} style={{ padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 14 }}>
+        <Card key={i} style={{ padding: `14px ${S.pad}px`, marginBottom: S.gap, display: "flex", alignItems: "center", gap: 14 }}>
           <Bone w={56} h={56} r={16} />
           <div style={{ flex: 1 }}>
             <Bone w="70%" h={16} r={6} style={{ marginBottom: 8 }} />
@@ -675,7 +697,7 @@ export default function App() {
       `}</style>
 
       <div style={{ width: "100%", maxWidth: 440, minHeight: "100vh", background: C.bg, position: "relative", overflow: "hidden" }}>
-        <div style={{ padding: "16px 16px 120px" }}>
+        <div style={{ padding: `16px ${S.gutter}px 120px` }}>
           {loading ? <SkeletonScreen tab={tab} /> : (
             <>
               {tab === "pool" && (
@@ -763,7 +785,7 @@ export default function App() {
         {toast && (
           <div style={{
             position: "fixed", bottom: 108, left: "50%", transform: "translateX(-50%)",
-            background: C.card2, color: C.t1, padding: "12px 18px", borderRadius: 16,
+            background: C.card2, color: C.t1, padding: "12px 18px", borderRadius: 999,
             fontSize: 14.5, fontWeight: 600, border: `1px solid ${C.line}`, zIndex: 60,
             animation: "fadeUp .25s ease", maxWidth: 320, textAlign: "center",
           }}>{toast}</div>
@@ -850,7 +872,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
       </div>
 
       {rooms.length > 0 && (
-        <div style={{ display: "flex", gap: 12, overflowX: "auto", margin: "0 -16px 18px", padding: "2px 16px 4px" }}>
+        <div style={{ display: "flex", gap: S.gap, overflowX: "auto", margin: `0 -${S.gutter}px 14px`, padding: `2px ${S.gutter}px 4px` }}>
           {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={() => onOpenRoom(r.id)} />)}
         </div>
       )}
@@ -858,9 +880,9 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
       {wishes.length === 0 ? (
         <Empty emoji="🎁" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: S.gap }}>
           {wishes.map(w => (
-            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: "6px 16px 14px", cursor: "pointer" }}>
+            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `6px ${S.pad}px ${S.pad - 2}px`, cursor: "pointer" }}>
               <WishRow w={w} right={
                 <ChevronRight size={20} color={C.t2} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
               } />
@@ -925,7 +947,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
           </div>
         </>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 12px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: `${S.gap + 6}px ${S.gap}px` }}>
           {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} width="100%" onOpen={() => onOpen(r.id)} />)}
         </div>
       )}
@@ -1001,7 +1023,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
         {emojiChoices.map(e => (
           <button key={e} onClick={() => setEmoji(e)} style={{
-            width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
+            width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
             background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
           }}><Sticker emoji={e} size={22} /></button>
         ))}
@@ -1099,7 +1121,7 @@ function HistorySheet({ online, onClose }) {
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
         </div>
       ) : (
-        <Card style={{ padding: "4px 16px" }}>
+        <Card style={{ padding: `4px ${S.pad}px` }}>
           {gifts.map((w, i) => (
             <div key={w.id} style={{ borderBottom: i < gifts.length - 1 ? `1px solid ${C.line}` : "none" }}>
               <WishRow w={w} right={w.owner && <span style={{ color: C.t3, fontSize: 12.5 }}>{t("giftingFor", { name: w.owner.name })}</span>} />
@@ -1198,7 +1220,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   return (
     <div style={{ position: "absolute", inset: 0, top: 0, background: C.bg, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
       <FallbackBack onBack={onBack} />
-      <div style={{ padding: "16px 16px 140px" }}>
+      <div style={{ padding: `16px ${S.gutter}px 140px` }}>
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
           <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
@@ -1232,17 +1254,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14, marginBottom: 16 }}>
-          {[["lists", t("segLists")], ["mine", t("segMine")]].map(([k, l]) => (
-            <button key={k} onClick={() => setSeg(k)} style={{
-              flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-              fontSize: 14, fontWeight: 600, background: seg === k ? C.card2 : "transparent", color: seg === k ? C.t1 : C.t2,
-            }}>{l}</button>
-          ))}
-        </div>
+        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} style={{ marginBottom: 16 }} />
 
         {loading ? (
-          <Card style={{ padding: "4px 16px" }}>
+          <Card style={{ padding: `4px ${S.pad}px` }}>
             {[0, 1].map(i => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", borderBottom: i === 0 ? `1px solid ${C.line}` : "none" }}>
                 <Bone w={52} h={52} r={16} />
@@ -1268,7 +1283,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                   <Avatar m={m} size={28} /><span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700 }}>{m.name}</span>
                 </div>
-                <Card style={{ padding: "4px 16px" }}>
+                <Card style={{ padding: `4px ${S.pad}px` }}>
                   {mws.map((w, i, arr) => (
                     <div key={w.id} style={{ borderBottom: i < arr.length - 1 ? `1px solid ${C.line}` : "none" }}>
                       <WishRow w={w} right={reserveRight(w)} />
@@ -1289,7 +1304,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           <div>
             {mine.length === 0
               ? <Empty emoji="👀" title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
-              : <Card style={{ padding: "4px 16px" }}>
+              : <Card style={{ padding: `4px ${S.pad}px` }}>
                 {mine.map((w, i) => (
                   <div key={w.id} style={{ borderBottom: i < mine.length - 1 ? `1px solid ${C.line}` : "none" }}>
                     <WishRow w={w} right={<span style={{ color: C.t3, fontSize: 12.5 }}>{t("visibleToAll")}</span>} />
@@ -1379,7 +1394,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
             </div>
           ) : (
           <>
-          <Card style={{ padding: 16, marginTop: 24, textAlign: "left" }}>
+          <Card style={{ padding: S.pad, marginTop: 24, textAlign: "left" }}>
             <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{t("giftBudget")}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {["500 ₴", "1 000 ₴", "2 000 ₴"].map(b => (
@@ -1426,7 +1441,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
           <div style={{ marginTop: 26, textAlign: "left" }}>
             <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("wishesOf", { name: target.name })}</div>
-            <Card style={{ padding: "4px 16px" }}>
+            <Card style={{ padding: `4px ${S.pad}px` }}>
               {targetWishes.length ? targetWishes.map((w, i) => (
                 <div key={w.id} style={{ borderBottom: i < targetWishes.length - 1 ? `1px solid ${C.line}` : "none" }}>
                   <WishRow w={w} right={
@@ -1475,14 +1490,7 @@ function AddSheet({ rooms, onClose, onSave }) {
 
   return (
     <Sheet title={t("newWish")} onClose={onClose} maxHeight="90vh">
-      <div style={{ display: "flex", gap: 6, background: C.card2, padding: 4, borderRadius: 12, marginBottom: 14 }}>
-        {[["photo", t("photo")], ["emoji", t("emojiTab")]].map(([k, l]) => (
-          <button key={k} onClick={() => setCover(k)} style={{
-            flex: 1, padding: "9px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
-            fontSize: 13.5, fontWeight: 600, background: cover === k ? C.blue : "transparent", color: cover === k ? "#fff" : C.t2,
-          }}>{l}</button>
-        ))}
-      </div>
+      <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} style={{ marginBottom: 14 }} />
 
       {cover === "photo" ? (
         <div style={{ marginBottom: 16 }}>
@@ -1497,7 +1505,7 @@ function AddSheet({ rooms, onClose, onSave }) {
             </div>
           ) : (
             <button onClick={() => fileRef.current && fileRef.current.click()} style={{
-              width: "100%", padding: "26px", borderRadius: 16, cursor: "pointer",
+              width: "100%", padding: "26px", borderRadius: 22, cursor: "pointer",
               background: C.card2, border: `1px dashed ${C.line}`, color: C.t2, fontFamily: font,
               display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
             }}>
@@ -1510,7 +1518,7 @@ function AddSheet({ rooms, onClose, onSave }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           {WISH_EMOJI.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
-              width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
+              width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
               background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
             }}><Sticker emoji={e} size={22} /></button>
           ))}
@@ -1544,7 +1552,7 @@ function Field({ label, value, onChange, placeholder }) {
       <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{label}</div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
-          width: "100%", background: C.card2, border: `1px solid ${C.line}`, borderRadius: 14,
+          width: "100%", background: C.card2, border: `1px solid ${C.line}`, borderRadius: 18,
           padding: "14px 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
         onFocus={e => e.target.style.borderColor = C.blueLine}
@@ -1564,13 +1572,13 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
       <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 14 }}>{me.name}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("statsLine", { w: wishes.length, r: rooms.length })}</div>
 
-      <div style={{ display: "flex", gap: 12, marginTop: 22 }}>
-        <Card style={{ flex: 1, padding: 18 }}>
+      <div style={{ display: "flex", gap: S.gap, marginTop: 22 }}>
+        <Card style={{ flex: 1, padding: S.pad, textAlign: "left" }}>
           <Gift size={22} color={C.blue} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{wishes.reduce((n, w) => n + w.rooms.length, 0)}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("sharedStat")}</div>
         </Card>
-        <Card style={{ flex: 1, padding: 18 }}>
+        <Card style={{ flex: 1, padding: S.pad, textAlign: "left" }}>
           <Heart size={22} color="#FF4D8D" />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{gifting}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("giftingStat")}</div>
@@ -1581,14 +1589,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
         <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8, textAlign: "left", display: "flex", alignItems: "center", gap: 6 }}>
           <Globe size={15} /> {t("language")}
         </div>
-        <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14 }}>
-          {LANGS.map(l => (
-            <button key={l} onClick={() => setLang(l)} style={{
-              flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-              fontSize: 13.5, fontWeight: 600, background: lang === l ? C.blue : "transparent", color: lang === l ? "#fff" : C.t2,
-            }}>{LANG_SHORT[l]}</button>
-          ))}
-        </div>
+        <Segmented options={LANGS.map(l => [l, LANG_SHORT[l]])} value={lang} onChange={setLang} />
       </div>
 
       {isDesignDevUser && (
@@ -1596,20 +1597,13 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
           <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8, textAlign: "left" }}>
             Design system (dev only)
           </div>
-          <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14 }}>
-            {[["classic", "Classic"], ["glass", "Glass"]].map(([k, l]) => (
-              <button key={k} onClick={() => setDesignSystem(k)} style={{
-                flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-                fontSize: 13.5, fontWeight: 600, background: designSystem === k ? C.blue : "transparent", color: designSystem === k ? "#fff" : C.t2,
-              }}>{l}</button>
-            ))}
-          </div>
+          <Segmented options={[["classic", "Classic"], ["glass", "Glass"]]} value={designSystem} onChange={setDesignSystem} />
         </div>
       )}
 
-      <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: S.gap }}>
         {[[Clock, t("history"), onHistory], [Link2, t("myInvites"), onInvites], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui")]].map(([Icon, l, on], i) => (
-          <Card key={i} onClick={on} style={{ padding: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
+          <Card key={i} onClick={on} style={{ padding: S.pad, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
             <Icon size={20} color={C.t2} />
             <span style={{ flex: 1, textAlign: "left", color: C.t1, fontSize: 15.5, fontWeight: 600 }}>{l}</span>
             <ChevronRight size={19} color={C.t3} />
