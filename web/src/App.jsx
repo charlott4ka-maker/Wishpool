@@ -26,6 +26,26 @@ const C = {
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
 const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
+/* ---------- iOS-style frosted glass ---------- */
+const GLASS = {
+  fill: "rgba(28,28,30,0.55)",
+  border: "rgba(255,255,255,0.13)",
+  blur: "blur(24px) saturate(180%)",
+  // top rim highlight + faint bottom rim, like light catching the edge of glass
+  rim: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04)",
+};
+// Shared glass surfaces. `blur` only where content actually scrolls underneath
+// (floating controls, sheets) — on static cards over black it costs GPU for nothing.
+function glass({ blur = false, on = false } = {}) {
+  return {
+    background: on
+      ? `radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.14) 75%), ${GLASS.fill}`
+      : `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.025) 100%), ${GLASS.fill}`,
+    border: `1px solid ${on ? "rgba(255,255,255,0.38)" : GLASS.border}`,
+    boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.4), 0 0 16px rgba(255,255,255,0.08)" : GLASS.rim,
+    ...(blur ? { backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur } : null),
+  };
+}
 const font =
   '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
 
@@ -120,7 +140,7 @@ const STR = {
   poolSub: { uk: "Спільний пул. Звідси шериш у кімнати.", ru: "Общий пул. Отсюда шеришь в комнаты.", en: "Your pool. Share items into rooms from here." },
   poolEmptyTitle: { uk: "Пул поки порожній", ru: "Пул пока пустой", en: "Your pool is empty" },
   poolEmptySub: { uk: "Додай перше бажання — потім вирішиш, кому його показати.", ru: "Добавь первое желание — потом решишь, кому его показать.", en: "Add your first wish — decide who sees it later." },
-  privateNote: { uk: "🔒 Приватне — не бачить ніхто", ru: "🔒 Приватное — не видит никто", en: "🔒 Private — nobody sees it" },
+  privateNote: { uk: "Приватне — не бачить ніхто", ru: "Приватное — не видит никто", en: "Private — nobody sees it" },
   showInRooms: { uk: "Показати в кімнатах", ru: "Показать в комнатах", en: "Show in rooms" },
   noRoomsHint: { uk: "Поки немає кімнат — створи на вкладці «Кімнати».", ru: "Пока нет комнат — создай на вкладке «Комнаты».", en: "No rooms yet — create one on the Rooms tab." },
   deleteWish: { uk: "Видалити бажання", ru: "Удалить желание", en: "Delete wish" },
@@ -187,7 +207,7 @@ const STR = {
   whatYouWantPh: { uk: "Напр., бездротові навушники", ru: "Например, беспроводные наушники", en: "e.g. wireless headphones" },
   priceOpt: { uk: "Ціна (необов’язково)", ru: "Цена (необязательно)", en: "Price (optional)" },
   linkOpt: { uk: "Посилання на товар (необов’язково)", ru: "Ссылка на товар (необязательно)", en: "Product link (optional)" },
-  nothingSelectedPrivate: { uk: "Нічого не вибрано — залишиться приватним 🔒", ru: "Ничего не выбрано — останется приватным 🔒", en: "Nothing selected — it stays private 🔒" },
+  nothingSelectedPrivate: { uk: "Нічого не вибрано — залишиться приватним", ru: "Ничего не выбрано — останется приватным", en: "Nothing selected — it stays private" },
   saveWish: { uk: "Зберегти бажання", ru: "Сохранить желание", en: "Save wish" },
 
   statsLine: { uk: "бажань: {w} · кімнат: {r}", ru: "желаний: {w} · комнат: {r}", en: "{w} wishes · {r} rooms" },
@@ -320,10 +340,10 @@ function Avatar({ m, size = 34 }) {
 }
 function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
   const styles = {
-    primary: { background: C.blue, color: "#fff", border: "none" },
-    ghost: { background: "transparent", color: C.t1, border: `1px solid ${C.line}` },
-    soft: { background: C.blueSoft, color: "#7FB0FF", border: `1px solid ${C.blueLine}` },
-    green: { background: C.greenSoft, color: "#7EE29A", border: `1px solid rgba(52,199,89,0.4)` },
+    primary: { background: `linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%), ${C.blue}`, color: "#fff", border: "1px solid rgba(255,255,255,0.18)", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.3), 0 6px 22px ${hex(C.blue, 0.35)}` },
+    ghost: { ...glass({ blur: true }), color: C.t1 },
+    soft: { ...glass({ blur: true }), background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%), ${C.blueSoft}`, color: "#7FB0FF", border: `1px solid ${C.blueLine}` },
+    green: { ...glass({ blur: true }), background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%), ${C.greenSoft}`, color: "#7EE29A", border: "1px solid rgba(52,199,89,0.4)" },
   }[kind];
   return (
     <button
@@ -339,37 +359,33 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
     </button>
   );
 }
-function Chip({ children, active, onClick, color }) {
+function Chip({ children, active, onClick }) {
   return (
     <button onClick={onClick} style={{
       padding: "9px 15px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
       cursor: "pointer", whiteSpace: "nowrap",
-      background: active ? "rgba(255,255,255,0.10)" : C.card2,
-      color: active ? C.t1 : "rgba(255,255,255,0.78)",
-      border: `1px solid ${active ? "rgba(255,255,255,0.22)" : "transparent"}`,
-      boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,0.12)" : "none",
+      ...glass({ on: active }),
+      color: active ? C.t1 : "rgba(255,255,255,0.55)",
       display: "inline-flex", alignItems: "center", gap: 6,
     }}>
-      {color && <span style={{ width: 7, height: 7, borderRadius: 7, background: color }} />}
       {children}
     </button>
   );
 }
 function Card({ children, style, onClick }) {
-  return <div onClick={onClick} style={{ background: C.card, borderRadius: S.r, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
+  return <div onClick={onClick} style={{ ...glass(), borderRadius: S.r, ...style }}>{children}</div>;
 }
 function Segmented({ options, value, onChange, style }) {
   return (
-    <div style={{ display: "flex", gap: 4, background: C.card, padding: 4, borderRadius: 999, border: `1px solid ${C.line}`, ...style }}>
+    <div style={{ display: "flex", gap: 4, ...glass(), padding: 4, borderRadius: 999, ...style }}>
       {options.map(([k, l]) => {
         const on = value === k;
         return (
           <button key={k} onClick={() => onChange(k)} style={{
             flex: 1, padding: "11px 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
-            background: on ? "rgba(255,255,255,0.12)" : "transparent", color: on ? C.t1 : C.t2,
-            border: `1px solid ${on ? "rgba(255,255,255,0.16)" : "transparent"}`,
-            boxShadow: on ? "inset 0 1px 0 rgba(255,255,255,0.14)" : "none",
+            ...(on ? glass({ on: true }) : { background: "transparent", border: "1px solid transparent" }),
+            color: on ? C.t1 : C.t2,
           }}>{l}</button>
         );
       })}
@@ -377,14 +393,6 @@ function Segmented({ options, value, onChange, style }) {
   );
 }
 
-/* ---------- iOS-style frosted glass ---------- */
-const GLASS = {
-  fill: "rgba(28,28,30,0.55)",
-  border: "rgba(255,255,255,0.13)",
-  blur: "blur(24px) saturate(180%)",
-  // top rim highlight + faint bottom rim, like light catching the edge of glass
-  rim: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04)",
-};
 // Round glass button (close / back / add) — the one style used for every such control.
 function GlassButton({ onClick, children, size = 40, label, style }) {
   return (
@@ -450,8 +458,8 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
+      <div style={{ position: "relative", background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0) 30%), rgba(22,22,24,0.78)", backdropFilter: "blur(30px) saturate(180%)", WebkitBackdropFilter: "blur(30px) saturate(180%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", border: `1px solid ${GLASS.border}`, boxShadow: GLASS.rim, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+        <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
           <GlassButton onClick={onClose} size={36} label="Close"><X size={18} /></GlassButton>
@@ -785,8 +793,8 @@ export default function App() {
         {toast && (
           <div style={{
             position: "fixed", bottom: 108, left: "50%", transform: "translateX(-50%)",
-            background: C.card2, color: C.t1, padding: "12px 18px", borderRadius: 999,
-            fontSize: 14.5, fontWeight: 600, border: `1px solid ${C.line}`, zIndex: 60,
+            ...glass({ blur: true }), color: C.t1, padding: "12px 18px", borderRadius: 999,
+            fontSize: 14.5, fontWeight: 600, zIndex: 60,
             animation: "fadeUp .25s ease", maxWidth: 320, textAlign: "center",
           }}>{toast}</div>
         )}
@@ -888,10 +896,10 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
               } />
               <div style={{ display: "flex", gap: 7, flexWrap: "wrap", paddingTop: 4 }}>
                 {w.rooms.length === 0
-                  ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("privateNote")}</span>
+                  ? <span style={{ color: C.t2, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 6 }}><Lock size={13} color="#FFFFFF" strokeWidth={2.4} />{t("privateNote")}</span>
                   : rooms.filter(r => w.rooms.includes(r.id)).map(r => (
                     <span key={r.id} style={{ fontSize: 12.5, color: C.t2, display: "inline-flex", gap: 5, alignItems: "center" }}>
-                      <span style={{ width: 7, height: 7, borderRadius: 7, background: r.tint }} />{r.emoji} {r.name}
+                      {r.emoji} {r.name}
                     </span>
                   ))}
               </div>
@@ -902,7 +910,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
                     {rooms.length === 0
                       ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
                       : rooms.map(r => (
-                        <Chip key={r.id} active={w.rooms.includes(r.id)} color={r.tint} onClick={() => onToggleRoom(w.id, r.id)}>
+                        <Chip key={r.id} active={w.rooms.includes(r.id)} onClick={() => onToggleRoom(w.id, r.id)}>
                           {r.emoji} {r.name}
                         </Chip>
                       ))}
@@ -983,7 +991,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
       <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("roomType")}</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
         {ROOM_PRESETS.map(p => (
-          <Chip key={p.type} active={preset.type === p.type} color={p.tint} onClick={() => setPreset(p)}>
+          <Chip key={p.type} active={preset.type === p.type} onClick={() => setPreset(p)}>
             {p.emoji} {t(p.key)}
           </Chip>
         ))}
@@ -1024,7 +1032,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
         {emojiChoices.map(e => (
           <button key={e} onClick={() => setEmoji(e)} style={{
             width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
-            background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
+            ...glass({ on: emoji === e }),
           }}><Sticker emoji={e} size={22} /></button>
         ))}
       </div>
@@ -1227,9 +1235,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 }}>
             <div style={{ color: C.t1, fontSize: 24, fontWeight: 800 }}>{room.name}</div>
             {isOwner && (
-              <button onClick={onEdit} style={{ background: C.card2, border: `1px solid ${C.line}`, color: C.t2, width: 28, height: 28, borderRadius: 28, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Pencil size={13} />
-              </button>
+              <GlassButton onClick={onEdit} size={30} label={t("editRoom")}><Pencil size={13} /></GlassButton>
             )}
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
@@ -1237,9 +1243,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
             ))}
             {!coupleFull && (
-              <button onClick={onInvite} style={{ marginLeft: 8, width: 38, height: 38, borderRadius: 38, border: `1px dashed ${C.blueLine}`, background: C.blueSoft, color: "#7FB0FF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Plus size={18} />
-              </button>
+              <GlassButton onClick={onInvite} size={38} label={t("invite")} style={{ marginLeft: 8 }}><Plus size={18} /></GlassButton>
             )}
           </div>
           {coupleFull ? (
@@ -1506,7 +1510,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           ) : (
             <button onClick={() => fileRef.current && fileRef.current.click()} style={{
               width: "100%", padding: "26px", borderRadius: 22, cursor: "pointer",
-              background: C.card2, border: `1px dashed ${C.line}`, color: C.t2, fontFamily: font,
+              ...glass(), border: "1px dashed rgba(255,255,255,0.22)", color: C.t2, fontFamily: font,
               display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
             }}>
               <ImageIcon size={26} color={C.t2} />
@@ -1519,7 +1523,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           {WISH_EMOJI.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
               width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
-              background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
+              ...glass({ on: emoji === e }),
             }}><Sticker emoji={e} size={22} /></button>
           ))}
         </div>
@@ -1532,13 +1536,13 @@ function AddSheet({ rooms, onClose, onSave }) {
       <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
         {rooms.map(r => (
-          <Chip key={r.id} active={inRooms.includes(r.id)} color={r.tint}
+          <Chip key={r.id} active={inRooms.includes(r.id)}
             onClick={() => setInRooms(x => x.includes(r.id) ? x.filter(i => i !== r.id) : [...x, r.id])}>
             {r.emoji} {r.name}
           </Chip>
         ))}
       </div>
-      <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20 }}>{t("nothingSelectedPrivate")}</div>
+      <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><Lock size={13} color="#FFFFFF" strokeWidth={2.4} />{t("nothingSelectedPrivate")}</div>
 
       <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
         {busy ? t("savingWish") : t("saveWish")}
@@ -1552,11 +1556,11 @@ function Field({ label, value, onChange, placeholder }) {
       <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{label}</div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
-          width: "100%", background: C.card2, border: `1px solid ${C.line}`, borderRadius: 18,
+          width: "100%", ...glass(), borderRadius: 18,
           padding: "14px 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
-        onFocus={e => e.target.style.borderColor = C.blueLine}
-        onBlur={e => e.target.style.borderColor = C.line} />
+        onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.32)"}
+        onBlur={e => e.target.style.borderColor = GLASS.border} />
     </div>
   );
 }
