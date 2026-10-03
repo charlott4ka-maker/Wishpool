@@ -1497,9 +1497,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 
   return (
-    <div style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease" }}>
+    <div style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
       {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
-      <div style={{ position: "relative", overflow: "hidden", padding: "16px 16px 52px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
+      <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 52px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
         <StickerPattern emoji={room.emoji} />
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
           {hasTgBack() ? <span /> : <HeroButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
@@ -1531,7 +1531,8 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         </div>
       </div>
       {/* content sheet slides over the hero with rounded corners */}
-      <div style={{ position: "relative", marginTop: -28, background: C.bg, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "24px 16px 140px", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
+      {/* fills the rest of the screen so Delete/Leave sits at the very bottom */}
+      <div style={{ position: "relative", marginTop: -28, flex: "1 0 auto", display: "flex", flexDirection: "column", background: C.bg, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "24px 16px calc(24px + env(safe-area-inset-bottom))", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
 
         <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral style={{ marginBottom: 16 }} />
 
@@ -1597,7 +1598,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           </div>
         )}
 
-        <div style={{ marginTop: 32, display: "flex", justifyContent: "center" }}>
+        <div style={{ marginTop: "auto", paddingTop: 32, display: "flex", justifyContent: "center" }}>
           {isOwner ? (
             <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
               <Trash2 size={16} /> {t("deleteRoom")}
