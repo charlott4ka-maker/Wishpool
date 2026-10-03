@@ -1,9 +1,22 @@
 import React, { useState, useEffect, useRef, useContext, createContext } from "react";
 import { createPortal } from "react-dom";
 import {
-  Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
-} from "lucide-react";
+  Gift as PhGift, Users as PhUsers, User as PhUser, Plus as PhPlus, Check as PhCheck, CaretLeft as PhCaretLeft, CaretRight as PhCaretRight, X as PhX, ShareNetwork as PhShareNetwork, LockSimple as PhLockSimple, DiceFive as PhDiceFive, Sparkle as PhSparkle, Clock as PhClock, Link as PhLink, Heart as PhHeart, Image as PhImage, Trash as PhTrash, Globe as PhGlobe, PaperPlaneTilt as PhPaperPlaneTilt, PencilSimple as PhPencilSimple,
+} from "@phosphor-icons/react";
+
+// Phosphor icons in the reference's chunky style: solid ("fill") glyphs for
+// objects, bold strokes for arrows / marks. Wrapped so call sites keep the
+// lucide-style API (size, color, style); `weight` overrides per use.
+const icon = (P, w) => function Icon({ size = 20, color = "currentColor", style, weight }) {
+  return <P size={size} color={color} weight={weight || w} style={style} />;
+};
+const Gift = icon(PhGift, "fill"), Users = icon(PhUsers, "fill"), User = icon(PhUser, "fill");
+const Plus = icon(PhPlus, "bold"), Check = icon(PhCheck, "bold"), X = icon(PhX, "bold");
+const ChevronLeft = icon(PhCaretLeft, "bold"), ChevronRight = icon(PhCaretRight, "bold");
+const Share2 = icon(PhShareNetwork, "fill"), Lock = icon(PhLockSimple, "fill"), Dices = icon(PhDiceFive, "fill");
+const Sparkles = icon(PhSparkle, "fill"), Clock = icon(PhClock, "fill"), Link2 = icon(PhLink, "bold");
+const Heart = icon(PhHeart, "fill"), ImageIcon = icon(PhImage, "fill"), Trash2 = icon(PhTrash, "fill");
+const Globe = icon(PhGlobe, "fill"), Send = icon(PhPaperPlaneTilt, "fill"), Pencil = icon(PhPencilSimple, "fill");
 
 /* ---------- design tokens ---------- */
 // Wise-style dark theme with blue in place of Wise's lime: flat surfaces, no
@@ -274,7 +287,7 @@ const useT = () => useContext(LangCtx);
 
 // Image stickers (web/public/stickers/<name>.png), stored in a wish's `emoji`
 // field as "stk:<name>" and drawn by <Sticker> like any emoji.
-const STICKERS = ["burger", "pizza", "icecream", "cactus", "heel", "globe", "fire", "bulb", "tent", "dog", "cat", "alien"];
+const STICKERS = ["burger", "pizza", "icecream", "cactus", "heel", "globe", "fire", "bulb", "dog", "cat", "alien"];
 const WISH_EMOJI = [...STICKERS.map(n => "stk:" + n), "🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍", "🎨", "🧣", "🕹️", "🍷"];
 
 /* ---------- little ui atoms ---------- */
@@ -305,7 +318,7 @@ function stickerFilter(size) {
   return `url(#stk-${w * 10}) drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`;
 }
 // Bullet-style icon: a small circle tinted with `color`, a thin ring of the same
-// hue and a light icon (lucide component) or emoji inside.
+// hue and a light icon component or emoji inside.
 function IconBadge({ icon: Icon, emoji, color = "#FFFFFF", size = 24, style }) {
   const light = tintToWhite(color, 0.45);
   return (
@@ -495,7 +508,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
     primary: { ...glass({ on: true }), color: C.onBlue },
     ghost: { ...glass(), color: C.t1 },
     soft: { background: C.blueDeep, border: "none", boxShadow: "none", color: C.blueLight },
-    green: { background: C.blueDeep, border: "none", boxShadow: "none", color: C.blueLight },
+    green: { background: C.blue, border: "none", boxShadow: "none", color: C.onBlue },
   }[kind];
   return (
     <button
@@ -536,8 +549,9 @@ function Segmented({ options, value, onChange, style }) {
           <button key={k} onClick={() => onChange(k)} style={{
             flex: 1, padding: "0 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
-            ...(on ? glass({ on: true }) : { background: "transparent", border: "none" }),
-            color: on ? C.onBlue : C.t2,
+            // tab switch: the selected tab is a black pill on the grey track
+            background: on ? "#000000" : "transparent", border: "none", boxShadow: "none",
+            color: on ? C.t1 : C.t2,
           }}>{l}</button>
         );
       })}
@@ -950,7 +964,7 @@ function TabBar({ tab, setTab }) {
                 width: 92, height: 58, borderRadius: 999, cursor: "pointer", fontFamily: font, border: "none",
                 background: on ? C.blueDeep : "transparent", color: on ? C.blueLight : C.t2, transition: "background .2s",
               }}>
-                <Icon size={22} />
+                <Icon size={24} weight={on ? "fill" : "regular"} />
                 <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{it.label}</span>
               </button>
             );
