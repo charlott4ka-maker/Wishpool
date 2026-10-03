@@ -286,10 +286,13 @@ function stickerFilter(size) {
   return `url(#stk-${w * 10}) drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`;
 }
 // Image stickers (web/public/stickers/<name>.webp) are stored as "stk:<name>".
+// Their white rim is baked into the file (an SVG filter rim drifted and broke up
+// on iOS at large sizes), so they only get the soft shadow here. The box is a
+// bit bigger than before because the rim now sits inside the image.
 function Sticker({ emoji, size, style }) {
   if (typeof emoji === "string" && emoji.startsWith("stk:")) {
     return <img src={`/stickers/${emoji.slice(4)}.webp`} alt="" draggable={false}
-      style={{ height: size * 1.1, width: size * 1.1, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: stickerFilter(size), ...style }} />;
+      style={{ height: size * 1.24, width: size * 1.24, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: `drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`, ...style }} />;
   }
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
 }
@@ -1215,7 +1218,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
   return (
     <RoomSheetShell title={t("newRoom")} onClose={onClose}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-        <GlossTile emoji={emoji} size={80} tint={tint} />
+        <GlossTile emoji={emoji} size={96} tint={tint} bare />
       </div>
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
@@ -1259,7 +1262,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
   return (
     <RoomSheetShell title={t("editRoom")} onClose={onClose}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-        <GlossTile emoji={emoji} size={80} tint={tint} />
+        <GlossTile emoji={emoji} size={96} tint={tint} bare />
       </div>
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
