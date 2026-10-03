@@ -412,6 +412,7 @@ function Avatar({ m, size = 34 }) {
 function Pill({ children, onClick, kind = "primary", icon, disabled, full, size = "lg" }) {
   const styles = {
     primary: { background: C.blue, color: "#fff", border: "none" },
+    glass: { background: "rgba(255,255,255,0.18)", color: "#fff", border: "1px solid rgba(255,255,255,0.28)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" },
     ghost: { background: "transparent", color: C.t1, border: `1px solid ${C.line}` },
     soft: { background: C.blueSoft, color: "#7FB0FF", border: `1px solid ${C.blueLine}` },
     green: { background: C.greenSoft, color: "#7EE29A", border: `1px solid rgba(52,199,89,0.4)` },
@@ -1296,22 +1297,20 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               <HeroButton onClick={onInvite} label={t("invite")} style={{ marginLeft: 8 }}><Plus size={18} /></HeroButton>
             )}
           </div>
-        </div>
-      </div>
-      {/* content sheet slides over the hero with rounded corners */}
-      <div style={{ position: "relative", marginTop: -28, background: C.bg, borderRadius: "28px 28px 0 0", padding: "24px 16px 140px", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
-        <div style={{ textAlign: "center", marginBottom: 16 }}>
           {coupleFull ? (
-            <div style={{ color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
+            <div style={{ marginTop: 16, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>{t("coupleFullHint")}</div>
           ) : (
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <Pill kind={room.type === "couple" ? "primary" : "ghost"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
+            <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center" }}>
+              <Pill kind={room.type === "couple" ? "primary" : "glass"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
               {room.type !== "couple" && (
                 <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
               )}
             </div>
           )}
         </div>
+      </div>
+      {/* content sheet slides over the hero with rounded corners */}
+      <div style={{ position: "relative", marginTop: -28, background: C.bg, borderRadius: "28px 28px 0 0", padding: "24px 16px 140px", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
 
         <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} style={{ marginBottom: 16 }} />
 
