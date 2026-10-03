@@ -484,7 +484,7 @@ function Segmented({ options, value, onChange, style, neutral }) {
         return (
           <button key={k} onClick={() => onChange(k)} style={{
             flex: 1, padding: "0 10px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font,
-            fontSize: 14, fontWeight: 600, background: on ? (neutral ? "#333336" : C.blue) : "transparent", color: on ? "#fff" : C.t2,
+            fontSize: 14, fontWeight: 600, background: on ? (neutral ? "#3A3A3E" : C.blue) : "transparent", color: on ? "#fff" : C.t2,
           }}>{l}</button>
         );
       })}
@@ -1878,7 +1878,7 @@ function AddSheet({ rooms, onClose, onSave }) {
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
         <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newWish")}</div>
 
-        <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} style={{ marginBottom: 16 }} />
+        <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral style={{ marginBottom: 16, background: C.card2 }} />
 
         {cover === "photo" ? (
           <div style={{ marginBottom: 16 }}>
