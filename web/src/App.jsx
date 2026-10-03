@@ -956,7 +956,9 @@ function RoomFolder({ room, wishes, onOpen }) {
           );
         })}
         <div style={{ position: "absolute", left: "4%", top: "28%", width: "46%", height: "9%", zIndex: 3, borderRadius: "14px 14px 0 0", ...frost, background: "rgba(255,255,255,0.20)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)" }} />
-        <div style={{ position: "absolute", left: "4%", right: "4%", top: "37%", bottom: "4%", zIndex: 3, borderRadius: "0 18px 18px 18px", ...frost, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 24px rgba(0,0,0,0.35)" }} />
+        <div style={{ position: "absolute", left: "4%", right: "4%", top: "37%", bottom: "4%", zIndex: 3, borderRadius: "0 18px 18px 18px", ...frost, boxShadow: "0 10px 24px rgba(0,0,0,0.35)" }} />
+        {/* top highlight only where the body edge is exposed (right of the tab), so tab and body read as one piece */}
+        <div style={{ position: "absolute", left: "50%", right: "calc(4% + 14px)", top: "37%", height: 1, zIndex: 3, background: "rgba(255,255,255,0.22)" }} />
         <div style={{ position: "absolute", left: "16%", top: "50%", zIndex: 4, transform: "rotate(-8deg)" }}>
           <Sticker emoji={room.emoji} size={38} />
         </div>
