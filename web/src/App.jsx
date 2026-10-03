@@ -24,6 +24,8 @@ const C = {
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
 const S = { gutter: 12, gap: 12, pad: 20, r: 30, rTile: 0.3 };
+// Every button / control is one of exactly two heights.
+const H = { lg: 52, sm: 40 };
 /* ---------- clear glass ---------- */
 // Clear, not frosted: no backdrop blur and almost no fill (so nothing turns a
 // flat grey), just a diagonal reflection, a bright top rim and faint edges.
@@ -33,16 +35,16 @@ const GLASS = {
   sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
   rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
 };
-// `tint` adds a faint inner glow of the block's colour (blue by default) so a
+// `tint` adds a faint fill of the block's colour (blue by default) so a
 // block reads as tinted glass rather than fully see-through.
 function glass({ on = false, tint = C.blue } = {}) {
   if (on) return {
     background: "linear-gradient(180deg, #5A82EA 0%, #3563D8 55%, #2850BE 100%)",
-    border: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 22px ${hex(C.blue, 0.5)}`,
+    border: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
   };
   return {
     background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
-    border: "none", boxShadow: `${GLASS.rim}, inset 0 0 28px ${hex(tint, 0.07)}`,
+    border: "none", boxShadow: GLASS.rim,
   };
 }
 // Calm solid surface for static content (cards, inputs, unselected controls):
@@ -440,12 +442,12 @@ function Avatar({ m, size = 34 }) {
     </div>
   );
 }
-function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
+function Pill({ children, onClick, kind = "primary", icon, disabled, full, size = "lg" }) {
   const styles = {
     primary: { ...glass({ on: true }), color: "#fff" },
     ghost: { ...glass(), color: C.t1 },
     soft: { ...glass(), color: C.t1 },
-    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.blue, 0.32)}`, color: C.blueLight, boxShadow: `${GLASS.rim}, 0 0 18px ${hex(C.blue, 0.35)}` },
+    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.blue, 0.32)}`, color: C.blueLight },
   }[kind];
   return (
     <button
@@ -453,7 +455,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
       style={{
         ...styles, opacity: disabled ? 0.45 : 1, width: full ? "100%" : "auto",
         display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-        padding: "14px 22px", borderRadius: 999, fontSize: 16, fontWeight: 600,
+        height: H[size], padding: size === "lg" ? "0 24px" : "0 16px", borderRadius: 999, fontSize: size === "lg" ? 16 : 14.5, fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap",
         fontFamily: font, cursor: disabled ? "default" : "pointer",
       }}
     >
@@ -464,11 +466,9 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
 function Chip({ children, active, onClick }) {
   return (
     <button onClick={onClick} style={{
-      padding: "11px 18px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
+      height: H.sm, padding: "0 16px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
       cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
       ...(active ? glass({ on: true }) : surface({ fill: SOLID.control })),
-      // selected chips stay flat: keep the top highlight, no outer glow
-      ...(active ? { boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4)" } : null),
       color: active ? "#fff" : C.t2,
       display: "inline-flex", alignItems: "center", gap: 6,
     }}>
@@ -481,12 +481,12 @@ function Card({ children, style, onClick, tint }) {
 }
 function Segmented({ options, value, onChange, style }) {
   return (
-    <div style={{ display: "flex", gap: 4, ...surface(), padding: 4, borderRadius: 999, ...style }}>
+    <div style={{ display: "flex", gap: 4, ...surface(), height: H.lg, padding: (H.lg - H.sm) / 2, borderRadius: 999, ...style }}>
       {options.map(([k, l]) => {
         const on = value === k;
         return (
           <button key={k} onClick={() => onChange(k)} style={{
-            flex: 1, padding: "11px 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
+            flex: 1, padding: "0 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
             ...(on ? glass({ on: true }) : { background: "transparent", border: "none" }),
             color: on ? "#fff" : C.t2,
@@ -498,13 +498,12 @@ function Segmented({ options, value, onChange, style }) {
 }
 
 // Round glass button (close / back / add) — the one style used for every such control.
-function GlassButton({ onClick, children, size = 40, label, style }) {
+function GlassButton({ onClick, children, size = H.sm, label, style }) {
   return (
     <button onClick={onClick} aria-label={label} style={{
       width: size, height: size, borderRadius: size, flexShrink: 0, cursor: "pointer", padding: 0,
       display: "flex", alignItems: "center", justifyContent: "center", color: C.t1,
       ...glass(),
-      boxShadow: `${GLASS.rim}, 0 0 18px ${hex(C.blue, 0.18)}`,
       ...style,
     }}>
       {children}
@@ -519,7 +518,7 @@ function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <Title text={title} size={22} />
-          <GlassButton onClick={onClose} size={36} label="Close"><X size={18} /></GlassButton>
+          <GlassButton onClick={onClose} label="Close"><X size={18} /></GlassButton>
         </div>
         {children}
       </div>
@@ -757,7 +756,6 @@ export default function App() {
         @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
         @keyframes spinEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-        @keyframes glow{0%,100%{box-shadow:0 0 0 0 ${hex(C.accent,0.0)}}50%{box-shadow:0 0 40px 4px ${hex(C.accent,0.55)}}}
         @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
         @keyframes spin{to{transform:rotate(360deg)}}
         ::-webkit-scrollbar{display:none}
@@ -891,7 +889,7 @@ function TabBar({ tab, setTab }) {
             const on = tab === it.id; const Icon = it.icon;
             return (
               <button key={it.id} onClick={() => setTab(it.id)} aria-label={it.label} style={{
-                position: "relative", display: "flex", alignItems: "center", gap: 8, height: 46,
+                position: "relative", display: "flex", alignItems: "center", gap: 8, height: H.lg,
                 padding: on ? "0 20px 0 16px" : "0 15px", borderRadius: 999, cursor: "pointer", fontFamily: font,
                 transition: "padding .3s cubic-bezier(.3,1.3,.5,1), background .25s, box-shadow .25s",
                 ...(on ? glass({ on: true }) : { background: "transparent", border: "none" }),
@@ -919,7 +917,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
           <Title text={t("poolTitle")} />
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("poolSub")}</div>
         </div>
-        <GlassButton onClick={onAdd} size={44} label={t("addWish")}><Plus size={22} /></GlassButton>
+        <GlassButton onClick={onAdd} label={t("addWish")}><Plus size={22} /></GlassButton>
       </div>
 
       {wishes.length === 0 ? (
@@ -950,7 +948,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                         </Chip>
                       ))}
                   </div>
-                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 14, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 8, background: "none", border: "none", height: H.sm, padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <IconBadge icon={Trash2} color="#FF5A5A" size={26} /> {t("deleteWish")}
                   </button>
                 </div>
@@ -979,7 +977,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
           <Title text={t("roomsTitle")} />
           <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("roomsSub")}</div>
         </div>
-        <GlassButton onClick={onCreate} size={44} label={t("createRoom")}><Plus size={22} /></GlassButton>
+        <GlassButton onClick={onCreate} label={t("createRoom")}><Plus size={22} /></GlassButton>
       </div>
 
       {rooms.length === 0 ? (
@@ -1085,7 +1083,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
         {emojiChoices.map(e => (
           <button key={e} onClick={() => setEmoji(e)} style={{
-            width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
+            width: H.lg, height: H.lg, borderRadius: H.lg * S.rTile, fontSize: 22, cursor: "pointer",
             ...(emoji === e ? glass({ on: true }) : surface({ fill: SOLID.control })),
           }}><Sticker emoji={e} size={22} /></button>
         ))}
@@ -1141,7 +1139,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
                 <GlossTile emoji={g.room.emoji} size={30} tint={g.room.tint} />
                 <div style={{ color: C.t1, fontSize: 15, fontWeight: 700 }}>{g.room.name}</div>
                 <div style={{ marginLeft: "auto" }}>
-                  <Pill kind="soft" icon={<Share2 size={14} />} onClick={() => onShare({ id: g.room.id, name: g.room.name })}>{t("shareBtn")}</Pill>
+                  <Pill size="sm" kind="soft" icon={<Share2 size={14} />} onClick={() => onShare({ id: g.room.id, name: g.room.name })}>{t("shareBtn")}</Pill>
                 </div>
               </div>
               <Card style={{ padding: "4px 14px" }}>
@@ -1220,7 +1218,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
                 </div>
-                <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: inRoom ? "none" : "2px solid rgba(255,255,255,0.25)", background: inRoom ? C.blue : "transparent", boxShadow: inRoom ? `0 0 12px ${hex(C.blue, 0.6)}` : "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: inRoom ? "none" : "2px solid rgba(255,255,255,0.25)", background: inRoom ? C.blue : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {isPending
                     ? <div style={{ width: 12, height: 12, borderRadius: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", animation: "spin .6s linear infinite" }} />
                     : (inRoom && <Check size={16} color={"#fff"} strokeWidth={3} />)}
@@ -1274,9 +1272,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
-      ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-      : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, padding: "8px 12px" }}>{t("taken")}</span>
-        : <Pill kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
+      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
+      : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
+        : <Pill size="sm" kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
   );
 
   return (
@@ -1289,7 +1287,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 }}>
             <Title text={room.name} size={32} />
             {isOwner && (
-              <GlassButton onClick={onEdit} size={30} label={t("editRoom")}><Pencil size={13} /></GlassButton>
+              <GlassButton onClick={onEdit} label={t("editRoom")}><Pencil size={13} /></GlassButton>
             )}
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
@@ -1297,7 +1295,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
             ))}
             {!coupleFull && (
-              <GlassButton onClick={onInvite} size={38} label={t("invite")} style={{ marginLeft: 8 }}><Plus size={18} /></GlassButton>
+              <GlassButton onClick={onInvite} label={t("invite")} style={{ marginLeft: 8 }}><Plus size={18} /></GlassButton>
             )}
           </div>
           {coupleFull ? (
@@ -1377,11 +1375,11 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 
         <div style={{ marginTop: 30, display: "flex", justifyContent: "center" }}>
           {isOwner ? (
-            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", padding: "8px 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
               <Trash2 size={16} /> {t("deleteRoom")}
             </button>
           ) : (
-            <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", padding: "8px 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
               <X size={16} /> {t("leaveRoom")}
             </button>
           )}
@@ -1477,7 +1475,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
       {stage === "drawing" && (
         <div style={{ padding: "80px 22px", textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ animation: "glow 1.2s ease-in-out infinite", borderRadius: 30 }}>
+            <div>
               <div style={{ animation: "spinEmoji .5s ease-in-out infinite" }}>
                 <GlossTile emoji={spin} size={128} tint={C.accent} />
               </div>
@@ -1504,8 +1502,8 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                 <div key={w.id} style={{ borderBottom: i < targetWishes.length - 1 ? `1px solid ${C.line}` : "none" }}>
                   <WishRow w={w} right={
                     isMine(w)
-                      ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-                      : <Pill kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
+                      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
+                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w.id)}>{t("take")}</Pill>
                   } />
                 </div>
               )) : <div style={{ padding: 16, color: C.t3, fontSize: 13.5 }}>{t("emptyLater")}</div>}
@@ -1557,8 +1555,8 @@ function AddSheet({ rooms, onClose, onSave }) {
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <GlossTile image={image} size={72} />
               <div style={{ flex: 1, display: "flex", gap: 8 }}>
-                <Pill kind="ghost" onClick={() => fileRef.current && fileRef.current.click()}>{t("replace")}</Pill>
-                <Pill kind="ghost" onClick={() => setImage(null)}>{t("remove")}</Pill>
+                <Pill size="sm" kind="ghost" onClick={() => fileRef.current && fileRef.current.click()}>{t("replace")}</Pill>
+                <Pill size="sm" kind="ghost" onClick={() => setImage(null)}>{t("remove")}</Pill>
               </div>
             </div>
           ) : (
@@ -1573,10 +1571,10 @@ function AddSheet({ rooms, onClose, onSave }) {
           )}
         </div>
       ) : (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
           {WISH_EMOJI.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
-              width: 46, height: 46, borderRadius: 46 * S.rTile, fontSize: 22, cursor: "pointer",
+              width: H.lg, height: H.lg, borderRadius: H.lg * S.rTile, fontSize: 22, cursor: "pointer",
               ...(emoji === e ? glass({ on: true }) : surface({ fill: SOLID.control })),
             }}><Sticker emoji={e} size={22} /></button>
           ))}
@@ -1611,7 +1609,7 @@ function Field({ label, value, onChange, placeholder }) {
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
           width: "100%", ...surface({ fill: SOLID.field }), borderRadius: 18,
-          padding: "14px 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
+          height: H.lg, padding: "0 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
         onFocus={e => e.target.style.boxShadow = `0 0 0 2px ${hex(C.blue, 0.65)}`}
         onBlur={e => e.target.style.boxShadow = "none"} />
