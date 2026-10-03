@@ -238,9 +238,7 @@ const WISH_EMOJI = ["🎁", "👟", "📖", "🎧", "🌿", "🧴", "☕", "💍
 function ImageLightbox({ src, onClose }) {
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeUp .2s ease" }}>
-      <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 38, height: 38, borderRadius: 38, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <X size={18} />
-      </button>
+      <GlassButton onClick={onClose} label="Close" style={{ position: "absolute", top: 16, right: 16 }}><X size={18} /></GlassButton>
       <img src={src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92%", maxHeight: "85vh", borderRadius: 16, objectFit: "contain" }} />
     </div>
   );
@@ -349,17 +347,85 @@ function Chip({ children, active, onClick, color }) {
 function Card({ children, style, onClick }) {
   return <div onClick={onClick} style={{ background: C.card, borderRadius: 22, border: `1px solid ${C.line}`, ...style }}>{children}</div>;
 }
-function Sheet({ title, onClose, children }) {
+
+/* ---------- iOS-style frosted glass ---------- */
+const GLASS = {
+  fill: "rgba(28,28,30,0.55)",
+  border: "rgba(255,255,255,0.13)",
+  blur: "blur(24px) saturate(180%)",
+  // top rim highlight + faint bottom rim, like light catching the edge of glass
+  rim: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04)",
+};
+// Round glass button (close / back / add) — the one style used for every such control.
+function GlassButton({ onClick, children, size = 40, label, style }) {
+  return (
+    <button onClick={onClick} aria-label={label} style={{
+      width: size, height: size, borderRadius: size, flexShrink: 0, cursor: "pointer", padding: 0,
+      display: "flex", alignItems: "center", justifyContent: "center", color: C.t1,
+      background: `radial-gradient(120% 120% at 30% 0%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 60%), ${GLASS.fill}`,
+      backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
+      border: `1px solid ${GLASS.border}`,
+      boxShadow: `${GLASS.rim}, 0 6px 20px rgba(0,0,0,0.45), 0 0 18px rgba(255,255,255,0.05)`,
+      ...style,
+    }}>
+      {children}
+    </button>
+  );
+}
+// Semi-transparent "folder": a fan of wish covers peeking out from behind a frosted panel.
+function FolderCover({ w, size }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: size * 0.24, overflow: "hidden",
+      background: `radial-gradient(120% 90% at 30% 20%, rgba(255,255,255,0.14) 0%, ${C.card2} 60%)`,
+      border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 8px 18px rgba(0,0,0,0.45)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      {w.image
+        ? <img src={w.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        : <span style={{ fontSize: size * 0.5, lineHeight: 1 }}>{w.emoji}</span>}
+    </div>
+  );
+}
+const FAN = { 1: [[0, -4]], 2: [[-20, -8], [20, 7]], 3: [[-32, -11], [32, 10], [0, -1]] };
+function RoomFolder({ room, wishes, onOpen, width = 152 }) {
+  const { t } = useT();
+  const shared = wishes.filter(w => w.rooms.includes(room.id));
+  const covers = shared.length ? shared.slice(0, 3) : [{ id: "e", emoji: room.emoji }];
+  const H = 160, PANEL = 94, TILE = 82;
+  return (
+    <div onClick={onOpen} style={{ position: "relative", width, height: H, flexShrink: 0, cursor: "pointer", animation: "fadeUp .3s ease" }}>
+      <div style={{ position: "absolute", left: "18%", right: "18%", top: 14, height: 80, borderRadius: "50%", background: hex(room.tint, 0.4), filter: "blur(26px)", pointerEvents: "none" }} />
+      {covers.map((w, i) => {
+        const [dx, rot] = FAN[covers.length][i];
+        return (
+          <div key={w.id} style={{ position: "absolute", top: 4, left: "50%", transform: `translateX(calc(-50% + ${dx}px)) rotate(${rot}deg)` }}>
+            <FolderCover w={w} size={TILE} />
+          </div>
+        );
+      })}
+      <div style={{
+        position: "absolute", left: 0, right: 0, bottom: 0, height: PANEL, borderRadius: 24,
+        background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)",
+        backdropFilter: "blur(16px) saturate(170%)", WebkitBackdropFilter: "blur(16px) saturate(170%)",
+        border: `1px solid ${GLASS.border}`, boxShadow: `${GLASS.rim}, 0 10px 26px rgba(0,0,0,0.4)`,
+        padding: "0 12px 13px", display: "flex", flexDirection: "column", justifyContent: "flex-end", textAlign: "center",
+      }}>
+        <div style={{ color: C.t1, fontSize: 14.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.emoji} {room.name}</div>
+        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11.5, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
+      </div>
+    </div>
+  );
+}
+function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "85vh", overflowY: "auto" }}>
+      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
-          <button onClick={onClose} style={{ background: C.card2, border: "none", color: C.t2, width: 32, height: 32, borderRadius: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <X size={18} />
-          </button>
+          <GlassButton onClick={onClose} size={36} label="Close"><X size={18} /></GlassButton>
         </div>
         {children}
       </div>
@@ -619,6 +685,7 @@ export default function App() {
                 ) : (
                   <PoolScreen wishes={wishes} rooms={rooms}
                     onAdd={() => setOverlay({ type: "add" })}
+                    onOpenRoom={(id) => setOverlay({ type: "room", roomId: id })}
                     onToggleRoom={toggleWishRoom}
                     onDelete={deleteWish}
                   />
@@ -706,14 +773,8 @@ function FallbackBack({ onBack }) {
   const hasTG = typeof window !== "undefined" && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton;
   if (hasTG) return null;
   return (
-    <div style={{ position: "sticky", top: 0, zIndex: 10, background: C.bg, padding: "14px 16px 6px" }}>
-      <button onClick={onBack} style={{
-        display: "inline-flex", alignItems: "center", gap: 4, background: C.card, color: C.t1,
-        border: `1px solid ${C.line}`, borderRadius: 999, padding: "8px 14px 8px 10px", fontSize: 14.5,
-        fontWeight: 600, fontFamily: font, cursor: "pointer",
-      }}>
-        <ChevronLeft size={18} /> {t("back")}
-      </button>
+    <div style={{ position: "sticky", top: 0, zIndex: 10, padding: "14px 16px 6px" }}>
+      <GlassButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></GlassButton>
     </div>
   );
 }
@@ -724,42 +785,68 @@ function TabBar({ tab, setTab }) {
     { id: "rooms", label: t("tabRooms"), icon: Users },
     { id: "profile", label: t("tabProfile"), icon: User },
   ];
+  const W = 86; // fixed slot width so the active bubble can slide between tabs
+  const idx = Math.max(0, items.findIndex(it => it.id === tab));
   return (
-    <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
-      <div style={{
-        display: "flex", gap: 6, background: hex("#1C1C1E", 0.92), backdropFilter: "blur(20px)",
-        padding: 6, borderRadius: 999, border: `1px solid ${C.line}`,
-      }}>
-        {items.map(it => {
-          const on = tab === it.id; const Icon = it.icon;
-          return (
-            <button key={it.id} onClick={() => setTab(it.id)} style={{
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-              padding: "9px 20px", borderRadius: 999, border: "none", cursor: "pointer",
-              background: on ? C.blueSoft : "transparent", color: on ? "#7FB0FF" : C.t2, fontFamily: font,
-            }}>
-              <Icon size={21} />
-              <span style={{ fontSize: 11.5, fontWeight: 600 }}>{it.label}</span>
-            </button>
-          );
-        })}
+    <>
+      {/* fade content out under the bar, like iOS */}
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%)" }} />
+      <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
+        <div style={{
+          position: "relative", display: "flex", padding: 5, borderRadius: 999,
+          background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%), ${GLASS.fill}`,
+          backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
+          border: `1px solid ${GLASS.border}`,
+          boxShadow: `${GLASS.rim}, 0 12px 34px rgba(0,0,0,0.55)`,
+        }}>
+          {/* sliding active bubble with a soft glow underneath */}
+          <div style={{
+            position: "absolute", top: 5, bottom: 5, left: 5, width: W, borderRadius: 999,
+            transform: `translateX(${idx * W}px)`, transition: "transform .38s cubic-bezier(.3,1.3,.5,1)",
+            background: "radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.07) 70%)",
+            border: "1px solid rgba(255,255,255,0.16)",
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.28), 0 0 22px ${hex(C.blue, 0.35)}`,
+          }}>
+            <div style={{ position: "absolute", left: "20%", right: "20%", bottom: -6, height: 14, borderRadius: "50%", background: hex(C.blue, 0.7), filter: "blur(10px)" }} />
+          </div>
+          {items.map(it => {
+            const on = tab === it.id; const Icon = it.icon;
+            return (
+              <button key={it.id} onClick={() => setTab(it.id)} style={{
+                position: "relative", width: W, display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                padding: "8px 0", borderRadius: 999, border: "none", cursor: "pointer", background: "transparent",
+                color: on ? "#FFFFFF" : C.t2, fontFamily: font, transition: "color .25s",
+              }}>
+                <Icon size={21} style={{ filter: on ? `drop-shadow(0 0 6px ${hex("#7FB0FF", 0.9)})` : "none", transition: "filter .25s" }} />
+                <span style={{ fontSize: 11, fontWeight: 600 }}>{it.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
 /* ---------- POOL ---------- */
-function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
+function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }) {
   const { t } = useT();
   const [openId, setOpenId] = useState(null);
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "6px 4px 14px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 14px" }}>
         <div>
           <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("poolTitle")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{t("poolSub")}</div>
         </div>
+        <GlassButton onClick={onAdd} size={44} label={t("addWish")}><Plus size={22} /></GlassButton>
       </div>
+
+      {rooms.length > 0 && (
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", margin: "0 -16px 18px", padding: "2px 16px 4px" }}>
+          {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={() => onOpenRoom(r.id)} />)}
+        </div>
+      )}
 
       {wishes.length === 0 ? (
         <Empty emoji="🎁" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
@@ -801,9 +888,11 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
         </div>
       )}
 
-      <div style={{ marginTop: 18 }}>
-        <Pill full kind="primary" icon={<Plus size={19} />} onClick={onAdd}>{t("addWish")}</Pill>
-      </div>
+      {wishes.length === 0 && (
+        <div style={{ marginTop: 18 }}>
+          <Pill full kind="primary" icon={<Plus size={19} />} onClick={onAdd}>{t("addWish")}</Pill>
+        </div>
+      )}
     </div>
   );
 }
@@ -813,42 +902,26 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
   const { t } = useT();
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
-      <div style={{ padding: "6px 4px 14px" }}>
-        <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
-        <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{t("roomsSub")}</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "6px 4px 18px" }}>
+        <div>
+          <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{t("roomsSub")}</div>
+        </div>
+        <GlassButton onClick={onCreate} size={44} label={t("createRoom")}><Plus size={22} /></GlassButton>
       </div>
 
       {rooms.length === 0 ? (
-        <Empty emoji="👋" title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
+        <>
+          <Empty emoji="👋" title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
+          <div style={{ marginTop: 18 }}>
+            <Pill full kind="primary" icon={<Plus size={19} />} onClick={onCreate}>{t("createRoom")}</Pill>
+          </div>
+        </>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {rooms.map(r => {
-            const shared = wishes.filter(w => w.rooms.includes(r.id)).length;
-            return (
-              <Card key={r.id} style={{ padding: 16, cursor: "pointer", overflow: "hidden", position: "relative" }}>
-                <div onClick={() => onOpen(r.id)} style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ position: "absolute", inset: 0, background: `radial-gradient(80% 120% at 100% 0%, ${hex(r.tint, 0.14)} 0%, transparent 60%)`, pointerEvents: "none" }} />
-                  <GlossTile emoji={r.emoji} size={56} tint={r.tint} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: C.t1, fontSize: 17.5, fontWeight: 700 }}>{r.name}</div>
-                    <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
-                  </div>
-                  <div style={{ display: "flex", marginRight: 6 }}>
-                    {r.members.slice(0, 3).map((m, i) => (
-                      <div key={m.id} style={{ marginLeft: i ? -10 : 0 }}><Avatar m={m} size={30} /></div>
-                    ))}
-                  </div>
-                  <ChevronRight size={20} color={C.t3} />
-                </div>
-              </Card>
-            );
-          })}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px 12px" }}>
+          {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} width="100%" onOpen={() => onOpen(r.id)} />)}
         </div>
       )}
-
-      <div style={{ marginTop: 18 }}>
-        <Pill full kind={rooms.length === 0 ? "primary" : "ghost"} icon={<Plus size={19} />} onClick={onCreate}>{t("createRoom")}</Pill>
-      </div>
     </div>
   );
 }
@@ -873,35 +946,29 @@ function CreateRoomSheet({ onClose, onCreate }) {
     catch (e) { setBusy(false); }
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{t("newRoom")}</div>
-
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-          <GlossTile emoji={preset.emoji} size={80} tint={preset.tint} />
-        </div>
-
-        <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("roomType")}</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-          {ROOM_PRESETS.map(p => (
-            <Chip key={p.type} active={preset.type === p.type} color={p.tint} onClick={() => setPreset(p)}>
-              {p.emoji} {t(p.key)}
-            </Chip>
-          ))}
-        </div>
-        {preset.type === "couple" && (
-          <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 18 }}>{t("coupleRoomHint")}</div>
-        )}
-
-        <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
-
-        <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy} onClick={submit}>
-          {busy ? t("creating") : t("createRoom")}
-        </Pill>
+    <Sheet title={t("newRoom")} onClose={onClose}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+        <GlossTile emoji={preset.emoji} size={80} tint={preset.tint} />
       </div>
-    </div>
+
+      <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("roomType")}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+        {ROOM_PRESETS.map(p => (
+          <Chip key={p.type} active={preset.type === p.type} color={p.tint} onClick={() => setPreset(p)}>
+            {p.emoji} {t(p.key)}
+          </Chip>
+        ))}
+      </div>
+      {preset.type === "couple" && (
+        <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 18 }}>{t("coupleRoomHint")}</div>
+      )}
+
+      <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
+
+      <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy} onClick={submit}>
+        {busy ? t("creating") : t("createRoom")}
+      </Pill>
+    </Sheet>
   );
 }
 
@@ -919,32 +986,26 @@ function EditRoomSheet({ room, onClose, onSave }) {
     catch (e) { setBusy(false); }
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{t("editRoom")}</div>
-
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-          <GlossTile emoji={emoji} size={80} tint={room.tint} />
-        </div>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
-          {emojiChoices.map(e => (
-            <button key={e} onClick={() => setEmoji(e)} style={{
-              width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
-              background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-            }}>{e}</button>
-          ))}
-        </div>
-
-        <Field label={t("name")} value={name} onChange={setName} placeholder={t("name")} />
-
-        <Pill full kind="primary" disabled={!name.trim() || busy} onClick={submit}>
-          {busy ? t("savingWish") : t("saveChanges")}
-        </Pill>
+    <Sheet title={t("editRoom")} onClose={onClose}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+        <GlossTile emoji={emoji} size={80} tint={room.tint} />
       </div>
-    </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
+        {emojiChoices.map(e => (
+          <button key={e} onClick={() => setEmoji(e)} style={{
+            width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
+            background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
+          }}>{e}</button>
+        ))}
+      </div>
+
+      <Field label={t("name")} value={name} onChange={setName} placeholder={t("name")} />
+
+      <Pill full kind="primary" disabled={!name.trim() || busy} onClick={submit}>
+        {busy ? t("savingWish") : t("saveChanges")}
+      </Pill>
+    </Sheet>
   );
 }
 
@@ -1291,9 +1352,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
   return (
     <div style={{ position: "absolute", inset: 0, background: C.bg, zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
       <div style={{ padding: "16px 18px", display: "flex", justifyContent: "flex-end" }}>
-        <button onClick={onClose} style={{ background: C.card, border: `1px solid ${C.line}`, color: C.t2, width: 34, height: 34, borderRadius: 34, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <X size={18} />
-        </button>
+        <GlassButton onClick={onClose} label="Close"><X size={18} /></GlassButton>
       </div>
 
       {stage === "setup" && (
@@ -1408,74 +1467,68 @@ function AddSheet({ rooms, onClose, onSave }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{t("newWish")}</div>
-
-        <div style={{ display: "flex", gap: 6, background: C.card2, padding: 4, borderRadius: 12, marginBottom: 14 }}>
-          {[["photo", t("photo")], ["emoji", t("emojiTab")]].map(([k, l]) => (
-            <button key={k} onClick={() => setCover(k)} style={{
-              flex: 1, padding: "9px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
-              fontSize: 13.5, fontWeight: 600, background: cover === k ? C.blue : "transparent", color: cover === k ? "#fff" : C.t2,
-            }}>{l}</button>
-          ))}
-        </div>
-
-        {cover === "photo" ? (
-          <div style={{ marginBottom: 16 }}>
-            <input ref={fileRef} type="file" accept="image/*" onChange={pickFile} style={{ display: "none" }} />
-            {image ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <GlossTile image={image} size={72} />
-                <div style={{ flex: 1, display: "flex", gap: 8 }}>
-                  <Pill kind="ghost" onClick={() => fileRef.current && fileRef.current.click()}>{t("replace")}</Pill>
-                  <Pill kind="ghost" onClick={() => setImage(null)}>{t("remove")}</Pill>
-                </div>
-              </div>
-            ) : (
-              <button onClick={() => fileRef.current && fileRef.current.click()} style={{
-                width: "100%", padding: "26px", borderRadius: 16, cursor: "pointer",
-                background: C.card2, border: `1px dashed ${C.line}`, color: C.t2, fontFamily: font,
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
-              }}>
-                <ImageIcon size={26} color={C.t2} />
-                {t("uploadPhoto")}
-              </button>
-            )}
-          </div>
-        ) : (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-            {WISH_EMOJI.map(e => (
-              <button key={e} onClick={() => setEmoji(e)} style={{
-                width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
-                background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-              }}>{e}</button>
-            ))}
-          </div>
-        )}
-
-        <Field label={t("whatYouWant")} value={title} onChange={setTitle} placeholder={t("whatYouWantPh")} />
-        <Field label={t("priceOpt")} value={price} onChange={setPrice} placeholder="4 200 ₴" />
-        <Field label={t("linkOpt")} value={link} onChange={setLink} placeholder="https://…" />
-
-        <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-          {rooms.map(r => (
-            <Chip key={r.id} active={inRooms.includes(r.id)} color={r.tint}
-              onClick={() => setInRooms(x => x.includes(r.id) ? x.filter(i => i !== r.id) : [...x, r.id])}>
-              {r.emoji} {r.name}
-            </Chip>
-          ))}
-        </div>
-        <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20 }}>{t("nothingSelectedPrivate")}</div>
-
-        <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
-          {busy ? t("savingWish") : t("saveWish")}
-        </Pill>
+    <Sheet title={t("newWish")} onClose={onClose} maxHeight="90vh">
+      <div style={{ display: "flex", gap: 6, background: C.card2, padding: 4, borderRadius: 12, marginBottom: 14 }}>
+        {[["photo", t("photo")], ["emoji", t("emojiTab")]].map(([k, l]) => (
+          <button key={k} onClick={() => setCover(k)} style={{
+            flex: 1, padding: "9px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
+            fontSize: 13.5, fontWeight: 600, background: cover === k ? C.blue : "transparent", color: cover === k ? "#fff" : C.t2,
+          }}>{l}</button>
+        ))}
       </div>
-    </div>
+
+      {cover === "photo" ? (
+        <div style={{ marginBottom: 16 }}>
+          <input ref={fileRef} type="file" accept="image/*" onChange={pickFile} style={{ display: "none" }} />
+          {image ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <GlossTile image={image} size={72} />
+              <div style={{ flex: 1, display: "flex", gap: 8 }}>
+                <Pill kind="ghost" onClick={() => fileRef.current && fileRef.current.click()}>{t("replace")}</Pill>
+                <Pill kind="ghost" onClick={() => setImage(null)}>{t("remove")}</Pill>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => fileRef.current && fileRef.current.click()} style={{
+              width: "100%", padding: "26px", borderRadius: 16, cursor: "pointer",
+              background: C.card2, border: `1px dashed ${C.line}`, color: C.t2, fontFamily: font,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
+            }}>
+              <ImageIcon size={26} color={C.t2} />
+              {t("uploadPhoto")}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+          {WISH_EMOJI.map(e => (
+            <button key={e} onClick={() => setEmoji(e)} style={{
+              width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
+              background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
+            }}>{e}</button>
+          ))}
+        </div>
+      )}
+
+      <Field label={t("whatYouWant")} value={title} onChange={setTitle} placeholder={t("whatYouWantPh")} />
+      <Field label={t("priceOpt")} value={price} onChange={setPrice} placeholder="4 200 ₴" />
+      <Field label={t("linkOpt")} value={link} onChange={setLink} placeholder="https://…" />
+
+      <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+        {rooms.map(r => (
+          <Chip key={r.id} active={inRooms.includes(r.id)} color={r.tint}
+            onClick={() => setInRooms(x => x.includes(r.id) ? x.filter(i => i !== r.id) : [...x, r.id])}>
+            {r.emoji} {r.name}
+          </Chip>
+        ))}
+      </div>
+      <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20 }}>{t("nothingSelectedPrivate")}</div>
+
+      <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
+        {busy ? t("savingWish") : t("saveWish")}
+      </Pill>
+    </Sheet>
   );
 }
 function Field({ label, value, onChange, placeholder }) {
