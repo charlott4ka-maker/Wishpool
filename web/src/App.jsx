@@ -6,17 +6,22 @@ import {
 } from "lucide-react";
 
 /* ---------- design tokens ---------- */
+// Wise-style dark theme with blue in place of Wise's lime: flat surfaces, no
+// glass or gradients. Accent buttons are light blue with dark navy text;
+// secondary ones are a deep blue tint with light-blue text.
 const C = {
-  bg: "#000000",
-  card: "#161618",
-  card2: "#232326",
-  line: "rgba(255,255,255,0.08)",
+  bg: "#111318",
+  card: "#24262B",
+  card2: "#2F3237",
+  line: "rgba(255,255,255,0.10)",
   t1: "#FFFFFF",
-  t2: "#98989F",
-  t3: "#6E6E75",
-  blue: "#3563D8",
-  blueLight: "#8AA6F2",
-  accent: "#3563D8",
+  t2: "#A3A6AD",
+  t3: "#767A82",
+  blue: "#9CC1FF",        // accent fill (Wise lime → light blue)
+  blueLight: "#9CC1FF",   // accent text / links / icons
+  onBlue: "#0A1C3D",      // text on accent fill
+  blueDeep: "#15284A",    // secondary pill fill
+  accent: "#9CC1FF",
 };
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
@@ -24,58 +29,35 @@ const S = { gutter: 12, gap: 12, pad: 20, r: 30, rTile: 0.3 };
 // Every button / control is one of exactly two heights.
 const H = { lg: 52, sm: 40 };
 /* ---------- surfaces ---------- */
-// Blocks: iOS blacks, no outlines. screen #000 → card / sheet #161618 →
-// field, control #232326. Cards get a faint inner glow of their colour.
-const SOLID = { card: "#161618", sheet: "#161618", field: "#232326", control: "#232326" };
-// Every block is iOS-style glass too: same reflection, tint and rim as the
-// buttons. Fields and controls sit one step lighter so they read inside cards
-// and sheets.
-function surface({ tint = C.blue, fill = SOLID.card } = {}) {
-  const lift = fill === SOLID.card ? 0.012 : 0.035;
-  return {
-    background: `${GLASS.sheen}, radial-gradient(420px 260px at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), rgba(255,255,255,${lift})`,
-    border: "none", boxShadow: GLASS.rim,
-  };
+// screen #111318 → card / sheet #24262B → inset field (darker, like Wise's
+// amount inputs) → control #2F3237. All flat.
+const SOLID = { card: C.card, sheet: "#1B1D21", field: "#16181C", control: C.card2 };
+function surface({ fill = SOLID.card } = {}) {
+  return { background: fill, border: "none", boxShadow: "none" };
 }
-// Buttons and floating chrome keep the clear-glass look: diagonal reflection,
-// faint blue tint, bright top rim. Selected / primary = glossy blue.
-const GLASS = {
-  fill: "rgba(255,255,255,0.03)",
-  // Fixed-size layers (px, anchored top-left) so the light doesn't stretch or
-  // shift when a block changes height, e.g. a wish card expanding.
-  sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%) 0 0 / 100% 220px no-repeat",
-  rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
-};
-function glass({ on = false, tint = C.blue } = {}) {
-  if (on) return {
-    background: "linear-gradient(180deg, #5A82EA 0%, #3563D8 55%, #2850BE 100%)",
-    border: "none", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
-  };
-  return {
-    background: `${GLASS.sheen}, radial-gradient(420px 260px at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), ${GLASS.fill}`,
-    border: "none", boxShadow: GLASS.rim,
-  };
+const GLASS = { rim: "none" };
+// `on` = selected / primary: solid accent; otherwise a flat raised control.
+function glass({ on = false } = {}) {
+  return on
+    ? { background: C.blue, border: "none", boxShadow: "none" }
+    : { background: SOLID.control, border: "none", boxShadow: "none" };
 }
 // Floating bars sit over scrolling content: dark tint + light blur for legibility.
 function glassFloat() {
-  return { ...glass(), background: `${GLASS.sheen}, rgba(0,0,0,0.55)`, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" };
+  return { background: "#24262B", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 30px rgba(0,0,0,0.45)" };
 }
 const font =
-  '"Montserrat",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
-const titleStyle = { fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.1 };
+  '"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
+// Heavy, condensed, uppercase display face for headings (Wise-like).
+const display = '"Oswald","Arial Narrow",sans-serif';
+const titleStyle = { fontFamily: display, fontWeight: 700, textTransform: "uppercase", letterSpacing: -0.2, lineHeight: 1.0 };
 const labelStyle = { fontSize: 13, fontWeight: 600, color: C.t2 };
-// Bold title; with more than one word the last one is set in blue.
-function Title({ text, size = 32, style }) {
-  const words = String(text).split(" ");
-  const tail = words.length > 1 ? words.pop() : null;
-  return (
-    <div style={{ ...titleStyle, color: C.t1, fontSize: size, ...style }}>
-      {words.join(" ")}{tail && <> <span style={{ color: C.blueLight }}>{tail}</span></>}
-    </div>
-  );
+// Display heading (uppercase, condensed, heavy).
+function Title({ text, size = 34, style }) {
+  return <div style={{ ...titleStyle, color: C.t1, fontSize: size, ...style }}>{text}</div>;
 }
 // Soft deep-blue glow at the top of an otherwise black screen.
-const SKY = "radial-gradient(90% 38% at 30% -4%, rgba(48,74,170,0.55) 0%, rgba(20,30,80,0.25) 45%, transparent 75%), #000";
+const SKY = C.bg;
 
 // Safe persistence: uses localStorage when available (real deploy),
 // silently falls back to in-memory in sandboxes that block it (artifact preview).
@@ -497,10 +479,10 @@ function Avatar({ m, size = 34 }) {
 }
 function Pill({ children, onClick, kind = "primary", icon, disabled, full, size = "lg" }) {
   const styles = {
-    primary: { ...glass({ on: true }), color: "#fff" },
+    primary: { ...glass({ on: true }), color: C.onBlue },
     ghost: { ...glass(), color: C.t1 },
-    soft: { ...glass(), color: C.t1 },
-    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.blue, 0.32)}`, color: C.blueLight },
+    soft: { background: C.blueDeep, border: "none", boxShadow: "none", color: C.blueLight },
+    green: { background: C.blueDeep, border: "none", boxShadow: "none", color: C.blueLight },
   }[kind];
   return (
     <button
@@ -522,7 +504,7 @@ function Chip({ children, active, onClick }) {
       height: H.sm, padding: "0 16px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
       cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
       ...(active ? glass({ on: true }) : surface({ fill: SOLID.control })),
-      color: active ? "#fff" : C.t2,
+      color: active ? C.onBlue : C.t1,
       display: "inline-flex", alignItems: "center", gap: 8,
     }}>
       {children}
@@ -542,7 +524,7 @@ function Segmented({ options, value, onChange, style }) {
             flex: 1, padding: "0 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
             ...(on ? glass({ on: true }) : { background: "transparent", border: "none" }),
-            color: on ? "#fff" : C.t2,
+            color: on ? C.onBlue : C.t2,
           }}>{l}</button>
         );
       })}
@@ -819,7 +801,7 @@ export default function App() {
 
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
-    <div style={{ background: SKY, backgroundAttachment: "fixed", minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500, position: "relative" }}>
+    <div style={{ background: SKY, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500, position: "relative" }}>
       <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -943,21 +925,19 @@ function TabBar({ tab, setTab }) {
   return (
     <>
       {/* fade content out under the bar, like iOS */}
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(17,19,24,0) 0%, rgba(17,19,24,0.9) 100%)" }} />
       <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
-        <div style={{ display: "flex", gap: 4, padding: 6, borderRadius: 999, ...glassFloat() }}>
+        <div style={{ display: "flex", gap: 2, padding: 5, borderRadius: 999, ...glassFloat() }}>
           {items.map(it => {
             const on = tab === it.id; const Icon = it.icon;
             return (
               <button key={it.id} onClick={() => setTab(it.id)} aria-label={it.label} style={{
-                position: "relative", display: "flex", alignItems: "center", gap: 8, height: H.lg,
-                padding: on ? "0 20px 0 16px" : "0 15px", borderRadius: 999, cursor: "pointer", fontFamily: font,
-                transition: "padding .3s cubic-bezier(.3,1.3,.5,1), background .25s, box-shadow .25s",
-                ...(on ? glass({ on: true }) : { background: "transparent", border: "none" }),
-                color: on ? "#FFFFFF" : C.t2,
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
+                width: 92, height: 58, borderRadius: 999, cursor: "pointer", fontFamily: font, border: "none",
+                background: on ? "#3A3D43" : "transparent", color: on ? C.t1 : C.t2, transition: "background .2s",
               }}>
-                <Icon size={21} />
-                {on && <span style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", animation: "fadeUp .25s ease" }}>{it.label}</span>}
+                <Icon size={22} />
+                <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{it.label}</span>
               </button>
             );
           })}
@@ -1344,7 +1324,6 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       <FallbackBack onBack={onBack} />
       <div style={{ padding: `16px ${S.gutter}px 140px` }}>
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
-          <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
             <Title text={room.name} size={32} />
