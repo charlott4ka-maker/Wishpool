@@ -1407,8 +1407,31 @@ function heroTop(tint) {
   const n = tint.replace("#", ""); const c = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16));
   return "#" + c.map(v => Math.round(13 + (v - 13) * 0.72).toString(16).padStart(2, "0")).join("");
 }
+// Room tint rotated around the colour wheel, for the hero's mesh blobs.
+function hueShift(tint, deg) {
+  const n = tint.replace("#", ""); let [r, g, b] = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16) / 255);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  let h = 0, s = 0;
+  if (d) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+  }
+  h = (h + deg + 360) % 360;
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+  const [R1, G1, B1] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return "#" + [R1, G1, B1].map(v => Math.round((v + m) * 255).toString(16).padStart(2, "0")).join("");
+}
+// Mesh-like hero: soft light behind the sticker, two neighbouring hues
+// drifting in from the corners, over the room tint.
 function roomHeroBg(tint) {
-  return `radial-gradient(120% 90% at 50% 30%, ${hex(tint, 0.85)} 0%, ${hex(tint, 0.55)} 55%, ${hex(tint, 0.3)} 100%), #0d0d10`;
+  return [
+    `radial-gradient(42% 34% at 50% 30%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%)`,
+    `radial-gradient(70% 60% at 0% 10%, ${hex(hueShift(tint, 40), 0.75)} 0%, ${hex(hueShift(tint, 40), 0)} 100%)`,
+    `radial-gradient(75% 65% at 100% 95%, ${hex(hueShift(tint, -40), 0.7)} 0%, ${hex(hueShift(tint, -40), 0)} 100%)`,
+    `radial-gradient(120% 90% at 50% 30%, ${hex(tint, 0.9)} 0%, ${hex(tint, 0.6)} 55%, ${hex(tint, 0.35)} 100%)`,
+    "#0d0d10",
+  ].join(", ");
 }
 // Round frosted-glass button that sits on the coloured hero.
 function HeroButton({ onClick, label, children, style }) {
