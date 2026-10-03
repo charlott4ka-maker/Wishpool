@@ -2,6 +2,16 @@
   "buildCommand": "npm run build",
   "outputDirectory": "web/dist",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" }
-  ]
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    }
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "refresh-on-classic": false,
+      "glass-navigation-folders": false
+    }
+  }
 }
