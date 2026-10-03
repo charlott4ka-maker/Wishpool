@@ -975,19 +975,28 @@ function TabBar({ tab, setTab }) {
 }
 
 /* ---------- POOL ---------- */
-// The screen's main button: follows the list, but while scrolling it sticks
-// just above the tab bar (bar: 20 offset + 52 + 2×6 padding + 2 border ≈ 86).
-const MAIN_CTA = { marginTop: 24, position: "sticky", bottom: 96, zIndex: 40 };
+// The screen's main button sits at the end of the list; a round "+" next to
+// the title gives the same action without scrolling down.
+const MAIN_CTA = { marginTop: 24 };
+function HeaderAdd({ onClick, label }) {
+  return (
+    <button onClick={onClick} aria-label={label} style={{
+      width: H.lg, height: H.lg, borderRadius: "50%", border: "none", cursor: "pointer", flexShrink: 0,
+      background: C.card2, color: C.t1, display: "flex", alignItems: "center", justifyContent: "center",
+    }}><Plus size={24} /></button>
+  );
+}
 function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
   const { t } = useT();
   const [openId, setOpenId] = useState(null);
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "6px 4px 24px" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, padding: "6px 4px 24px" }}>
         <div>
           <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("poolTitle")}</div>
           <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("poolSub")}</div>
         </div>
+        <HeaderAdd onClick={onAdd} label={t("addWish")} />
       </div>
 
       {wishes.length === 0 ? (
@@ -1130,9 +1139,12 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
   const { t } = useT();
   return (
     <div>
-      <div style={{ padding: "6px 4px 24px" }}>
-        <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
-        <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("roomsSub")}</div>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, padding: "6px 4px 24px" }}>
+        <div>
+          <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("roomsSub")}</div>
+        </div>
+        <HeaderAdd onClick={onCreate} label={t("createRoom")} />
       </div>
 
       {rooms.length === 0 ? (
