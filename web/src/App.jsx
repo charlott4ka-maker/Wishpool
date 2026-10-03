@@ -1550,6 +1550,12 @@ function heroTop(tint) {
   const n = tint.replace("#", ""); const c = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16));
   return "#" + c.map(v => Math.round(13 + (v - 13) * 0.72).toString(16).padStart(2, "0")).join("");
 }
+// Blend two #rrggbb colours (k = share of the second one).
+function mixHex(c1, c2, k) {
+  const p = (c) => [0, 2, 4].map(i => parseInt(c.replace("#", "").slice(i, i + 2), 16));
+  const x = p(c1), y = p(c2);
+  return "#" + x.map((v, i) => Math.round(v + (y[i] - v) * k).toString(16).padStart(2, "0")).join("");
+}
 // Room tint rotated around the colour wheel, for the hero's mesh blobs.
 function hueShift(tint, deg) {
   const n = tint.replace("#", ""); let [r, g, b] = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16) / 255);
@@ -1570,10 +1576,10 @@ function hueShift(tint, deg) {
 // Hue of a colour in degrees (0..360).
 const hueOf = (c) => { const n = c.replace("#", ""); const [r, g, b] = [0, 2, 4].map(k => parseInt(n.slice(k, k + 2), 16)); return (Math.atan2(Math.sqrt(3) * (g - b), 2 * r - g - b) * 180 / Math.PI + 360) % 360; };
 function roomHeroBg(tint) {
-  // Top-left gets the neighbour that reads lighter: for blues/purples/pinks
-  // (hue 180..360) that's the one turning back towards cyan/magenta.
+  // Spots stay in the room's own colour: a lighter shade top-left (nudged a
+  // little towards its lighter neighbour) and a deeper one bottom-right.
   const cool = hueOf(tint) >= 180;
-  const a = hueShift(tint, cool ? -40 : 40), b = hueShift(tint, cool ? 40 : -40);
+  const a = mixHex(hueShift(tint, cool ? -10 : 10), "#ffffff", 0.22), b = mixHex(hueShift(tint, cool ? 8 : -8), "#000000", 0.2);
   return [
     `radial-gradient(42% 34% at 50% 30%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%)`,
     `radial-gradient(70% 60% at 0% 10%, ${hex(a, 0.75)} 0%, ${hex(a, 0)} 100%)`,
