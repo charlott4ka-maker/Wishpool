@@ -28,7 +28,7 @@ export function createPgStore(q) {
     async userRoomIds(userId) { const { rows } = await q(`SELECT room_id FROM members WHERE user_id=$1`, [userId]); return rows.map(r => r.room_id); },
     async getRoom(id) { const { rows } = await q(`SELECT * FROM rooms WHERE id=$1`, [id]); return mapRoom(rows[0]); },
     async createRoom(r) { await q(`INSERT INTO rooms(id,name,type,emoji,tint,owner_id,created_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, [r.id, r.name, r.type, r.emoji, r.tint, r.ownerId, r.createdAt]); },
-    async updateRoom(id, { name, emoji }) { await q(`UPDATE rooms SET name=COALESCE($2,name), emoji=COALESCE($3,emoji) WHERE id=$1`, [id, name ?? null, emoji ?? null]); },
+    async updateRoom(id, { name, emoji, tint }) { await q(`UPDATE rooms SET name=COALESCE($2,name), emoji=COALESCE($3,emoji), tint=COALESCE($4,tint) WHERE id=$1`, [id, name ?? null, emoji ?? null, tint ?? null]); },
     async addMember(roomId, userId) { await q(`INSERT INTO members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, [roomId, userId]); },
     async getWish(id) { const { rows } = await q(`SELECT * FROM wishes WHERE id=$1`, [id]); return mapWish(rows[0]); },
     async createWish(w) { await q(`INSERT INTO wishes(id,owner_id,emoji,image,images,link,title,price,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [w.id, w.ownerId, w.emoji, w.image, JSON.stringify(w.images || []), w.link, w.title, w.price, w.createdAt]); },

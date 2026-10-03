@@ -16,10 +16,11 @@ export function createMemStore() {
     async userRoomIds(userId) { return D.members.filter(m => m.userId === userId).map(m => m.roomId); },
     async getRoom(id) { return D.rooms[id] || null; },
     async createRoom(r) { D.rooms[r.id] = { ...r }; },
-    async updateRoom(id, { name, emoji }) {
+    async updateRoom(id, { name, emoji, tint }) {
       const r = D.rooms[id]; if (!r) return;
       if (name !== undefined) r.name = name;
       if (emoji !== undefined) r.emoji = emoji;
+      if (tint !== undefined) r.tint = tint;
     },
     async addMember(roomId, userId) { if (!D.members.some(m => m.roomId === roomId && m.userId === userId)) D.members.push({ roomId, userId }); },
     async getWish(id) { return D.wishes[id] || null; },

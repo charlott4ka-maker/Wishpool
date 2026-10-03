@@ -84,9 +84,10 @@ export async function createApp() {
     const r = await store.getRoom(req.params.id);
     if (!r) return res.status(404).json({ error: "not_found" });
     if (r.ownerId !== req.user.id) return res.status(403).json({ error: "not_owner" });
-    const { name, emoji } = req.body || {};
+    const { name, emoji, tint } = req.body || {};
     if (!name || !name.trim()) return res.status(400).json({ error: "name_required" });
-    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji });
+    const okTint = typeof tint === "string" && /^#[0-9a-fA-F]{6}$/.test(tint) ? tint : r.tint;
+    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint });
     res.json({ ok: true });
   });
 

@@ -142,6 +142,8 @@ const STR = {
   roomTeam: { uk: "Команда", ru: "Команда", en: "Team" },
   newRoom: { uk: "Нова кімната", ru: "Новая комната", en: "New room" },
   roomType: { uk: "Тип кімнати", ru: "Тип комнаты", en: "Room type" },
+  roomSticker: { uk: "Стікер", ru: "Стикер", en: "Sticker" },
+  roomColor: { uk: "Колір", ru: "Цвет", en: "Color" },
   name: { uk: "Назва", ru: "Название", en: "Name" },
 
   invite: { uk: "Запросити", ru: "Пригласить", en: "Invite" },
@@ -1034,97 +1036,137 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
 }
 
 /* ---------- CREATE ROOM ---------- */
+// Room type is just a status (couple limits members to two); the folder's
+// sticker and colour are picked separately.
 const ROOM_PRESETS = [
-  { type: "friends", key: "roomFriends", emoji: "🎮", tint: "#38BDF8" },
-  { type: "couple", key: "roomCouple", emoji: "💞", tint: "#FF4D8D" },
-  { type: "family", key: "roomFamily", emoji: "🏠", tint: "#34C759" },
-  { type: "team", key: "roomTeam", emoji: "💼", tint: "#2E7DF6" },
+  { type: "friends", key: "roomFriends" },
+  { type: "couple", key: "roomCouple" },
+  { type: "family", key: "roomFamily" },
+  { type: "team", key: "roomTeam" },
 ];
+const ROOM_STICKERS = STICKERS.map(n => "stk:" + n);
+const ROOM_COLORS = ["#2E7DF6", "#38BDF8", "#34C759", "#FFB020", "#FF7A45", "#FF4D8D", "#AF52DE"];
+
+const sheetLabel = { color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 };
+function RoomStickerPicker({ value, onChange }) {
+  const list = Array.from(new Set([...(value && !ROOM_STICKERS.includes(value) ? [value] : []), ...ROOM_STICKERS]));
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginBottom: 16 }}>
+      {list.map(e => (
+        <button key={e} onClick={() => onChange(e)} style={{
+          width: "100%", aspectRatio: "1", borderRadius: "50%", cursor: "pointer", padding: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: value === e ? C.blueSoft : C.card2, border: `1.5px solid ${value === e ? C.blue : "transparent"}`,
+        }}><Sticker emoji={e} size={28} /></button>
+      ))}
+    </div>
+  );
+}
+function RoomColorPicker({ value, onChange }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+      {ROOM_COLORS.map(c => {
+        const on = value.toLowerCase() === c.toLowerCase();
+        return (
+          <button key={c} onClick={() => onChange(c)} aria-label={c} style={{
+            width: H.sm, height: H.sm, borderRadius: "50%", cursor: "pointer", padding: 0, background: c,
+            border: "none", boxShadow: on ? `0 0 0 3px ${C.card}, 0 0 0 5px ${c}` : "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>{on && <Check size={18} color="#fff" strokeWidth={3} />}</button>
+        );
+      })}
+    </div>
+  );
+}
+function RoomSheetShell({ title, onClose, children }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
+      <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "92vh", overflowY: "auto" }}>
+        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{title}</div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function CreateRoomSheet({ onClose, onCreate }) {
   const { t } = useT();
   const [preset, setPreset] = useState(ROOM_PRESETS[0]);
+  const [emoji, setEmoji] = useState(ROOM_STICKERS[0]);
+  const [tint, setTint] = useState(ROOM_COLORS[0]);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const title = name.trim() || t(preset.key);
   const submit = async () => {
     if (busy) return;
     setBusy(true);
-    try { await onCreate({ name: title, type: preset.type, emoji: preset.emoji, tint: preset.tint }); }
+    try { await onCreate({ name: title, type: preset.type, emoji, tint }); }
     catch (e) { setBusy(false); }
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newRoom")}</div>
-
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-          <GlossTile emoji={preset.emoji} size={80} tint={preset.tint} />
-        </div>
-
-        <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("roomType")}</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-          {ROOM_PRESETS.map(p => (
-            <Chip key={p.type} active={preset.type === p.type} color={p.tint} onClick={() => setPreset(p)}>
-              <Sticker emoji={p.emoji} size={15} />{t(p.key)}
-            </Chip>
-          ))}
-        </div>
-        {preset.type === "couple" && (
-          <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 16 }}>{t("coupleRoomHint")}</div>
-        )}
-
-        <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
-
-        <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy} onClick={submit}>
-          {busy ? t("creating") : t("createRoom")}
-        </Pill>
+    <RoomSheetShell title={t("newRoom")} onClose={onClose}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+        <GlossTile emoji={emoji} size={80} tint={tint} />
       </div>
-    </div>
+
+      <div style={sheetLabel}>{t("roomSticker")}</div>
+      <RoomStickerPicker value={emoji} onChange={setEmoji} />
+
+      <div style={sheetLabel}>{t("roomColor")}</div>
+      <RoomColorPicker value={tint} onChange={setTint} />
+
+      <div style={sheetLabel}>{t("roomType")}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        {ROOM_PRESETS.map(p => (
+          <Chip key={p.type} active={preset.type === p.type} onClick={() => setPreset(p)}>{t(p.key)}</Chip>
+        ))}
+      </div>
+      {preset.type === "couple" && (
+        <div style={{ color: C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16 }}>{t("coupleRoomHint")}</div>
+      )}
+
+      <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
+
+      <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy} onClick={submit}>
+        {busy ? t("creating") : t("createRoom")}
+      </Pill>
+    </RoomSheetShell>
   );
 }
 
-/* ---------- EDIT ROOM (name + icon) ---------- */
+/* ---------- EDIT ROOM (name, sticker, colour) ---------- */
 function EditRoomSheet({ room, onClose, onSave }) {
   const { t } = useT();
   const [name, setName] = useState(room.name);
   const [emoji, setEmoji] = useState(room.emoji);
+  const [tint, setTint] = useState(room.tint);
   const [busy, setBusy] = useState(false);
-  const emojiChoices = Array.from(new Set([room.emoji, ...ROOM_PRESETS.map(p => p.emoji)]));
   const submit = async () => {
     if (busy || !name.trim()) return;
     setBusy(true);
-    try { await onSave({ name: name.trim(), emoji }); }
+    try { await onSave({ name: name.trim(), emoji, tint }); }
     catch (e) { setBusy(false); }
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-      <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
-        <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("editRoom")}</div>
-
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-          <GlossTile emoji={emoji} size={80} tint={room.tint} />
-        </div>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 16 }}>
-          {emojiChoices.map(e => (
-            <button key={e} onClick={() => setEmoji(e)} style={{
-              width: H.lg, height: H.lg, borderRadius: R.tile, fontSize: 22, cursor: "pointer",
-              background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-            }}><Sticker emoji={e} size={22} /></button>
-          ))}
-        </div>
-
-        <Field label={t("name")} value={name} onChange={setName} placeholder={t("name")} />
-
-        <Pill full kind="primary" disabled={!name.trim() || busy} onClick={submit}>
-          {busy ? t("savingWish") : t("saveChanges")}
-        </Pill>
+    <RoomSheetShell title={t("editRoom")} onClose={onClose}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+        <GlossTile emoji={emoji} size={80} tint={tint} />
       </div>
-    </div>
+
+      <div style={sheetLabel}>{t("roomSticker")}</div>
+      <RoomStickerPicker value={emoji} onChange={setEmoji} />
+
+      <div style={sheetLabel}>{t("roomColor")}</div>
+      <RoomColorPicker value={tint} onChange={setTint} />
+
+      <Field label={t("name")} value={name} onChange={setName} placeholder={t("name")} />
+
+      <Pill full kind="primary" disabled={!name.trim() || busy} onClick={submit}>
+        {busy ? t("savingWish") : t("saveChanges")}
+      </Pill>
+    </RoomSheetShell>
   );
 }
 
