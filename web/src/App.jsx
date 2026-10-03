@@ -24,22 +24,26 @@ const C = {
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
 const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
-/* ---------- iOS-style frosted glass ---------- */
-// No outlines anywhere: glass reads through the frosted blur, a soft sheen in
-// the top-left (same as the round buttons), a light top rim and a drop shadow.
+/* ---------- clear glass ---------- */
+// Clear, not frosted: no backdrop blur and almost no fill (so nothing turns a
+// flat grey), just a diagonal reflection, a bright top rim and faint edges.
+// No outlines.
 const GLASS = {
-  fill: "rgba(255,255,255,0.07)",
-  sheen: "radial-gradient(120% 120% at 30% 0%, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.02) 60%)",
-  blur: "blur(22px) saturate(160%)",
-  rim: "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.25), 0 10px 30px rgba(0,0,0,0.28)",
+  fill: "rgba(255,255,255,0.02)",
+  sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
+  rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
 };
-const frost = { backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur };
 function glass({ on = false } = {}) {
   if (on) return {
     background: "linear-gradient(180deg, #7FA3FF 0%, #4F7FF0 55%, #3C66DA 100%)",
     border: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 22px ${hex(C.blue, 0.5)}`,
   };
-  return { background: `${GLASS.sheen}, ${GLASS.fill}`, border: "none", boxShadow: GLASS.rim, ...frost };
+  return { background: `${GLASS.sheen}, ${GLASS.fill}`, border: "none", boxShadow: GLASS.rim };
+}
+// Floating bars sit over scrolling content, so they get a dark (not grey) tint
+// and a light blur purely for legibility.
+function glassFloat() {
+  return { ...glass(), background: `${GLASS.sheen}, rgba(0,0,0,0.55)`, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" };
 }
 const font =
   '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
@@ -305,11 +309,10 @@ function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false }) {
       onClick={image ? (e) => { e.stopPropagation(); setOpen(true); } : undefined}
       style={{
         width: size, height: size, borderRadius: round ? "50%" : size * S.rTile,
-        // round = bullet-style glass: translucent tint, thin same-hue ring, frosted
+        // round = bullet-style glass: translucent tint, thin same-hue ring
         background: image ? C.card2 : round
           ? `${GLASS.sheen}, ${hex(tint, 0.18)}`
           : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.45)} 0%, rgba(255,255,255,0.07) 60%, rgba(255,255,255,0.04) 100%)`,
-        ...(round ? frost : null),
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: round ? `inset 0 0 0 1px ${hex(tint, 0.45)}, ${GLASS.rim}` : GLASS.rim, flexShrink: 0, overflow: "hidden", position: "relative",
         cursor: image ? "zoom-in" : "default",
@@ -438,59 +441,11 @@ function GlassButton({ onClick, children, size = 40, label, style }) {
     </button>
   );
 }
-// Folder: a dark glass body with the room's wish photos fanned out of the top,
-// a frosted pocket over the lower half carrying the name and member count, and
-// the room emoji stuck on the pocket as a sticker.
-function FolderCover({ w, size }) {
-  return (
-    <div style={{
-      width: size, height: size * 1.35, borderRadius: size * 0.2, overflow: "hidden",
-      background: C.card2,
-      boxShadow: "0 8px 18px rgba(0,0,0,0.5)",
-    }}>
-      <img src={w.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-    </div>
-  );
-}
-const FAN = { 1: [[0, -3]], 2: [[-17, -6], [17, 5]], 3: [[-26, -8], [26, 7], [0, -1]] };
-function RoomFolder({ room, wishes, onOpen, width = 152 }) {
-  const { t } = useT();
-  // only real photos go inside; no photos → an empty folder
-  const covers = wishes.filter(w => w.rooms.includes(room.id) && w.image).slice(0, 3);
-  const H = 168, POCKET = 78, TILE = 78;
-  return (
-    <div onClick={onOpen} style={{ position: "relative", width, height: H, flexShrink: 0, cursor: "pointer", animation: "fadeUp .3s ease" }}>
-      {/* body */}
-      <div style={{ position: "absolute", top: 22, left: 0, right: 0, bottom: 0, borderRadius: 26, background: `${GLASS.sheen}, rgba(255,255,255,0.06)`, boxShadow: GLASS.rim }} />
-      {/* wish photos */}
-      {covers.map((w, i) => {
-        const [dx, rot] = FAN[covers.length][i];
-        return (
-          <div key={w.id} style={{ position: "absolute", top: 4, left: "50%", transform: `translateX(calc(-50% + ${dx}px)) rotate(${rot}deg)` }}>
-            <FolderCover w={w} size={TILE} />
-          </div>
-        );
-      })}
-      {/* frosted pocket */}
-      <div style={{
-        position: "absolute", left: 0, right: 0, bottom: 0, height: POCKET, borderRadius: 26,
-        background: "linear-gradient(180deg, rgba(48,48,54,0.32) 0%, rgba(28,28,32,0.88) 75%)",
-        backdropFilter: "blur(16px) saturate(160%)", WebkitBackdropFilter: "blur(16px) saturate(160%)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -6px 16px rgba(0,0,0,0.25)",
-        padding: "0 12px 14px", display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", textAlign: "center",
-      }}>
-        <Sticker emoji={room.emoji} size={30} style={{ position: "absolute", top: -16, right: 10, transform: "rotate(10deg)" }} />
-        <div style={{ color: C.t1, fontSize: 15, fontWeight: 700, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
-        <div style={{ ...labelStyle, fontSize: 11.5, fontWeight: 500, marginTop: 2, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
-      </div>
-    </div>
-  );
-}
 function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(2,4,12,0.55)" }} />
-      <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(22,22,24,0.88)`, backdropFilter: "blur(40px) saturate(170%)", WebkitBackdropFilter: "blur(40px) saturate(170%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -10px 40px rgba(0,0,0,0.4)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(6,6,8,0.94)`, backdropFilter: "blur(40px) saturate(170%)", WebkitBackdropFilter: "blur(40px) saturate(170%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -10px 40px rgba(0,0,0,0.4)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <Title text={title} size={22} />
@@ -755,7 +710,6 @@ export default function App() {
                 ) : (
                   <PoolScreen wishes={wishes} rooms={rooms}
                     onAdd={() => setOverlay({ type: "add" })}
-                    onOpenRoom={(id) => setOverlay({ type: "room", roomId: id })}
                     onToggleRoom={toggleWishRoom}
                     onDelete={deleteWish}
                   />
@@ -826,7 +780,7 @@ export default function App() {
         {toast && (
           <div style={{
             position: "fixed", bottom: 108, left: "50%", transform: "translateX(-50%)",
-            ...glass(), color: C.t1, padding: "12px 18px", borderRadius: 999,
+            ...glassFloat(), color: C.t1, padding: "12px 18px", borderRadius: 999,
             fontSize: 14.5, fontWeight: 600, zIndex: 60,
             animation: "fadeUp .25s ease", maxWidth: 320, textAlign: "center",
           }}>{toast}</div>
@@ -860,7 +814,7 @@ function TabBar({ tab, setTab }) {
       {/* fade content out under the bar, like iOS */}
       <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)" }} />
       <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
-        <div style={{ display: "flex", gap: 4, padding: 6, borderRadius: 999, ...glass() }}>
+        <div style={{ display: "flex", gap: 4, padding: 6, borderRadius: 999, ...glassFloat() }}>
           {items.map(it => {
             const on = tab === it.id; const Icon = it.icon;
             return (
@@ -883,7 +837,7 @@ function TabBar({ tab, setTab }) {
 }
 
 /* ---------- POOL ---------- */
-function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }) {
+function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
   const { t } = useT();
   const [openId, setOpenId] = useState(null);
   return (
@@ -895,12 +849,6 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onOpenRoom }
         </div>
         <GlassButton onClick={onAdd} size={44} label={t("addWish")}><Plus size={22} /></GlassButton>
       </div>
-
-      {rooms.length > 0 && (
-        <div style={{ display: "flex", gap: S.gap, overflowX: "auto", margin: `-16px -${S.gutter}px -18px`, padding: `18px ${S.gutter}px 32px` }}>
-          {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={() => onOpenRoom(r.id)} />)}
-        </div>
-      )}
 
       {wishes.length === 0 ? (
         <Empty emoji="🎁" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
@@ -972,8 +920,28 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
           </div>
         </>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: `${S.gap + 6}px ${S.gap}px` }}>
-          {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} width="100%" onOpen={() => onOpen(r.id)} />)}
+        <div style={{ display: "flex", flexDirection: "column", gap: S.gap }}>
+          {rooms.map(r => {
+            const shared = wishes.filter(w => w.rooms.includes(r.id)).length;
+            return (
+              <Card key={r.id} onClick={() => onOpen(r.id)} style={{ padding: S.pad, cursor: "pointer", overflow: "hidden", position: "relative" }}>
+                <div style={{ position: "absolute", inset: 0, background: `radial-gradient(80% 120% at 100% 0%, ${hex(r.tint, 0.14)} 0%, transparent 60%)`, pointerEvents: "none" }} />
+                <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14 }}>
+                  <GlossTile emoji={r.emoji} size={56} tint={r.tint} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: C.t1, fontSize: 17.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                    <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
+                  </div>
+                  <div style={{ display: "flex", marginRight: 4 }}>
+                    {r.members.slice(0, 3).map((m, i) => (
+                      <div key={m.id} style={{ marginLeft: i ? -10 : 0 }}><Avatar m={m} size={30} /></div>
+                    ))}
+                  </div>
+                  <IconBadge icon={ChevronRight} color="#8A8A8E" size={28} />
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
