@@ -151,8 +151,8 @@ const STR = {
   youGift: { uk: "Ви даруєте", ru: "Вы дарите", en: "You're gifting" },
   taken: { uk: "Зайнято", ru: "Занято", en: "Taken" },
   take: { uk: "Беру", ru: "Беру", en: "I'll get it" },
-  giftTakenTitle: { uk: "Подарунок у кошику!", ru: "Подарок в корзине!", en: "Gift's in the basket!" },
-  giftTakenBody: { uk: "«{name}» тепер твоя місія. Тсс, ніхто не дізнається, хто що взяв, а іменинник побачить сюрприз лише на святі", ru: "«{name}» теперь твоя миссия. Тсс, никто не узнает, кто что взял, а виновник торжества увидит сюрприз только на празднике", en: "«{name}» is your mission now. Shh, nobody will know who took what, and the lucky one only sees the surprise on the big day" },
+  giftTakenTitle: { uk: "Ти даруєш «{name}»", ru: "Ты даришь «{name}»", en: "You're gifting «{name}»" },
+  giftTakenBody: { uk: "Тсс, ніхто не дізнається, хто що взяв, а іменинник побачить сюрприз лише на святі", ru: "Тсс, никто не узнает, кто что взял, а виновник торжества увидит сюрприз только на празднике", en: "Shh, nobody will know who took what, and the lucky one only sees the surprise on the big day" },
   giftTakenOk: { uk: "Беру на себе", ru: "Беру на себя", en: "On it" },
   photosHint: { uk: "До 3 фото", ru: "До 3 фото", en: "Up to 3 photos" },
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
@@ -1396,8 +1396,8 @@ function GiftTakenSheet({ title, onClose }) {
       <Sheet onClose={onClose}>
         <div style={{ textAlign: "center", paddingTop: 4 }}>
           <img src="/stickers/basket.webp" alt="" style={{ width: 168, height: "auto", display: "block", margin: "0 auto", animation: "basketDrop .7s cubic-bezier(.2,.9,.3,1.25)" }} />
-          <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle")}</div>
-          <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody", { name: title })}</div>
+          <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
+          <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
           <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill></div>
         </div>
       </Sheet>
