@@ -340,8 +340,16 @@ function ImageLightbox({ src, onClose }) {
     </div>
   );
 }
-function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false }) {
+function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false, bare = false }) {
   const [open, setOpen] = useState(false);
+  // bare: an emoji shown as a free-standing sticker, without a tile behind it
+  if (bare && !image) {
+    return (
+      <div style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Sticker emoji={emoji} size={size * 0.74} />
+      </div>
+    );
+  }
   return (
     <>
     <div
@@ -544,7 +552,7 @@ function SkeletonScreen({ tab }) {
 function WishRow({ w, right }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px" }}>
-      <GlossTile emoji={w.emoji} image={w.image} size={52} round />
+      <GlossTile emoji={w.emoji} image={w.image} size={52} round bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{w.price}</div>}
@@ -964,7 +972,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
             return (
               <Card key={r.id} tint={r.tint} onClick={() => onOpen(r.id)} style={{ padding: S.pad, cursor: "pointer", overflow: "hidden", position: "relative" }}>
                 <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 14 }}>
-                  <GlossTile emoji={r.emoji} size={56} tint={r.tint} />
+                  <GlossTile emoji={r.emoji} size={56} bare />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: C.t1, fontSize: 17.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                     <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
@@ -1183,7 +1191,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
             const isPending = pendingId === w.id;
             return (
               <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
-                <GlossTile emoji={w.emoji} image={w.image} size={44} round />
+                <GlossTile emoji={w.emoji} image={w.image} size={44} round bare />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
