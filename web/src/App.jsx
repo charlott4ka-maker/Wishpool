@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext, createContext } from "r
 import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
+  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw,
 } from "lucide-react";
 
 /* ---------- design tokens ---------- */
@@ -126,6 +126,9 @@ const STR = {
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
+  offlineTitle: { uk: "Упс, немає інтернету", ru: "Упс, нет интернета", en: "Oops, no internet" },
+  offlineSub: { uk: "Перевір підключення, а ми почекаємо тут", ru: "Проверь подключение, а мы подождём тут", en: "Check your connection, we'll wait right here" },
+  offlineRetry: { uk: "Спробувати ще раз", ru: "Попробовать снова", en: "Try again" },
   noConnection: { uk: "Немає зв'язку. Перевір інтернет і спробуй ще раз", ru: "Нет связи с сервером. Проверь интернет и попробуй ещё раз", en: "Can't reach the server. Check your connection and try again" },
 
   roomsTitle: { uk: "Кімнати", ru: "Комнаты", en: "Rooms" },
@@ -503,6 +506,21 @@ function Empty({ emoji, title, sub }) {
   );
 }
 
+/* ---------- no internet ---------- */
+function OfflineScreen({ busy, onRetry }) {
+  const { t } = useT();
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", textAlign: "center", animation: "fadeUp .3s ease" }}>
+      <div style={{ transform: "rotate(-8deg)" }}><Sticker emoji="stk:orange" size={120} /></div>
+      <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 24 }}>{t("offlineTitle")}</div>
+      <div style={{ color: C.t2, fontSize: 15, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{t("offlineSub")}</div>
+      <div style={{ marginTop: 32, width: "100%", maxWidth: 320 }}>
+        <Pill full kind="primary" icon={<RefreshCw size={18} style={busy ? { animation: "spin 1s linear infinite" } : null} />} disabled={busy} onClick={onRetry}>{t("offlineRetry")}</Pill>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- loading skeleton ---------- */
 function Bone({ w, h, r = 8, style }) {
   return (
@@ -594,7 +612,27 @@ export default function App() {
 
   const showToast = (msg, ms = 1800) => { setToast(msg); setTimeout(() => setToast(null), ms); };
 
-  const refreshState = async () => { try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms(st.rooms || []); } catch (e) { showToast(t("noConnection"), 3000); } };
+  // netDown: the server can't be reached (no internet), so show the full-screen stub.
+  const [netDown, setNetDown] = useState(() => online && typeof navigator !== "undefined" && navigator.onLine === false);
+  const refreshState = async ({ quiet } = {}) => {
+    try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms(st.rooms || []); setNetDown(false); return true; }
+    catch (e) { if (!quiet) showToast(t("noConnection"), 3000); return false; }
+  };
+  const [retrying, setRetrying] = useState(false);
+  const retryNet = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    const ok = await refreshState({ quiet: true });
+    setRetrying(false);
+    if (ok) setLoading(false); else setNetDown(true);
+  };
+  useEffect(() => {
+    if (!online) return;
+    const off = () => setNetDown(true);
+    const on = () => { retryNet(); };
+    window.addEventListener("offline", off); window.addEventListener("online", on);
+    return () => { window.removeEventListener("offline", off); window.removeEventListener("online", on); };
+  }, []); // eslint-disable-line
 
   // Online: load state from server + auto-join a room from an invite deep-link (room__inviter).
   useEffect(() => {
@@ -605,7 +643,8 @@ export default function App() {
       if (sp) { const p = String(sp).split("__"); startId = p[0]; inviterId = p[1] || null; }
       let joinFailed = false;
       if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) { joinFailed = true; if (e.message === "room_full") showToast(t("roomFull"), 3000); } }
-      await refreshState();
+      const ok = await refreshState({ quiet: true });
+      if (!ok) { setNetDown(true); return; }
       if (startId && !joinFailed) setOverlay({ type: "room", roomId: startId });
       setLoading(false);
     })();
@@ -810,6 +849,8 @@ export default function App() {
         {overlay?.type === "invites" && (
           <InvitesSheet online={online} rooms={rooms} onShare={shareInvite} onClose={() => setOverlay(null)} />
         )}
+
+        {netDown && <OfflineScreen busy={retrying} onRetry={retryNet} />}
 
         {celebrate && <GiftTakenSheet title={celebrate.title} onClose={() => setCelebrate(null)} />}
 
