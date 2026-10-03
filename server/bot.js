@@ -58,3 +58,43 @@ export function botRoute(token) {
     res.json({ ok: true });
   };
 }
+
+// ---- Event reminders (Vercel cron hits GET /api/cron/remind once a day) ----
+const REMIND = {
+  uk: { week: (e, r) => `Через тиждень: ${e} у кімнаті «${r}» 🎁\nЗазирни у вішлисти й обери подарунок, поки все не розібрали.`, day: (e, r) => `Вже завтра: ${e} у кімнаті «${r}» 🎉\nПодарунок ще не обрано? Саме час.`, ev: "подія", open: "Відкрити кімнату" },
+  ru: { week: (e, r) => `Через неделю: ${e} в комнате «${r}» 🎁\nЗагляни в вишлисты и выбери подарок, пока всё не разобрали.`, day: (e, r) => `Уже завтра: ${e} в комнате «${r}» 🎉\nПодарок ещё не выбран? Самое время.`, ev: "событие", open: "Открыть комнату" },
+  en: { week: (e, r) => `In a week: ${e} in «${r}» 🎁\nPeek at the wishlists and pick a gift before they're all claimed.`, day: (e, r) => `Tomorrow: ${e} in «${r}» 🎉\nNo gift yet? Now's the time.`, ev: "the event", open: "Open the room" },
+};
+// Calendar day (YYYY-MM-DD) in Kyiv time, `plus` days from now.
+function kyivDay(plus = 0) {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv" }).format(new Date());
+  const d = new Date(today + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + plus);
+  return d.toISOString().slice(0, 10);
+}
+export function remindRoute(token, store) {
+  return async (req, res) => {
+    // Vercel sends "Authorization: Bearer $CRON_SECRET" when CRON_SECRET is set.
+    const secret = process.env.CRON_SECRET;
+    const okAuth = secret ? req.get("authorization") === `Bearer ${secret}` : /vercel-cron/i.test(req.get("user-agent") || "");
+    if (!okAuth) return res.status(401).end();
+    if (!token) return res.json({ ok: false, error: "no_token" });
+    let sent = 0;
+    for (const [kind, plus] of [["week", 7], ["day", 1]]) {
+      const day = kyivDay(plus);
+      for (const r of await store.roomsWithEventOn(day)) {
+        if (!(await store.markReminder(r.id, day, kind))) continue; // already sent
+        for (const u of await store.roomMembers(r.id)) {
+          const L = REMIND[pickLang(await store.userLang(u.id))];
+          try {
+            const out = await tg(token, "sendMessage", {
+              chat_id: u.id, text: L[kind](r.eventTitle || L.ev, r.name),
+              reply_markup: { inline_keyboard: [[{ text: L.open, url: `${APP_LINK}?startapp=${r.id}` }]] },
+            });
+            if (out && out.ok) sent++;
+          } catch (e) { /* user never started the bot, or blocked it */ }
+        }
+      }
+    }
+    res.json({ ok: true, sent });
+  };
+}

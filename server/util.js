@@ -14,4 +14,9 @@ export const mapWish = (r) => r && ({ id: r.id, ownerId: r.owner_id, emoji: r.em
 export const cleanImages = (list) => (Array.isArray(list) ? list : [])
   .filter(x => typeof x === "string" && (/^data:image\/(jpeg|png|webp|gif);base64,/.test(x) || /^https:\/\//.test(x)))
   .slice(0, MAX_IMAGES);
-export const mapRoom = (r) => r && ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, ownerId: r.owner_id, createdAt: Number(r.created_at) });
+export const mapRoom = (r) => r && ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, ownerId: r.owner_id, createdAt: Number(r.created_at), eventTitle: r.event_title || "", eventDate: r.event_date || "" });
+// Room event ("Anya's birthday", 2026-11-12): short title + a YYYY-MM-DD date.
+export const cleanEvent = (title, date) => ({
+  eventTitle: typeof title === "string" ? title.trim().slice(0, 60) : "",
+  eventDate: typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "",
+});

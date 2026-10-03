@@ -2,12 +2,12 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [] };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set() };
   return {
     async init() {},
     async ensureUser(u) {
       const cur = D.users[u.id] || { id: u.id, color: colorFor(u.id) };
-      D.users[u.id] = { ...cur, name: u.name, photo: u.photo || null };
+      D.users[u.id] = { ...cur, name: u.name, photo: u.photo || null, lang: u.lang || cur.lang || null };
       return D.users[u.id];
     },
     async getUser(id) { return D.users[id] || null; },
@@ -16,16 +16,24 @@ export function createMemStore() {
     async userRoomIds(userId) { return D.members.filter(m => m.userId === userId).map(m => m.roomId); },
     async getRoom(id) { return D.rooms[id] || null; },
     async createRoom(r) { D.rooms[r.id] = { ...r }; },
-    async updateRoom(id, { name, emoji, tint }) {
+    async updateRoom(id, { name, emoji, tint, eventTitle, eventDate }) {
       const r = D.rooms[id]; if (!r) return;
       if (name !== undefined) r.name = name;
       if (emoji !== undefined) r.emoji = emoji;
       if (tint !== undefined) r.tint = tint;
+      if (eventTitle !== undefined) r.eventTitle = eventTitle;
+      if (eventDate !== undefined) r.eventDate = eventDate;
     },
+    async roomsWithEventOn(day) { return Object.values(D.rooms).filter(r => r.eventDate === day); },
+    async markReminder(roomId, day, kind) { const k = roomId + "|" + day + "|" + kind; if (D.reminders.has(k)) return false; D.reminders.add(k); return true; },
+    async userLang(id) { return D.users[id] ? D.users[id].lang || null : null; },
+    async chips(wishId) { return D.chips.filter(c => c.wishId === wishId).map(c => c.userId); },
+    async addChip(wishId, userId) { if (!D.chips.some(c => c.wishId === wishId && c.userId === userId)) D.chips.push({ wishId, userId }); },
+    async removeChip(wishId, userId) { D.chips = D.chips.filter(c => !(c.wishId === wishId && c.userId === userId)); },
     async addMember(roomId, userId) { if (!D.members.some(m => m.roomId === roomId && m.userId === userId)) D.members.push({ roomId, userId }); },
     async getWish(id) { return D.wishes[id] || null; },
     async createWish(w) { D.wishes[w.id] = { ...w }; },
-    async deleteWish(id) { delete D.wishes[id]; D.wishRooms = D.wishRooms.filter(x => x.wishId !== id); delete D.reservations[id]; },
+    async deleteWish(id) { delete D.wishes[id]; D.wishRooms = D.wishRooms.filter(x => x.wishId !== id); delete D.reservations[id]; D.chips = D.chips.filter(c => c.wishId !== id); },
     async wishRoomIds(wishId) { return D.wishRooms.filter(x => x.wishId === wishId).map(x => x.roomId); },
     async toggleWishRoom(wishId, roomId) {
       const ex = D.wishRooms.find(x => x.wishId === wishId && x.roomId === roomId);
@@ -37,7 +45,8 @@ export function createMemStore() {
     async userWishes(userId) { return Object.values(D.wishes).filter(w => w.ownerId === userId).sort((a, b) => b.createdAt - a.createdAt); },
     async wishesSharedTo(userId, roomId) { const ids = new Set(D.wishRooms.filter(x => x.roomId === roomId).map(x => x.wishId)); return Object.values(D.wishes).filter(w => w.ownerId === userId && ids.has(w.id)); },
     async giftsByMe(userId) {
-      return Object.entries(D.reservations).filter(([, g]) => g === userId).map(([wid]) => D.wishes[wid]).filter(Boolean)
+      const ids = new Set([...Object.entries(D.reservations).filter(([, g]) => g === userId).map(([wid]) => wid), ...D.chips.filter(c => c.userId === userId).map(c => c.wishId)]);
+      return [...ids].map(wid => D.wishes[wid]).filter(Boolean)
         .map(w => ({ wish: w, owner: D.users[w.ownerId] || null }));
     },
     async getReservation(wishId) { return D.reservations[wishId] || null; },

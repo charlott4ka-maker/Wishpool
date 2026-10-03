@@ -13,5 +13,11 @@
       "refresh-on-classic": false,
       "glass-navigation-folders": false
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/remind",
+      "schedule": "0 7 * * *"
+    }
+  ]
 }

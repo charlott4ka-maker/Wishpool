@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useContext, create
 import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw,
+  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw, CalendarDays, Users2,
 } from "lucide-react";
 
 /* ---------- design tokens ---------- */
@@ -72,6 +72,9 @@ const api = {
   room: (id) => apiReq("GET", "/rooms/" + id),
   reserve: (id) => apiReq("POST", "/wishes/" + id + "/reserve"),
   unreserve: (id) => apiReq("DELETE", "/wishes/" + id + "/reserve"),
+  chip: (id) => apiReq("POST", "/wishes/" + id + "/chip"),
+  unchip: (id) => apiReq("DELETE", "/wishes/" + id + "/chip"),
+  preview: (url) => apiReq("GET", "/preview?url=" + encodeURIComponent(url)),
   runDraw: (id, budget) => apiReq("POST", "/rooms/" + id + "/draw", { budget }),
   draw: (id) => apiReq("GET", "/rooms/" + id + "/draw"),
   gifts: () => apiReq("GET", "/gifts"),
@@ -106,8 +109,40 @@ function openTgLink(url) {
   if (w && w.openTelegramLink) w.openTelegramLink(url);
   else { try { window.open(url, "_blank"); } catch (e) {} }
 }
+// Telegram haptics: "light"/"medium" taps, "select" for pickers,
+// "success"/"warning"/"error" for outcomes. No-op outside Telegram.
+function haptic(kind = "light") {
+  try {
+    const h = tgWebApp() && tgWebApp().HapticFeedback; if (!h) return;
+    if (kind === "select") h.selectionChanged();
+    else if (kind === "success" || kind === "warning" || kind === "error") h.notificationOccurred(kind);
+    else h.impactOccurred(kind);
+  } catch (e) {}
+}
+// Whole days from today (local time) to a YYYY-MM-DD date; null if no date.
+function daysUntil(date) {
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const [y, m, d] = date.split("-").map(Number);
+  const now = new Date();
+  return Math.round((new Date(y, m - 1, d) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+}
+function plural(lang, n, forms) { // forms: [one, few, many] for uk/ru, [one, other] for en
+  if (lang === "en") return n === 1 ? forms[0] : forms[1];
+  const a = n % 10, b = n % 100;
+  return a === 1 && b !== 11 ? forms[0] : a >= 2 && a <= 4 && (b < 12 || b > 14) ? forms[1] : forms[2];
+}
+// "через 9 дней" / "Завтра" / "Сегодня"; null when there is no upcoming date.
+function countdownLabel(lang, t, date) {
+  const n = daysUntil(date);
+  if (n == null || n < 0) return null;
+  if (n === 0) return t("evToday");
+  if (n === 1) return t("evTomorrow");
+  const unit = plural(lang, n, lang === "uk" ? ["день", "дні", "днів"] : lang === "ru" ? ["день", "дня", "дней"] : ["day", "days"]);
+  return t("evIn", { n, unit });
+}
 function tgConfirm(message, onYes) {
   const w = tgWebApp();
+  haptic("warning");
   if (w && w.showConfirm) w.showConfirm(message, (ok) => { if (ok) onYes(); });
   else if (typeof window !== "undefined" && window.confirm) { if (window.confirm(message)) onYes(); }
   else onYes();
@@ -132,6 +167,28 @@ const STR = {
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
+  evToday: { uk: "Сьогодні!", ru: "Сегодня!", en: "Today!" },
+  evTomorrow: { uk: "Завтра", ru: "Завтра", en: "Tomorrow" },
+  evIn: { uk: "через {n} {unit}", ru: "через {n} {unit}", en: "in {n} {unit}" },
+  evLabel: { uk: "Привід і дата", ru: "Повод и дата", en: "Occasion and date" },
+  evTitlePh: { uk: "Напр., ДР Ані", ru: "Например, ДР Ани", en: "e.g. Anna's birthday" },
+  evPickDate: { uk: "Обрати дату", ru: "Выбрать дату", en: "Pick a date" },
+  evHint: { uk: "Бот нагадає всім за тиждень і за день", ru: "Бот напомнит всем за неделю и за день", en: "The bot reminds everyone a week and a day before" },
+  giveHow: { uk: "Як даруємо «{name}»?", ru: "Как дарим «{name}»?", en: "How do we gift «{name}»?" },
+  giveSolo: { uk: "Подарую від себе", ru: "Подарю от себя", en: "I'll gift it myself" },
+  giveSoloSub: { uk: "Забронюю, і ніхто більше не візьме", ru: "Забронирую, и никто больше не возьмёт", en: "Reserve it so nobody doubles up" },
+  giveGroup: { uk: "Скинемося разом", ru: "Скинемся вместе", en: "Chip in together" },
+  giveGroupSub: { uk: "Відкрию збір, інші зможуть приєднатись", ru: "Открою сбор, остальные смогут присоединиться", en: "Start a group gift others can join" },
+  chipJoin: { uk: "Скинутись", ru: "Скинуться", en: "Chip in" },
+  chipIn: { uk: "В долі", ru: "В доле", en: "In" },
+  chipJoined: { uk: "Ти в долі! Інші побачать, що збір відкрито", ru: "Ты в доле! Остальные увидят, что сбор открыт", en: "You're in! Others will see the group gift" },
+  chipLeft: { uk: "Ти більше не у зборі", ru: "Ты больше не в сборе", en: "You left the group gift" },
+  chipNote: { uk: "Скидаються {n} з {total}", ru: "Скидываются {n} из {total}", en: "{n} of {total} chipping in" },
+  linkLabel: { uk: "Посилання на товар", ru: "Ссылка на товар", en: "Product link" },
+  linkHint: { uk: "Встав посилання, і ми підтягнемо назву, ціну та фото", ru: "Вставь ссылку, и мы подтянем название, цену и фото", en: "Paste a link and we'll fill in the name, price and photo" },
+  linkLoading: { uk: "Шукаю товар…", ru: "Ищу товар…", en: "Looking it up…" },
+  linkDone: { uk: "Готово, перевір дані", ru: "Готово, проверь данные", en: "Done, double-check the details" },
+  linkFail: { uk: "Не вдалося підтягнути, заповни вручну", ru: "Не получилось подтянуть, заполни вручную", en: "Couldn't fetch it, fill it in by hand" },
   roomLoadFailTitle: { uk: "Кімната не завантажилась", ru: "Комната не загрузилась", en: "Couldn't load the room" },
   roomLoadFailSub: { uk: "Щось пішло не так. Спробуй ще раз за мить.", ru: "Что-то пошло не так. Попробуй ещё раз через минутку.", en: "Something went wrong. Give it another try in a moment." },
   roomGone: { uk: "Цієї кімнати вже немає", ru: "Этой комнаты уже нет", en: "This room doesn't exist anymore" },
@@ -448,7 +505,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
   }[kind];
   return (
     <button
-      onClick={disabled ? undefined : onClick}
+      onClick={disabled ? undefined : (e) => { haptic("light"); onClick && onClick(e); }}
       style={{
         ...styles, opacity: disabled ? 0.45 : 1, width: full ? "100%" : "auto",
         display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -462,7 +519,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full, size 
 }
 function Chip({ children, active, onClick, color }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={(e) => { haptic("select"); onClick && onClick(e); }} style={{
       height: H.sm, padding: "0 16px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font, flexShrink: 0,
       cursor: "pointer", whiteSpace: "nowrap",
       background: active ? C.blueSoft : "transparent",
@@ -482,7 +539,7 @@ function Segmented({ options, value, onChange, style, neutral }) {
       {options.map(([k, l]) => {
         const on = value === k;
         return (
-          <button key={k} onClick={() => onChange(k)} style={{
+          <button key={k} onClick={() => { if (!on) haptic("select"); onChange(k); }} style={{
             flex: 1, padding: "0 10px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, background: on ? (neutral ? "#3A3A3E" : C.blue) : "transparent", color: on ? "#fff" : C.t2,
           }}>{l}</button>
@@ -744,7 +801,7 @@ export default function App() {
       catch (e) { showToast(t("noConnection"), 3000); throw e; }
     }
     const id = "r" + Date.now();
-    const room = { id, name: data.name, type: data.type, emoji: data.emoji, tint: data.tint,
+    const room = { id, name: data.name, type: data.type, emoji: data.emoji, tint: data.tint, eventTitle: data.eventTitle || "", eventDate: data.eventDate || "",
       members: [{ id: "you", name: t("you"), color: "#7B61FF", you: true }] };
     setRooms(rs => [...rs, room]);
     setOverlay({ type: "room", roomId: id });
@@ -789,6 +846,16 @@ export default function App() {
       try { await api.unreserve(wid); } catch (e) { showToast(t("noConnection"), 3000); return; }
     }
     setReserved(r => { const n = { ...r }; delete n[wid]; return n; }); showToast(t("giftCancelled"));
+  };
+  const chip = async (wid) => {
+    if (online) { try { await api.chip(wid); } catch (e) { showToast(t("noConnection"), 3000); return false; } }
+    else setReserved(r => ({ ...r, [wid]: "chip" }));
+    haptic("success"); showToast(t("chipJoined"), 2600); return true;
+  };
+  const unchip = async (wid) => {
+    if (online) { try { await api.unchip(wid); } catch (e) { showToast(t("noConnection"), 3000); return; } }
+    else setReserved(r => { const n = { ...r }; delete n[wid]; return n; });
+    showToast(t("chipLeft"));
   };
   const toggleWishRoom = async (wid, rid) => {
     if (online) {
@@ -872,6 +939,8 @@ export default function App() {
             online={online}
             onReserve={reserve}
             onUnreserve={unreserve}
+            onChip={chip}
+            onUnchip={unchip}
             onAddFromPool={() => setOverlay({ type: "pool", roomId: overlay.roomId })}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
             onDraw={() => setOverlay({ type: "draw", roomId: overlay.roomId })}
@@ -959,7 +1028,7 @@ function TabBar({ tab, setTab }) {
         {items.map(it => {
           const on = tab === it.id; const Icon = it.icon;
           return (
-            <button key={it.id} onClick={() => setTab(it.id)} style={{
+            <button key={it.id} onClick={() => { if (tab !== it.id) haptic("select"); setTab(it.id); }} style={{
               display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
               height: H.lg, padding: "0 20px", justifyContent: "center", borderRadius: 999, border: "none", cursor: "pointer",
               background: on ? C.blueSoft : "transparent", color: on ? "#7FB0FF" : C.t2, fontFamily: font,
@@ -980,7 +1049,7 @@ function TabBar({ tab, setTab }) {
 const MAIN_CTA = { marginTop: 24 };
 function HeaderAdd({ onClick, label }) {
   return (
-    <button onClick={onClick} aria-label={label} style={{
+    <button onClick={() => { haptic("light"); onClick(); }} aria-label={label} style={{
       width: H.lg, height: H.lg, borderRadius: "50%", border: "none", cursor: "pointer", flexShrink: 0,
       background: C.card2, color: C.t1, display: "flex", alignItems: "center", justifyContent: "center",
     }}><Plus size={24} /></button>
@@ -1057,7 +1126,8 @@ function folderPath(w, h) {
 // on the front, name + member count sit underneath.
 const FOLDER_MAX_AVATARS = 5;
 function RoomFolder({ room, wishes, onOpen }) {
-  const { t } = useT();
+  const { lang, t } = useT();
+  const cd = countdownLabel(lang, t, room.eventDate);
   const box = useRef(null);
   const [dim, setDim] = useState(null);
   // Measured before the first paint so the frosted front is there from frame one.
@@ -1133,7 +1203,9 @@ function RoomFolder({ room, wishes, onOpen }) {
         </div>
       </div>
       <div style={{ color: C.t1, fontSize: 15, fontWeight: 700, marginTop: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
-      <div style={{ display: "inline-block", marginTop: 8, padding: "4px 12px", borderRadius: R.pill, background: C.card2, color: C.t2, fontSize: 12.5 }}>{t("membersColon", { n: room.members.length })}</div>
+      {cd != null
+        ? <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, padding: "4px 12px", borderRadius: R.pill, background: hex(room.tint, 0.22), color: "#fff", fontSize: 12.5, fontWeight: 600 }}><CalendarDays size={13} />{cd}</div>
+        : <div style={{ display: "inline-block", marginTop: 8, padding: "4px 12px", borderRadius: R.pill, background: C.card2, color: C.t2, fontSize: 12.5 }}>{t("membersColon", { n: room.members.length })}</div>}
     </div>
   );
 }
@@ -1182,7 +1254,7 @@ function RoomStickerPicker({ value, onChange }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginBottom: 16 }}>
       {list.map(e => (
-        <button key={e} onClick={() => onChange(e)} style={{
+        <button key={e} onClick={() => { haptic("select"); onChange(e); }} style={{
           width: "100%", aspectRatio: "1", borderRadius: "50%", cursor: "pointer", padding: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
           background: value === e ? C.blueSoft : C.card2, border: `1.5px solid ${value === e ? C.blue : "transparent"}`,
@@ -1197,7 +1269,7 @@ function RoomColorPicker({ value, onChange }) {
       {ROOM_COLORS.map(c => {
         const on = value.toLowerCase() === c.toLowerCase();
         return (
-          <button key={c} onClick={() => onChange(c)} aria-label={c} style={{
+          <button key={c} onClick={() => { haptic("select"); onChange(c); }} aria-label={c} style={{
             width: H.sm, height: H.sm, borderRadius: "50%", cursor: "pointer", padding: 0, background: c,
             border: "none", boxShadow: on ? `0 0 0 3px ${C.card}, 0 0 0 5px ${c}` : "none",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -1207,9 +1279,19 @@ function RoomColorPicker({ value, onChange }) {
     </div>
   );
 }
+// Frosted pill with the room's occasion and countdown, on coloured backgrounds.
+function EventBadge({ text }) {
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 8, padding: "6px 12px", borderRadius: R.pill, background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 13.5, fontWeight: 600, maxWidth: "100%" }}>
+      <CalendarDays size={15} style={{ flexShrink: 0 }} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
+    </div>
+  );
+}
 // Live preview in the create/edit sheets: the room's hero in miniature, so the
 // chosen sticker, colour and name are seen exactly as the room will look.
-function RoomPreview({ emoji, tint, name }) {
+function RoomPreview({ emoji, tint, name, eventTitle, eventDate }) {
+  const { lang, t } = useT();
+  const cd = countdownLabel(lang, t, eventDate);
   return (
     <div style={{
       borderRadius: R.card, marginBottom: 24, padding: "24px 16px", textAlign: "center", overflow: "hidden",
@@ -1217,6 +1299,27 @@ function RoomPreview({ emoji, tint, name }) {
     }}>
       <div style={{ display: "flex", justifyContent: "center" }}><Sticker emoji={emoji} size={52} /></div>
       <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, marginTop: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
+      {cd && <EventBadge text={[eventTitle, cd].filter(Boolean).join(" · ")} />}
+    </div>
+  );
+}
+// Optional occasion for a room: short title + date (native date picker).
+function EventFields({ title, date, onTitle, onDate }) {
+  const { t } = useT();
+  const inp = { background: C.card2, border: "1px solid transparent", borderRadius: R.pill, height: H.lg, padding: "0 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none", minWidth: 0 };
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={sheetLabel}>{t("evLabel")}</div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input value={title} onChange={e => onTitle(e.target.value)} placeholder={t("evTitlePh")} maxLength={60} style={{ ...inp, flex: 1 }} />
+        <div style={{ position: "relative", flex: "0 0 148px" }}>
+          <input type="date" value={date} onChange={e => onDate(e.target.value)} aria-label={t("evPickDate")}
+            style={{ ...inp, width: "100%", paddingRight: date ? 40 : 16, color: date ? C.t1 : "transparent", WebkitAppearance: "none", appearance: "none" }} />
+          {!date && <span style={{ position: "absolute", left: 16, top: 0, height: H.lg, display: "flex", alignItems: "center", gap: 8, color: C.t3, fontSize: 15, pointerEvents: "none" }}><CalendarDays size={16} />{t("evPickDate")}</span>}
+          {date && <button onClick={() => onDate("")} aria-label="Clear" style={{ position: "absolute", right: 8, top: 8, width: 36, height: 36, border: "none", background: "none", color: C.t3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>}
+        </div>
+      </div>
+      <div style={{ color: C.t3, fontSize: 12.5, marginTop: 8 }}>{t("evHint")}</div>
     </div>
   );
 }
@@ -1239,17 +1342,19 @@ function CreateRoomSheet({ onClose, onCreate }) {
   const [emoji, setEmoji] = useState(ROOM_STICKERS[0]);
   const [tint, setTint] = useState(ROOM_COLORS[0]);
   const [name, setName] = useState("");
+  const [evTitle, setEvTitle] = useState("");
+  const [evDate, setEvDate] = useState("");
   const [busy, setBusy] = useState(false);
   const title = name.trim() || t(preset.key);
   const submit = async () => {
     if (busy) return;
     setBusy(true);
-    try { await onCreate({ name: title, type: preset.type, emoji, tint }); }
+    try { await onCreate({ name: title, type: preset.type, emoji, tint, eventTitle: evTitle.trim(), eventDate: evDate }); }
     catch (e) { setBusy(false); }
   };
   return (
     <RoomSheetShell title={t("newRoom")} onClose={onClose}>
-      <RoomPreview emoji={emoji} tint={tint} name={title} />
+      <RoomPreview emoji={emoji} tint={tint} name={title} eventTitle={evTitle.trim()} eventDate={evDate} />
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
       <RoomStickerPicker value={emoji} onChange={setEmoji} />
@@ -1268,6 +1373,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
       )}
 
       <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
+      <EventFields title={evTitle} date={evDate} onTitle={setEvTitle} onDate={setEvDate} />
 
       <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy} onClick={submit}>
         {busy ? t("creating") : t("createRoom")}
@@ -1282,16 +1388,18 @@ function EditRoomSheet({ room, onClose, onSave }) {
   const [name, setName] = useState(room.name);
   const [emoji, setEmoji] = useState(room.emoji);
   const [tint, setTint] = useState(room.tint);
+  const [evTitle, setEvTitle] = useState(room.eventTitle || "");
+  const [evDate, setEvDate] = useState(room.eventDate || "");
   const [busy, setBusy] = useState(false);
   const submit = async () => {
     if (busy || !name.trim()) return;
     setBusy(true);
-    try { await onSave({ name: name.trim(), emoji, tint }); }
+    try { await onSave({ name: name.trim(), emoji, tint, eventTitle: evTitle.trim(), eventDate: evDate }); }
     catch (e) { setBusy(false); }
   };
   return (
     <RoomSheetShell title={t("editRoom")} onClose={onClose}>
-      <RoomPreview emoji={emoji} tint={tint} name={name.trim() || room.name} />
+      <RoomPreview emoji={emoji} tint={tint} name={name.trim() || room.name} eventTitle={evTitle.trim()} eventDate={evDate} />
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
       <RoomStickerPicker value={emoji} onChange={setEmoji} />
@@ -1300,6 +1408,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
       <RoomColorPicker value={tint} onChange={setTint} />
 
       <Field label={t("name")} value={name} onChange={setName} placeholder={t("name")} />
+      <EventFields title={evTitle} date={evDate} onTitle={setEvTitle} onDate={setEvDate} />
 
       <Pill full kind="primary" disabled={!name.trim() || busy} onClick={submit}>
         {busy ? t("savingWish") : t("saveChanges")}
@@ -1483,8 +1592,9 @@ function HeroButton({ onClick, label, children, style }) {
   );
 }
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack }) {
-  const { t } = useT();
+function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onChip, onUnchip, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack }) {
+  const { lang, t } = useT();
+  const heroCd = countdownLabel(lang, t, room.eventDate);
   // Telegram's own top bar takes the hero colour while the room is open.
   useEffect(() => {
     const tg = tgWebApp(); if (!tg || !tg.setHeaderColor) return;
@@ -1510,7 +1620,8 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         members: room.members,
         lists: room.members.filter(m => !m.you).map(m => ({
           member: m,
-          wishes: (m.wishes || []).map(w => ({ ...w, reservedByMe: reserved[w.id] === "you", taken: !!reserved[w.id] && reserved[w.id] !== "you" })),
+          wishes: (m.wishes || []).map(w => ({ ...w, reservedByMe: reserved[w.id] === "you", taken: !!reserved[w.id] && reserved[w.id] !== "you" && reserved[w.id] !== "chip",
+            chips: reserved[w.id] === "chip" ? { count: 1, mine: true, total: Math.max(1, room.members.length - 1) } : null })),
         })),
         mine: wishes.filter(w => w.rooms.includes(room.id)),
       });
@@ -1527,12 +1638,18 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 
   const doReserve = async (w) => { await onReserve(w); setTick(x => x + 1); };
   const doUnreserve = async (wid) => { await onUnreserve(wid); setTick(x => x + 1); };
+  const doChip = async (wid) => { await onChip(wid); setTick(x => x + 1); };
+  const doUnchip = async (wid) => { await onUnchip(wid); setTick(x => x + 1); };
+  const [giving, setGiving] = useState(null); // wish picked with "Take": solo or group?
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
-        : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 22, width: "auto", display: "block" }} /></Pill>
+        : w.chips ? (w.chips.mine
+          ? <Pill size="sm" kind="green" icon={<Users2 size={16} />} onClick={() => doUnchip(w.id)}>{t("chipIn")} · {w.chips.count}/{w.chips.total}</Pill>
+          : <Pill size="sm" kind="soft" icon={<Users2 size={16} />} onClick={() => doChip(w.id)}>{t("chipJoin")} · {w.chips.count}/{w.chips.total}</Pill>)
+        : <Pill size="sm" kind="soft" onClick={() => setGiving(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 22, width: "auto", display: "block" }} /></Pill>
   );
 
   return (
@@ -1546,6 +1663,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         <div style={{ position: "relative" }}>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}><GlossTile emoji={room.emoji} size={80} tint={room.tint} bare /></div>
           <div style={{ color: "#fff", fontSize: 26, fontWeight: 800, marginTop: 12, textShadow: "0 1px 12px rgba(0,0,0,0.25)" }}>{room.name}</div>
+          {heroCd && <EventBadge text={[room.eventTitle, heroCd].filter(Boolean).join(" · ")} />}
           <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
             {members.map((m, i) => (
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} cut={i < members.length - 1 ? 10 : 0} /></div>
@@ -1648,6 +1766,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           )}
         </div>
       </div>
+      {giving && <GiveSheet wish={giving} onClose={() => setGiving(null)}
+        onSolo={() => { const w = giving; setGiving(null); doReserve(w); }}
+        onGroup={() => { const w = giving; setGiving(null); doChip(w.id); }} />}
     </div>
   );
 }
@@ -1693,6 +1814,28 @@ function Confetti() {
     return () => { cancelAnimationFrame(raf); clearTimeout(t2); clearTimeout(t3); };
   }, []);
   return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 75 }} />;
+}
+// "Take" on a free wish: gift it alone (reserve) or open a group chip-in.
+function GiveSheet({ wish, onSolo, onGroup, onClose }) {
+  const { t } = useT();
+  const opt = (icon, title, sub, onClick, primary) => (
+    <button onClick={() => { haptic("light"); onClick(); }} style={{
+      width: "100%", display: "flex", alignItems: "center", gap: 16, padding: 16, borderRadius: R.tile, border: "none", cursor: "pointer", textAlign: "left", fontFamily: font,
+      background: primary ? C.blue : C.card2, color: "#fff", marginTop: 8,
+    }}>
+      <div style={{ width: H.sm, height: H.sm, borderRadius: "50%", background: "rgba(255,255,255,0.16)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>{title}</div>
+        <div style={{ fontSize: 13, fontWeight: 500, marginTop: 4, color: primary ? "rgba(255,255,255,0.8)" : C.t2, lineHeight: 1.35 }}>{sub}</div>
+      </div>
+    </button>
+  );
+  return (
+    <Sheet title={t("giveHow", { name: wish.title })} onClose={onClose}>
+      {opt(<Gift size={20} />, t("giveSolo"), t("giveSoloSub"), onSolo, true)}
+      {opt(<Users2 size={20} />, t("giveGroup"), t("giveGroupSub"), onGroup, false)}
+    </Sheet>
+  );
 }
 function GiftTakenSheet({ title, onClose }) {
   const { t } = useT();
@@ -1827,6 +1970,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                   <WishRow w={w} right={
                     isMine(w)
                       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
+                      : w.chips ? <span style={{ color: C.t3, fontSize: 12.5, fontWeight: 600 }}>{t("chipNote", { n: w.chips.count, total: w.chips.total })}</span>
                       : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 22, width: "auto", display: "block" }} /></Pill>
                   } />
                 </div>
@@ -1856,6 +2000,34 @@ function AddSheet({ rooms, onClose, onSave }) {
   const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
   const MAX_PHOTOS = 3;
+  // Paste a product link -> fill empty name/price and add the shop photo.
+  const [linkState, setLinkState] = useState(null); // null | "loading" | "done" | "fail"
+  const lastLink = useRef("");
+  const fill = useRef({ title, price, images });
+  fill.current = { title, price, images };
+  useEffect(() => {
+    const url = link.trim();
+    if (!/^https?:\/\/[^\s/]+\.[^\s]+/i.test(url) || url === lastLink.current) return;
+    const id = setTimeout(async () => {
+      lastLink.current = url; setLinkState("loading");
+      try {
+        const p = await api.preview(url);
+        if (lastLink.current !== url) return;
+        const cur = fill.current;
+        if (p.title && !cur.title.trim()) setTitle(p.title);
+        if (p.price && !cur.price.trim()) setPrice(p.price);
+        if (p.image && cur.images.length < MAX_PHOTOS) {
+          const blob = await (await fetch(p.image)).blob();
+          const small = await compressImage(blob).catch(() => p.image);
+          setImages(xs => xs.length < MAX_PHOTOS && !xs.includes(small) ? [...xs, small] : xs);
+          setCover("photo");
+        }
+        setLinkState(p.title || p.price || p.image ? "done" : "fail");
+        haptic(p.title || p.image ? "success" : "warning");
+      } catch (e) { if (lastLink.current === url) setLinkState("fail"); }
+    }, 500);
+    return () => clearTimeout(id);
+  }, [link]); // eslint-disable-line
   const pickFile = (e) => {
     const files = Array.from(e.target.files || []).slice(0, MAX_PHOTOS - images.length);
     e.target.value = ""; // allow re-picking the same file after removing it
@@ -1918,7 +2090,7 @@ function AddSheet({ rooms, onClose, onSave }) {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(WISH_EMOJI.length, 7)}, 1fr)`, gap: 8, marginBottom: 16 }}>
             {WISH_EMOJI.map(e => (
-              <button key={e} onClick={() => setEmoji(e)} style={{
+              <button key={e} onClick={() => { haptic("select"); setEmoji(e); }} style={{
                 width: "100%", aspectRatio: "1", borderRadius: "50%", cursor: "pointer", padding: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 background: emoji === e ? C.blueSoft : C.card2, border: `1.5px solid ${emoji === e ? C.blue : "transparent"}`,
@@ -1927,9 +2099,14 @@ function AddSheet({ rooms, onClose, onSave }) {
           </div>
         )}
 
+        <Field label={t("linkLabel")} value={link} onChange={setLink} placeholder="https://…" />
+        <div style={{ color: linkState === "fail" ? "#FF8A80" : linkState === "done" ? "#7EE29A" : C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+          {linkState === "loading" && <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} />}
+          {linkState === "done" && <Check size={13} />}
+          {linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : t("linkHint")}
+        </div>
         <Field label={t("whatYouWant")} value={title} onChange={setTitle} placeholder={t("whatYouWantPh")} />
         <Field label={t("priceOpt")} value={price} onChange={setPrice} placeholder="4 200 ₴" />
-        <Field label={t("linkOpt")} value={link} onChange={setLink} placeholder="https://…" />
 
         <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>

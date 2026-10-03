@@ -2,8 +2,9 @@ import express from "express";
 import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
-import { uid, cleanImages, pubUser } from "./util.js";
-import { botRoute, ensureWebhook } from "./bot.js";
+import { uid, cleanImages, pubUser, cleanEvent } from "./util.js";
+import { botRoute, ensureWebhook, remindRoute } from "./bot.js";
+import { previewLink } from "./preview.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -23,10 +24,16 @@ export async function createApp() {
     const images = imgUrls(w, w.images && w.images.length ? w.images : (w.image ? [w.image] : []));
     return { id: w.id, emoji: w.emoji, image: images[0] || null, images, link: w.link, title: w.title, price: w.price };
   };
-  const withReservations = (ws, me) => Promise.all(ws.map(async w => {
-    const g = await store.getReservation(w.id);
-    return { ...pubWish(w), reservedByMe: g === me, taken: !!g && g !== me };
+  // What a gifter sees on someone else's wish: solo reservation, or a group
+  // chip-in ("chips": who's in, out of `total` possible gifters in the room).
+  const withReservations = (ws, me, total) => Promise.all(ws.map(async w => {
+    const [g, ch] = await Promise.all([store.getReservation(w.id), store.chips(w.id)]);
+    return {
+      ...pubWish(w), reservedByMe: g === me, taken: !!g && g !== me,
+      chips: ch.length ? { count: ch.length, mine: ch.includes(me), total: Math.max(total || 0, ch.length) } : null,
+    };
   }));
+  const roomOut = (r) => ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle || "", eventDate: r.eventDate || "" });
 
   // Public: <img> tags can't send the initData header. Wish ids are random.
   app.get("/api/img/:wid/:i", async (req, res, next) => {
@@ -44,6 +51,8 @@ export async function createApp() {
 
   // Bot webhook (Telegram -> us): before the initData auth, it has its own secret.
   app.post("/api/tg-webhook", botRoute(BOT_TOKEN));
+  // Daily Vercel cron: event reminders (a week and a day before).
+  app.get("/api/cron/remind", remindRoute(BOT_TOKEN, store));
   await ensureWebhook(BOT_TOKEN);
 
   const api = express.Router();
@@ -63,7 +72,7 @@ export async function createApp() {
       Promise.all(roomIds.map(async id => {
         const [r, members, shared] = await Promise.all([store.getRoom(id), store.roomMembers(id), store.wishesSharedTo(me, id)]);
         return r && {
-          id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint,
+          ...roomOut(r),
           members: members.map(u => pubUser(u, me)),
           sharedCount: shared.length,
         };
@@ -99,8 +108,8 @@ export async function createApp() {
   });
 
   api.post("/rooms", async (req, res) => {
-    const { name, type, emoji, tint } = req.body || {};
-    const r = { id: uid("r"), name: name || "Room", type: type || "friends", emoji: emoji || "🎁", tint: tint || "#2E7DF6", ownerId: req.user.id, createdAt: Date.now() };
+    const { name, type, emoji, tint, eventTitle, eventDate } = req.body || {};
+    const r = { id: uid("r"), name: name || "Room", type: type || "friends", emoji: emoji || "🎁", tint: tint || "#2E7DF6", ownerId: req.user.id, createdAt: Date.now(), ...cleanEvent(eventTitle, eventDate) };
     await store.createRoom(r);
     await store.addMember(r.id, req.user.id);
     res.json({ room: { id: r.id } });
@@ -110,10 +119,13 @@ export async function createApp() {
     const r = await store.getRoom(req.params.id);
     if (!r) return res.status(404).json({ error: "not_found" });
     if (r.ownerId !== req.user.id) return res.status(403).json({ error: "not_owner" });
-    const { name, emoji, tint } = req.body || {};
+    const body = req.body || {};
+    const { name, emoji, tint } = body;
     if (!name || !name.trim()) return res.status(400).json({ error: "name_required" });
     const okTint = typeof tint === "string" && /^#[0-9a-fA-F]{6}$/.test(tint) ? tint : r.tint;
-    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint });
+    // event fields are optional; sending them (even empty) sets/clears the event
+    const ev = "eventTitle" in body || "eventDate" in body ? cleanEvent(body.eventTitle, body.eventDate) : {};
+    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint, ...ev });
     res.json({ ok: true });
   });
 
@@ -162,13 +174,14 @@ export async function createApp() {
     const r = await store.getRoom(req.params.id);
     if (!r || !(await store.isMember(r.id, me))) return res.status(404).json({ error: "not_found" });
     const members = await store.roomMembers(r.id);
+    const gifters = members.length - 1; // everyone but the wish owner
     const [lists, mineRaw] = await Promise.all([
-      Promise.all(members.filter(x => x.id !== me).map(async u => ({ member: pubUser(u), wishes: await withReservations(await store.wishesSharedTo(u.id, r.id), me) }))),
+      Promise.all(members.filter(x => x.id !== me).map(async u => ({ member: pubUser(u), wishes: await withReservations(await store.wishesSharedTo(u.id, r.id), me, gifters) }))),
       store.wishesSharedTo(me, r.id),
     ]);
     const mine = mineRaw.map(pubWish); // owner sees no reservations (surprise-safe)
     res.json({
-      room: { id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, owner: r.ownerId === me },
+      room: { ...roomOut(r), owner: r.ownerId === me },
       members: members.map(u => pubUser(u, me)),
       lists, mine,
     });
@@ -180,8 +193,36 @@ export async function createApp() {
     if (w.ownerId === req.user.id) return res.status(403).json({ error: "own_wish" });
     const cur = await store.getReservation(w.id);
     if (cur && cur !== req.user.id) return res.status(409).json({ error: "taken" });
+    if ((await store.chips(w.id)).length) return res.status(409).json({ error: "chipping" });
     await store.setReservation(w.id, req.user.id);
     res.json({ ok: true });
+  });
+
+  // Chip in together on a wish (instead of one person taking it). Only people
+  // who share a room with the wish can join; the owner never sees any of this.
+  api.post("/wishes/:id/chip", async (req, res) => {
+    const me = req.user.id;
+    const w = await store.getWish(req.params.id);
+    if (!w) return res.status(404).json({ error: "not_found" });
+    if (w.ownerId === me) return res.status(403).json({ error: "own_wish" });
+    const roomIds = await store.wishRoomIds(w.id);
+    const ok = (await Promise.all(roomIds.map(rid => store.isMember(rid, me)))).some(Boolean);
+    if (!ok) return res.status(403).json({ error: "not_member" });
+    const cur = await store.getReservation(w.id);
+    if (cur && cur !== me) return res.status(409).json({ error: "taken" });
+    if (cur === me) await store.clearReservation(w.id, me); // turning my solo gift into a group one
+    await store.addChip(w.id, me);
+    res.json({ ok: true });
+  });
+  api.delete("/wishes/:id/chip", async (req, res) => {
+    await store.removeChip(req.params.id, req.user.id);
+    res.json({ ok: true });
+  });
+
+  // Product link -> { title, price, image } for the add-wish form.
+  api.get("/preview", async (req, res) => {
+    try { res.json(await previewLink(String(req.query.url || ""))); }
+    catch (e) { res.status(422).json({ error: e.message || "preview_failed" }); }
   });
 
   api.delete("/wishes/:id/reserve", async (req, res) => {
@@ -211,7 +252,7 @@ export async function createApp() {
     const draw = await store.getDraw(req.params.id);
     if (!draw || !draw.assignments[me]) return res.json({ target: null });
     const u = await store.getUser(draw.assignments[me]);
-    const wishes = await withReservations(await store.wishesSharedTo(u.id, req.params.id), me);
+    const wishes = await withReservations(await store.wishesSharedTo(u.id, req.params.id), me, (await store.roomMembers(req.params.id)).length - 1);
     res.json({ budget: draw.budget, target: pubUser(u), wishes });
   });
 

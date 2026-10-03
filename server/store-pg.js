@@ -14,11 +14,16 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS wish_rooms(wish_id text, room_id text, primary key(wish_id,room_id))`);
       await q(`CREATE TABLE IF NOT EXISTS reservations(wish_id text primary key, gifter_id text)`);
       await q(`CREATE TABLE IF NOT EXISTS draws(room_id text primary key, assignments jsonb, budget text, at bigint)`);
+      await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lang text`);
+      await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS event_title text`);
+      await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS event_date text`);
+      await q(`CREATE TABLE IF NOT EXISTS chips(wish_id text, user_id text, at bigint, primary key(wish_id,user_id))`);
+      await q(`CREATE TABLE IF NOT EXISTS reminders(room_id text, day text, kind text, primary key(room_id,day,kind))`);
       await q(`CREATE TABLE IF NOT EXISTS invites(room_id text, inviter_id text, invitee_id text, at bigint, primary key(room_id, invitee_id))`);
     },
     async ensureUser(u) {
       // name and photo are refreshed on every visit (photo goes null if the user hides it)
-      const { rows } = await q(`INSERT INTO users(id,name,color,photo) VALUES($1,$2,$3,$4) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, photo=EXCLUDED.photo RETURNING id,name,color,photo`, [u.id, u.name, colorFor(u.id), u.photo || null]);
+      const { rows } = await q(`INSERT INTO users(id,name,color,photo,lang) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, photo=EXCLUDED.photo, lang=COALESCE(EXCLUDED.lang, users.lang) RETURNING id,name,color,photo`, [u.id, u.name, colorFor(u.id), u.photo || null, u.lang || null]);
       return rows[0];
     },
     async getUser(id) { const { rows } = await q(`SELECT id,name,color,photo FROM users WHERE id=$1`, [id]); return rows[0] || null; },
@@ -26,12 +31,18 @@ export function createPgStore(q) {
     async roomMembers(roomId) { const { rows } = await q(`SELECT u.id,u.name,u.color,u.photo FROM members m JOIN users u ON u.id=m.user_id WHERE m.room_id=$1`, [roomId]); return rows; },
     async userRoomIds(userId) { const { rows } = await q(`SELECT room_id FROM members WHERE user_id=$1`, [userId]); return rows.map(r => r.room_id); },
     async getRoom(id) { const { rows } = await q(`SELECT * FROM rooms WHERE id=$1`, [id]); return mapRoom(rows[0]); },
-    async createRoom(r) { await q(`INSERT INTO rooms(id,name,type,emoji,tint,owner_id,created_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, [r.id, r.name, r.type, r.emoji, r.tint, r.ownerId, r.createdAt]); },
-    async updateRoom(id, { name, emoji, tint }) { await q(`UPDATE rooms SET name=COALESCE($2,name), emoji=COALESCE($3,emoji), tint=COALESCE($4,tint) WHERE id=$1`, [id, name ?? null, emoji ?? null, tint ?? null]); },
+    async createRoom(r) { await q(`INSERT INTO rooms(id,name,type,emoji,tint,owner_id,created_at,event_title,event_date) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [r.id, r.name, r.type, r.emoji, r.tint, r.ownerId, r.createdAt, r.eventTitle || "", r.eventDate || ""]); },
+    async updateRoom(id, { name, emoji, tint, eventTitle, eventDate }) { await q(`UPDATE rooms SET name=COALESCE($2,name), emoji=COALESCE($3,emoji), tint=COALESCE($4,tint), event_title=COALESCE($5,event_title), event_date=COALESCE($6,event_date) WHERE id=$1`, [id, name ?? null, emoji ?? null, tint ?? null, eventTitle ?? null, eventDate ?? null]); },
+    async roomsWithEventOn(day) { const { rows } = await q(`SELECT * FROM rooms WHERE event_date=$1`, [day]); return rows.map(mapRoom); },
+    async markReminder(roomId, day, kind) { const { rows } = await q(`INSERT INTO reminders(room_id,day,kind) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING room_id`, [roomId, day, kind]); return rows.length > 0; },
+    async userLang(id) { const { rows } = await q(`SELECT lang FROM users WHERE id=$1`, [id]); return rows[0] ? rows[0].lang : null; },
+    async chips(wishId) { const { rows } = await q(`SELECT user_id FROM chips WHERE wish_id=$1 ORDER BY at`, [wishId]); return rows.map(r => r.user_id); },
+    async addChip(wishId, userId) { await q(`INSERT INTO chips(wish_id,user_id,at) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`, [wishId, userId, Date.now()]); },
+    async removeChip(wishId, userId) { await q(`DELETE FROM chips WHERE wish_id=$1 AND user_id=$2`, [wishId, userId]); },
     async addMember(roomId, userId) { await q(`INSERT INTO members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, [roomId, userId]); },
     async getWish(id) { const { rows } = await q(`SELECT * FROM wishes WHERE id=$1`, [id]); return mapWish(rows[0]); },
     async createWish(w) { await q(`INSERT INTO wishes(id,owner_id,emoji,image,images,link,title,price,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [w.id, w.ownerId, w.emoji, w.image, JSON.stringify(w.images || []), w.link, w.title, w.price, w.createdAt]); },
-    async deleteWish(id) { await q(`DELETE FROM wishes WHERE id=$1`, [id]); await q(`DELETE FROM wish_rooms WHERE wish_id=$1`, [id]); await q(`DELETE FROM reservations WHERE wish_id=$1`, [id]); },
+    async deleteWish(id) { await q(`DELETE FROM wishes WHERE id=$1`, [id]); await q(`DELETE FROM wish_rooms WHERE wish_id=$1`, [id]); await q(`DELETE FROM reservations WHERE wish_id=$1`, [id]); await q(`DELETE FROM chips WHERE wish_id=$1`, [id]); },
     async wishRoomIds(wishId) { const { rows } = await q(`SELECT room_id FROM wish_rooms WHERE wish_id=$1`, [wishId]); return rows.map(r => r.room_id); },
     async toggleWishRoom(wishId, roomId) {
       const { rows } = await q(`SELECT 1 FROM wish_rooms WHERE wish_id=$1 AND room_id=$2`, [wishId, roomId]);
@@ -43,9 +54,10 @@ export function createPgStore(q) {
     async userWishes(userId) { const { rows } = await q(`SELECT * FROM wishes WHERE owner_id=$1 ORDER BY created_at DESC`, [userId]); return rows.map(mapWish); },
     async wishesSharedTo(userId, roomId) { const { rows } = await q(`SELECT w.* FROM wishes w JOIN wish_rooms wr ON wr.wish_id=w.id WHERE w.owner_id=$1 AND wr.room_id=$2`, [userId, roomId]); return rows.map(mapWish); },
     async giftsByMe(userId) {
-      const { rows } = await q(`SELECT w.*, u.name AS owner_name, u.color AS owner_color, u.photo AS owner_photo FROM reservations r
-        JOIN wishes w ON w.id = r.wish_id JOIN users u ON u.id = w.owner_id
-        WHERE r.gifter_id=$1 ORDER BY w.created_at DESC`, [userId]);
+      const { rows } = await q(`SELECT w.*, u.name AS owner_name, u.color AS owner_color, u.photo AS owner_photo FROM wishes w
+        JOIN users u ON u.id = w.owner_id
+        WHERE w.id IN (SELECT wish_id FROM reservations WHERE gifter_id=$1 UNION SELECT wish_id FROM chips WHERE user_id=$1)
+        ORDER BY w.created_at DESC`, [userId]);
       return rows.map(r => ({ wish: mapWish(r), owner: { id: r.owner_id, name: r.owner_name, color: r.owner_color, photo: r.owner_photo } }));
     },
     async getReservation(wishId) { const { rows } = await q(`SELECT gifter_id FROM reservations WHERE wish_id=$1`, [wishId]); return rows[0] ? rows[0].gifter_id : null; },
