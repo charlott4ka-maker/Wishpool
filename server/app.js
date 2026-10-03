@@ -3,6 +3,7 @@ import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser } from "./util.js";
+import { botRoute, ensureWebhook } from "./bot.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -17,6 +18,10 @@ export async function createApp() {
     const images = w.images && w.images.length ? w.images : (w.image ? [w.image] : []);
     return { id: w.id, emoji: w.emoji, image: images[0] || null, images, link: w.link, title: w.title, price: w.price };
   };
+
+  // Bot webhook (Telegram -> us): before the initData auth, it has its own secret.
+  app.post("/api/tg-webhook", botRoute(BOT_TOKEN));
+  await ensureWebhook(BOT_TOKEN);
 
   const api = express.Router();
   // API responses must never be conditionally cached (304) — each call needs a fresh body.
