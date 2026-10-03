@@ -402,7 +402,6 @@ function Avatar({ m, size = 34 }) {
       width: size, height: size, borderRadius: size, background: m.color, overflow: "hidden",
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0,
-      border: `2px solid ${C.bg}`,
     }}>
       {m.photo && !failed
         ? <img src={m.photo} alt="" onError={() => setFailed(true)} referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
