@@ -9,32 +9,39 @@ import {
 const PoolScreenGlass = React.lazy(() => import("./PoolScreenGlass.jsx"));
 
 /* ---------- design tokens ---------- */
+// Accent pairing for the dark-navy theme. "raspberry" = blue + raspberry,
+// "blue" = everything blue. One switch, nothing else needs to change.
+const THEME = "raspberry";
+const ACC = THEME === "blue"
+  ? { main: "#5B8CFF", light: "#A9C1FF", deep: "#1C3A9E" }
+  : { main: "#E8336F", light: "#FF8AB0", deep: "#6E1640" };
 const C = {
-  bg: "#5A7FA6",
-  card: "rgba(255,255,255,0.10)",
-  card2: "rgba(255,255,255,0.16)",
-  line: "rgba(255,255,255,0.16)",
+  bg: "#070B1C",
+  card: "rgba(255,255,255,0.06)",
+  card2: "rgba(255,255,255,0.10)",
+  line: "rgba(255,255,255,0.08)",
   t1: "#FFFFFF",
-  t2: "rgba(255,255,255,0.75)",
-  t3: "rgba(255,255,255,0.52)",
-  ink: "#17171B",          // dark text on solid-white selected pills
-  accent: "#E8F24E",       // lime highlight (status dots, reveal, glow)
-  accentSoft: "rgba(232,242,78,0.20)",
+  t2: "rgba(255,255,255,0.62)",
+  t3: "rgba(255,255,255,0.40)",
+  blue: "#3D6BFF",
+  blueLight: "#8FAEFF",
+  accent: ACC.main,
+  accentLight: ACC.light,
 };
-// Soft blurred colour-field backgrounds: four big radial blobs over a vertical
-// base gradient, with a light scrim at the bottom so white text stays readable.
+// Dark navy colour fields: four big blurred blobs (blues + accent) over a
+// near-black navy base, with a darker scrim at the bottom.
 const MESH = {
-  pool: { blobs: ["#3E7FC4", "#B4CBE0", "#CDB97E", "#7C6C43"], base: ["#5A8FC6", "#8E7F57"] },
-  rooms: { blobs: ["#9AA3AC", "#C47A62", "#D2643A", "#2F2B2E"], base: ["#87909A", "#3B3235"] },
-  profile: { blobs: ["#6A76BC", "#B9A6CC", "#D8917F", "#46385A"], base: ["#6C75B2", "#4A3B5C"] },
+  pool: { blobs: ["#1F3FB8", "#0E1A5C", ACC.deep, "#0B1E6E"], base: ["#0A1030", "#05070F"] },
+  rooms: { blobs: ["#15257A", ACC.deep, "#1C3CA8", "#060914"], base: ["#0B0F2A", "#05060E"] },
+  profile: { blobs: ["#2A2F9E", "#0F1A55", ACC.deep, "#1A3A9C"], base: ["#0B0E2C", "#05060F"] },
 };
 function roomMesh(tint) {
-  return { blobs: ["#8E969F", hex(tint, 0.75), hex(tint, 0.5), "#2E2B30"], base: ["#7F8790", "#36313A"] };
+  return { blobs: [hex(tint, 0.45), "#14206A", hex(tint, 0.22), "#05070F"], base: ["#0A0F2A", "#05060E"] };
 }
 function mesh(m) {
   const [a, b, c, d] = m.blobs;
   return [
-    "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.22) 100%)",
+    "linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.35) 100%)",
     `radial-gradient(70% 45% at 12% 6%, ${a} 0%, transparent 70%)`,
     `radial-gradient(60% 40% at 88% 34%, ${b} 0%, transparent 70%)`,
     `radial-gradient(80% 45% at 22% 74%, ${c} 0%, transparent 70%)`,
@@ -56,25 +63,21 @@ function AppBackground({ tab }) {
 // inside them, big soft corners.
 const S = { gutter: 12, gap: 10, pad: 18, r: 30, rTile: 0.3 };
 /* ---------- iOS-style frosted glass ---------- */
+// No outlines anywhere: glass reads through the frosted blur, a soft sheen in
+// the top-left (same as the round buttons), a light top rim and a drop shadow.
 const GLASS = {
-  fill: "rgba(255,255,255,0.12)",
-  border: "rgba(255,255,255,0.24)",
-  blur: "blur(24px) saturate(180%)",
-  // top rim highlight + faint bottom rim, like light catching the edge of glass
-  rim: "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(255,255,255,0.06)",
+  fill: "rgba(255,255,255,0.055)",
+  sheen: "radial-gradient(120% 120% at 30% 0%, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.02) 60%)",
+  blur: "blur(22px) saturate(160%)",
+  rim: "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.25), 0 10px 30px rgba(0,0,0,0.28)",
 };
-// Shared glass surfaces. `blur` only where content actually scrolls underneath
-// (floating controls, sheets) — on static cards over black it costs GPU for nothing.
-function glass({ blur = false, on = false } = {}) {
-  return {
-    // selected = solid white pill (pair with color: C.ink), like iOS
-    background: on
-      ? "rgba(255,255,255,0.96)"
-      : `linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 100%), ${GLASS.fill}`,
-    border: `1px solid ${on ? "#FFFFFF" : GLASS.border}`,
-    boxShadow: on ? "0 4px 16px rgba(0,0,0,0.16)" : GLASS.rim,
-    ...(blur ? { backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur } : null),
+const frost = { backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur };
+function glass({ on = false } = {}) {
+  if (on) return {
+    background: `linear-gradient(180deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0) 65%), ${C.blue}`,
+    border: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35), 0 6px 20px ${hex(C.blue, 0.45)}`,
   };
+  return { background: `${GLASS.sheen}, ${GLASS.fill}`, border: "none", boxShadow: GLASS.rim, ...frost };
 }
 const font =
   '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
@@ -305,7 +308,7 @@ function ImageLightbox({ src, onClose }) {
     </div>
   );
 }
-function GlossTile({ emoji, image, size = 92, tint = "#FFFFFF" }) {
+function GlossTile({ emoji, image, size = 92, tint = C.blue }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -313,10 +316,9 @@ function GlossTile({ emoji, image, size = 92, tint = "#FFFFFF" }) {
       onClick={image ? (e) => { e.stopPropagation(); setOpen(true); } : undefined}
       style={{
         width: size, height: size, borderRadius: size * S.rTile,
-        background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.4)} 0%, rgba(255,255,255,0.14) 60%, rgba(255,255,255,0.08) 100%)`,
+        background: image ? C.card2 : `radial-gradient(120% 90% at 30% 20%, ${hex(tint,0.45)} 0%, rgba(255,255,255,0.07) 60%, rgba(255,255,255,0.04) 100%)`,
         display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: `${GLASS.rim}, 0 6px 18px rgba(0,0,0,0.12)`,
-        border: `1px solid ${GLASS.border}`, flexShrink: 0, overflow: "hidden", position: "relative",
+        boxShadow: GLASS.rim, flexShrink: 0, overflow: "hidden", position: "relative",
         cursor: image ? "zoom-in" : "default",
       }}
     >
@@ -362,7 +364,7 @@ function Avatar({ m, size = 34 }) {
       width: size, height: size, borderRadius: size, background: m.color,
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0,
-      border: "2px solid rgba(255,255,255,0.75)",
+      boxShadow: "0 0 0 2px #0A0F26",
     }}>
       {m.name.slice(0, 1)}
     </div>
@@ -370,10 +372,10 @@ function Avatar({ m, size = 34 }) {
 }
 function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
   const styles = {
-    primary: { background: "#FFFFFF", color: C.ink, border: "1px solid #FFFFFF", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" },
-    ghost: { ...glass({ blur: true }), color: C.t1 },
-    soft: { ...glass({ blur: true }), color: C.t1 },
-    green: { ...glass({ blur: true }), background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%), ${C.accentSoft}`, color: C.accent, border: "1px solid rgba(232,242,78,0.5)" },
+    primary: { ...glass({ on: true }), color: "#fff" },
+    ghost: { ...glass(), color: C.t1 },
+    soft: { ...glass(), color: C.t1 },
+    green: { ...glass(), background: `${GLASS.sheen}, ${hex(C.accent, 0.24)}`, color: C.accentLight, boxShadow: `${GLASS.rim}, 0 0 18px ${hex(C.accent, 0.3)}` },
   }[kind];
   return (
     <button
@@ -395,7 +397,7 @@ function Chip({ children, active, onClick }) {
       padding: "9px 15px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font,
       cursor: "pointer", whiteSpace: "nowrap",
       ...glass({ on: active }),
-      color: active ? C.ink : C.t2,
+      color: active ? "#fff" : C.t2,
       display: "inline-flex", alignItems: "center", gap: 6,
     }}>
       {children}
@@ -414,8 +416,8 @@ function Segmented({ options, value, onChange, style }) {
           <button key={k} onClick={() => onChange(k)} style={{
             flex: 1, padding: "11px 10px", borderRadius: 999, cursor: "pointer", fontFamily: font,
             fontSize: 14, fontWeight: 600, transition: "background .2s, color .2s",
-            ...(on ? glass({ on: true }) : { background: "transparent", border: "1px solid transparent" }),
-            color: on ? C.ink : C.t2,
+            ...(on ? glass({ on: true }) : { background: "transparent", border: "none" }),
+            color: on ? "#fff" : C.t2,
           }}>{l}</button>
         );
       })}
@@ -429,57 +431,62 @@ function GlassButton({ onClick, children, size = 40, label, style }) {
     <button onClick={onClick} aria-label={label} style={{
       width: size, height: size, borderRadius: size, flexShrink: 0, cursor: "pointer", padding: 0,
       display: "flex", alignItems: "center", justifyContent: "center", color: C.t1,
-      background: `radial-gradient(120% 120% at 30% 0%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 60%), ${GLASS.fill}`,
-      backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
-      border: `1px solid ${GLASS.border}`,
-      boxShadow: `${GLASS.rim}, 0 6px 20px rgba(0,0,0,0.45), 0 0 18px rgba(255,255,255,0.05)`,
+      ...glass(),
+      boxShadow: `${GLASS.rim}, 0 0 18px ${hex(C.blue, 0.18)}`,
       ...style,
     }}>
       {children}
     </button>
   );
 }
-// Semi-transparent "folder": a fan of wish covers peeking out from behind a frosted panel.
+// Folder: a tinted back plate with a tab, the room's wish covers tucked inside,
+// a frosted front pocket, and the room emoji as a sticker badge on the front.
 function FolderCover({ w, size }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: size * 0.24, overflow: "hidden",
-      background: `radial-gradient(120% 90% at 30% 20%, rgba(255,255,255,0.14) 0%, ${C.card2} 60%)`,
-      border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 8px 18px rgba(0,0,0,0.45)",
+      background: w.blank ? "linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08))" : C.card2,
+      boxShadow: "0 6px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
-      {w.image
+      {w.blank ? null : w.image
         ? <img src={w.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         : <Sticker emoji={w.emoji} size={size * 0.5} />}
     </div>
   );
 }
-const FAN = { 1: [[0, -4]], 2: [[-20, -8], [20, 7]], 3: [[-32, -11], [32, 10], [0, -1]] };
+const FAN = { 1: [[0, -3]], 2: [[-18, -7], [18, 6]], 3: [[-30, -10], [30, 9], [0, -1]] };
 function RoomFolder({ room, wishes, onOpen, width = 152 }) {
   const { t } = useT();
   const shared = wishes.filter(w => w.rooms.includes(room.id));
-  const covers = shared.length ? shared.slice(0, 3) : [{ id: "e", emoji: room.emoji }];
-  const H = 160, PANEL = 94, TILE = 82;
+  const covers = shared.length ? shared.slice(0, 3) : [{ id: "b1", blank: true }, { id: "b2", blank: true }];
+  const H = 170, PANEL = 96, TILE = 74, tint = room.tint;
   return (
     <div onClick={onOpen} style={{ position: "relative", width, height: H, flexShrink: 0, cursor: "pointer", animation: "fadeUp .3s ease" }}>
-      <div style={{ position: "absolute", left: "18%", right: "18%", top: 14, height: 80, borderRadius: "50%", background: hex(room.tint, 0.4), filter: "blur(26px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", left: "15%", right: "15%", top: 30, height: 90, borderRadius: "50%", background: hex(tint, 0.35), filter: "blur(30px)", pointerEvents: "none" }} />
+      {/* back plate + tab */}
+      <div style={{ position: "absolute", top: 8, left: 12, width: "42%", height: 26, borderRadius: "12px 12px 0 0", background: hex(tint, 0.5) }} />
+      <div style={{ position: "absolute", top: 22, left: 0, right: 0, bottom: 0, borderRadius: 24, background: `linear-gradient(170deg, ${hex(tint, 0.5)} 0%, ${hex(tint, 0.16)} 70%)`, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)" }} />
+      {/* contents */}
       {covers.map((w, i) => {
         const [dx, rot] = FAN[covers.length][i];
         return (
-          <div key={w.id} style={{ position: "absolute", top: 4, left: "50%", transform: `translateX(calc(-50% + ${dx}px)) rotate(${rot}deg)` }}>
+          <div key={w.id} style={{ position: "absolute", top: 30, left: "50%", transform: `translateX(calc(-50% + ${dx}px)) rotate(${rot}deg)` }}>
             <FolderCover w={w} size={TILE} />
           </div>
         );
       })}
+      {/* frosted front pocket */}
       <div style={{
         position: "absolute", left: 0, right: 0, bottom: 0, height: PANEL, borderRadius: 24,
-        background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)",
-        backdropFilter: "blur(16px) saturate(170%)", WebkitBackdropFilter: "blur(16px) saturate(170%)",
-        border: `1px solid ${GLASS.border}`, boxShadow: `${GLASS.rim}, 0 10px 26px rgba(0,0,0,0.4)`,
-        padding: "0 12px 13px", display: "flex", flexDirection: "column", justifyContent: "flex-end", textAlign: "center",
+        background: `${GLASS.sheen}, linear-gradient(180deg, ${hex(tint, 0.26)} 0%, ${hex(tint, 0.08)} 100%), rgba(255,255,255,0.06)`,
+        backdropFilter: "blur(14px) saturate(170%)", WebkitBackdropFilter: "blur(14px) saturate(170%)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.28), 0 -4px 18px rgba(0,0,0,0.22), 0 12px 28px rgba(0,0,0,0.35)",
+        padding: "0 14px 14px", display: "flex", flexDirection: "column", justifyContent: "flex-end",
       }}>
-        <div style={{ color: C.t1, fontSize: 14.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.emoji} {room.name}</div>
-        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11.5, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
+        <Sticker emoji={room.emoji} size={34} style={{ position: "absolute", top: -18, left: 12 }} />
+        <div style={{ color: C.t1, fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
+        <div style={{ color: C.t2, fontSize: 12, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
       </div>
     </div>
   );
@@ -487,8 +494,8 @@ function RoomFolder({ room, wishes, onOpen, width = 152 }) {
 function Sheet({ title, onClose, children, maxHeight = "85vh" }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />
-      <div style={{ position: "relative", background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 40%), rgba(52,54,62,0.78)", backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", border: `1px solid ${GLASS.border}`, boxShadow: GLASS.rim, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(2,4,12,0.55)" }} />
+      <div style={{ position: "relative", background: `${GLASS.sheen}, rgba(14,18,42,0.84)`, backdropFilter: "blur(40px) saturate(170%)", WebkitBackdropFilter: "blur(40px) saturate(170%)", borderRadius: `${S.r + 4}px ${S.r + 4}px 0 0`, padding: "10px 20px 32px", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -10px 40px rgba(0,0,0,0.4)", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight, overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: "rgba(255,255,255,0.22)", margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title}</div>
@@ -834,7 +841,7 @@ export default function App() {
         {toast && (
           <div style={{
             position: "fixed", bottom: 108, left: "50%", transform: "translateX(-50%)",
-            ...glass({ blur: true }), color: C.t1, padding: "12px 18px", borderRadius: 999,
+            ...glass(), color: C.t1, padding: "12px 18px", borderRadius: 999,
             fontSize: 14.5, fontWeight: 600, zIndex: 60,
             animation: "fadeUp .25s ease", maxWidth: 320, textAlign: "center",
           }}>{toast}</div>
@@ -868,24 +875,20 @@ function TabBar({ tab, setTab }) {
   return (
     <>
       {/* fade content out under the bar, like iOS */}
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.28) 100%)" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(5,7,15,0) 0%, rgba(5,7,15,0.75) 100%)" }} />
       <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
         <div style={{
           position: "relative", display: "flex", padding: 5, borderRadius: 999,
-          background: `linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%), ${GLASS.fill}`,
-          backdropFilter: GLASS.blur, WebkitBackdropFilter: GLASS.blur,
-          border: `1px solid ${GLASS.border}`,
-          boxShadow: `${GLASS.rim}, 0 12px 34px rgba(0,0,0,0.25)`,
+          ...glass(),
         }}>
           {/* sliding active bubble with a soft glow underneath */}
           <div style={{
             position: "absolute", top: 5, bottom: 5, left: 5, width: W, borderRadius: 999,
             transform: `translateX(${idx * W}px)`, transition: "transform .38s cubic-bezier(.3,1.3,.5,1)",
-            background: "radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.07) 70%)",
-            border: "1px solid rgba(255,255,255,0.16)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.45), 0 0 22px rgba(255,255,255,0.35)",
+            background: `radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 70%), ${hex(C.blue, 0.25)}`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.3), 0 0 24px ${hex(C.blue, 0.5)}`,
           }}>
-            <div style={{ position: "absolute", left: "20%", right: "20%", bottom: -6, height: 14, borderRadius: "50%", background: "rgba(255,255,255,0.85)", filter: "blur(10px)" }} />
+            <div style={{ position: "absolute", left: "20%", right: "20%", bottom: -6, height: 14, borderRadius: "50%", background: hex(C.blue, 0.9), filter: "blur(10px)" }} />
           </div>
           {items.map(it => {
             const on = tab === it.id; const Icon = it.icon;
@@ -895,7 +898,7 @@ function TabBar({ tab, setTab }) {
                 padding: "8px 0", borderRadius: 999, border: "none", cursor: "pointer", background: "transparent",
                 color: on ? "#FFFFFF" : C.t2, fontFamily: font, transition: "color .25s",
               }}>
-                <Icon size={21} style={{ filter: on ? `drop-shadow(0 0 6px rgba(255,255,255,0.95))` : "none", transition: "filter .25s" }} />
+                <Icon size={21} style={{ filter: on ? `drop-shadow(0 0 6px ${hex(C.blueLight, 0.95)})` : "none", transition: "filter .25s" }} />
                 <span style={{ fontSize: 11, fontWeight: 600 }}>{it.label}</span>
               </button>
             );
@@ -1207,10 +1210,10 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
                   {w.price && <div style={{ color: C.t2, fontSize: 13 }}>{w.price}</div>}
                 </div>
-                <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: `2px solid ${inRoom ? "#FFFFFF" : C.line}`, background: inRoom ? "#FFFFFF" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 26, height: 26, borderRadius: 26, flexShrink: 0, border: inRoom ? "none" : "2px solid rgba(255,255,255,0.25)", background: inRoom ? C.blue : "transparent", boxShadow: inRoom ? `0 0 12px ${hex(C.blue, 0.6)}` : "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {isPending
                     ? <div style={{ width: 12, height: 12, borderRadius: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", animation: "spin .6s linear infinite" }} />
-                    : (inRoom && <Check size={16} color={C.ink} strokeWidth={3} />)}
+                    : (inRoom && <Check size={16} color={"#fff"} strokeWidth={3} />)}
                 </div>
               </div>
             );
@@ -1551,7 +1554,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           ) : (
             <button onClick={() => fileRef.current && fileRef.current.click()} style={{
               width: "100%", padding: "26px", borderRadius: 22, cursor: "pointer",
-              ...glass(), border: "1px dashed rgba(255,255,255,0.22)", color: C.t2, fontFamily: font,
+              ...glass(), color: C.t2, fontFamily: font,
               display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600,
             }}>
               <ImageIcon size={26} color={C.t2} />
@@ -1600,8 +1603,8 @@ function Field({ label, value, onChange, placeholder }) {
           width: "100%", ...glass(), borderRadius: 18,
           padding: "14px 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
-        onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.32)"}
-        onBlur={e => e.target.style.borderColor = GLASS.border} />
+        onFocus={e => e.target.style.boxShadow = `${GLASS.rim}, 0 0 0 2px ${hex(C.blue, 0.65)}`}
+        onBlur={e => e.target.style.boxShadow = GLASS.rim} />
     </div>
   );
 }
@@ -1619,7 +1622,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesign
 
       <div style={{ display: "flex", gap: S.gap, marginTop: 22 }}>
         <Card style={{ flex: 1, padding: S.pad, textAlign: "left" }}>
-          <Gift size={22} color={C.accent} />
+          <Gift size={22} color={C.blueLight} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{wishes.reduce((n, w) => n + w.rooms.length, 0)}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("sharedStat")}</div>
         </Card>

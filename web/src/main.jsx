@@ -7,8 +7,8 @@ const tg = window.Telegram && window.Telegram.WebApp;
 if (tg) {
   try { tg.ready(); } catch (e) {}
   try { tg.expand(); } catch (e) {}                     // full height
-  try { tg.setHeaderColor("#5A8FC6"); } catch (e) {}    // top of the Wishes colour field; App.jsx updates it per screen
-  try { tg.setBackgroundColor("#5A8FC6"); } catch (e) {}
+  try { tg.setHeaderColor("#0A1030"); } catch (e) {}    // top of the dark navy background; App.jsx updates it per screen
+  try { tg.setBackgroundColor("#0A1030"); } catch (e) {}
   try { tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } catch (e) {} // avoid accidental close on scroll
 }
 
