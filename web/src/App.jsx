@@ -34,7 +34,7 @@ const SOLID = { card: "#161618", sheet: "#161618", field: "#232326", control: "#
 // buttons. Fields and controls sit one step lighter so they read inside cards
 // and sheets.
 function surface({ tint = C.blue, fill = SOLID.card } = {}) {
-  const lift = fill === SOLID.card ? 0.05 : 0.10;
+  const lift = fill === SOLID.card ? 0.025 : 0.055;
   return {
     background: `${GLASS.sheen}, radial-gradient(120% 100% at 15% 0%, ${hex(tint, 0.12)} 0%, ${hex(tint, 0.04)} 55%, ${hex(tint, 0.02)} 100%), rgba(255,255,255,${lift})`,
     border: "none", boxShadow: GLASS.rim,
@@ -43,7 +43,7 @@ function surface({ tint = C.blue, fill = SOLID.card } = {}) {
 // Buttons and floating chrome keep the clear-glass look: diagonal reflection,
 // faint blue tint, bright top rim. Selected / primary = glossy blue.
 const GLASS = {
-  fill: "rgba(255,255,255,0.08)",
+  fill: "rgba(255,255,255,0.045)",
   sheen: "linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.03) 100%)",
   rim: "inset 0 1px 0 rgba(255,255,255,0.22), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(255,255,255,0.03), inset 0 -1px 0 rgba(255,255,255,0.04)",
 };
