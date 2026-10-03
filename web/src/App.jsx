@@ -1676,9 +1676,10 @@ function AddSheet({ rooms, onClose, onSave }) {
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(WISH_EMOJI.length, 7)}, 1fr)`, gap: 8, marginBottom: 16 }}>
             {WISH_EMOJI.map(e => (
               <button key={e} onClick={() => setEmoji(e)} style={{
-                width: "100%", height: H.lg, borderRadius: R.tile, fontSize: 22, cursor: "pointer",
-                background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
-              }}><Sticker emoji={e} size={22} /></button>
+                width: "100%", aspectRatio: "1", borderRadius: "50%", cursor: "pointer", padding: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: emoji === e ? C.blueSoft : C.card2, border: `1.5px solid ${emoji === e ? C.blue : "transparent"}`,
+              }}><Sticker emoji={e} size={28} /></button>
             ))}
           </div>
         )}
