@@ -367,6 +367,27 @@ function GlossTile({ emoji, image, size = 92, tint = C.blue, round = false, bare
       </div>
     );
   }
+  // bare + photo: a "photo sticker" to match the emoji ones: rounded square,
+  // white die-cut border, soft shadow and a slight tilt (direction varies per
+  // photo so a list doesn't look stamped).
+  if (bare && image) {
+    const tilt = (image.length % 2 ? -1 : 1) * 4;
+    const inner = Math.round(size * 0.86);
+    return (
+      <>
+      <div style={{ width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div onClick={(e) => { e.stopPropagation(); setOpen(true); }} style={{
+          width: inner, height: inner, borderRadius: inner * 0.26, overflow: "hidden", cursor: "zoom-in",
+          border: "2.5px solid #fff", transform: `rotate(${tilt}deg)`,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.45)", background: C.card2,
+        }}>
+          <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        </div>
+      </div>
+      {open && <ImageLightbox src={image} onClose={() => setOpen(false)} />}
+      </>
+    );
+  }
   return (
     <>
     <div
@@ -593,7 +614,7 @@ function sepBelow(show, inset = ROW_INSET, pad = S.pad) {
 }
 function WishRow({ w, right }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 4px" }}>
       <GlossTile emoji={w.emoji} image={w.image} size={52} round bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
@@ -951,7 +972,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: S.gap }}>
           {wishes.map(w => (
-            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `6px ${S.pad}px ${S.pad - 2}px`, cursor: "pointer" }}>
+            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `8px ${S.pad}px ${S.pad}px`, cursor: "pointer" }}>
               <WishRow w={w} right={
                 <IconBadge icon={ChevronRight} color="#8A8A8E" size={28} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
               } />
