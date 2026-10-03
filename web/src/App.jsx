@@ -315,6 +315,20 @@ function IconBadge({ icon: Icon, emoji, color = "#FFFFFF", size = 24, style }) {
     </span>
   );
 }
+// Small status chip in the bullet style: tinted fill + thin same-hue ring
+// around both the icon/emoji and the label.
+function TagChip({ icon: Icon, emoji, color = "#FFFFFF", children }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px 5px 8px", borderRadius: 999,
+      background: hex(color, 0.14), boxShadow: `inset 0 0 0 1px ${hex(color, 0.45)}`,
+      color: tintToWhite(color, 0.6), fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap",
+    }}>
+      {Icon ? <Icon size={13} strokeWidth={2.4} /> : <span style={{ fontSize: 14, lineHeight: 1 }}>{emoji}</span>}
+      {children}
+    </span>
+  );
+}
 function Sticker({ emoji, size, style }) {
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
 }
@@ -887,11 +901,9 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
               } />
               <div style={{ display: "flex", gap: 7, flexWrap: "wrap", paddingTop: 4 }}>
                 {w.rooms.length === 0
-                  ? <span style={{ color: C.t2, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 7 }}><IconBadge icon={Lock} color="#FFFFFF" size={22} />{t("privateNote")}</span>
+                  ? <TagChip icon={Lock} color="#FFFFFF">{t("privateNote")}</TagChip>
                   : rooms.filter(r => w.rooms.includes(r.id)).map(r => (
-                    <span key={r.id} style={{ fontSize: 12.5, color: C.t2, display: "inline-flex", gap: 7, alignItems: "center", marginRight: 6 }}>
-                      <IconBadge emoji={r.emoji} color={r.tint} size={22} />{r.name}
-                    </span>
+                    <TagChip key={r.id} emoji={r.emoji} color={r.tint}>{r.name}</TagChip>
                   ))}
               </div>
               {openId === w.id && (
