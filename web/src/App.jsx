@@ -1422,27 +1422,6 @@ function HeroButton({ onClick, label, children, style }) {
     }}>{children}</button>
   );
 }
-// Faint one-colour copies of the room sticker in rings around the centre,
-// like Telegram's profile pattern.
-const PATTERN = [
-  [50, 22, 30, .9], [26, 40, 26, .8], [74, 40, 26, .8], [18, 78, 24, .7], [82, 78, 24, .7],
-  [34, 12, 20, .55], [66, 12, 20, .55], [10, 30, 18, .5], [90, 30, 18, .5], [30, 108, 22, .6],
-  [70, 108, 22, .6], [6, 112, 18, .45], [94, 112, 18, .45], [42, 150, 18, .45], [58, 150, 18, .45],
-  [16, 158, 16, .4], [84, 158, 16, .4], [50, 195, 18, .4], [26, 205, 16, .35], [74, 205, 16, .35],
-];
-function StickerPattern({ emoji }) {
-  return (
-    <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", maskImage: "radial-gradient(90% 80% at 50% 40%, #000 30%, transparent 100%)", WebkitMaskImage: "radial-gradient(90% 80% at 50% 40%, #000 30%, transparent 100%)" }}>
-      {PATTERN.map(([x, y, sz, o], i) => {
-        const st = { position: "absolute", left: `${x}%`, top: y, transform: "translate(-50%,-50%)", filter: "brightness(0)", opacity: 0.16 * o };
-        return typeof emoji === "string" && emoji.startsWith("stk:")
-          ? <img key={i} src={`/stickers/${emoji.slice(4)}.webp`} alt="" style={{ ...st, width: sz * 1.2, height: sz * 1.2, objectFit: "contain" }} />
-          : <span key={i} style={{ ...st, fontSize: sz, lineHeight: 1 }}>{emoji}</span>;
-      })}
-    </div>
-  );
-}
-
 /* ---------- ROOM DETAIL ---------- */
 function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack }) {
   const { t } = useT();
@@ -1500,7 +1479,6 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
     <div style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
       {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
       <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 52px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
-        <StickerPattern emoji={room.emoji} />
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
           {hasTgBack() ? <span /> : <HeroButton onClick={onBack} label={t("back")}><ChevronLeft size={20} /></HeroButton>}
           {isOwner ? <HeroButton onClick={onEdit} label={t("editRoom")}><Pencil size={17} /></HeroButton> : <span />}
