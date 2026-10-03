@@ -547,7 +547,7 @@ const sepBelow = (show, inset = LIST.icon + LIST.gap) => show ? {
 function WishRow({ w, right, noPhoto }) {
   const imgs = wishImages(w);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "12px 0", minHeight: 56 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "16px 0", minHeight: 64 }}>
       <GlossTile emoji={w.emoji} image={noPhoto ? null : imgs[0]} images={imgs} size={LIST.icon} bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
@@ -891,7 +891,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {wishes.map(w => (
-            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `${wishImages(w).length ? 0 : 6}px 16px ${openId === w.id ? 14 : 6}px`, cursor: "pointer" }}>
+            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `${wishImages(w).length ? 0 : 4}px 16px ${openId === w.id ? 16 : 4}px`, cursor: "pointer" }}>
               {wishImages(w).length > 0 && <PhotoHeader images={wishImages(w)} />}
               <WishRow w={w} noPhoto={wishImages(w).length > 0} right={
                 <ChevronRight size={20} color={C.t2} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
@@ -1114,7 +1114,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
               </div>
               <Card style={{ padding: `0 ${LIST.pad}px` }}>
                 {g.people.map((p, i) => (
-                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "11px 0", ...sepBelow(i < g.people.length - 1) }}>
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "16px 0", ...sepBelow(i < g.people.length - 1) }}>
                     <Avatar m={p} size={LIST.icon} />
                     <div style={{ color: C.t1, fontSize: 15, fontWeight: 600 }}>{p.name}</div>
                     <div style={{ marginLeft: "auto", color: C.t3, fontSize: 12.5 }}>{t("invitedByYou")}</div>
@@ -1335,7 +1335,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         {loading ? (
           <Card style={{ padding: `0 ${LIST.pad}px` }}>
             {[0, 1].map(i => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "12px 0", ...sepBelow(i === 0) }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: LIST.gap, padding: "16px 0", ...sepBelow(i === 0) }}>
                 <Bone w={LIST.icon} h={LIST.icon} r={8} />
                 <div style={{ flex: 1 }}>
                   <Bone w="55%" h={16} r={6} style={{ marginBottom: 8 }} />
@@ -1754,9 +1754,9 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
 
       <Card style={{ marginTop: 16, padding: `0 ${LIST.pad}px` }}>
         {[[Clock, t("history"), onHistory, "#FF9F0A"], [Link2, t("myInvites"), onInvites, "#5E5CE6"], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui"), "#2E7DF6"]].map(([Icon, l, on, bg], i, arr) => (
-          <div key={i} onClick={on} style={{ height: 52, display: "flex", alignItems: "center", gap: LIST.gap, cursor: "pointer", ...sepBelow(i < arr.length - 1) }}>
-            <div style={{ width: LIST.icon, height: LIST.icon, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Icon size={18} color="#fff" strokeWidth={2.4} />
+          <div key={i} onClick={on} style={{ height: 60, display: "flex", alignItems: "center", gap: LIST.gap, cursor: "pointer", ...sepBelow(i < arr.length - 1) }}>
+            <div style={{ width: LIST.icon, height: LIST.icon, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Icon size={22} color={C.t2} />
             </div>
             <span style={{ flex: 1, textAlign: "left", color: C.t1, fontSize: 16, fontWeight: 500 }}>{l}</span>
             <ChevronRight size={20} color={C.t3} />
