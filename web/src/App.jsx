@@ -51,13 +51,11 @@ function glassFloat() {
   };
 }
 const font =
-  '"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
-// Heavy, condensed, uppercase display face for headings (Wise-like).
-const display = '"Oswald","Arial Narrow",sans-serif';
-const titleStyle = { fontFamily: display, fontWeight: 700, textTransform: "uppercase", letterSpacing: -0.2, lineHeight: 1.0 };
+  '"Montserrat",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
+const titleStyle = { fontWeight: 800, letterSpacing: -0.6, lineHeight: 1.1 };
 const labelStyle = { fontSize: 13, fontWeight: 600, color: C.t2 };
-// Display heading (uppercase, condensed, heavy).
-function Title({ text, size = 34, style }) {
+// Bold heading.
+function Title({ text, size = 32, style }) {
   return <div style={{ ...titleStyle, color: C.t1, fontSize: size, ...style }}>{text}</div>;
 }
 // Soft deep-blue glow at the top of an otherwise black screen.
