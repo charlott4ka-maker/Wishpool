@@ -1188,6 +1188,19 @@ function RoomColorPicker({ value, onChange }) {
     </div>
   );
 }
+// Live preview in the create/edit sheets: the room's hero in miniature, so the
+// chosen sticker, colour and name are seen exactly as the room will look.
+function RoomPreview({ emoji, tint, name }) {
+  return (
+    <div style={{
+      borderRadius: R.card, marginBottom: 24, padding: "24px 16px", textAlign: "center", overflow: "hidden",
+      background: roomHeroBg(tint), transition: "background .3s ease",
+    }}>
+      <div style={{ display: "flex", justifyContent: "center" }}><Sticker emoji={emoji} size={52} /></div>
+      <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, marginTop: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
+    </div>
+  );
+}
 function RoomSheetShell({ title, onClose, children }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 70, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
@@ -1217,9 +1230,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
   };
   return (
     <RoomSheetShell title={t("newRoom")} onClose={onClose}>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-        <GlossTile emoji={emoji} size={96} tint={tint} bare />
-      </div>
+      <RoomPreview emoji={emoji} tint={tint} name={title} />
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
       <RoomStickerPicker value={emoji} onChange={setEmoji} />
@@ -1261,9 +1272,7 @@ function EditRoomSheet({ room, onClose, onSave }) {
   };
   return (
     <RoomSheetShell title={t("editRoom")} onClose={onClose}>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-        <GlossTile emoji={emoji} size={96} tint={tint} bare />
-      </div>
+      <RoomPreview emoji={emoji} tint={tint} name={name.trim() || room.name} />
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
       <RoomStickerPicker value={emoji} onChange={setEmoji} />
