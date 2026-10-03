@@ -16,8 +16,14 @@ export function verifyInitData(initData, botToken) {
     if (calc !== hash) return null;
     const user = JSON.parse(params.get("user") || "{}");
     if (!user.id) return null;
-    return { id: String(user.id), name: user.first_name || "User" };
+    return { id: String(user.id), name: user.first_name || "User", photo: safePhoto(user.photo_url) };
   } catch (e) { return null; }
+}
+
+// Telegram's profile photo URL (only present when the user's privacy settings
+// allow it). Accept plain https URLs only, so it is always safe as an <img src>.
+export function safePhoto(url) {
+  return typeof url === "string" && url.length <= 1000 && /^https:\/\//.test(url) ? url : null;
 }
 
 // Express middleware: resolves req.user from the X-Init-Data header.
@@ -35,9 +41,9 @@ export function authMiddleware(botToken) {
     // No BOT_TOKEN configured: local dev / browser preview only.
     const dev = req.get("X-Dev-User");
     if (dev) {
-      try { const u = JSON.parse(dev); if (u.id) { req.user = { id: String(u.id), name: u.name || "Dev" }; return next(); } } catch {}
+      try { const u = JSON.parse(dev); if (u.id) { req.user = { id: String(u.id), name: u.name || "Dev", photo: safePhoto(u.photo) }; return next(); } } catch {}
     }
-    req.user = { id: "demo", name: "Demo" };
+    req.user = { id: "demo", name: "Demo", photo: null };
     next();
   };
 }

@@ -5,7 +5,11 @@ export function createMemStore() {
   const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [] };
   return {
     async init() {},
-    async ensureUser(u) { if (!D.users[u.id]) D.users[u.id] = { id: u.id, name: u.name, color: colorFor(u.id) }; return D.users[u.id]; },
+    async ensureUser(u) {
+      const cur = D.users[u.id] || { id: u.id, color: colorFor(u.id) };
+      D.users[u.id] = { ...cur, name: u.name, photo: u.photo || null };
+      return D.users[u.id];
+    },
     async getUser(id) { return D.users[id] || null; },
     async isMember(roomId, userId) { return D.members.some(m => m.roomId === roomId && m.userId === userId); },
     async roomMembers(roomId) { return D.members.filter(m => m.roomId === roomId).map(m => D.users[m.userId]).filter(Boolean); },
@@ -53,7 +57,7 @@ export function createMemStore() {
     async listInvites(inviterId) {
       return D.invites.filter(i => i.inviterId === inviterId).sort((a, b) => b.at - a.at).map(i => {
         const u = D.users[i.inviteeId] || {}; const r = D.rooms[i.roomId] || {};
-        return { room_id: i.roomId, invitee_id: i.inviteeId, uname: u.name, ucolor: u.color, rname: r.name, emoji: r.emoji, tint: r.tint };
+        return { room_id: i.roomId, invitee_id: i.inviteeId, uname: u.name, ucolor: u.color, uphoto: u.photo || null, rname: r.name, emoji: r.emoji, tint: r.tint };
       });
     },
   };

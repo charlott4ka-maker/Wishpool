@@ -1,13 +1,53 @@
 import React, { useState, useEffect, useRef, useContext, createContext } from "react";
 import { createPortal } from "react-dom";
-import {
-  Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil,
-} from "lucide-react";
-// Experimental dark-glass reskin of the wishes screen — see the `designSystem`
-// toggle below. Isolated in its own file and lazy-loaded, so regular users (who
-// never flip the toggle) never pay for its extra JS in their bundle.
-const PoolScreenGlass = React.lazy(() => import("./PoolScreenGlass.jsx"));
+import F7ArrowshapeTurnUpRightFill from "framework7-icons/react/esm/ArrowshapeTurnUpRightFill.js";
+import F7Checkmark from "framework7-icons/react/esm/Checkmark.js";
+import F7ChevronLeft from "framework7-icons/react/esm/ChevronLeft.js";
+import F7ChevronRight from "framework7-icons/react/esm/ChevronRight.js";
+import F7ClockFill from "framework7-icons/react/esm/ClockFill.js";
+import F7CubeFill from "framework7-icons/react/esm/CubeFill.js";
+import F7Ellipsis from "framework7-icons/react/esm/Ellipsis.js";
+import F7GiftFill from "framework7-icons/react/esm/GiftFill.js";
+import F7Globe from "framework7-icons/react/esm/Globe.js";
+import F7HeartFill from "framework7-icons/react/esm/HeartFill.js";
+import F7Link from "framework7-icons/react/esm/Link.js";
+import F7LockFill from "framework7-icons/react/esm/LockFill.js";
+import F7PaperplaneFill from "framework7-icons/react/esm/PaperplaneFill.js";
+import F7Pencil from "framework7-icons/react/esm/Pencil.js";
+import F7Person2Fill from "framework7-icons/react/esm/Person2Fill.js";
+import F7PersonFill from "framework7-icons/react/esm/PersonFill.js";
+import F7PhotoFill from "framework7-icons/react/esm/PhotoFill.js";
+import F7Plus from "framework7-icons/react/esm/Plus.js";
+import F7Sparkles from "framework7-icons/react/esm/Sparkles.js";
+import F7TrashFill from "framework7-icons/react/esm/TrashFill.js";
+import F7Xmark from "framework7-icons/react/esm/Xmark.js";
+// One-colour icons drawn after Apple's SF Symbols (Framework7 Icons, MIT; SF
+// Symbols themselves may only be used on Apple platforms). Wrapped to keep the
+// size / color / style API the call sites already use.
+const sf = (I) => function Icon({ size = 20, color = "currentColor", style }) {
+  return <I width={size} height={size} style={{ color, flexShrink: 0, display: "block", ...style }} />;
+};
+const Gift = sf(F7GiftFill);
+const Users = sf(F7Person2Fill);
+const User = sf(F7PersonFill);
+const Plus = sf(F7Plus);
+const Check = sf(F7Checkmark);
+const ChevronLeft = sf(F7ChevronLeft);
+const ChevronRight = sf(F7ChevronRight);
+const X = sf(F7Xmark);
+const Share2 = sf(F7ArrowshapeTurnUpRightFill);
+const Lock = sf(F7LockFill);
+const Dices = sf(F7CubeFill);
+const Sparkles = sf(F7Sparkles);
+const Clock = sf(F7ClockFill);
+const MoreHorizontal = sf(F7Ellipsis);
+const Link2 = sf(F7Link);
+const Heart = sf(F7HeartFill);
+const ImageIcon = sf(F7PhotoFill);
+const Trash2 = sf(F7TrashFill);
+const Globe = sf(F7Globe);
+const Send = sf(F7PaperplaneFill);
+const Pencil = sf(F7Pencil);
 
 /* ---------- design tokens ---------- */
 const C = {
@@ -24,8 +64,10 @@ const C = {
   green: "#34C759",
   greenSoft: "rgba(52,199,89,0.16)",
 };
+// Every button / control is one of exactly two heights.
+const H = { lg: 52, sm: 40 };
 const font =
-  '-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
+  '"Montserrat",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif';
 
 // Safe persistence: uses localStorage when available (real deploy),
 // silently falls back to in-memory in sandboxes that block it (artifact preview).
@@ -86,12 +128,12 @@ function detectLang() {
     return "en";
   } catch (e) { return "en"; }
 }
-function tgUserName() {
-  try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.first_name) || null; }
+function tgUserPhoto() {
+  try { const w = tgWebApp(); const url = w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.photo_url; return url && /^https:\/\//.test(url) ? url : null; }
   catch (e) { return null; }
 }
-function tgUsername() {
-  try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.username) || null; }
+function tgUserName() {
+  try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.first_name) || null; }
   catch (e) { return null; }
 }
 function openTgLink(url) {
@@ -117,10 +159,10 @@ const STR = {
   poolTitle: { uk: "Мої бажання", ru: "Мои желания", en: "My wishes" },
   poolSub: { uk: "Спільний пул. Звідси шериш у кімнати.", ru: "Общий пул. Отсюда шеришь в комнаты.", en: "Your pool. Share items into rooms from here." },
   poolEmptyTitle: { uk: "Пул поки порожній", ru: "Пул пока пустой", en: "Your pool is empty" },
-  poolEmptySub: { uk: "Додай перше бажання — потім вирішиш, кому його показати.", ru: "Добавь первое желание — потом решишь, кому его показать.", en: "Add your first wish — decide who sees it later." },
-  privateNote: { uk: "Приватне — не бачить ніхто", ru: "Приватное — не видит никто", en: "Private — nobody sees it" },
+  poolEmptySub: { uk: "Додай перше бажання, а потім вирішиш, кому його показати.", ru: "Добавь первое желание, а потом решишь, кому его показать.", en: "Add your first wish. Decide who sees it later." },
+  privateNote: { uk: "Приватне, не бачить ніхто", ru: "Приватное, не видит никто", en: "Private, nobody sees it" },
   showInRooms: { uk: "Показати в кімнатах", ru: "Показать в комнатах", en: "Show in rooms" },
-  noRoomsHint: { uk: "Поки немає кімнат — створи на вкладці «Кімнати».", ru: "Пока нет комнат — создай на вкладке «Комнаты».", en: "No rooms yet — create one on the Rooms tab." },
+  noRoomsHint: { uk: "Поки немає кімнат. Створи на вкладці «Кімнати».", ru: "Пока нет комнат. Создай на вкладке «Комнаты».", en: "No rooms yet. Create one on the Rooms tab." },
   deleteWish: { uk: "Видалити бажання", ru: "Удалить желание", en: "Delete wish" },
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
@@ -130,7 +172,7 @@ const STR = {
   roomsTitle: { uk: "Кімнати", ru: "Комнаты", en: "Rooms" },
   roomsSub: { uk: "Запроси друзів і обмінюйтесь бажаннями.", ru: "Пригласи друзей и обменивайтесь желаниями.", en: "Invite friends and swap wishlists." },
   roomsEmptyTitle: { uk: "Поки немає кімнат", ru: "Пока нет комнат", en: "No rooms yet" },
-  roomsEmptySub: { uk: "Створи кімнату й поклич друзів — тут з’являться їхні вішлисти.", ru: "Создай комнату и позови друзей — здесь появятся их вишлисты.", en: "Create a room and invite friends — their wishlists show up here." },
+  roomsEmptySub: { uk: "Створи кімнату й поклич друзів. Тут з’являться їхні вішлисти.", ru: "Создай комнату и позови друзей. Здесь появятся их вишлисты.", en: "Create a room and invite friends. Their wishlists show up here." },
   createRoom: { uk: "Створити кімнату", ru: "Создать комнату", en: "Create a room" },
   membersColon: { uk: "Учасники: {n}", ru: "Участники: {n}", en: "{n} members" },
   yourWishesColon: { uk: "твоїх бажань: {n}", ru: "твоих желаний: {n}", en: "{n} of your wishes" },
@@ -148,7 +190,7 @@ const STR = {
   segLists: { uk: "Списки друзів", ru: "Списки друзей", en: "Friends' lists" },
   segMine: { uk: "Моє в кімнаті", ru: "Моё в комнате", en: "My items here" },
   onlyYouTitle: { uk: "Тут поки лише ти", ru: "Здесь пока только ты", en: "It's just you so far" },
-  onlyYouSub: { uk: "Запроси друзів — їхні вішлисти з’являться тут, і можна буде дарувати.", ru: "Пригласи друзей — их вишлисты появятся тут, и можно будет дарить.", en: "Invite friends — their wishlists appear here and you can start gifting." },
+  onlyYouSub: { uk: "Запроси друзів. Їхні вішлисти з’являться тут, і можна буде дарувати.", ru: "Пригласи друзей. Их вишлисты появятся тут, и можно будет дарить.", en: "Invite friends. Their wishlists appear here and you can start gifting." },
   inviteFriends: { uk: "Запросити друзів", ru: "Пригласить друзей", en: "Invite friends" },
   youGift: { uk: "Ви даруєте", ru: "Вы дарите", en: "You're gifting" },
   taken: { uk: "Зайнято", ru: "Занято", en: "Taken" },
@@ -158,15 +200,15 @@ const STR = {
   giftTakenOk: { uk: "Супер", ru: "Супер", en: "Great" },
   photosHint: { uk: "До 3 фото", ru: "До 3 фото", en: "Up to 3 photos" },
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
-  reserveNote: { uk: "Резерв бачать дарувальники, але власник бажання — ні", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
+  reserveNote: { uk: "Резерв бачать дарувальники, але не власник бажання", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
   nothingSharedTitle: { uk: "Ти ще нічим сюди не поділився", ru: "Ты ещё ничем сюда не поделился", en: "You haven't shared anything here" },
   nothingSharedSub: { uk: "Відкрий бажання в пулі й увімкни цю кімнату.", ru: "Открой желание в пуле и включи эту комнату.", en: "Open a wish in your pool and enable this room." },
   visibleToAll: { uk: "видно всім", ru: "видно всем", en: "visible to all" },
   addFromPool: { uk: "Додати з пулу", ru: "Добавить из пула", en: "Add from pool" },
-  poolEmptyInRoom: { uk: "У пулі поки немає бажань. Додай їх на вкладці «Бажання» — потім відзначиш тут.", ru: "В пуле пока нет желаний. Добавь их на вкладке «Желания» — потом отметишь здесь.", en: "Your pool is empty. Add wishes on the Wishes tab, then check them here." },
+  poolEmptyInRoom: { uk: "У пулі поки немає бажань. Додай їх на вкладці «Бажання», потім відзначиш тут.", ru: "В пуле пока нет желаний. Добавь их на вкладке «Желания», потом отметишь здесь.", en: "Your pool is empty. Add wishes on the Wishes tab, then check them here." },
 
   secretExchange: { uk: "Таємний обмін", ru: "Тайный обмен", en: "Secret exchange" },
-  drawIntro: { uk: "Кожному випадково випаде один учасник. Ти побачиш лише свого — і його бажання.", ru: "Каждому случайно выпадет один участник. Ты увидишь только своего — и его желания.", en: "Everyone is randomly assigned one person. You'll see only yours — and their wishes." },
+  drawIntro: { uk: "Кожному випадково випаде один учасник. Ти побачиш лише свого та його бажання.", ru: "Каждому случайно выпадет один участник. Ты увидишь только своего и его желания.", en: "Everyone is randomly assigned one person. You'll see only yours and their wishes." },
   needThree: { uk: "Для жеребкування потрібно щонайменше 3 учасники. Зараз у кімнаті {n}.", ru: "Для жеребьёвки нужно минимум 3 участника. Сейчас в комнате {n}.", en: "A draw needs at least 3 people. The room has {n} now." },
   giftBudget: { uk: "Бюджет подарунка", ru: "Бюджет подарка", en: "Gift budget" },
   participants: { uk: "Учасники ({n})", ru: "Участники ({n})", en: "Participants ({n})" },
@@ -176,8 +218,8 @@ const STR = {
   youGot: { uk: "Тобі випав(-ла)", ru: "Тебе выпал", en: "You got" },
   budgetSecret: { uk: "Бюджет {b} · тримаємо в секреті 🤫", ru: "Бюджет {b} · держим в секрете 🤫", en: "Budget {b} · keep it secret 🤫" },
   wishesOf: { uk: "Бажання: {name}", ru: "Желания: {name}", en: "{name}'s wishes" },
-  emptyLater: { uk: "Список поки порожній — зазирни пізніше", ru: "Список пока пуст — загляни позже", en: "The list is empty — check back later" },
-  gotItTake: { uk: "Зрозуміло, беру подарунок", ru: "Понятно, беру подарок", en: "Got it — I'll get the gift" },
+  emptyLater: { uk: "Список поки порожній. Зазирни пізніше", ru: "Список пока пуст. Загляни позже", en: "The list is empty. Check back later" },
+  gotItTake: { uk: "Зрозуміло, беру подарунок", ru: "Понятно, беру подарок", en: "Got it, I'll get the gift" },
 
   newWish: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   photo: { uk: "Фото", ru: "Фото", en: "Photo" },
@@ -189,7 +231,7 @@ const STR = {
   whatYouWantPh: { uk: "Напр., бездротові навушники", ru: "Например, беспроводные наушники", en: "e.g. wireless headphones" },
   priceOpt: { uk: "Ціна (необов’язково)", ru: "Цена (необязательно)", en: "Price (optional)" },
   linkOpt: { uk: "Посилання на товар (необов’язково)", ru: "Ссылка на товар (необязательно)", en: "Product link (optional)" },
-  nothingSelectedPrivate: { uk: "Нічого не вибрано — залишиться приватним", ru: "Ничего не выбрано — останется приватным", en: "Nothing selected — it stays private" },
+  nothingSelectedPrivate: { uk: "Без кімнат бажання залишиться приватним", ru: "Без комнат желание останется приватным", en: "With no rooms picked, it stays private" },
   saveWish: { uk: "Зберегти бажання", ru: "Сохранить желание", en: "Save wish" },
 
   statsLine: { uk: "бажань: {w} · кімнат: {r}", ru: "желаний: {w} · комнат: {r}", en: "{w} wishes · {r} rooms" },
@@ -199,7 +241,7 @@ const STR = {
   myInvites: { uk: "Мої запрошення", ru: "Мои приглашения", en: "My invites" },
   invitedByYou: { uk: "запрошений тобою", ru: "приглашён тобой", en: "invited by you" },
   invitedNobody: { uk: "Ти ще нікого не запросила", ru: "Ты пока никого не пригласила", en: "You haven't invited anyone yet" },
-  invitedNobodySub: { uk: "Поділись кімнатою — і люди зʼявляться тут", ru: "Поделись комнатой — и люди появятся здесь", en: "Share a room and people will show up here" },
+  invitedNobodySub: { uk: "Поділись кімнатою, і люди зʼявляться тут", ru: "Поделись комнатой, и люди появятся здесь", en: "Share a room and people will show up here" },
   loadingInv: { uk: "Завантаження…", ru: "Загрузка…", en: "Loading…" },
   creating: { uk: "Створюємо…", ru: "Создаём…", en: "Creating…" },
   savingWish: { uk: "Зберігаємо…", ru: "Сохраняем…", en: "Saving…" },
@@ -214,7 +256,7 @@ const STR = {
   historyEmptySub: { uk: "Тут з’являться подарунки, які ти подарував і отримав.", ru: "Здесь появятся подарки, которые ты подарил и получил.", en: "Gifts you've given and received will show up here." },
   giftingFor: { uk: "даруєш {name}", ru: "даришь {name}", en: "gifting {name}" },
   giftCancelled: { uk: "Скасовано", ru: "Отменено", en: "Cancelled" },
-  roomFull: { uk: "У цій кімнаті вже двоє — місць більше немає", ru: "В этой комнате уже двое — мест больше нет", en: "This room already has two people — no room left" },
+  roomFull: { uk: "У цій кімнаті вже двоє, місць більше немає", ru: "В этой комнате уже двое, мест больше нет", en: "This room already has two people, no room left" },
   editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
   coupleRoomHint: { uk: "У цьому типі кімнати може бути лише двоє учасників.", ru: "В комнате этого типа может быть только два участника.", en: "This room type can only have two members." },
@@ -224,7 +266,7 @@ const STR = {
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
 
   linkCopied: { uk: "Посилання скопійовано", ru: "Ссылка скопирована", en: "Link copied" },
-  inviteText: { uk: "Залітай у кімнату «{name}» у Wishpool — зберемо вішлисти й обміняємось подарунками 🎁", ru: "Залетай в комнату «{name}» в Wishpool — соберём вишлисты и обменяемся подарками 🎁", en: "Join the «{name}» room in Wishpool — let's build wishlists and swap gifts 🎁" },
+  inviteText: { uk: "Залітай у кімнату «{name}» у Wishpool, зберемо вішлисти й обміняємось подарунками 🎁", ru: "Залетай в комнату «{name}» в Wishpool, соберём вишлисты и обменяемся подарками 🎁", en: "Join the «{name}» room in Wishpool, let's build wishlists and swap gifts 🎁" },
 };
 
 function tr(lang, id, params) {
@@ -280,7 +322,7 @@ function ImageLightbox({ src, images, start = 0, onClose }) {
   const touch = useRef(null);
   const go = (d) => setI(x => (x + d + list.length) % list.length);
   const stop = (e) => e.stopPropagation();
-  const roundBtn = { background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: 40, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+  const roundBtn = { background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", width: H.sm, height: H.sm, borderRadius: H.sm, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
   const arrow = (d) => list.length > 1 && (
     <button onClick={(e) => { stop(e); go(d); }} aria-label={d < 0 ? "Previous" : "Next"}
       style={{ ...roundBtn, position: "absolute", top: "50%", [d < 0 ? "left" : "right"]: 12, transform: "translateY(-50%)" }}>
@@ -319,7 +361,7 @@ function PhotoHeader({ images, height = 200, inset = 16 }) {
         {n > 1 && (
           <>
             <div style={{ position: "absolute", top: 12, right: 12, padding: "4px 10px", borderRadius: 999, background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 12.5, fontWeight: 600, pointerEvents: "none" }}>{cur + 1}/{n}</div>
-            <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6, pointerEvents: "none" }}>
+            <div style={{ position: "absolute", bottom: 10, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 8, pointerEvents: "none" }}>
               {images.map((_, idx) => (
                 <span key={idx} style={{ width: idx === cur ? 18 : 6, height: 6, borderRadius: 6, background: idx === cur ? "#fff" : "rgba(255,255,255,0.5)", transition: "width .25s, background .25s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
               ))}
@@ -390,19 +432,25 @@ function compressImage(file, maxDim = 1000, quality = 0.82) {
     img.src = url;
   });
 }
+// Telegram profile photo when we have one; coloured initial otherwise (no photo,
+// hidden by the user's privacy settings, or the image failed to load).
 function Avatar({ m, size = 34 }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [m.photo]);
   return (
     <div style={{
-      width: size, height: size, borderRadius: size, background: m.color,
+      width: size, height: size, borderRadius: size, background: m.color, overflow: "hidden",
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0,
       border: `2px solid ${C.bg}`,
     }}>
-      {m.name.slice(0, 1)}
+      {m.photo && !failed
+        ? <img src={m.photo} alt="" onError={() => setFailed(true)} referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        : m.name.slice(0, 1)}
     </div>
   );
 }
-function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
+function Pill({ children, onClick, kind = "primary", icon, disabled, full, size = "lg" }) {
   const styles = {
     primary: { background: C.blue, color: "#fff", border: "none" },
     ghost: { background: "transparent", color: C.t1, border: `1px solid ${C.line}` },
@@ -415,7 +463,7 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
       style={{
         ...styles, opacity: disabled ? 0.45 : 1, width: full ? "100%" : "auto",
         display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-        padding: "14px 22px", borderRadius: 999, fontSize: 16, fontWeight: 600,
+        height: H[size], padding: size === "lg" ? "0 24px" : "0 16px", borderRadius: 999, fontSize: size === "lg" ? 16 : 14.5, fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap",
         fontFamily: font, cursor: disabled ? "default" : "pointer",
       }}
     >
@@ -426,16 +474,31 @@ function Pill({ children, onClick, kind = "primary", icon, disabled, full }) {
 function Chip({ children, active, onClick, color }) {
   return (
     <button onClick={onClick} style={{
-      padding: "7px 13px", borderRadius: 14, fontSize: 13.5, fontWeight: 600, fontFamily: font,
+      height: H.sm, padding: "0 16px", borderRadius: 999, fontSize: 14, fontWeight: 600, fontFamily: font, flexShrink: 0,
       cursor: "pointer", whiteSpace: "nowrap",
       background: active ? C.blueSoft : "transparent",
       color: active ? "#7FB0FF" : C.t2,
       border: `1px solid ${active ? C.blueLine : C.line}`,
-      display: "inline-flex", alignItems: "center", gap: 6,
+      display: "inline-flex", alignItems: "center", gap: 8,
     }}>
       {color && <span style={{ width: 7, height: 7, borderRadius: 7, background: color }} />}
       {children}
     </button>
+  );
+}
+function Segmented({ options, value, onChange, style }) {
+  return (
+    <div style={{ display: "flex", gap: 4, background: C.card, height: H.lg, padding: (H.lg - H.sm) / 2, borderRadius: 999, ...style }}>
+      {options.map(([k, l]) => {
+        const on = value === k;
+        return (
+          <button key={k} onClick={() => onChange(k)} style={{
+            flex: 1, padding: "0 10px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font,
+            fontSize: 14, fontWeight: 600, background: on ? C.blue : "transparent", color: on ? "#fff" : C.t2,
+          }}>{l}</button>
+        );
+      })}
+    </div>
   );
 }
 function Card({ children, style, onClick }) {
@@ -450,7 +513,7 @@ function Sheet({ title, onClose, children }) {
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 14px" }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
           <div style={{ color: C.t1, fontSize: 20, fontWeight: 800 }}>{title || ""}</div>
-          <button onClick={onClose} style={{ background: C.card2, border: "none", color: C.t2, width: 32, height: 32, borderRadius: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: C.card2, border: "none", color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <X size={18} />
           </button>
         </div>
@@ -464,7 +527,7 @@ function Empty({ emoji, title, sub }) {
     <div style={{ padding: "48px 24px", animation: "fadeUp .4s ease", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
       <Sticker emoji={emoji} size={72} />
       <div style={{ color: C.t1, fontSize: 18, fontWeight: 700, marginTop: 16 }}>{title}</div>
-      <div style={{ color: C.t2, fontSize: 14.5, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
+      <div style={{ color: C.t2, fontSize: 14.5, marginTop: 8, maxWidth: 260, lineHeight: 1.4 }}>{sub}</div>
     </div>
   );
 }
@@ -488,11 +551,11 @@ function SkeletonScreen({ tab }) {
       {header && (
         <div style={{ padding: "6px 4px 14px" }}>
           <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{header.title}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{header.sub}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{header.sub}</div>
         </div>
       )}
       {[0, 1, 2].map(i => (
-        <Card key={i} style={{ padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 14 }}>
+        <Card key={i} style={{ padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 12 }}>
           <Bone w={56} h={56} r={16} />
           <div style={{ flex: 1 }}>
             <Bone w="70%" h={16} r={6} style={{ marginBottom: 8 }} />
@@ -508,11 +571,11 @@ function SkeletonScreen({ tab }) {
 function WishRow({ w, right, noPhoto }) {
   const imgs = wishImages(w);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px" }}>
       <GlossTile emoji={w.emoji} image={noPhoto ? null : imgs[0]} images={imgs} size={52} bare />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
-        {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{w.price}</div>}
+        {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{w.price}</div>}
         {w.link && (
           <button onClick={(e) => { e.stopPropagation(); window.open(w.link, "_blank"); }}
             style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#7FB0FF", fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, fontFamily: font, maxWidth: "100%" }}>
@@ -543,13 +606,8 @@ export default function App() {
   const [reserved, setReserved] = useState(() => store.get("wp_reserved", {}));
   const [loading, setLoading] = useState(online);
 
-  // Dev-only design-system toggle: lets one specific Telegram account (by @username)
-  // preview alternate looks for the wishes screen without exposing any switch to
-  // regular users. Defaults to classic for everyone, including that account, until
-  // it's flipped — and flipping it back is instant (no redeploy).
-  const isDesignDevUser = tgUsername() === "reckliess";
-  const [designSystem, setDesignSystem] = useState(() => store.get("wp_design_system", "classic"));
-  useEffect(() => { store.set("wp_design_system", designSystem); }, [designSystem]);
+  // The old dev-only "Glass" preview is gone; drop its saved choice.
+  useEffect(() => { try { window.localStorage.removeItem("wp_design_system"); } catch (e) {} }, []);
 
   // Persist locally only in single-device (offline) mode. In Telegram the server is the source of truth.
   useEffect(() => { if (!online) store.set("wp_rooms", rooms); }, [rooms, online]);
@@ -686,10 +744,12 @@ export default function App() {
 
   return (
     <LangCtx.Provider value={{ lang, setLang, t }}>
-    <div style={{ background: C.bg, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font }}>
+    <div style={{ background: C.bg, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500 }}>
       <StickerDefs />
       <style>{`
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+        body,input,button,textarea,select{font-weight:500;font-family:inherit}
+        input::placeholder{font-weight:500}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
         @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
@@ -705,31 +765,18 @@ export default function App() {
           {loading ? <SkeletonScreen tab={tab} /> : (
             <>
               {tab === "pool" && (
-                designSystem === "glass" ? (
-                  <React.Suspense fallback={<SkeletonScreen tab="pool" />}>
-                    <PoolScreenGlass wishes={wishes} rooms={rooms}
-                      onAdd={() => setOverlay({ type: "add" })}
-                      onToggleRoom={toggleWishRoom}
-                      onDelete={deleteWish}
-                      GlossTile={GlossTile}
-                      t={t}
-                    />
-                  </React.Suspense>
-                ) : (
-                  <PoolScreen wishes={wishes} rooms={rooms}
-                    onAdd={() => setOverlay({ type: "add" })}
-                    onToggleRoom={toggleWishRoom}
-                    onDelete={deleteWish}
-                  />
-                )
+                <PoolScreen wishes={wishes} rooms={rooms}
+                  onAdd={() => setOverlay({ type: "add" })}
+                  onToggleRoom={toggleWishRoom}
+                  onDelete={deleteWish}
+                />
               )}
               {tab === "rooms" && (
                 <RoomsScreen rooms={rooms} wishes={wishes}
                   onOpen={(id) => setOverlay({ type: "room", roomId: id })}
                   onCreate={() => setOverlay({ type: "createRoom" })} />
               )}
-              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })}
-                isDesignDevUser={isDesignDevUser} designSystem={designSystem} setDesignSystem={setDesignSystem} />}
+              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
             </>
           )}
         </div>
@@ -810,7 +857,7 @@ function FallbackBack({ onBack }) {
     <div style={{ position: "sticky", top: 0, zIndex: 10, background: C.bg, padding: "14px 16px 6px" }}>
       <button onClick={onBack} style={{
         display: "inline-flex", alignItems: "center", gap: 4, background: C.card, color: C.t1,
-        border: `1px solid ${C.line}`, borderRadius: 999, padding: "8px 14px 8px 10px", fontSize: 14.5,
+        border: `1px solid ${C.line}`, borderRadius: 999, height: H.sm, padding: "0 16px 0 12px", fontSize: 14.5,
         fontWeight: 600, fontFamily: font, cursor: "pointer",
       }}>
         <ChevronLeft size={18} /> {t("back")}
@@ -828,7 +875,7 @@ function TabBar({ tab, setTab }) {
   return (
     <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
       <div style={{
-        display: "flex", gap: 6, background: hex("#1C1C1E", 0.92), backdropFilter: "blur(20px)",
+        display: "flex", gap: 8, background: hex("#1C1C1E", 0.92), backdropFilter: "blur(20px)",
         padding: 6, borderRadius: 999, border: `1px solid ${C.line}`,
       }}>
         {items.map(it => {
@@ -836,7 +883,7 @@ function TabBar({ tab, setTab }) {
           return (
             <button key={it.id} onClick={() => setTab(it.id)} style={{
               display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-              padding: "9px 20px", borderRadius: 999, border: "none", cursor: "pointer",
+              height: H.lg, padding: "0 20px", justifyContent: "center", borderRadius: 999, border: "none", cursor: "pointer",
               background: on ? C.blueSoft : "transparent", color: on ? "#7FB0FF" : C.t2, fontFamily: font,
             }}>
               <Icon size={21} />
@@ -858,7 +905,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "6px 4px 14px" }}>
         <div>
           <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("poolTitle")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{t("poolSub")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("poolSub")}</div>
         </div>
       </div>
 
@@ -885,9 +932,9 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                       ))}
                   </div>
                   {w.rooms.length === 0 && rooms.length > 0 && (
-                    <div style={{ color: C.t3, fontSize: 12.5, marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}><Lock size={13} />{t("privateNote")}</div>
+                    <div style={{ color: C.t3, fontSize: 12.5, marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} />{t("privateNote")}</div>
                   )}
-                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 14, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 8, background: "none", border: "none", height: H.sm, padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <Trash2 size={15} /> {t("deleteWish")}
                   </button>
                 </div>
@@ -897,7 +944,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
         </div>
       )}
 
-      <div style={{ marginTop: 18 }}>
+      <div style={{ marginTop: 24 }}>
         <Pill full kind="primary" icon={<Plus size={19} />} onClick={onAdd}>{t("addWish")}</Pill>
       </div>
     </div>
@@ -911,7 +958,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
     <div style={{ animation: "fadeUp .3s ease" }}>
       <div style={{ padding: "6px 4px 14px" }}>
         <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("roomsTitle")}</div>
-        <div style={{ color: C.t2, fontSize: 14, marginTop: 2 }}>{t("roomsSub")}</div>
+        <div style={{ color: C.t2, fontSize: 14, marginTop: 4 }}>{t("roomsSub")}</div>
       </div>
 
       {rooms.length === 0 ? (
@@ -922,12 +969,12 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
             const shared = wishes.filter(w => w.rooms.includes(r.id)).length;
             return (
               <Card key={r.id} style={{ padding: 16, cursor: "pointer", overflow: "hidden", position: "relative" }}>
-                <div onClick={() => onOpen(r.id)} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div onClick={() => onOpen(r.id)} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ position: "absolute", inset: 0, background: `radial-gradient(80% 120% at 100% 0%, ${hex(r.tint, 0.14)} 0%, transparent 60%)`, pointerEvents: "none" }} />
                   <GlossTile emoji={r.emoji} size={56} tint={r.tint} bare />
                   <div style={{ flex: 1 }}>
                     <div style={{ color: C.t1, fontSize: 17.5, fontWeight: 700 }}>{r.name}</div>
-                    <div style={{ color: C.t2, fontSize: 13.5, marginTop: 2 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
+                    <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{t("membersColon", { n: r.members.length })} · {t("yourWishesColon", { n: shared })}</div>
                   </div>
                   <div style={{ display: "flex", marginRight: 6 }}>
                     {r.members.slice(0, 3).map((m, i) => (
@@ -942,7 +989,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
         </div>
       )}
 
-      <div style={{ marginTop: 18 }}>
+      <div style={{ marginTop: 24 }}>
         <Pill full kind={rooms.length === 0 ? "primary" : "ghost"} icon={<Plus size={19} />} onClick={onCreate}>{t("createRoom")}</Pill>
       </div>
     </div>
@@ -973,14 +1020,14 @@ function CreateRoomSheet({ onClose, onCreate }) {
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
       <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{t("newRoom")}</div>
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newRoom")}</div>
 
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
           <GlossTile emoji={preset.emoji} size={80} tint={preset.tint} />
         </div>
 
         <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("roomType")}</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           {ROOM_PRESETS.map(p => (
             <Chip key={p.type} active={preset.type === p.type} color={p.tint} onClick={() => setPreset(p)}>
               <Sticker emoji={p.emoji} size={15} />{t(p.key)}
@@ -988,7 +1035,7 @@ function CreateRoomSheet({ onClose, onCreate }) {
           ))}
         </div>
         {preset.type === "couple" && (
-          <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 18 }}>{t("coupleRoomHint")}</div>
+          <div style={{ color: C.t3, fontSize: 12.5, marginTop: -10, marginBottom: 16 }}>{t("coupleRoomHint")}</div>
         )}
 
         <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
@@ -1019,16 +1066,16 @@ function EditRoomSheet({ room, onClose, onSave }) {
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
       <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{t("editRoom")}</div>
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("editRoom")}</div>
 
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
           <GlossTile emoji={emoji} size={80} tint={room.tint} />
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 18 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 16 }}>
           {emojiChoices.map(e => (
             <button key={e} onClick={() => setEmoji(e)} style={{
-              width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
+              width: H.lg, height: H.lg, borderRadius: 16, fontSize: 22, cursor: "pointer",
               background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
             }}><Sticker emoji={e} size={22} /></button>
           ))}
@@ -1070,7 +1117,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
           <div style={{ fontSize: 56, lineHeight: 1 }}>🔗</div>
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("invitedNobody")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{t("invitedNobodySub")}</div>
           {rooms.length > 0 && (
             <div style={{ marginTop: 16 }}>
               <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>
@@ -1078,14 +1125,14 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
           )}
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {groups.map(g => (
             <div key={g.room.id}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                 <GlossTile emoji={g.room.emoji} size={30} tint={g.room.tint} />
                 <div style={{ color: C.t1, fontSize: 15, fontWeight: 700 }}>{g.room.name}</div>
                 <div style={{ marginLeft: "auto" }}>
-                  <Pill kind="soft" icon={<Share2 size={14} />} onClick={() => onShare({ id: g.room.id, name: g.room.name })}>{t("shareBtn")}</Pill>
+                  <Pill size="sm" kind="soft" icon={<Share2 size={14} />} onClick={() => onShare({ id: g.room.id, name: g.room.name })}>{t("shareBtn")}</Pill>
                 </div>
               </div>
               <Card style={{ padding: "4px 14px" }}>
@@ -1124,10 +1171,10 @@ function HistorySheet({ online, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 10px 4px" }}>
           <div style={{ fontSize: 56, lineHeight: 1 }}>🎁</div>
           <div style={{ color: C.t1, fontSize: 16, fontWeight: 700, marginTop: 12 }}>{t("historyEmptyTitle")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8, maxWidth: 260, lineHeight: 1.4 }}>{t("historyEmptySub")}</div>
         </div>
       ) : (
-        <Card style={{ padding: "4px 16px" }}>
+        <Card style={{ padding: "4px 20px" }}>
           {gifts.map((w, i) => (
             <div key={w.id} style={{ borderBottom: i < gifts.length - 1 ? `1px solid ${C.line}` : "none" }}>
               <WishRow w={w} right={w.owner && <span style={{ color: C.t3, fontSize: 12.5 }}>{t("giftingFor", { name: w.owner.name })}</span>} />
@@ -1153,12 +1200,12 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
       {wishes.length === 0 ? (
         <div style={{ color: C.t2, fontSize: 14, padding: "6px 2px 4px", lineHeight: 1.4 }}>{t("poolEmptyInRoom")}</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {wishes.map(w => {
             const inRoom = w.rooms.includes(roomId);
             const isPending = pendingId === w.id;
             return (
-              <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
+              <div key={w.id} onClick={() => handleToggle(w.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 4px", cursor: isPending ? "default" : "pointer", opacity: isPending ? 0.6 : 1 }}>
                 <GlossTile emoji={w.emoji} image={wishImages(w)[0]} images={wishImages(w)} size={44} bare />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: C.t1, fontSize: 15.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
@@ -1218,9 +1265,9 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
-      ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-      : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, padding: "8px 12px" }}>{t("taken")}</span>
-        : <Pill kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
+      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
+      : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
+        : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
   );
 
   return (
@@ -1230,11 +1277,11 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         <div style={{ textAlign: "center", padding: "10px 0 18px", position: "relative" }}>
           <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, background: `radial-gradient(circle, ${hex(room.tint, 0.16)} 0%, transparent 70%)`, pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "center" }}><GlossTile emoji={room.emoji} size={92} tint={room.tint} /></div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
             <div style={{ color: C.t1, fontSize: 24, fontWeight: 800 }}>{room.name}</div>
             {isOwner && (
-              <button onClick={onEdit} style={{ background: C.card2, border: `1px solid ${C.line}`, color: C.t2, width: 28, height: 28, borderRadius: 28, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Pencil size={13} />
+              <button onClick={onEdit} style={{ background: C.card2, border: `1px solid ${C.line}`, color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Pencil size={18} />
               </button>
             )}
           </div>
@@ -1243,15 +1290,15 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               <div key={m.id} style={{ marginLeft: i ? -10 : 0, textAlign: "center" }}><Avatar m={m} size={38} /></div>
             ))}
             {!coupleFull && (
-              <button onClick={onInvite} style={{ marginLeft: 8, width: 38, height: 38, borderRadius: 38, border: `1px dashed ${C.blueLine}`, background: C.blueSoft, color: "#7FB0FF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <button onClick={onInvite} style={{ marginLeft: 8, width: H.sm, height: H.sm, borderRadius: H.sm, border: `1px dashed ${C.blueLine}`, background: C.blueSoft, color: "#7FB0FF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Plus size={18} />
               </button>
             )}
           </div>
           {coupleFull ? (
-            <div style={{ marginTop: 14, color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
+            <div style={{ marginTop: 16, color: C.t3, fontSize: 13 }}>{t("coupleFullHint")}</div>
           ) : (
-            <div style={{ marginTop: 14, display: "flex", gap: 10, justifyContent: "center" }}>
+            <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
               <Pill kind={room.type === "couple" ? "primary" : "ghost"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill>
               {room.type !== "couple" && (
                 <Pill kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill>
@@ -1260,19 +1307,12 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14, marginBottom: 16 }}>
-          {[["lists", t("segLists")], ["mine", t("segMine")]].map(([k, l]) => (
-            <button key={k} onClick={() => setSeg(k)} style={{
-              flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-              fontSize: 14, fontWeight: 600, background: seg === k ? C.card2 : "transparent", color: seg === k ? C.t1 : C.t2,
-            }}>{l}</button>
-          ))}
-        </div>
+        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} style={{ marginBottom: 16 }} />
 
         {loading ? (
-          <Card style={{ padding: "4px 16px" }}>
+          <Card style={{ padding: "4px 20px" }}>
             {[0, 1].map(i => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", borderBottom: i === 0 ? `1px solid ${C.line}` : "none" }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: i === 0 ? `1px solid ${C.line}` : "none" }}>
                 <Bone w={52} h={52} r={16} />
                 <div style={{ flex: 1 }}>
                   <Bone w="55%" h={16} r={6} style={{ marginBottom: 8 }} />
@@ -1290,13 +1330,13 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               </div>
             </div>
           ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             {lists.map(({ member: m, wishes: mws }) => (
               <div key={m.id}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
                   <Avatar m={m} size={28} /><span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700 }}>{m.name}</span>
                 </div>
-                <Card style={{ padding: "4px 16px" }}>
+                <Card style={{ padding: "4px 20px" }}>
                   {mws.map((w, i, arr) => (
                     <div key={w.id} style={{ borderBottom: i < arr.length - 1 ? `1px solid ${C.line}` : "none" }}>
                       <WishRow w={w} right={reserveRight(w)} />
@@ -1317,26 +1357,26 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           <div>
             {mine.length === 0
               ? <Empty emoji="👀" title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
-              : <Card style={{ padding: "4px 16px" }}>
+              : <Card style={{ padding: "4px 20px" }}>
                 {mine.map((w, i) => (
                   <div key={w.id} style={{ borderBottom: i < mine.length - 1 ? `1px solid ${C.line}` : "none" }}>
                     <WishRow w={w} right={<span style={{ color: C.t3, fontSize: 12.5 }}>{t("visibleToAll")}</span>} />
                   </div>
                 ))}
               </Card>}
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 16 }}>
               <Pill full kind="ghost" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>
             </div>
           </div>
         )}
 
-        <div style={{ marginTop: 30, display: "flex", justifyContent: "center" }}>
+        <div style={{ marginTop: 32, display: "flex", justifyContent: "center" }}>
           {isOwner ? (
-            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", padding: "8px 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => tgConfirm(t("confirmDelete"), onDelete)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
               <Trash2 size={16} /> {t("deleteRoom")}
             </button>
           ) : (
-            <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", padding: "8px 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <button onClick={() => tgConfirm(t("confirmLeave"), onLeave)} style={{ background: "none", border: "none", height: H.sm, padding: "0 12px", cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
               <X size={16} /> {t("leaveRoom")}
             </button>
           )}
@@ -1445,7 +1485,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
   return (
     <div style={{ position: "absolute", inset: 0, background: C.bg, zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
       <div style={{ padding: "16px 18px", display: "flex", justifyContent: "flex-end" }}>
-        <button onClick={onClose} style={{ background: C.card, border: `1px solid ${C.line}`, color: C.t2, width: 34, height: 34, borderRadius: 34, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <button onClick={onClose} style={{ background: C.card, border: `1px solid ${C.line}`, color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <X size={18} />
         </button>
       </div>
@@ -1459,7 +1499,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
           </div>
 
           {!canDraw ? (
-            <div style={{ marginTop: 26 }}>
+            <div style={{ marginTop: 24 }}>
               <div style={{ color: C.t2, fontSize: 14.5, marginBottom: 16, lineHeight: 1.4 }}>
                 {t("needThree", { n: room.members.length })}
               </div>
@@ -1468,20 +1508,20 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
           ) : (
           <>
           <Card style={{ padding: 16, marginTop: 24, textAlign: "left" }}>
-            <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{t("giftBudget")}</div>
+            <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{t("giftBudget")}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {["500 ₴", "1 000 ₴", "2 000 ₴"].map(b => (
                 <Chip key={b} active={budget === b} onClick={() => setBudget(b)}>{b}</Chip>
               ))}
             </div>
             <div style={{ height: 16 }} />
-            <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t("participants", { n: room.members.length })}</div>
+            <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("participants", { n: room.members.length })}</div>
             <div style={{ display: "flex" }}>
               {room.members.map((m, i) => <div key={m.id} style={{ marginLeft: i ? -8 : 0 }}><Avatar m={m} size={34} /></div>)}
             </div>
           </Card>
 
-          <div style={{ marginTop: 22 }}>
+          <div style={{ marginTop: 24 }}>
             <Pill full kind="primary" icon={<Sparkles size={18} />} onClick={() => setStage("drawing")}>{t("runDraw")}</Pill>
           </div>
           </>
@@ -1498,36 +1538,36 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
               </div>
             </div>
           </div>
-          <div style={{ color: C.t1, fontSize: 20, fontWeight: 700, marginTop: 28 }}>{t("shuffling")}</div>
-          <div style={{ color: C.t2, fontSize: 14, marginTop: 6 }}>{t("dealing")}</div>
+          <div style={{ color: C.t1, fontSize: 20, fontWeight: 700, marginTop: 32 }}>{t("shuffling")}</div>
+          <div style={{ color: C.t2, fontSize: 14, marginTop: 8 }}>{t("dealing")}</div>
         </div>
       )}
 
       {stage === "reveal" && target && (
         <div style={{ padding: "20px 22px", textAlign: "center" }}>
           <div style={{ color: C.blue, fontSize: 14, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{t("youGot")}</div>
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 18, animation: "pop .5s ease" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 24, animation: "pop .5s ease" }}>
             <Avatar m={target} size={96} />
           </div>
           <div style={{ color: C.t1, fontSize: 28, fontWeight: 800, marginTop: 16 }}>{target.name}</div>
           <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("budgetSecret", { b: budget })}</div>
 
-          <div style={{ marginTop: 26, textAlign: "left" }}>
+          <div style={{ marginTop: 24, textAlign: "left" }}>
             <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t("wishesOf", { name: target.name })}</div>
-            <Card style={{ padding: "4px 16px" }}>
+            <Card style={{ padding: "4px 20px" }}>
               {targetWishes.length ? targetWishes.map((w, i) => (
                 <div key={w.id} style={{ borderBottom: i < targetWishes.length - 1 ? `1px solid ${C.line}` : "none" }}>
                   <WishRow w={w} right={
                     isMine(w)
-                      ? <Pill kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
-                      : <Pill kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
+                      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
+                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<Sticker emoji="🎉" size={17} /></Pill>
                   } />
                 </div>
               )) : <div style={{ padding: 16, color: C.t3, fontSize: 13.5 }}>{t("emptyLater")}</div>}
             </Card>
           </div>
 
-          <div style={{ marginTop: 22 }}>
+          <div style={{ marginTop: 24 }}>
             <Pill full kind="primary" icon={<Check size={18} />} onClick={onClose}>{t("gotItTake")}</Pill>
           </div>
         </div>
@@ -1569,16 +1609,9 @@ function AddSheet({ rooms, onClose, onSave }) {
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
       <div style={{ position: "relative", background: C.card, borderRadius: "28px 28px 0 0", padding: "10px 20px 32px", border: `1px solid ${C.line}`, animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 18 }}>{t("newWish")}</div>
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newWish")}</div>
 
-        <div style={{ display: "flex", gap: 6, background: C.card2, padding: 4, borderRadius: 12, marginBottom: 14 }}>
-          {[["photo", t("photo")], ["emoji", t("emojiTab")]].map(([k, l]) => (
-            <button key={k} onClick={() => setCover(k)} style={{
-              flex: 1, padding: "9px", borderRadius: 9, border: "none", cursor: "pointer", fontFamily: font,
-              fontSize: 13.5, fontWeight: 600, background: cover === k ? C.blue : "transparent", color: cover === k ? "#fff" : C.t2,
-            }}>{l}</button>
-          ))}
-        </div>
+        <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} style={{ marginBottom: 16 }} />
 
         {cover === "photo" ? (
           <div style={{ marginBottom: 16 }}>
@@ -1616,10 +1649,10 @@ function AddSheet({ rooms, onClose, onSave }) {
             )}
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, marginBottom: 16 }}>
             {WISH_EMOJI.map(e => (
               <button key={e} onClick={() => setEmoji(e)} style={{
-                width: 44, height: 44, borderRadius: 14, fontSize: 22, cursor: "pointer",
+                width: "100%", height: H.lg, borderRadius: 16, fontSize: 22, cursor: "pointer",
                 background: emoji === e ? C.blueSoft : C.card2, border: `1px solid ${emoji === e ? C.blueLine : C.line}`,
               }}><Sticker emoji={e} size={22} /></button>
             ))}
@@ -1639,7 +1672,7 @@ function AddSheet({ rooms, onClose, onSave }) {
             </Chip>
           ))}
         </div>
-        <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}><Lock size={13} />{t("nothingSelectedPrivate")}</div>
+        <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} />{t("nothingSelectedPrivate")}</div>
 
         <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
           {busy ? t("savingWish") : t("saveWish")}
@@ -1655,7 +1688,7 @@ function Field({ label, value, onChange, placeholder }) {
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
           width: "100%", background: C.card2, border: `1px solid ${C.line}`, borderRadius: 14,
-          padding: "14px 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
+          height: H.lg, padding: "0 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none",
         }}
         onFocus={e => e.target.style.borderColor = C.blueLine}
         onBlur={e => e.target.style.borderColor = C.line} />
@@ -1664,62 +1697,39 @@ function Field({ label, value, onChange, placeholder }) {
 }
 
 /* ---------- PROFILE ---------- */
-function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesignDevUser, designSystem, setDesignSystem }) {
+function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
   const { t, lang, setLang } = useT();
-  const me = { name: tgUserName() || t("guest"), color: "#7B61FF" };
+  const me = { name: tgUserName() || t("guest"), color: "#7B61FF", photo: tgUserPhoto() };
   const gifting = Object.values(reserved || {}).filter(v => v === "you").length;
   return (
     <div style={{ animation: "fadeUp .3s ease", textAlign: "center", paddingTop: 12 }}>
       <div style={{ display: "flex", justifyContent: "center" }}><Avatar m={me} size={92} /></div>
-      <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 14 }}>{me.name}</div>
+      <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 16 }}>{me.name}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("statsLine", { w: wishes.length, r: rooms.length })}</div>
 
-      <div style={{ display: "flex", gap: 12, marginTop: 22 }}>
-        <Card style={{ flex: 1, padding: 18 }}>
+      <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+        <Card style={{ flex: 1, padding: 20 }}>
           <Gift size={22} color={C.blue} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{wishes.reduce((n, w) => n + w.rooms.length, 0)}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("sharedStat")}</div>
         </Card>
-        <Card style={{ flex: 1, padding: 18 }}>
+        <Card style={{ flex: 1, padding: 20 }}>
           <Heart size={22} color="#FF4D8D" />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{gifting}</div>
           <div style={{ color: C.t2, fontSize: 12.5 }}>{t("giftingStat")}</div>
         </Card>
       </div>
 
-      <div style={{ marginTop: 18 }}>
-        <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8, textAlign: "left", display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ marginTop: 24 }}>
+        <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8, textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}>
           <Globe size={15} /> {t("language")}
         </div>
-        <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14 }}>
-          {LANGS.map(l => (
-            <button key={l} onClick={() => setLang(l)} style={{
-              flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-              fontSize: 13.5, fontWeight: 600, background: lang === l ? C.blue : "transparent", color: lang === l ? "#fff" : C.t2,
-            }}>{LANG_SHORT[l]}</button>
-          ))}
-        </div>
+        <Segmented options={LANGS.map(l => [l, LANG_SHORT[l]])} value={lang} onChange={setLang} />
       </div>
 
-      {isDesignDevUser && (
-        <div style={{ marginTop: 18 }}>
-          <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8, textAlign: "left" }}>
-            Design system (dev only)
-          </div>
-          <div style={{ display: "flex", gap: 6, background: C.card, padding: 5, borderRadius: 14 }}>
-            {[["classic", "Classic"], ["glass", "Glass"]].map(([k, l]) => (
-              <button key={k} onClick={() => setDesignSystem(k)} style={{
-                flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font,
-                fontSize: 13.5, fontWeight: 600, background: designSystem === k ? C.blue : "transparent", color: designSystem === k ? "#fff" : C.t2,
-              }}>{l}</button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         {[[Clock, t("history"), onHistory], [Link2, t("myInvites"), onInvites], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui")]].map(([Icon, l, on], i) => (
-          <Card key={i} onClick={on} style={{ padding: 16, display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}>
+          <Card key={i} onClick={on} style={{ padding: 20, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
             <Icon size={20} color={C.t2} />
             <span style={{ flex: 1, textAlign: "left", color: C.t1, fontSize: 15.5, fontWeight: 600 }}>{l}</span>
             <ChevronRight size={19} color={C.t3} />
