@@ -401,54 +401,53 @@ function GlassButton({ onClick, children, size = 40, label, style }) {
     </button>
   );
 }
-// Folder: a tinted back plate with a tab, the room's wish covers tucked inside,
-// a frosted front pocket, and the room emoji as a sticker badge on the front.
+// Folder: a dark glass body with the room's wish photos fanned out of the top,
+// a frosted pocket over the lower half carrying the name and member count, and
+// the room emoji stuck on the pocket as a sticker.
 function FolderCover({ w, size }) {
   return (
     <div style={{
-      width: size, height: size, borderRadius: size * 0.24, overflow: "hidden",
-      background: w.blank ? "linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08))" : C.card2,
-      boxShadow: "0 6px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
+      width: size, height: size * 1.35, borderRadius: size * 0.2, overflow: "hidden",
+      background: w.blank ? "linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))" : C.card2,
+      boxShadow: "0 8px 18px rgba(0,0,0,0.5)",
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       {w.blank ? null : w.image
         ? <img src={w.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        : <Sticker emoji={w.emoji} size={size * 0.5} />}
+        : <Sticker emoji={w.emoji} size={size * 0.48} />}
     </div>
   );
 }
-const FAN = { 1: [[0, -3]], 2: [[-18, -7], [18, 6]], 3: [[-30, -10], [30, 9], [0, -1]] };
+const FAN = { 1: [[0, -3]], 2: [[-17, -6], [17, 5]], 3: [[-26, -8], [26, 7], [0, -1]] };
 function RoomFolder({ room, wishes, onOpen, width = 152 }) {
   const { t } = useT();
   const shared = wishes.filter(w => w.rooms.includes(room.id));
   const covers = shared.length ? shared.slice(0, 3) : [{ id: "b1", blank: true }, { id: "b2", blank: true }];
-  const H = 170, PANEL = 96, TILE = 74, tint = room.tint;
+  const H = 168, POCKET = 78, TILE = 78;
   return (
     <div onClick={onOpen} style={{ position: "relative", width, height: H, flexShrink: 0, cursor: "pointer", animation: "fadeUp .3s ease" }}>
-      <div style={{ position: "absolute", left: "15%", right: "15%", top: 30, height: 90, borderRadius: "50%", background: hex(tint, 0.35), filter: "blur(30px)", pointerEvents: "none" }} />
-      {/* back plate + tab */}
-      <div style={{ position: "absolute", top: 8, left: 12, width: "42%", height: 26, borderRadius: "12px 12px 0 0", background: hex(tint, 0.5) }} />
-      <div style={{ position: "absolute", top: 22, left: 0, right: 0, bottom: 0, borderRadius: 24, background: `linear-gradient(170deg, ${hex(tint, 0.5)} 0%, ${hex(tint, 0.16)} 70%)`, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)" }} />
-      {/* contents */}
+      {/* body */}
+      <div style={{ position: "absolute", top: 22, left: 0, right: 0, bottom: 0, borderRadius: 26, background: `${GLASS.sheen}, rgba(255,255,255,0.06)`, boxShadow: GLASS.rim }} />
+      {/* wish photos */}
       {covers.map((w, i) => {
         const [dx, rot] = FAN[covers.length][i];
         return (
-          <div key={w.id} style={{ position: "absolute", top: 30, left: "50%", transform: `translateX(calc(-50% + ${dx}px)) rotate(${rot}deg)` }}>
+          <div key={w.id} style={{ position: "absolute", top: 4, left: "50%", transform: `translateX(calc(-50% + ${dx}px)) rotate(${rot}deg)` }}>
             <FolderCover w={w} size={TILE} />
           </div>
         );
       })}
-      {/* frosted front pocket */}
+      {/* frosted pocket */}
       <div style={{
-        position: "absolute", left: 0, right: 0, bottom: 0, height: PANEL, borderRadius: 24,
-        background: `${GLASS.sheen}, linear-gradient(180deg, ${hex(tint, 0.26)} 0%, ${hex(tint, 0.08)} 100%), rgba(255,255,255,0.06)`,
-        backdropFilter: "blur(14px) saturate(170%)", WebkitBackdropFilter: "blur(14px) saturate(170%)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.28), 0 -4px 18px rgba(0,0,0,0.22), 0 12px 28px rgba(0,0,0,0.35)",
-        padding: "0 14px 14px", display: "flex", flexDirection: "column", justifyContent: "flex-end",
+        position: "absolute", left: 0, right: 0, bottom: 0, height: POCKET, borderRadius: 26,
+        background: "linear-gradient(180deg, rgba(48,48,54,0.32) 0%, rgba(28,28,32,0.88) 75%)",
+        backdropFilter: "blur(16px) saturate(160%)", WebkitBackdropFilter: "blur(16px) saturate(160%)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.16), 0 -6px 16px rgba(0,0,0,0.25)",
+        padding: "0 12px 14px", display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", textAlign: "center",
       }}>
-        <Sticker emoji={room.emoji} size={34} style={{ position: "absolute", top: -18, left: 12 }} />
-        <div style={{ color: C.t1, fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
-        <div style={{ color: C.t2, fontSize: 12, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
+        <Sticker emoji={room.emoji} size={30} style={{ position: "absolute", top: -16, right: 10, transform: "rotate(10deg)" }} />
+        <div style={{ color: C.t1, fontSize: 14.5, fontWeight: 700, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
+        <div style={{ color: C.t2, fontSize: 11.5, marginTop: 2, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t("membersColon", { n: room.members.length })}</div>
       </div>
     </div>
   );
