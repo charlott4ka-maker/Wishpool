@@ -130,6 +130,10 @@ function tgUserName() {
   try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.first_name) || null; }
   catch (e) { return null; }
 }
+function tgUserPhoto() {
+  try { const w = tgWebApp(); const url = w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.photo_url; return url && /^https:\/\//.test(url) ? url : null; }
+  catch (e) { return null; }
+}
 function tgUsername() {
   try { const w = tgWebApp(); return (w && w.initDataUnsafe && w.initDataUnsafe.user && w.initDataUnsafe.user.username) || null; }
   catch (e) { return null; }
@@ -407,15 +411,22 @@ function compressImage(file, maxDim = 1000, quality = 0.82) {
     img.src = url;
   });
 }
+// Telegram profile photo when we have one; coloured initial otherwise (no photo,
+// hidden by the user's privacy settings, or the image failed to load).
 function Avatar({ m, size = 34 }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [m.photo]);
+  const showPhoto = m.photo && !failed;
   return (
     <div style={{
       width: size, height: size, borderRadius: size, background: m.color,
-      display: "flex", alignItems: "center", justifyContent: "center",
+      display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
       color: "#fff", fontWeight: 700, fontSize: size * 0.4, flexShrink: 0,
       boxShadow: "0 0 0 2px #000",
     }}>
-      {m.name.slice(0, 1)}
+      {showPhoto
+        ? <img src={m.photo} alt="" onError={() => setFailed(true)} referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        : m.name.slice(0, 1)}
     </div>
   );
 }
@@ -1600,7 +1611,7 @@ function Field({ label, value, onChange, placeholder }) {
 /* ---------- PROFILE ---------- */
 function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, isDesignDevUser, designSystem, setDesignSystem }) {
   const { t, lang, setLang } = useT();
-  const me = { name: tgUserName() || t("guest"), color: "#7B61FF" };
+  const me = { name: tgUserName() || t("guest"), color: "#7B61FF", photo: tgUserPhoto() };
   const gifting = Object.values(reserved || {}).filter(v => v === "you").length;
   return (
     <div style={{ animation: "fadeUp .3s ease", textAlign: "center", paddingTop: 12 }}>
