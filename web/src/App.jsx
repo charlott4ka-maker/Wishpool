@@ -932,18 +932,41 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
 // Room as a frosted folder: wish photos shared into the room peek out from
 // behind a translucent folder front (tab on the left), the room sticker is
 // stuck on the front, name + member count sit underneath.
+// One continuous folder-front outline (tab on the left, smooth step down to
+// the body) for a box of w×h px, so the frosted front is a single element with
+// no seam between tab and body.
+function folderPath(w, h) {
+  const x0 = w * 0.04, x1 = w * 0.96, yT = h * 0.28, yB = h * 0.37, y1 = h * 0.96, xt = w * 0.5, r = 18, rt = 14;
+  const top = `M ${x0} ${yT + rt} Q ${x0} ${yT} ${x0 + rt} ${yT} L ${xt - 10} ${yT} C ${xt} ${yT} ${xt} ${yB} ${xt + 12} ${yB} L ${x1 - r} ${yB} Q ${x1} ${yB} ${x1} ${yB + r}`;
+  return { top, full: `${top} L ${x1} ${y1 - r} Q ${x1} ${y1} ${x1 - r} ${y1} L ${x0 + r} ${y1} Q ${x0} ${y1} ${x0} ${y1 - r} Z` };
+}
+// Room as a frosted folder: wish photos shared into the room peek out from
+// behind the translucent front, the room sticker and the members' avatars are
+// on the front, name + member count sit underneath.
+const FOLDER_MAX_AVATARS = 5;
 function RoomFolder({ room, wishes, onOpen }) {
   const { t } = useT();
+  const box = useRef(null);
+  const [dim, setDim] = useState(null);
+  useEffect(() => {
+    const el = box.current; if (!el) return;
+    const ro = new ResizeObserver(([e]) => setDim({ w: e.contentRect.width, h: e.contentRect.height }));
+    ro.observe(el); return () => ro.disconnect();
+  }, []);
   const photos = wishes.filter(w => w.rooms.includes(room.id)).map(w => wishImages(w)[0]).filter(Boolean).slice(0, 3);
   const spots = [
     { left: "33%", top: "2%", rot: 0, z: 2 },
     { left: "9%", top: "16%", rot: -10, z: 1 },
     { left: "57%", top: "12%", rot: 9, z: 1 },
   ];
-  const frost = { background: "linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.12) 100%)", backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)" };
+  const fp = dim && folderPath(dim.w, dim.h);
+  const members = room.members || [];
+  const extra = members.length > FOLDER_MAX_AVATARS ? members.length - (FOLDER_MAX_AVATARS - 1) : 0;
+  const shown = extra ? members.slice(0, FOLDER_MAX_AVATARS - 1) : members;
+  const AV = 24, OV = 8;
   return (
     <div onClick={onOpen} style={{ cursor: "pointer", textAlign: "center", animation: "fadeUp .3s ease" }}>
-      <div style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
+      <div ref={box} style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
         <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: "rgba(255,255,255,0.10)" }} />
         {photos.map((src, i) => {
           const sp = spots[i];
@@ -955,12 +978,30 @@ function RoomFolder({ room, wishes, onOpen }) {
             }} />
           );
         })}
-        <div style={{ position: "absolute", left: "4%", top: "28%", width: "46%", height: "9%", zIndex: 3, borderRadius: "14px 14px 0 0", ...frost, background: "rgba(255,255,255,0.20)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.22)" }} />
-        <div style={{ position: "absolute", left: "4%", right: "4%", top: "37%", bottom: "4%", zIndex: 3, borderRadius: "0 18px 18px 18px", ...frost, boxShadow: "0 10px 24px rgba(0,0,0,0.35)" }} />
-        {/* top highlight only where the body edge is exposed (right of the tab), so tab and body read as one piece */}
-        <div style={{ position: "absolute", left: "50%", right: "calc(4% + 14px)", top: "37%", height: 1, zIndex: 3, background: "rgba(255,255,255,0.22)" }} />
-        <div style={{ position: "absolute", left: "16%", top: "50%", zIndex: 4, transform: "rotate(-8deg)" }}>
-          <Sticker emoji={room.emoji} size={38} />
+        {fp && (
+          <>
+            <div style={{
+              position: "absolute", inset: 0, zIndex: 3, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
+              background: "linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.12) 100%)",
+              backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)",
+            }} />
+            <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
+              <path d={fp.top} fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1" />
+            </svg>
+          </>
+        )}
+        <div style={{ position: "absolute", left: "14%", top: "46%", zIndex: 4, transform: "rotate(-8deg)" }}>
+          <Sticker emoji={room.emoji} size={34} />
+        </div>
+        <div style={{ position: "absolute", right: "11%", bottom: "12%", zIndex: 4, display: "flex" }}>
+          {shown.map((m, i) => (
+            <div key={m.id} style={{ marginLeft: i ? -OV : 0 }}>
+              <Avatar m={m} size={AV} cut={i < shown.length - 1 || extra ? OV : 0} />
+            </div>
+          ))}
+          {extra > 0 && (
+            <div style={{ marginLeft: -OV, width: AV, height: AV, borderRadius: AV, background: "rgba(255,255,255,0.22)", color: "#fff", fontSize: 10.5, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>+{extra}</div>
+          )}
         </div>
       </div>
       <div style={{ color: C.t1, fontSize: 15, fontWeight: 700, marginTop: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
