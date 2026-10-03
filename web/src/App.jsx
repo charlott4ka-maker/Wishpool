@@ -9,19 +9,21 @@ import {
 // Wise-style dark theme with blue in place of Wise's lime: flat surfaces, no
 // glass or gradients. Accent buttons are light blue with dark navy text;
 // secondary ones are a deep blue tint with light-blue text.
+// Original Wishpool palette: true black, #161618 / #232326 surfaces,
+// #2E7DF6 blue with white text, soft blue tint for secondary/selected nav.
 const C = {
-  bg: "#111318",
-  card: "#24262B",
-  card2: "#2F3237",
-  line: "rgba(255,255,255,0.10)",
+  bg: "#000000",
+  card: "#161618",
+  card2: "#232326",
+  line: "rgba(255,255,255,0.08)",
   t1: "#FFFFFF",
-  t2: "#A3A6AD",
-  t3: "#767A82",
-  blue: "#9CC1FF",        // accent fill (Wise lime → light blue)
-  blueLight: "#9CC1FF",   // accent text / links / icons
-  onBlue: "#0A1C3D",      // text on accent fill
-  blueDeep: "#15284A",    // secondary pill fill
-  accent: "#9CC1FF",
+  t2: "#8A8A8E",
+  t3: "#6E6E73",
+  blue: "#2E7DF6",        // accent fill
+  blueLight: "#7FB0FF",   // accent text / links / icons
+  onBlue: "#FFFFFF",      // text on accent fill
+  blueDeep: "rgba(46,125,246,0.16)", // secondary pill / selected tab fill
+  accent: "#2E7DF6",
 };
 // Layout rhythm: tight screen gutter, small gaps between blocks, roomy padding
 // inside them, big soft corners.
@@ -31,7 +33,7 @@ const H = { lg: 52, sm: 40 };
 /* ---------- surfaces ---------- */
 // screen #111318 → card / sheet #24262B → inset field (darker, like Wise's
 // amount inputs) → control #2F3237. All flat.
-const SOLID = { card: C.card, sheet: "#1B1D21", field: "#16181C", control: C.card2 };
+const SOLID = { card: C.card, sheet: C.card, field: C.card2, control: C.card2 };
 function surface({ fill = SOLID.card } = {}) {
   return { background: fill, border: "none", boxShadow: "none" };
 }
@@ -46,7 +48,7 @@ function glass({ on = false } = {}) {
 function glassFloat() {
   // The only glass in the app (Wise-like): translucent dark bar over content.
   return {
-    background: "rgba(36,38,43,0.72)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 30px rgba(0,0,0,0.45)",
+    background: "rgba(28,28,30,0.78)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 30px rgba(0,0,0,0.45)",
     backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)",
   };
 }
@@ -928,7 +930,7 @@ function TabBar({ tab, setTab }) {
   return (
     <>
       {/* fade content out under the bar, like iOS */}
-      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(17,19,24,0) 0%, rgba(17,19,24,0.9) 100%)" }} />
+      <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: 120, zIndex: 49, pointerEvents: "none", background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%)" }} />
       <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", zIndex: 50 }}>
         <div style={{ display: "flex", gap: 2, padding: 5, borderRadius: 999, ...glassFloat() }}>
           {items.map(it => {
@@ -937,7 +939,7 @@ function TabBar({ tab, setTab }) {
               <button key={it.id} onClick={() => setTab(it.id)} aria-label={it.label} style={{
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
                 width: 92, height: 58, borderRadius: 999, cursor: "pointer", fontFamily: font, border: "none",
-                background: on ? "#3A3D43" : "transparent", color: on ? C.t1 : C.t2, transition: "background .2s",
+                background: on ? C.blueDeep : "transparent", color: on ? C.blueLight : C.t2, transition: "background .2s",
               }}>
                 <Icon size={22} />
                 <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{it.label}</span>

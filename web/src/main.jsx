@@ -12,8 +12,8 @@ const tg = window.Telegram && window.Telegram.WebApp;
 if (tg) {
   try { tg.ready(); } catch (e) {}
   try { tg.expand(); } catch (e) {}                     // full height
-  try { tg.setHeaderColor("#111318"); } catch (e) {}    // match the app background
-  try { tg.setBackgroundColor("#111318"); } catch (e) {}
+  try { tg.setHeaderColor("#000000"); } catch (e) {}    // match the app background
+  try { tg.setBackgroundColor("#000000"); } catch (e) {}
   try { tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } catch (e) {} // avoid accidental close on scroll
 }
 
