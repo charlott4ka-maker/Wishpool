@@ -975,7 +975,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                       ))}
                   </div>
                   <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 8, background: "none", border: "none", height: H.sm, padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <IconBadge icon={Trash2} color="#FF5A5A" size={26} /> {t("deleteWish")}
+                    <Trash2 size={17} /> {t("deleteWish")}
                   </button>
                 </div>
               )}
@@ -1683,7 +1683,7 @@ function AddSheet({ rooms, onClose, onSave }) {
           </Chip>
         ))}
       </div>
-      <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} color="#FFFFFF" strokeWidth={2.4} />{t("nothingSelectedPrivate")}</div>
+      <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} color={C.t3} strokeWidth={2.4} />{t("nothingSelectedPrivate")}</div>
 
       <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
         {busy ? t("savingWish") : t("saveWish")}
