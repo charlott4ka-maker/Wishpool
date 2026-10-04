@@ -294,7 +294,6 @@ const STR = {
   coupleRoomHint: { uk: "Тільки для двох: ви бачите вішлисти одне одного й обираєте подарунки потай. Третього сюди не запросити.", ru: "Только для двоих: вы видите вишлисты друг друга и выбираете подарки втайне. Третьего сюда не пригласить.", en: "Just the two of you: see each other's wishlists and pick gifts in secret. No third person can join." },
   friendsRoomHint: { uk: "Для компанії друзів чи колег. Кожен ділиться своїми бажаннями, подарунки можна бронювати чи скидатися разом, а ще провести Таємного Санту.", ru: "Для компании друзей или коллег. Каждый делится своими желаниями, подарки можно бронировать или скидываться вместе, а ещё провести Тайного Санту.", en: "For a group of friends or colleagues. Everyone shares their wishes, gifts can be claimed or chipped in on, and you can run a Secret Santa." },
   familyRoomHint: { uk: "Для родини: всі діляться бажаннями до свят, бронюють подарунки одне одному й можуть провести Таємного Санту.", ru: "Для семьи: все делятся желаниями к праздникам, бронируют подарки друг другу и могут провести Тайного Санту.", en: "For family: everyone shares wishes before the holidays, claims gifts for each other and can run a Secret Santa." },
-  coupleFullHint: { uk: "Кімната для двох вже заповнена", ru: "Комната для двоих уже заполнена", en: "This two-person room is full" },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
@@ -1718,9 +1717,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               </button>
             )}
           </div>
-          {coupleFull ? (
-            <div style={{ marginTop: 16, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>{t("coupleFullHint")}</div>
-          ) : (
+          {coupleFull ? null : (
             <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
               <div style={{ flex: 1, display: "flex" }}><Pill full kind={room.type === "couple" ? "primary" : "glass"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill></div>
               {room.type !== "couple" && (
