@@ -27,7 +27,12 @@ async function get(url, accept, maxBytes) {
     await assertPublic(u);
     const r = await fetch(u, {
       redirect: "manual", signal: AbortSignal.timeout(7000),
-      headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", Accept: accept, "Accept-Language": "uk,ru;q=0.9,en;q=0.8" },
+      // look like a regular desktop browser: many shops answer bots with 403
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        Accept: accept, "Accept-Language": "uk-UA,uk;q=0.9,ru;q=0.8,en;q=0.7",
+        "Sec-Fetch-Dest": accept.startsWith("image") ? "image" : "document", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Site": "none", "Upgrade-Insecure-Requests": "1",
+      },
     });
     if (r.status >= 300 && r.status < 400 && r.headers.get("location")) { u = new URL(r.headers.get("location"), u); continue; }
     if (!r.ok) throw new Error("http_" + r.status);
@@ -81,22 +86,64 @@ function fmtPrice(amount, currency) {
   return c ? `${s} ${c}` : s;
 }
 
+// Links copied from search results, ads or social apps wrap the real shop URL:
+// google.com/aclk?...&adurl=, google.com/url?q=, l.facebook.com/l.php?u=, ...
+const WRAP_PARAMS = ["adurl", "url", "q", "u", "to", "target", "redirect", "redirect_url", "dest"];
+export function unwrapLink(raw) {
+  let u = new URL(raw.trim());
+  for (let i = 0; i < 4; i++) {
+    const inner = WRAP_PARAMS.map(k => u.searchParams.get(k)).find(v => v && /^https?:\/\//i.test(v));
+    const wrapper = /(^|\.)google\.|(^|\.)facebook\.com$|(^|\.)instagram\.com$|(^|\.)vk\.com$|(^|\.)t\.me$|doubleclick\.net$|googleadservices\.com$/i.test(u.hostname);
+    if (!inner || !wrapper) break;
+    u = new URL(inner);
+  }
+  return u;
+}
+// Last resort: a readable name from the URL itself (/ua/apple-airpods-pro-2/p123/ -> "Apple airpods pro 2").
+export function titleFromPath(u) {
+  const parts = decodeURIComponent(u.pathname).split("/").filter(Boolean)
+    .filter(p => /[a-zа-яіїєґ]{3}/i.test(p) && !/^(ua|ru|en|uk|p|product|products|item|goods|catalog|dp)$/i.test(p));
+  const best = parts.sort((a, b) => b.length - a.length)[0] || "";
+  const t = best.replace(/\.(html?|php)$/i, "").replace(/[-_+]+/g, " ").replace(/\b[a-z]*\d{4,}[a-z\d]*\b/gi, "").replace(/\s+/g, " ").trim();
+  return t.length >= 4 ? (t[0].toUpperCase() + t.slice(1)).slice(0, 120) : "";
+}
+// Fallback when the shop blocks us: microlink.io reads public page metadata
+// (free tier, no key). Only the product URL is sent.
+async function viaMicrolink(url) {
+  const r = await fetch("https://api.microlink.io/?url=" + encodeURIComponent(url), { signal: AbortSignal.timeout(8000) });
+  const j = await r.json().catch(() => null);
+  if (!j || j.status !== "success" || !j.data) throw new Error("microlink_" + (j && j.code || r.status));
+  return { title: j.data.title || "", price: "", imageUrl: (j.data.image && j.data.image.url) || "", base: url };
+}
+
 export async function previewLink(raw) {
   let url;
-  try { url = new URL(raw.trim()); } catch (e) { throw new Error("bad_url"); }
-  const page = await get(url.href, "text/html,application/xhtml+xml", 2_500_000);
-  const { title, price, imageUrl } = parseProduct(page.buf.toString("utf8"));
+  try { url = unwrapLink(raw); } catch (e) { throw new Error("bad_url"); }
+  await assertPublic(url);
+  let info = null, base = url.href;
+  try {
+    const page = await get(url.href, "text/html,application/xhtml+xml", 2_500_000);
+    info = parseProduct(page.buf.toString("utf8")); base = page.url.href;
+  } catch (e) { console.error("preview direct failed", url.hostname, e.message); }
+  if (!info || !info.title || /access denied|just a moment|attention required|captcha|403|forbidden/i.test(info.title)) {
+    try { const m = await viaMicrolink(url.href); info = { ...m, price: info && info.price || "" }; base = m.base; }
+    catch (e) { console.error("preview microlink failed", url.hostname, e.message); }
+  }
+  const title = (info && info.title) || titleFromPath(url);
+  const price = (info && info.price) || "";
+  const imageUrl = info && info.imageUrl;
+  if (!title && !imageUrl) throw new Error("nothing_found");
   let image = null;
   if (imageUrl) {
     try {
-      const iu = new URL(imageUrl, page.url);
+      const iu = new URL(imageUrl, base);
       // fetched here and handed over as a data URL: shops often block hotlinking
       const img = await get(iu.href, "image/*", 4_000_000);
       const type = (img.type.split(";")[0] || "").trim();
       if (/^image\/(jpeg|png|webp|gif)$/.test(type)) image = `data:${type};base64,${img.buf.toString("base64")}`;
     } catch (e) {}
   }
-  return { title, price, image };
+  return { title, price, image, url: url.href };
 }
 
 export function parseProduct(html) {

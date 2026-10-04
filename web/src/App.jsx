@@ -211,7 +211,6 @@ const STR = {
   roomFriends: { uk: "Друзі", ru: "Друзья", en: "Friends" },
   roomCouple: { uk: "Пара", ru: "Пара", en: "Couple" },
   roomFamily: { uk: "Сім’я", ru: "Семья", en: "Family" },
-  roomTeam: { uk: "Команда", ru: "Команда", en: "Team" },
   newRoom: { uk: "Нова кімната", ru: "Новая комната", en: "New room" },
   roomType: { uk: "Тип кімнати", ru: "Тип комнаты", en: "Room type" },
   roomSticker: { uk: "Стікер", ru: "Стикер", en: "Sticker" },
@@ -292,7 +291,9 @@ const STR = {
   roomFull: { uk: "У цій кімнаті вже двоє, місць більше немає", ru: "В этой комнате уже двое, мест больше нет", en: "This room already has two people, no room left" },
   editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
-  coupleRoomHint: { uk: "У цьому типі кімнати може бути лише двоє учасників.", ru: "В комнате этого типа может быть только два участника.", en: "This room type can only have two members." },
+  coupleRoomHint: { uk: "Тільки для двох: ви бачите вішлисти одне одного й обираєте подарунки потай. Третього сюди не запросити.", ru: "Только для двоих: вы видите вишлисты друг друга и выбираете подарки втайне. Третьего сюда не пригласить.", en: "Just the two of you: see each other's wishlists and pick gifts in secret. No third person can join." },
+  friendsRoomHint: { uk: "Для компанії друзів чи колег. Кожен ділиться своїми бажаннями, подарунки можна бронювати чи скидатися разом, а ще провести Таємного Санту.", ru: "Для компании друзей или коллег. Каждый делится своими желаниями, подарки можно бронировать или скидываться вместе, а ещё провести Тайного Санту.", en: "For a group of friends or colleagues. Everyone shares their wishes, gifts can be claimed or chipped in on, and you can run a Secret Santa." },
+  familyRoomHint: { uk: "Для родини: всі діляться бажаннями до свят, бронюють подарунки одне одному й можуть провести Таємного Санту.", ru: "Для семьи: все делятся желаниями к праздникам, бронируют подарки друг другу и могут провести Тайного Санту.", en: "For family: everyone shares wishes before the holidays, claims gifts for each other and can run a Secret Santa." },
   coupleFullHint: { uk: "Кімната для двох вже заповнена", ru: "Комната для двоих уже заполнена", en: "This two-person room is full" },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
@@ -1246,12 +1247,19 @@ const ROOM_PRESETS = [
   { type: "friends", key: "roomFriends" },
   { type: "couple", key: "roomCouple" },
   { type: "family", key: "roomFamily" },
-  { type: "team", key: "roomTeam" },
 ];
+// What each type is for, shown under the type chips.
+const ROOM_TYPE_HINT = { friends: "friendsRoomHint", couple: "coupleRoomHint", family: "familyRoomHint" };
 const ROOM_STICKERS = STICKERS.map(n => "stk:" + n);
 const ROOM_COLORS = ["#2E7DF6", "#38BDF8", "#34C759", "#FF7A45", "#FF4D8D", "#AF52DE"];
 // Yellow was dropped from the palette: rooms that still have it show as orange.
-const fixRoom = (r) => r && String(r.tint).toUpperCase() === "#FFB020" ? { ...r, tint: "#FF7A45" } : r;
+const fixRoom = (r) => {
+  if (!r) return r;
+  let x = r;
+  if (String(x.tint).toUpperCase() === "#FFB020") x = { ...x, tint: "#FF7A45" };
+  if (x.type === "team") x = { ...x, type: "friends" }; // "Team" type was merged into Friends
+  return x;
+};
 
 const sheetLabel = { color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 };
 function RoomStickerPicker({ value, onChange }) {
@@ -1373,8 +1381,8 @@ function CreateRoomSheet({ onClose, onCreate }) {
           <Chip key={p.type} active={preset.type === p.type} onClick={() => setPreset(p)}>{t(p.key)}</Chip>
         ))}
       </div>
-      {preset.type === "couple" && (
-        <div style={{ color: C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16 }}>{t("coupleRoomHint")}</div>
+      {ROOM_TYPE_HINT[preset.type] && (
+        <div key={preset.type} style={{ color: C.t2, fontSize: 13, lineHeight: 1.45, marginTop: -8, marginBottom: 16, animation: "fadeUp .25s ease" }}>{t(ROOM_TYPE_HINT[preset.type])}</div>
       )}
 
       <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
