@@ -237,6 +237,8 @@ const STR = {
   nothingSharedSub: { uk: "Відкрий бажання в пулі й увімкни цю кімнату.", ru: "Открой желание в пуле и включи эту комнату.", en: "Open a wish in your pool and enable this room." },
   visibleToAll: { uk: "видно всім", ru: "видно всем", en: "visible to all" },
   addFromPool: { uk: "Додати з пулу", ru: "Добавить из пула", en: "Add from pool" },
+  editRoomWishes: { uk: "Змінити бажання", ru: "Изменить желания", en: "Edit wishes" },
+  roomWishesTitle: { uk: "Бажання в кімнаті", ru: "Желания в комнате", en: "Wishes in this room" },
   poolEmptyInRoom: { uk: "У пулі поки немає бажань. Додай їх на вкладці «Бажання», потім відзначиш тут.", ru: "В пуле пока нет желаний. Добавь их на вкладке «Желания», потом отметишь здесь.", en: "Your pool is empty. Add wishes on the Wishes tab, then check them here." },
 
   secretExchange: { uk: "Таємний обмін", ru: "Тайный обмен", en: "Secret exchange" },
@@ -1522,7 +1524,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
     try { await onToggle(wid); } finally { setPendingId(null); }
   };
   return (
-    <Sheet title={t("addFromPool")} onClose={onClose}>
+    <Sheet title={t("roomWishesTitle")} onClose={onClose}>
       {wishes.length === 0 ? (
         <Empty compact emoji="stk:coconut" title={t("poolEmptyTitle")} sub={t("poolEmptyInRoom")} />
       ) : (
@@ -1790,7 +1792,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                 ))}
               </Card>}
             <div style={{ marginTop: 16 }}>
-              <Pill full kind="ghost" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>
+              {/* the sheet both adds and removes, so with wishes already here it's "edit" */}
+              {mine.length
+                ? <Pill full kind="ghost" icon={<Pencil size={17} />} onClick={onAddFromPool}>{t("editRoomWishes")}</Pill>
+                : <Pill full kind="ghost" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>}
             </div>
           </div>
         )}
