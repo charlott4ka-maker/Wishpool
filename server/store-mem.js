@@ -33,6 +33,8 @@ export function createMemStore() {
     async addMember(roomId, userId) { if (!D.members.some(m => m.roomId === roomId && m.userId === userId)) D.members.push({ roomId, userId }); },
     async getWish(id) { return D.wishes[id] || null; },
     async createWish(w) { D.wishes[w.id] = { ...w }; },
+    async wishesWithInlineImages(limit) { return Object.values(D.wishes).filter(w => [w.image, ...(w.images || [])].some(x => typeof x === "string" && x.startsWith("data:image/"))).slice(0, limit); },
+    async setWishImages(id, images) { const w = D.wishes[id]; if (w) { w.images = images; w.image = images[0] || null; } },
     async deleteWish(id) { delete D.wishes[id]; D.wishRooms = D.wishRooms.filter(x => x.wishId !== id); delete D.reservations[id]; D.chips = D.chips.filter(c => c.wishId !== id); },
     async wishRoomIds(wishId) { return D.wishRooms.filter(x => x.wishId === wishId).map(x => x.roomId); },
     async toggleWishRoom(wishId, roomId) {

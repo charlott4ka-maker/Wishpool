@@ -5,6 +5,7 @@ import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser, cleanEvent } from "./util.js";
 import { botRoute, ensureWebhook, remindRoute } from "./bot.js";
 import { previewLink } from "./preview.js";
+import { storageOn, storeImages, dropImages } from "./storage.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -51,6 +52,24 @@ export async function createApp() {
 
   // Bot webhook (Telegram -> us): before the initData auth, it has its own secret.
   app.post("/api/tg-webhook", botRoute(BOT_TOKEN));
+  // One-off move of photos that still live inline in the database into R2.
+  // Open /api/admin/move-photos?key=<CRON_SECRET> a few times until "left": 0.
+  app.get("/api/admin/move-photos", async (req, res, next) => {
+    try {
+      const secret = process.env.CRON_SECRET;
+      if (!secret || req.query.key !== secret) return res.status(401).json({ error: "bad_key" });
+      if (!storageOn()) return res.status(400).json({ error: "r2_not_configured" });
+      const batch = await store.wishesWithInlineImages(20);
+      let moved = 0;
+      for (const w of batch) {
+        const list = w.images && w.images.length ? w.images : (w.image ? [w.image] : []);
+        const next = await storeImages(list, `w/${w.id}`);
+        await store.setWishImages(w.id, next);
+        moved++;
+      }
+      res.json({ moved, left: (await store.wishesWithInlineImages(1000)).length });
+    } catch (e) { next(e); }
+  });
   // Daily Vercel cron: event reminders (a week and a day before).
   app.get("/api/cron/remind", remindRoute(BOT_TOKEN, store));
   await ensureWebhook(BOT_TOKEN);
@@ -83,9 +102,14 @@ export async function createApp() {
 
   api.post("/wishes", async (req, res) => {
     const { emoji, image, images: rawImages, link, title, price, rooms = [] } = req.body || {};
-    const images = cleanImages(rawImages && rawImages.length ? rawImages : (image ? [image] : []));
+    let images = cleanImages(rawImages && rawImages.length ? rawImages : (image ? [image] : []));
     if (!title) return res.status(400).json({ error: "title_required" });
-    const w = { id: uid("w"), ownerId: req.user.id, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", createdAt: Date.now() };
+    const id = uid("w");
+    // Photos go to R2 when it's configured; if the upload fails they stay inline, so nothing is lost.
+    if (storageOn() && images.length) {
+      try { images = await storeImages(images, `w/${id}`); } catch (e) { console.error("r2 upload failed", e.message); }
+    }
+    const w = { id, ownerId: req.user.id, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", createdAt: Date.now() };
     await store.createWish(w);
     for (const rid of rooms) if (await store.isMember(rid, req.user.id)) await store.addWishRoom(w.id, rid);
     res.json({ wish: { ...pubWish(w), rooms: await store.wishRoomIds(w.id) } });
@@ -95,6 +119,7 @@ export async function createApp() {
     const w = await store.getWish(req.params.id);
     if (!w || w.ownerId !== req.user.id) return res.status(404).json({ error: "not_found" });
     await store.deleteWish(w.id);
+    await dropImages(w.images && w.images.length ? w.images : [w.image]);
     res.json({ ok: true });
   });
 

@@ -58,6 +58,9 @@ ready client. To switch to real multiplayer, load initial data from `api.state()
 `api.online()`, fetch room detail via `api.room(id)`, and route each action through the matching
 `api.*` call. Best done once the server URL is live so it can be verified end-to-end.
 
-## Notes
-- Photos are stored as base64 in the DB — fine for an MVP; free Postgres tiers give ~0.5 GB.
-  For heavy image use, move photos to external storage later.
+## Photos: Cloudflare R2 (optional, 10 GB free)
+Without R2 photos are stored inline in Postgres (~0.5 GB free, about 2-3k photos).
+With R2 the database keeps only each photo's public URL. Set in Vercel:
+`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`
+(the bucket's public r2.dev URL or a custom domain). Existing inline photos move over
+by opening `/api/admin/move-photos?key=<CRON_SECRET>` until it reports `"left": 0`.

@@ -42,6 +42,8 @@ export function createPgStore(q) {
     async addMember(roomId, userId) { await q(`INSERT INTO members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, [roomId, userId]); },
     async getWish(id) { const { rows } = await q(`SELECT * FROM wishes WHERE id=$1`, [id]); return mapWish(rows[0]); },
     async createWish(w) { await q(`INSERT INTO wishes(id,owner_id,emoji,image,images,link,title,price,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [w.id, w.ownerId, w.emoji, w.image, JSON.stringify(w.images || []), w.link, w.title, w.price, w.createdAt]); },
+    async wishesWithInlineImages(limit) { const { rows } = await q(`SELECT * FROM wishes WHERE images LIKE '%data:image/%' OR image LIKE 'data:image/%' LIMIT $1`, [limit]); return rows.map(mapWish); },
+    async setWishImages(id, images) { await q(`UPDATE wishes SET images=$2, image=$3 WHERE id=$1`, [id, JSON.stringify(images), images[0] || null]); },
     async deleteWish(id) { await q(`DELETE FROM wishes WHERE id=$1`, [id]); await q(`DELETE FROM wish_rooms WHERE wish_id=$1`, [id]); await q(`DELETE FROM reservations WHERE wish_id=$1`, [id]); await q(`DELETE FROM chips WHERE wish_id=$1`, [id]); },
     async wishRoomIds(wishId) { const { rows } = await q(`SELECT room_id FROM wish_rooms WHERE wish_id=$1`, [wishId]); return rows.map(r => r.room_id); },
     async toggleWishRoom(wishId, roomId) {
