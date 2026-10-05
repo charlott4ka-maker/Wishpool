@@ -202,6 +202,7 @@ const STR = {
   bdayGateSub: { uk: "Друзі обирають подарунок. Якщо ти і є іменинник, зайди як іменинник: побачиш лише свої бажання, а сюрприз не зіпсуєш.", ru: "Друзья выбирают подарок. Если ты и есть именинник, зайди как именинник: увидишь только свои желания, а сюрприз не испортишь.", en: "Friends are picking a gift. If it's your birthday, join as the birthday person: you'll only see your own wishes and won't spoil the surprise." },
   bdayGateIn: { uk: "Я в ділі", ru: "Я в деле", en: "I'm in" },
   bdayGateMe: { uk: "Це мій день народження", ru: "Это мой день рождения", en: "It's my birthday" },
+  privateShort: { uk: "Лише я", ru: "Только я", en: "Only me" },
   pickDate: { uk: "Обрати дату", ru: "Выбрать дату", en: "Pick a date" },
   evToday: { uk: "Сьогодні!", ru: "Сегодня!", en: "Today!" },
   evTomorrow: { uk: "Завтра", ru: "Завтра", en: "Tomorrow" },
@@ -1143,42 +1144,78 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
       {wishes.length === 0 ? (
         <Empty emoji="stk:bag" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {wishes.map(w => (
-            <Card key={w.id} onClick={() => setOpenId(openId === w.id ? null : w.id)} style={{ padding: `${wishImages(w).length ? 0 : 4}px 16px ${openId === w.id ? 16 : 4}px`, cursor: "pointer", border: "1px solid rgba(255,255,255,0.14)", overflow: "hidden" }}>
-              {wishImages(w).length > 0 && <PhotoHeader images={wishImages(w)} />}
-              <WishRow w={w} noPhoto={wishImages(w).length > 0} right={
-                <ChevronRight size={20} color={C.t2} style={{ transform: openId === w.id ? "rotate(90deg)" : "none", transition: ".2s" }} />
-              } />
-              {openId === w.id && (
-                <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}`, animation: "fadeUp .2s ease", cursor: "default" }}>
-                  <div style={{ color: C.t2, fontSize: 12.5, marginBottom: 8, fontWeight: 600 }}>{t("showInRooms")}</div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {rooms.length === 0
-                      ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
-                      : rooms.filter(r => r.type !== "birthday" || r.iAmCelebrant).map(r => (
-                        <Chip key={r.id} active={w.rooms.includes(r.id)} color={r.tint} onClick={() => onToggleRoom(w.id, r.id)}>
-                          <Sticker emoji={r.emoji} size={15} />{r.name}
-                        </Chip>
-                      ))}
-                  </div>
-                  {w.rooms.length === 0 && rooms.length > 0 && (
-                    <div style={{ color: C.t3, fontSize: 12.5, marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} />{t("privateNote")}</div>
-                  )}
-                  <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 8, background: "none", border: "none", height: H.sm, padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 13.5, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <Trash2 size={15} /> {t("deleteWish")}
-                  </button>
-                </div>
-              )}
-            </Card>
-          ))}
+        /* two-column grid of product-style cards; tap opens the wish sheet */
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {wishes.map(w => <WishTile key={w.id} w={w} onClick={() => setOpenId(w.id)} />)}
         </div>
+      )}
+      {openId && wishes.find(w => w.id === openId) && (
+        <WishSheet w={wishes.find(w => w.id === openId)} rooms={rooms} onToggleRoom={onToggleRoom}
+          onDelete={(id) => { setOpenId(null); onDelete(id); }} onClose={() => setOpenId(null)} />
       )}
 
       <div style={MAIN_CTA}>
         <Pill full kind="primary" icon={<Plus size={19} />} onClick={onAdd}>{t("addWish")}</Pill>
       </div>
     </div>
+  );
+}
+
+// Wishlist card: square picture (photo, or the sticker on a soft tile),
+// two lines of title, price in the accent colour, a small "where" badge.
+function WishTile({ w, onClick }) {
+  const { t } = useT();
+  const img = wishImages(w)[0];
+  const shared = w.rooms ? w.rooms.length : 0;
+  return (
+    <div onClick={() => { haptic("light"); onClick(); }} style={{ cursor: "pointer", background: C.card, borderRadius: R.card, padding: 8, border: "1px solid rgba(255,255,255,0.14)", animation: "fadeUp .3s ease", minWidth: 0 }}>
+      <div style={{ position: "relative", aspectRatio: "1", borderRadius: R.tile, overflow: "hidden", background: img ? C.card2 : "radial-gradient(120% 90% at 30% 20%, #2A2A2E 0%, #1E1E21 70%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {img
+          ? <img src={img} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <div style={{ transform: "rotate(-6deg)" }}><Sticker emoji={w.emoji} size={56} /></div>}
+        <div style={{ position: "absolute", left: 8, bottom: 8, height: 24, padding: "0 8px", borderRadius: 999, background: "rgba(0,0,0,0.55)", WebkitBackdropFilter: "blur(10px)", backdropFilter: "blur(10px)", color: "#fff", fontSize: 11.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+          {shared ? <><Users size={12} />{shared}</> : <><Lock size={11} />{t("privateShort")}</>}
+        </div>
+      </div>
+      <div style={{ padding: "12px 4px 4px" }}>
+        <div style={{ color: C.t1, fontSize: 14.5, fontWeight: 600, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: 37 }}>{w.title}</div>
+        <div style={{ color: w.price ? "#7FB0FF" : C.t3, fontSize: 14, fontWeight: 700, marginTop: 4 }}>{w.price || "\u00a0"}</div>
+      </div>
+    </div>
+  );
+}
+// Everything about one wish: photos, price, link, which rooms see it, delete.
+function WishSheet({ w, rooms, onToggleRoom, onDelete, onClose }) {
+  const { t } = useT();
+  const imgs = wishImages(w);
+  return (
+    <Sheet title="" onClose={onClose}>
+      {imgs.length ? <div style={{ marginTop: -8, borderRadius: R.card, overflow: "hidden" }}><PhotoHeader images={imgs} height={260} inset={0} /></div>
+        : <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 16px" }}><div style={{ transform: "rotate(-6deg)" }}><Sticker emoji={w.emoji} size={88} /></div></div>}
+      <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginTop: 12, lineHeight: 1.25 }}>{w.title}</div>
+      {w.price && <div style={{ color: "#7FB0FF", fontSize: 17, fontWeight: 700, marginTop: 4 }}>{w.price}</div>}
+      {w.link && (
+        <button onClick={() => window.open(w.link, "_blank")} style={{ marginTop: 12, height: H.sm, padding: "0 16px", borderRadius: 999, border: "none", background: C.blueSoft, color: "#7FB0FF", fontSize: 14, fontWeight: 600, fontFamily: font, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8, maxWidth: "100%" }}>
+          <Link2 size={15} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{linkHost(w.link)}</span>
+        </button>
+      )}
+      <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "24px 0 8px" }}>{t("showInRooms")}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {rooms.length === 0
+          ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
+          : rooms.filter(r => r.type !== "birthday" || r.iAmCelebrant).map(r => (
+            <Chip key={r.id} active={w.rooms.includes(r.id)} color={r.tint} onClick={() => onToggleRoom(w.id, r.id)}>
+              <Sticker emoji={r.emoji} size={15} />{r.name}
+            </Chip>
+          ))}
+      </div>
+      {w.rooms.length === 0 && rooms.length > 0 && (
+        <div style={{ color: C.t3, fontSize: 12.5, marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} />{t("privateNote")}</div>
+      )}
+      <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 16, background: "none", border: "none", height: H.sm, padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
+        <Trash2 size={16} /> {t("deleteWish")}
+      </button>
+    </Sheet>
   );
 }
 
