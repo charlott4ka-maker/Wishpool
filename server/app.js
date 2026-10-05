@@ -3,7 +3,7 @@ import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser, cleanEvent } from "./util.js";
-import { botRoute, ensureWebhook, remindRoute } from "./bot.js";
+import { botRoute, ensureWebhook, remindRoute, telegramBirthdate } from "./bot.js";
 import { previewLink } from "./preview.js";
 import { storageOn, storeImages, dropImages } from "./storage.js";
 
@@ -34,7 +34,13 @@ export async function createApp() {
       chips: ch.length ? { count: ch.length, mine: ch.includes(me), total: Math.max(total || 0, ch.length) } : null,
     };
   }));
-  const roomOut = (r) => ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle || "", eventDate: r.eventDate || "" });
+  const roomOut = (r, me) => ({
+    id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle || "", eventDate: r.eventDate || "",
+    bdayMode: r.bdayMode || "", celebrantName: r.celebrantName || "",
+    // who the birthday person is, as far as this viewer needs to know
+    iAmCelebrant: !!me && r.celebrantId === me, hasCelebrant: !!r.celebrantId, celebrantId: r.celebrantId || null,
+  });
+  const cleanName = (x) => typeof x === "string" ? x.trim().slice(0, 40) : "";
 
   // Public: <img> tags can't send the initData header. Wish ids are random.
   app.get("/api/img/:wid/:i", async (req, res, next) => {
@@ -81,6 +87,7 @@ export async function createApp() {
   api.use(async (req, _res, next) => { try { await store.ensureUser(req.user); next(); } catch (e) { next(e); } });
 
   api.get("/me", async (req, res) => res.json({ user: await store.getUser(req.user.id) }));
+  api.get("/me/birthday", async (req, res) => res.json({ birthday: await telegramBirthdate(BOT_TOKEN, req.user.id) }));
 
   api.get("/state", async (req, res) => {
     const me = req.user.id;
@@ -91,7 +98,7 @@ export async function createApp() {
       Promise.all(roomIds.map(async id => {
         const [r, members, shared] = await Promise.all([store.getRoom(id), store.roomMembers(id), store.wishesSharedTo(me, id)]);
         return r && {
-          ...roomOut(r),
+          ...roomOut(r, me),
           members: members.map(u => pubUser(u, me)),
           sharedCount: shared.length,
         };
@@ -133,8 +140,16 @@ export async function createApp() {
   });
 
   api.post("/rooms", async (req, res) => {
-    const { name, type, emoji, tint, eventTitle, eventDate } = req.body || {};
-    const r = { id: uid("r"), name: name || "Room", type: type || "friends", emoji: emoji || "🎁", tint: tint || "#2E7DF6", ownerId: req.user.id, createdAt: Date.now(), ...cleanEvent(eventTitle, eventDate) };
+    const { name, type, emoji, tint, eventTitle, eventDate, bdayMode, celebrantName } = req.body || {};
+    const t = ["friends", "couple", "birthday"].includes(type) ? type : "friends";
+    const mode = t === "birthday" ? (bdayMode === "other" ? "other" : "self") : "";
+    const r = {
+      id: uid("r"), name: name || "Room", type: t, emoji: emoji || "🎁", tint: tint || "#2E7DF6", ownerId: req.user.id, createdAt: Date.now(),
+      // only birthday rooms carry a date now
+      ...(t === "birthday" ? cleanEvent(eventTitle, eventDate) : {}),
+      bdayMode: mode, celebrantName: mode === "other" ? cleanName(celebrantName) : (mode === "self" ? cleanName(req.user.name) : ""),
+      celebrantId: mode === "self" ? req.user.id : null,
+    };
     await store.createRoom(r);
     await store.addMember(r.id, req.user.id);
     res.json({ room: { id: r.id } });
@@ -149,8 +164,9 @@ export async function createApp() {
     if (!name || !name.trim()) return res.status(400).json({ error: "name_required" });
     const okTint = typeof tint === "string" && /^#[0-9a-fA-F]{6}$/.test(tint) ? tint : r.tint;
     // event fields are optional; sending them (even empty) sets/clears the event
-    const ev = "eventTitle" in body || "eventDate" in body ? cleanEvent(body.eventTitle, body.eventDate) : {};
+    const ev = r.type === "birthday" && ("eventTitle" in body || "eventDate" in body) ? cleanEvent(body.eventTitle, body.eventDate) : {};
     await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint, ...ev });
+    if (r.type === "birthday" && r.bdayMode === "other" && "celebrantName" in body) await store.setCelebrantName(r.id, cleanName(body.celebrantName));
     res.json({ ok: true });
   });
 
@@ -162,6 +178,11 @@ export async function createApp() {
       return res.status(403).json({ error: "room_full" });
     }
     await store.addMember(r.id, req.user.id);
+    // Surprise birthday room: the person it's for can say so on the way in.
+    // They then only see their own wishes, never the ideas or who gifts what.
+    if (r.type === "birthday" && r.bdayMode === "other" && req.body && req.body.asCelebrant && !r.celebrantId) {
+      await store.setCelebrant(r.id, req.user.id);
+    }
     const inviterId = req.body && req.body.inviterId;
     if (inviterId && inviterId !== req.user.id && await store.isMember(r.id, inviterId)) {
       await store.recordInvite(r.id, inviterId, req.user.id);
@@ -194,11 +215,71 @@ export async function createApp() {
     })) });
   });
 
+  // What someone opening an invite link sees before joining (no wishes).
+  api.get("/rooms/:id/peek", async (req, res) => {
+    const r = await store.getRoom(req.params.id);
+    if (!r) return res.status(404).json({ error: "room_not_found" });
+    res.json({ room: { ...roomOut(r, req.user.id), member: await store.isMember(r.id, req.user.id), memberCount: (await store.roomMembers(r.id)).length } });
+  });
+
+  // Room owner: "this isn't the birthday person" (or set someone as them).
+  api.post("/rooms/:id/celebrant", async (req, res) => {
+    const r = await store.getRoom(req.params.id);
+    if (!r || r.ownerId !== req.user.id) return res.status(404).json({ error: "not_found" });
+    if (r.type !== "birthday" || r.bdayMode !== "other") return res.status(400).json({ error: "not_surprise" });
+    const uidNew = req.body && req.body.userId;
+    if (uidNew && !(await store.isMember(r.id, uidNew))) return res.status(400).json({ error: "not_member" });
+    await store.setCelebrant(r.id, uidNew || null);
+    res.json({ ok: true });
+  });
+
+  // Gift ideas added inside a birthday room: they live only in the room,
+  // never in anyone's pool, and the birthday person never sees them.
+  api.post("/rooms/:id/ideas", async (req, res) => {
+    const me = req.user.id;
+    const r = await store.getRoom(req.params.id);
+    if (!r || !(await store.isMember(r.id, me))) return res.status(404).json({ error: "not_found" });
+    if (r.type !== "birthday") return res.status(400).json({ error: "not_birthday" });
+    if (r.celebrantId === me) return res.status(403).json({ error: "celebrant" });
+    const { emoji, images: rawImages, link, title, price } = req.body || {};
+    if (!title) return res.status(400).json({ error: "title_required" });
+    const id = uid("w");
+    let images = cleanImages(rawImages || []);
+    if (storageOn() && images.length) { try { images = await storeImages(images, `w/${id}`); } catch (e) { console.error("r2 upload failed", e.message); } }
+    const w = { id, ownerId: me, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", createdAt: Date.now(), roomOnly: r.id };
+    await store.createWish(w);
+    await store.addWishRoom(w.id, r.id);
+    res.json({ ok: true, id });
+  });
+  api.delete("/rooms/:id/ideas/:wid", async (req, res) => {
+    const r = await store.getRoom(req.params.id);
+    const w = await store.getWish(req.params.wid);
+    if (!r || !w || w.roomOnly !== r.id || (w.ownerId !== req.user.id && r.ownerId !== req.user.id)) return res.status(404).json({ error: "not_found" });
+    await store.deleteWish(w.id);
+    await dropImages(w.images && w.images.length ? w.images : [w.image]);
+    res.json({ ok: true });
+  });
+
   api.get("/rooms/:id", async (req, res) => {
     const me = req.user.id;
     const r = await store.getRoom(req.params.id);
     if (!r || !(await store.isMember(r.id, me))) return res.status(404).json({ error: "not_found" });
     const members = await store.roomMembers(r.id);
+    if (r.type === "birthday") {
+      const head = { room: { ...roomOut(r, me), owner: r.ownerId === me }, members: members.map(u => pubUser(u, me)) };
+      // The birthday person: just their own shared wishes, nothing about gifts.
+      if (r.celebrantId === me) return res.json({ ...head, lists: [], ideas: [], mine: (await store.wishesSharedTo(me, r.id)).map(pubWish) });
+      // Guests: the birthday person's wishes (if they're in) + everyone's ideas.
+      const gifters = Math.max(1, members.length - (r.celebrantId ? 1 : 0));
+      const cel = r.celebrantId && members.find(u => u.id === r.celebrantId);
+      const [celWishes, ideasRaw] = await Promise.all([
+        cel ? withReservations(await store.wishesSharedTo(cel.id, r.id), me, gifters) : [],
+        store.roomIdeas(r.id),
+      ]);
+      const byId = Object.fromEntries(members.map(u => [u.id, u]));
+      const ideas = (await withReservations(ideasRaw, me, gifters)).map((w, i) => ({ ...w, by: byId[ideasRaw[i].ownerId] ? pubUser(byId[ideasRaw[i].ownerId], me) : null, mineIdea: ideasRaw[i].ownerId === me }));
+      return res.json({ ...head, lists: cel ? [{ member: pubUser(cel), wishes: celWishes }] : [], ideas, mine: [] });
+    }
     const gifters = members.length - 1; // everyone but the wish owner
     const [lists, mineRaw] = await Promise.all([
       Promise.all(members.filter(x => x.id !== me).map(async u => ({ member: pubUser(u), wishes: await withReservations(await store.wishesSharedTo(u.id, r.id), me, gifters) }))),
@@ -206,7 +287,7 @@ export async function createApp() {
     ]);
     const mine = mineRaw.map(pubWish); // owner sees no reservations (surprise-safe)
     res.json({
-      room: { ...roomOut(r), owner: r.ownerId === me },
+      room: { ...roomOut(r, me), owner: r.ownerId === me },
       members: members.map(u => pubUser(u, me)),
       lists, mine,
     });
@@ -215,7 +296,7 @@ export async function createApp() {
   api.post("/wishes/:id/reserve", async (req, res) => {
     const w = await store.getWish(req.params.id);
     if (!w) return res.status(404).json({ error: "not_found" });
-    if (w.ownerId === req.user.id) return res.status(403).json({ error: "own_wish" });
+    if (w.ownerId === req.user.id && !w.roomOnly) return res.status(403).json({ error: "own_wish" });
     const cur = await store.getReservation(w.id);
     if (cur && cur !== req.user.id) return res.status(409).json({ error: "taken" });
     if ((await store.chips(w.id)).length) return res.status(409).json({ error: "chipping" });
@@ -229,7 +310,7 @@ export async function createApp() {
     const me = req.user.id;
     const w = await store.getWish(req.params.id);
     if (!w) return res.status(404).json({ error: "not_found" });
-    if (w.ownerId === me) return res.status(403).json({ error: "own_wish" });
+    if (w.ownerId === me && !w.roomOnly) return res.status(403).json({ error: "own_wish" });
     const roomIds = await store.wishRoomIds(w.id);
     const ok = (await Promise.all(roomIds.map(rid => store.isMember(rid, me)))).some(Boolean);
     if (!ok) return res.status(403).json({ error: "not_member" });

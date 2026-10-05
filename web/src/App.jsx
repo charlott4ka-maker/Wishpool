@@ -65,7 +65,12 @@ const api = {
   toggleWishRoom: (id, roomId) => apiReq("POST", "/wishes/" + id + "/room", { roomId }),
   createRoom: (r) => apiReq("POST", "/rooms", r),
   updateRoom: (id, data) => apiReq("PATCH", "/rooms/" + id, data),
-  joinRoom: (id, inviterId) => apiReq("POST", "/rooms/" + id + "/join", inviterId ? { inviterId } : {}),
+  joinRoom: (id, inviterId, asCelebrant) => apiReq("POST", "/rooms/" + id + "/join", { ...(inviterId ? { inviterId } : {}), ...(asCelebrant ? { asCelebrant: true } : {}) }),
+  peekRoom: (id) => apiReq("GET", "/rooms/" + id + "/peek"),
+  setCelebrant: (id, userId) => apiReq("POST", "/rooms/" + id + "/celebrant", { userId: userId || null }),
+  addIdea: (id, w) => apiReq("POST", "/rooms/" + id + "/ideas", w),
+  deleteIdea: (id, wid) => apiReq("DELETE", "/rooms/" + id + "/ideas/" + wid),
+  myBirthday: () => apiReq("GET", "/me/birthday"),
   leaveRoom: (id) => apiReq("POST", "/rooms/" + id + "/leave"),
   deleteRoom: (id) => apiReq("DELETE", "/rooms/" + id),
   invites: () => apiReq("GET", "/invites"),
@@ -167,12 +172,40 @@ const STR = {
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
+  roomBirthday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
+  birthdayRoomHint: { uk: "Для одного іменинника: усі обирають подарунок саме йому. Можна зробити для себе або сюрприз для друга.", ru: "Для одного именинника: все выбирают подарок именно ему. Можно сделать для себя или сюрприз для друга.", en: "For one birthday person: everyone picks a gift for them. Make it for yourself or as a surprise for a friend." },
+  bdayWhose: { uk: "Чий день народження?", ru: "Чей день рождения?", en: "Whose birthday?" },
+  bdayMine: { uk: "Мій", ru: "Мой", en: "Mine" },
+  bdayOther: { uk: "Іншої людини", ru: "Другого человека", en: "Someone else's" },
+  bdayMineNote: { uk: "Ти іменинник: бачиш лише свої бажання, а хто що дарує, лишається сюрпризом.", ru: "Ты именинник: видишь только свои желания, а кто что дарит, остаётся сюрпризом.", en: "You're the birthday person: you see only your wishes, who gifts what stays a surprise." },
+  bdayOtherNote: { uk: "Сюрприз: іменинник не побачить ідеї подарунків і хто що дарує. Посилання йому краще не надсилати.", ru: "Сюрприз: именинник не увидит идеи подарков и кто что дарит. Ссылку ему лучше не отправлять.", en: "A surprise: the birthday person won't see gift ideas or who gifts what. Better not send them the link." },
+  bdayNameLabel: { uk: "Ім'я іменинника", ru: "Имя именинника", en: "Birthday person's name" },
+  bdayNamePh: { uk: "Напр., Оля", ru: "Например, Оля", en: "e.g. Anna" },
+  bdayDateLabel: { uk: "Дата свята", ru: "Дата праздника", en: "Party date" },
+  bdayFromTg: { uk: "Взяли з твого профілю Telegram", ru: "Взяли из твоего профиля Telegram", en: "Taken from your Telegram profile" },
+  bdayRoomNameOf: { uk: "ДР: {name}", ru: "ДР: {name}", en: "{name}'s birthday" },
+  bdayRoomNameMine: { uk: "Мій день народження", ru: "Мой день рождения", en: "My birthday" },
+  bdayWishesOf: { uk: "Бажання: {name}", ru: "Желания: {name}", en: "{name}'s wishes" },
+  bdayIdeas: { uk: "Ідеї подарунків", ru: "Идеи подарков", en: "Gift ideas" },
+  bdayIdeasHidden: { uk: "{name} цього не бачить", ru: "{name} этого не видит", en: "{name} can't see this" },
+  bdayAddIdea: { uk: "Додати ідею", ru: "Добавить идею", en: "Add an idea" },
+  bdayNoIdeasTitle: { uk: "Поки немає ідей", ru: "Пока нет идей", en: "No ideas yet" },
+  bdayNoIdeasSub: { uk: "Додайте, що можна подарувати. Посилання на товар теж підійде.", ru: "Добавьте, что можно подарить. Ссылка на товар тоже подойдёт.", en: "Add what could be gifted. A product link works too." },
+  bdayNewIdea: { uk: "Ідея подарунку", ru: "Идея подарка", en: "Gift idea" },
+  bdayIdeaAdded: { uk: "Ідею додано", ru: "Идея добавлена", en: "Idea added" },
+  bdayIdeaBy: { uk: "від {name}", ru: "от {name}", en: "from {name}" },
+  bdayCelebrantTitle: { uk: "Тут готують тобі сюрприз", ru: "Тут готовят тебе сюрприз", en: "A surprise is being planned for you" },
+  bdayCelebrantSub: { uk: "Додай свої бажання з пулу. Хто що дарує, ти не побачиш.", ru: "Добавь свои желания из пула. Кто что дарит, ты не увидишь.", en: "Add your wishes from the pool. You won't see who gifts what." },
+  bdayCelJoined: { uk: "{name} тут як іменинник", ru: "{name} здесь как именинник", en: "{name} is here as the birthday person" },
+  bdayNotCel: { uk: "Це не іменинник", ru: "Это не именинник", en: "Not the birthday person" },
+  bdayGateTitle: { uk: "Тут готують сюрприз. Іменинник: {name}", ru: "Тут готовят сюрприз. Именинник: {name}", en: "A surprise is being planned for {name}" },
+  bdayGateSub: { uk: "Друзі обирають подарунок. Якщо ти і є іменинник, зайди як іменинник: побачиш лише свої бажання, а сюрприз не зіпсуєш.", ru: "Друзья выбирают подарок. Если ты и есть именинник, зайди как именинник: увидишь только свои желания, а сюрприз не испортишь.", en: "Friends are picking a gift. If it's your birthday, join as the birthday person: you'll only see your own wishes and won't spoil the surprise." },
+  bdayGateIn: { uk: "Я в ділі", ru: "Я в деле", en: "I'm in" },
+  bdayGateMe: { uk: "Це мій день народження", ru: "Это мой день рождения", en: "It's my birthday" },
+  pickDate: { uk: "Обрати дату", ru: "Выбрать дату", en: "Pick a date" },
   evToday: { uk: "Сьогодні!", ru: "Сегодня!", en: "Today!" },
   evTomorrow: { uk: "Завтра", ru: "Завтра", en: "Tomorrow" },
   evIn: { uk: "через {n} {unit}", ru: "через {n} {unit}", en: "in {n} {unit}" },
-  evLabel: { uk: "Привід і дата", ru: "Повод и дата", en: "Occasion and date" },
-  evTitlePh: { uk: "Напр., ДР Ані", ru: "Например, ДР Ани", en: "e.g. Anna's birthday" },
-  evPickDate: { uk: "Обрати дату", ru: "Выбрать дату", en: "Pick a date" },
   evHint: { uk: "Бот нагадає всім за тиждень і за день", ru: "Бот напомнит всем за неделю и за день", en: "The bot reminds everyone a week and a day before" },
   giveHow: { uk: "Як даруємо «{name}»?", ru: "Как дарим «{name}»?", en: "How do we gift «{name}»?" },
   giveSolo: { uk: "Подарую від себе", ru: "Подарю от себя", en: "I'll gift it myself" },
@@ -210,7 +243,6 @@ const STR = {
 
   roomFriends: { uk: "Друзі", ru: "Друзья", en: "Friends" },
   roomCouple: { uk: "Пара", ru: "Пара", en: "Couple" },
-  roomFamily: { uk: "Сім’я", ru: "Семья", en: "Family" },
   newRoom: { uk: "Нова кімната", ru: "Новая комната", en: "New room" },
   roomType: { uk: "Тип кімнати", ru: "Тип комнаты", en: "Room type" },
   roomSticker: { uk: "Стікер", ru: "Стикер", en: "Sticker" },
@@ -250,7 +282,7 @@ const STR = {
   shuffling: { uk: "Перемішуємо…", ru: "Перемешиваем…", en: "Shuffling…" },
   dealing: { uk: "Роздаємо кожному підопічного", ru: "Раздаём каждому подопечного", en: "Assigning everyone a match" },
   youGot: { uk: "Тобі випав(-ла)", ru: "Тебе выпал", en: "You got" },
-  budgetSecret: { uk: "Бюджет {b} · тримаємо в секреті 🤫", ru: "Бюджет {b} · держим в секрете 🤫", en: "Budget {b} · keep it secret 🤫" },
+  budgetSecret: { uk: "Бюджет {b} · тримаємо в секреті", ru: "Бюджет {b} · держим в секрете", en: "Budget {b} · keep it secret" },
   wishesOf: { uk: "Бажання: {name}", ru: "Желания: {name}", en: "{name}'s wishes" },
   emptyLater: { uk: "Список поки порожній. Зазирни пізніше", ru: "Список пока пуст. Загляни позже", en: "The list is empty. Check back later" },
   gotItTake: { uk: "Зрозуміло, беру подарунок", ru: "Понятно, беру подарок", en: "Got it, I'll get the gift" },
@@ -295,7 +327,6 @@ const STR = {
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
   coupleRoomHint: { uk: "Тільки для двох: ви бачите вішлисти одне одного й обираєте подарунки потай. Третього сюди не запросити.", ru: "Только для двоих: вы видите вишлисты друг друга и выбираете подарки втайне. Третьего сюда не пригласить.", en: "Just the two of you: see each other's wishlists and pick gifts in secret. No third person can join." },
   friendsRoomHint: { uk: "Для компанії друзів чи колег. Кожен ділиться своїми бажаннями, подарунки можна бронювати чи скидатися разом, а ще провести Таємного Санту.", ru: "Для компании друзей или коллег. Каждый делится своими желаниями, подарки можно бронировать или скидываться вместе, а ещё провести Тайного Санту.", en: "For a group of friends or colleagues. Everyone shares their wishes, gifts can be claimed or chipped in on, and you can run a Secret Santa." },
-  familyRoomHint: { uk: "Для родини: всі діляться бажаннями до свят, бронюють подарунки одне одному й можуть провести Таємного Санту.", ru: "Для семьи: все делятся желаниями к праздникам, бронируют подарки друг другу и могут провести Тайного Санту.", en: "For family: everyone shares wishes before the holidays, claims gifts for each other and can run a Secret Santa." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
@@ -759,6 +790,19 @@ export default function App() {
       let startId = null, inviterId = null;
       if (sp) { const p = String(sp).split("__"); startId = p[0]; inviterId = p[1] || null; }
       let joinFailed = false;
+      // a surprise birthday room you're not in yet: show the gate instead of joining
+      if (startId) {
+        try {
+          const pk = await api.peekRoom(startId);
+          const r = pk && pk.room;
+          if (r && !r.member && r.type === "birthday" && r.bdayMode === "other") {
+            await refreshState({ quiet: true });
+            setOverlay({ type: "gate", room: r, inviterId });
+            setLoading(false);
+            return;
+          }
+        } catch (e) { /* fall through to a normal join */ }
+      }
       if (startId) { try { await api.joinRoom(startId, inviterId); } catch (e) { joinFailed = true; if (e.message === "room_full") showToast(t("roomFull"), 3000); else if (e.message === "not_found") showToast(t("roomGone"), 3000); } }
       const ok = await refreshState({ quiet: true });
       if (!ok) { setNetDown(true); return; }
@@ -774,6 +818,19 @@ export default function App() {
     setWishes(ws => ws.filter(w => w.id !== wid)); showToast(t("wishDeleted"));
   };
 
+  const [roomRefresh, setRoomRefresh] = useState(0);
+  const addIdea = async (roomId, w) => {
+    try { await api.addIdea(roomId, { emoji: w.emoji, images: w.images, link: w.link, title: w.title, price: w.price }); }
+    catch (e) { showToast(t("noConnection"), 3000); throw e; }
+    setRoomRefresh(x => x + 1); setOverlay({ type: "room", roomId }); showToast(t("bdayIdeaAdded"));
+  };
+  // Invite into a surprise birthday room: first ask if it's *your* birthday.
+  const joinFromGate = async (g, asCel) => {
+    try { await api.joinRoom(g.room.id, g.inviterId, asCel); }
+    catch (e) { showToast(t("noConnection"), 3000); return; }
+    await refreshState({ quiet: true });
+    setOverlay({ type: "room", roomId: g.room.id });
+  };
   const addWish = async (w) => {
     if (online) {
       try { const r = await api.createWish(w); setWishes(ws => [r.wish, ...ws]); }
@@ -935,9 +992,9 @@ export default function App() {
             onSave={addWish} />
         )}
         {overlay?.type === "createRoom" && (
-          <CreateRoomSheet onClose={() => setOverlay(null)} onCreate={createRoom} />
+          <CreateRoomSheet online={online} onClose={() => setOverlay(null)} onCreate={createRoom} />
         )}
-        {(overlay?.type === "room" || overlay?.type === "pool" || overlay?.type === "draw" || overlay?.type === "editRoom") && (
+        {(overlay?.type === "room" || overlay?.type === "pool" || overlay?.type === "draw" || overlay?.type === "editRoom" || overlay?.type === "idea") && (
           <RoomDetail room={rooms.find(r => r.id === overlay.roomId)} wishes={wishes}
             reserved={reserved}
             online={online}
@@ -946,6 +1003,9 @@ export default function App() {
             onChip={chip}
             onUnchip={unchip}
             onAddFromPool={() => setOverlay({ type: "pool", roomId: overlay.roomId })}
+            onAddIdea={() => setOverlay({ type: "idea", roomId: overlay.roomId })}
+            refreshKey={roomRefresh}
+            onError={() => showToast(t("noConnection"), 3000)}
             onInvite={() => shareInvite(rooms.find(r => r.id === overlay.roomId))}
             onDraw={() => setOverlay({ type: "draw", roomId: overlay.roomId })}
             onEdit={() => setOverlay({ type: "editRoom", roomId: overlay.roomId })}
@@ -953,6 +1013,13 @@ export default function App() {
             onDelete={() => removeRoom(overlay.roomId)}
             from={overlay.from} closerRef={roomCloser}
             onBack={() => setOverlay(null)} />
+        )}
+        {overlay?.type === "idea" && (
+          <AddSheet idea rooms={[]} onClose={() => setOverlay({ type: "room", roomId: overlay.roomId })}
+            onSave={(w) => addIdea(overlay.roomId, w)} />
+        )}
+        {overlay?.type === "gate" && (
+          <SurpriseGate room={overlay.room} onJoin={(asCel) => joinFromGate(overlay, asCel)} />
         )}
         {overlay?.type === "pool" && (
           <PoolPickerSheet wishes={wishes} roomId={overlay.roomId}
@@ -1089,7 +1156,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {rooms.length === 0
                       ? <span style={{ color: C.t3, fontSize: 12.5 }}>{t("noRoomsHint")}</span>
-                      : rooms.map(r => (
+                      : rooms.filter(r => r.type !== "birthday" || r.iAmCelebrant).map(r => (
                         <Chip key={r.id} active={w.rooms.includes(r.id)} color={r.tint} onClick={() => onToggleRoom(w.id, r.id)}>
                           <Sticker emoji={r.emoji} size={15} />{r.name}
                         </Chip>
@@ -1247,10 +1314,10 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
 const ROOM_PRESETS = [
   { type: "friends", key: "roomFriends" },
   { type: "couple", key: "roomCouple" },
-  { type: "family", key: "roomFamily" },
+  { type: "birthday", key: "roomBirthday" },
 ];
 // What each type is for, shown under the type chips.
-const ROOM_TYPE_HINT = { friends: "friendsRoomHint", couple: "coupleRoomHint", family: "familyRoomHint" };
+const ROOM_TYPE_HINT = { friends: "friendsRoomHint", couple: "coupleRoomHint", birthday: "birthdayRoomHint" };
 const ROOM_STICKERS = STICKERS.map(n => "stk:" + n);
 const ROOM_COLORS = ["#2E7DF6", "#38BDF8", "#34C759", "#FF7A45", "#FF4D8D", "#AF52DE"];
 // Yellow was dropped from the palette: rooms that still have it show as orange.
@@ -1258,7 +1325,7 @@ const fixRoom = (r) => {
   if (!r) return r;
   let x = r;
   if (String(x.tint).toUpperCase() === "#FFB020") x = { ...x, tint: "#FF7A45" };
-  if (x.type === "team") x = { ...x, type: "friends" }; // "Team" type was merged into Friends
+  if (x.type === "team" || x.type === "family") x = { ...x, type: "friends" }; // Team and Family were merged into Friends
   return x;
 };
 
@@ -1317,25 +1384,41 @@ function RoomPreview({ emoji, tint, name, eventTitle, eventDate }) {
     </div>
   );
 }
-// Optional occasion for a room: short title + date (native date picker).
-function EventFields({ title, date, onTitle, onDate }) {
-  const { t } = useT();
-  const inp = { background: C.card2, border: "1px solid transparent", borderRadius: R.pill, height: H.lg, padding: "0 16px", color: C.t1, fontSize: 16, fontFamily: font, outline: "none", minWidth: 0 };
+// One tappable row: calendar icon, the chosen date written out ("12 листопада"),
+// chevron. The native date input sits invisibly on top, so a tap opens the
+// phone's own picker (and showPicker() does it on desktop).
+function fmtDate(lang, date) {
+  const [y, m, d] = date.split("-").map(Number);
+  try { return new Date(y, m - 1, d).toLocaleDateString(lang === "uk" ? "uk-UA" : lang === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "long", year: y !== new Date().getFullYear() ? "numeric" : undefined }); }
+  catch (e) { return date; }
+}
+function DateField({ label, value, onChange, hint }) {
+  const { lang, t } = useT();
+  const ref = useRef(null);
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={sheetLabel}>{t("evLabel")}</div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <input value={title} onChange={e => onTitle(e.target.value)} placeholder={t("evTitlePh")} maxLength={60} style={{ ...inp, flex: 1 }} />
-        <div style={{ position: "relative", flex: "0 0 148px" }}>
-          <input type="date" value={date} onChange={e => onDate(e.target.value)} aria-label={t("evPickDate")}
-            style={{ ...inp, width: "100%", paddingRight: date ? 40 : 16, color: date ? C.t1 : "transparent", WebkitAppearance: "none", appearance: "none" }} />
-          {!date && <span style={{ position: "absolute", left: 16, top: 0, height: H.lg, display: "flex", alignItems: "center", gap: 8, color: C.t3, fontSize: 15, pointerEvents: "none" }}><CalendarDays size={16} />{t("evPickDate")}</span>}
-          {date && <button onClick={() => onDate("")} aria-label="Clear" style={{ position: "absolute", right: 8, top: 8, width: 36, height: 36, border: "none", background: "none", color: C.t3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>}
-        </div>
+      <div style={sheetLabel}>{label}</div>
+      <div style={{ position: "relative", height: H.lg, borderRadius: R.pill, background: C.card2, display: "flex", alignItems: "center", gap: 12, padding: "0 16px" }}>
+        <CalendarDays size={18} color={value ? C.t1 : C.t3} style={{ flexShrink: 0 }} />
+        <span style={{ flex: 1, color: value ? C.t1 : C.t3, fontSize: 16, fontWeight: 500 }}>{value ? fmtDate(lang, value) : t("pickDate")}</span>
+        <ChevronRight size={18} color={C.t3} style={{ flexShrink: 0 }} />
+        <input ref={ref} type="date" value={value} aria-label={label}
+          onChange={e => onChange(e.target.value)}
+          onClick={e => { try { e.currentTarget.showPicker && e.currentTarget.showPicker(); } catch (x) {} }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer", border: "none", fontSize: 16, WebkitAppearance: "none", appearance: "none" }} />
       </div>
-      <div style={{ color: C.t3, fontSize: 12.5, marginTop: 8 }}>{t("evHint")}</div>
+      {hint && <div style={{ color: C.t3, fontSize: 12.5, marginTop: 8 }}>{hint}</div>}
     </div>
   );
+}
+// Next date this day/month comes round (today counts), as YYYY-MM-DD.
+function nextOccurrence(day, month) {
+  const now = new Date(), y = now.getFullYear();
+  const pad = (n) => String(n).padStart(2, "0");
+  const thisYear = new Date(y, month - 1, day);
+  const today = new Date(y, now.getMonth(), now.getDate());
+  const yy = thisYear < today ? y + 1 : y;
+  return `${yy}-${pad(month)}-${pad(day)}`;
 }
 function RoomSheetShell({ title, onClose, children }) {
   return (
@@ -1350,25 +1433,38 @@ function RoomSheetShell({ title, onClose, children }) {
   );
 }
 
-function CreateRoomSheet({ onClose, onCreate }) {
+function CreateRoomSheet({ onClose, onCreate, online }) {
   const { t } = useT();
   const [preset, setPreset] = useState(ROOM_PRESETS[0]);
   const [emoji, setEmoji] = useState(ROOM_STICKERS[0]);
   const [tint, setTint] = useState(ROOM_COLORS[0]);
   const [name, setName] = useState("");
-  const [evTitle, setEvTitle] = useState("");
-  const [evDate, setEvDate] = useState("");
+  const [mode, setMode] = useState("self"); // birthday: "self" | "other"
+  const [celName, setCelName] = useState("");
+  const [date, setDate] = useState("");
+  const [fromTg, setFromTg] = useState(false);
   const [busy, setBusy] = useState(false);
-  const title = name.trim() || t(preset.key);
+  const bday = preset.type === "birthday";
+  // own birthday: try the date from the Telegram profile
+  useEffect(() => {
+    if (!bday || mode !== "self" || date || !online) return;
+    let live = true;
+    api.myBirthday().then(r => { if (live && r && r.birthday) { setDate(nextOccurrence(r.birthday.day, r.birthday.month)); setFromTg(true); } }).catch(() => {});
+    return () => { live = false; };
+  }, [bday, mode]); // eslint-disable-line
+  const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : (celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday"))) : t(preset.key);
+  const title = name.trim() || autoName;
+  const ready = !bday || (date && (mode === "self" || celName.trim()));
   const submit = async () => {
-    if (busy) return;
+    if (busy || !ready) return;
     setBusy(true);
-    try { await onCreate({ name: title, type: preset.type, emoji, tint, eventTitle: evTitle.trim(), eventDate: evDate }); }
+    const extra = bday ? { eventDate: date, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : {};
+    try { await onCreate({ name: title, type: preset.type, emoji, tint, ...extra }); }
     catch (e) { setBusy(false); }
   };
   return (
     <RoomSheetShell title={t("newRoom")} onClose={onClose}>
-      <RoomPreview emoji={emoji} tint={tint} name={title} eventTitle={evTitle.trim()} eventDate={evDate} />
+      <RoomPreview emoji={emoji} tint={tint} name={title} eventTitle="" eventDate={bday ? date : ""} />
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
       <RoomStickerPicker value={emoji} onChange={setEmoji} />
@@ -1382,14 +1478,21 @@ function CreateRoomSheet({ onClose, onCreate }) {
           <Chip key={p.type} active={preset.type === p.type} onClick={() => setPreset(p)}>{t(p.key)}</Chip>
         ))}
       </div>
-      {ROOM_TYPE_HINT[preset.type] && (
-        <div key={preset.type} style={{ color: C.t2, fontSize: 13, lineHeight: 1.45, marginTop: -8, marginBottom: 16, animation: "fadeUp .25s ease" }}>{t(ROOM_TYPE_HINT[preset.type])}</div>
+      <div key={preset.type} style={{ color: C.t2, fontSize: 13, lineHeight: 1.45, marginTop: -8, marginBottom: 16, animation: "fadeUp .25s ease" }}>{t(ROOM_TYPE_HINT[preset.type])}</div>
+
+      {bday && (
+        <div style={{ animation: "fadeUp .25s ease" }}>
+          <div style={sheetLabel}>{t("bdayWhose")}</div>
+          <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral style={{ marginBottom: 8, background: C.card2 }} />
+          <div style={{ color: C.t3, fontSize: 12.5, lineHeight: 1.45, marginBottom: 16 }}>{t(mode === "self" ? "bdayMineNote" : "bdayOtherNote")}</div>
+          {mode === "other" && <Field label={t("bdayNameLabel")} value={celName} onChange={setCelName} placeholder={t("bdayNamePh")} />}
+          <DateField label={t("bdayDateLabel")} value={date} onChange={(v) => { setDate(v); setFromTg(false); }} hint={fromTg ? t("bdayFromTg") : t("evHint")} />
+        </div>
       )}
 
-      <Field label={t("name")} value={name} onChange={setName} placeholder={t(preset.key)} />
-      <EventFields title={evTitle} date={evDate} onTitle={setEvTitle} onDate={setEvDate} />
+      <Field label={t("name")} value={name} onChange={setName} placeholder={autoName} />
 
-      <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy} onClick={submit}>
+      <Pill full kind="primary" icon={<Plus size={18} />} disabled={busy || !ready} onClick={submit}>
         {busy ? t("creating") : t("createRoom")}
       </Pill>
     </RoomSheetShell>
@@ -1402,18 +1505,20 @@ function EditRoomSheet({ room, onClose, onSave }) {
   const [name, setName] = useState(room.name);
   const [emoji, setEmoji] = useState(room.emoji);
   const [tint, setTint] = useState(room.tint);
-  const [evTitle, setEvTitle] = useState(room.eventTitle || "");
+  const bday = room.type === "birthday";
   const [evDate, setEvDate] = useState(room.eventDate || "");
+  const [celName, setCelName] = useState(room.celebrantName || "");
   const [busy, setBusy] = useState(false);
   const submit = async () => {
     if (busy || !name.trim()) return;
     setBusy(true);
-    try { await onSave({ name: name.trim(), emoji, tint, eventTitle: evTitle.trim(), eventDate: evDate }); }
+    const extra = bday ? { eventDate: evDate, eventTitle: "", ...(room.bdayMode === "other" ? { celebrantName: celName.trim() } : {}) } : {};
+    try { await onSave({ name: name.trim(), emoji, tint, ...extra }); }
     catch (e) { setBusy(false); }
   };
   return (
     <RoomSheetShell title={t("editRoom")} onClose={onClose}>
-      <RoomPreview emoji={emoji} tint={tint} name={name.trim() || room.name} eventTitle={evTitle.trim()} eventDate={evDate} />
+      <RoomPreview emoji={emoji} tint={tint} name={name.trim() || room.name} eventTitle="" eventDate={bday ? evDate : ""} />
 
       <div style={sheetLabel}>{t("roomSticker")}</div>
       <RoomStickerPicker value={emoji} onChange={setEmoji} />
@@ -1422,7 +1527,8 @@ function EditRoomSheet({ room, onClose, onSave }) {
       <RoomColorPicker value={tint} onChange={setTint} />
 
       <Field label={t("name")} value={name} onChange={setName} placeholder={t("name")} />
-      <EventFields title={evTitle} date={evDate} onTitle={setEvTitle} onDate={setEvDate} />
+      {bday && room.bdayMode === "other" && <Field label={t("bdayNameLabel")} value={celName} onChange={setCelName} placeholder={t("bdayNamePh")} />}
+      {bday && <DateField label={t("bdayDateLabel")} value={evDate} onChange={setEvDate} hint={t("evHint")} />}
 
       <Pill full kind="primary" disabled={!name.trim() || busy} onClick={submit}>
         {busy ? t("savingWish") : t("saveChanges")}
@@ -1612,7 +1718,7 @@ function HeroButton({ onClick, label, children, style }) {
   );
 }
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onChip, onUnchip, onAddFromPool, onInvite, onDraw, onEdit, onLeave, onDelete, onBack, from, closerRef }) {
+function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onChip, onUnchip, onAddFromPool, onAddIdea, onInvite, onDraw, onEdit, onLeave, onDelete, onBack, from, closerRef, refreshKey, onError }) {
   const { lang, t } = useT();
   // Opened from a folder: the room grows out of the folder's rectangle
   // (clip-path inset animation) and shrinks back into it on Back.
@@ -1673,13 +1779,26 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       setLoading(false);
     }
     return () => { live = false; };
-  }, [room.id, online, tick, wishes, reserved]);
+  }, [room.id, online, tick, wishes, reserved, refreshKey]);
 
   const members = (detail && detail.members) || room.members;
   const lists = (detail && detail.lists) || [];
   const mine = (detail && detail.mine) || [];
   const others = members.filter(m => !m.you);
   const coupleFull = room.type === "couple" && members.length >= 2;
+  // Birthday rooms: one birthday person; guests see their wishes + room-only ideas.
+  const bday = room.type === "birthday";
+  const info = (detail && detail.room) || room;
+  const iAmCel = !!info.iAmCelebrant;
+  const ideas = (detail && detail.ideas) || [];
+  const celMember = info.celebrantId ? members.find(m => m.id === info.celebrantId) : null;
+  const celName = (celMember && !celMember.you && celMember.name) || info.celebrantName || "";
+  const clearCelebrant = async () => {
+    try { await api.setCelebrant(room.id, null); setTick(x => x + 1); } catch (e) { onError && onError(); }
+  };
+  const removeIdea = (w) => tgConfirm(t("confirmDeleteWish"), async () => {
+    try { await api.deleteIdea(room.id, w.id); setTick(x => x + 1); } catch (e) { onError && onError(); }
+  });
 
   const doReserve = async (w) => { await onReserve(w); setTick(x => x + 1); };
   const doUnreserve = async (wid) => { await onUnreserve(wid); setTick(x => x + 1); };
@@ -1719,10 +1838,10 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               </button>
             )}
           </div>
-          {coupleFull ? null : (
+          {coupleFull || (bday && iAmCel && info.bdayMode === "other") ? null : (
             <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
-              <div style={{ flex: 1, display: "flex" }}><Pill full kind={room.type === "couple" ? "primary" : "glass"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill></div>
-              {room.type !== "couple" && (
+              <div style={{ flex: 1, display: "flex" }}><Pill full kind={room.type === "couple" || bday ? "primary" : "glass"} icon={<Share2 size={17} />} onClick={onInvite}>{t("invite")}</Pill></div>
+              {room.type === "friends" && (
                 <div style={{ flex: 1, display: "flex" }}><Pill full kind="primary" icon={<Dices size={18} />} onClick={onDraw}>{t("draw")}</Pill></div>
               )}
             </div>
@@ -1733,7 +1852,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       {/* fills the rest of the screen so Delete/Leave sits at the very bottom */}
       <div style={{ position: "relative", marginTop: -28, flex: "1 0 auto", display: "flex", flexDirection: "column", background: C.bg, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "16px 16px calc(16px + env(safe-area-inset-bottom))", boxShadow: "0 -10px 30px rgba(0,0,0,0.25)" }}>
 
-        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral style={{ marginBottom: 16 }} />
+        {!bday && <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral style={{ marginBottom: 16 }} />}
 
         {loading ? (
           <Card style={{ padding: `0 ${LIST.pad}px` }}>
@@ -1750,6 +1869,78 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : failed ? (
           <Empty emoji="stk:plumbob" tilt={0} title={t("roomLoadFailTitle")} sub={t("roomLoadFailSub")}
             action={<Pill kind="primary" icon={<RefreshCw size={17} />} onClick={() => { setLoading(true); setTick(x => x + 1); }}>{t("offlineRetry")}</Pill>} />
+        ) : bday ? (
+          iAmCel ? (
+            /* the birthday person: only their own wishes, the gifts stay a surprise */
+            <div>
+              <Empty compact emoji="stk:candle" title={t("bdayCelebrantTitle")} sub={t("bdayCelebrantSub")} />
+              {mine.length > 0 && (
+                <Card style={{ padding: `0 ${LIST.pad}px`, marginTop: 8 }}>
+                  {mine.map((w, i) => (
+                    <div key={w.id} style={{ ...sepBelow(i < mine.length - 1) }}>
+                      <WishRow w={w} right={<span style={{ color: C.t3, fontSize: 12.5 }}>{t("visibleToAll")}</span>} />
+                    </div>
+                  ))}
+                </Card>
+              )}
+              <div style={{ marginTop: 16 }}>
+                {mine.length
+                  ? <Pill full kind="ghost" icon={<Pencil size={17} />} onClick={onAddFromPool}>{t("editRoomWishes")}</Pill>
+                  : <Pill full kind="primary" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>}
+              </div>
+            </div>
+          ) : (
+            /* guests: the birthday person's wishes + gift ideas added right here */
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {info.owner && info.bdayMode === "other" && celMember && !celMember.you && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: R.card, background: C.card }}>
+                  <Avatar m={celMember} size={28} />
+                  <span style={{ flex: 1, color: C.t2, fontSize: 13.5, lineHeight: 1.35 }}>{t("bdayCelJoined", { name: celMember.name })}</span>
+                  <button onClick={() => tgConfirm(t("bdayNotCel") + "?", clearCelebrant)} style={{ background: "none", border: "none", color: "#7FB0FF", fontSize: 13.5, fontWeight: 600, fontFamily: font, cursor: "pointer", height: H.sm, padding: 0, whiteSpace: "nowrap" }}>{t("bdayNotCel")}</button>
+                </div>
+              )}
+              {lists.map(({ member: m, wishes: mws }) => mws.length > 0 && (
+                <div key={m.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+                    <Avatar m={m} size={28} /><span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700 }}>{t("bdayWishesOf", { name: m.name })}</span>
+                  </div>
+                  <Card style={{ padding: `0 ${LIST.pad}px` }}>
+                    {mws.map((w, i, arr) => (
+                      <div key={w.id} style={{ ...sepBelow(i < arr.length - 1) }}><WishRow w={w} right={reserveRight(w)} /></div>
+                    ))}
+                  </Card>
+                </div>
+              ))}
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
+                  <span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700 }}>{t("bdayIdeas")}</span>
+                  {celName && <span style={{ color: C.t3, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 4 }}><Lock size={12} />{t("bdayIdeasHidden", { name: celName })}</span>}
+                </div>
+                {ideas.length ? (
+                  <Card style={{ padding: `0 ${LIST.pad}px` }}>
+                    {ideas.map((w, i, arr) => (
+                      <div key={w.id} style={{ ...sepBelow(i < arr.length - 1) }}>
+                        <WishRow w={{ ...w, price: [w.price, w.by && !w.mineIdea ? t("bdayIdeaBy", { name: w.by.name }) : ""].filter(Boolean).join(" · ") }} right={
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            {(w.mineIdea || info.owner) && <button onClick={() => removeIdea(w)} aria-label={t("deleteWish")} style={{ width: H.sm, height: H.sm, border: "none", background: "none", color: C.t3, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Trash2 size={16} /></button>}
+                            {reserveRight(w)}
+                          </div>
+                        } />
+                      </div>
+                    ))}
+                  </Card>
+                ) : (
+                  <Empty compact emoji="stk:bag" title={t("bdayNoIdeasTitle")} sub={t("bdayNoIdeasSub")} />
+                )}
+                <div style={{ marginTop: 16 }}>
+                  <Pill full kind={ideas.length ? "ghost" : "primary"} icon={<Plus size={18} />} onClick={onAddIdea}>{t("bdayAddIdea")}</Pill>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", color: C.t3, fontSize: 12.5 }}>
+                <Lock size={13} /> {t("reserveNote")}
+              </div>
+            </div>
+          )
         ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
@@ -1860,6 +2051,29 @@ function Confetti() {
     return () => { cancelAnimationFrame(raf); clearTimeout(t2); clearTimeout(t3); };
   }, []);
   return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 75 }} />;
+}
+// Opening an invite to a surprise birthday room: guests go in, the birthday
+// person can say so and only ever see their own wishes there.
+function SurpriseGate({ room, onJoin }) {
+  const { lang, t } = useT();
+  const [busy, setBusy] = useState(false);
+  const go = async (asCel) => { if (busy) return; setBusy(true); try { await onJoin(asCel); } finally { setBusy(false); } };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 80, background: `linear-gradient(${heroTop(room.tint)} 0, transparent 160px), ${roomHeroBg(room.tint)}`, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", textAlign: "center" }}>
+        <div style={{ transform: "rotate(-8deg)" }}><Sticker emoji={room.emoji} size={96} /></div>
+        <div style={{ color: "#fff", fontSize: 26, fontWeight: 800, marginTop: 24 }}>{room.name}</div>
+        {room.eventDate && <EventBadge text={fmtDate(lang, room.eventDate)} />}
+      </div>
+      <div style={{ background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "24px 16px calc(24px + env(safe-area-inset-bottom))" }}>
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, lineHeight: 1.25 }}>{t("bdayGateTitle", { name: room.celebrantName || "?" })}</div>
+        <div style={{ color: C.t2, fontSize: 14.5, lineHeight: 1.45, marginTop: 8, marginBottom: 24 }}>{t("bdayGateSub")}</div>
+        <Pill full kind="primary" disabled={busy} onClick={() => go(false)}>{t("bdayGateIn")}</Pill>
+        <div style={{ height: 12 }} />
+        <Pill full kind="ghost" disabled={busy} onClick={() => go(true)}>{t("bdayGateMe")}</Pill>
+      </div>
+    </div>
+  );
 }
 // "Take" on a free wish: gift it alone (reserve) or open a group chip-in.
 function GiveSheet({ wish, onSolo, onGroup, onClose }) {
@@ -2087,7 +2301,8 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 }
 
 /* ---------- ADD SHEET ---------- */
-function AddSheet({ rooms, onClose, onSave }) {
+// idea: a gift idea inside a birthday room (no pool, no room picker)
+function AddSheet({ rooms, onClose, onSave, idea }) {
   const { t } = useT();
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
@@ -2147,7 +2362,7 @@ function AddSheet({ rooms, onClose, onSave }) {
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
       <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newWish")}</div>
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t(idea ? "bdayNewIdea" : "newWish")}</div>
 
         <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral style={{ marginBottom: 16, background: C.card2 }} />
 
@@ -2207,9 +2422,10 @@ function AddSheet({ rooms, onClose, onSave }) {
         <Field label={t("whatYouWant")} value={title} onChange={setTitle} placeholder={t("whatYouWantPh")} />
         <Field label={t("priceOpt")} value={price} onChange={setPrice} placeholder="4 200 ₴" />
 
+        {!idea && <>
         <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-          {rooms.map(r => (
+          {rooms.filter(r => r.type !== "birthday" || r.iAmCelebrant).map(r => (
             <Chip key={r.id} active={inRooms.includes(r.id)} color={r.tint}
               onClick={() => setInRooms(x => x.includes(r.id) ? x.filter(i => i !== r.id) : [...x, r.id])}>
               <Sticker emoji={r.emoji} size={15} />{r.name}
@@ -2217,6 +2433,8 @@ function AddSheet({ rooms, onClose, onSave }) {
           ))}
         </div>
         <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} />{t("nothingSelectedPrivate")}</div>
+        </>}
+        {idea && <div style={{ height: 8 }} />}
 
         <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
           {busy ? t("savingWish") : t("saveWish")}

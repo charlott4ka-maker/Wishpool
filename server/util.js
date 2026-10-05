@@ -9,12 +9,14 @@ const parseImages = (r) => {
   try { const a = JSON.parse(r.images || "null"); if (Array.isArray(a)) return a.slice(0, MAX_IMAGES); } catch {}
   return r.image ? [r.image] : [];
 };
-export const mapWish = (r) => r && ({ id: r.id, ownerId: r.owner_id, emoji: r.emoji, image: r.image, images: parseImages(r), link: r.link, title: r.title, price: r.price, createdAt: Number(r.created_at) });
+export const mapWish = (r) => r && ({ id: r.id, ownerId: r.owner_id, emoji: r.emoji, image: r.image, images: parseImages(r), link: r.link, title: r.title, price: r.price, createdAt: Number(r.created_at), roomOnly: r.room_only || null });
 // Accept data-URL images (from the in-app picker) or https URLs; drop anything else.
 export const cleanImages = (list) => (Array.isArray(list) ? list : [])
   .filter(x => typeof x === "string" && (/^data:image\/(jpeg|png|webp|gif);base64,/.test(x) || /^https:\/\//.test(x)))
   .slice(0, MAX_IMAGES);
-export const mapRoom = (r) => r && ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, ownerId: r.owner_id, createdAt: Number(r.created_at), eventTitle: r.event_title || "", eventDate: r.event_date || "" });
+export const mapRoom = (r) => r && ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, ownerId: r.owner_id, createdAt: Number(r.created_at), eventTitle: r.event_title || "", eventDate: r.event_date || "",
+  // birthday rooms: whose birthday ("self" = the creator, "other" = a surprise for someone else)
+  bdayMode: r.bday_mode || "", celebrantName: r.celebrant_name || "", celebrantId: r.celebrant_id || null });
 // Room event ("Anya's birthday", 2026-11-12): short title + a YYYY-MM-DD date.
 export const cleanEvent = (title, date) => ({
   eventTitle: typeof title === "string" ? title.trim().slice(0, 60) : "",

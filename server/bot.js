@@ -61,9 +61,9 @@ export function botRoute(token) {
 
 // ---- Event reminders (Vercel cron hits GET /api/cron/remind once a day) ----
 const REMIND = {
-  uk: { week: (e, r) => `Через тиждень: ${e} у кімнаті «${r}» 🎁\nЗазирни у вішлисти й обери подарунок, поки все не розібрали.`, day: (e, r) => `Вже завтра: ${e} у кімнаті «${r}» 🎉\nПодарунок ще не обрано? Саме час.`, ev: "подія", open: "Відкрити кімнату" },
-  ru: { week: (e, r) => `Через неделю: ${e} в комнате «${r}» 🎁\nЗагляни в вишлисты и выбери подарок, пока всё не разобрали.`, day: (e, r) => `Уже завтра: ${e} в комнате «${r}» 🎉\nПодарок ещё не выбран? Самое время.`, ev: "событие", open: "Открыть комнату" },
-  en: { week: (e, r) => `In a week: ${e} in «${r}» 🎁\nPeek at the wishlists and pick a gift before they're all claimed.`, day: (e, r) => `Tomorrow: ${e} in «${r}» 🎉\nNo gift yet? Now's the time.`, ev: "the event", open: "Open the room" },
+  uk: { week: (e, r) => `Через тиждень: ${e} у кімнаті «${r}» 🎁\nЗазирни у вішлисти й обери подарунок, поки все не розібрали.`, day: (e, r) => `Вже завтра: ${e} у кімнаті «${r}» 🎉\nПодарунок ще не обрано? Саме час.`, ev: "подія", bday: "день народження", open: "Відкрити кімнату" },
+  ru: { week: (e, r) => `Через неделю: ${e} в комнате «${r}» 🎁\nЗагляни в вишлисты и выбери подарок, пока всё не разобрали.`, day: (e, r) => `Уже завтра: ${e} в комнате «${r}» 🎉\nПодарок ещё не выбран? Самое время.`, ev: "событие", bday: "день рождения", open: "Открыть комнату" },
+  en: { week: (e, r) => `In a week: ${e} in «${r}» 🎁\nPeek at the wishlists and pick a gift before they're all claimed.`, day: (e, r) => `Tomorrow: ${e} in «${r}» 🎉\nNo gift yet? Now's the time.`, ev: "the event", bday: "the birthday", open: "Open the room" },
 };
 // Calendar day (YYYY-MM-DD) in Kyiv time, `plus` days from now.
 function kyivDay(plus = 0) {
@@ -84,10 +84,11 @@ export function remindRoute(token, store) {
       for (const r of await store.roomsWithEventOn(day)) {
         if (!(await store.markReminder(r.id, day, kind))) continue; // already sent
         for (const u of await store.roomMembers(r.id)) {
+          if (r.celebrantId && u.id === r.celebrantId) continue; // not "pick a gift" for their own birthday
           const L = REMIND[pickLang(await store.userLang(u.id))];
           try {
             const out = await tg(token, "sendMessage", {
-              chat_id: u.id, text: L[kind](r.eventTitle || L.ev, r.name),
+              chat_id: u.id, text: L[kind](r.eventTitle || (r.type === "birthday" ? L.bday : L.ev), r.name),
               reply_markup: { inline_keyboard: [[{ text: L.open, url: `${APP_LINK}?startapp=${r.id}` }]] },
             });
             if (out && out.ok) sent++;
@@ -97,4 +98,15 @@ export function remindRoute(token, store) {
     }
     res.json({ ok: true, sent });
   };
+}
+
+// Birthday from the user's Telegram profile, if they set one and it's visible
+// to bots (Bot API getChat -> ChatFullInfo.birthdate). Null when unavailable.
+export async function telegramBirthdate(token, userId) {
+  if (!token) return null;
+  try {
+    const r = await tg(token, "getChat", { chat_id: userId });
+    const b = r && r.ok && r.result && r.result.birthdate;
+    return b && b.day && b.month ? { day: b.day, month: b.month, year: b.year || null } : null;
+  } catch (e) { return null; }
 }
