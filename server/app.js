@@ -3,7 +3,7 @@ import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser, cleanEvent, cleanNote } from "./util.js";
-import { botRoute, ensureWebhook, remindRoute, telegramBirthdate } from "./bot.js";
+import { botRoute, ensureWebhook, remindRoute, telegramBirthdate, notifyWishShared, notifyGiftPicked } from "./bot.js";
 import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, dropImages } from "./storage.js";
 
@@ -57,7 +57,36 @@ export async function createApp() {
   });
 
   // Bot webhook (Telegram -> us): before the initData auth, it has its own secret.
-  app.post("/api/tg-webhook", botRoute(BOT_TOKEN));
+  // Wishes sent to the bot: a product link (filled in like the add form does),
+  // a photo with its caption, or just a name. They land in the private pool.
+  app.post("/api/tg-webhook", botRoute(BOT_TOKEN, {
+    async addWish(from, { text, url, image, fallbackTitle }) {
+      const owner = { id: String(from.id), name: from.first_name || "User", lang: from.language_code };
+      await store.ensureBotUser(owner);
+      let title = text, price = "", images = image ? [image] : [], guess = false;
+      if (url) {
+        try {
+          const p = await previewLink(url);
+          if (!title) { title = p.title; guess = !!p.guess; }
+          price = p.price || "";
+          if (p.image && !images.length) images = [p.image];
+        } catch (e) { console.error("bot preview failed", e.message); }
+      }
+      title = (title || "").slice(0, 120) || fallbackTitle;
+      const id = uid("w");
+      images = cleanImages(images);
+      if (storageOn() && images.length) { try { images = await storeImages(images, `w/${id}`); } catch (e) { console.error("r2 upload failed", e.message); } }
+      await store.createWish({ id, ownerId: owner.id, emoji: "stk:bag", image: images[0] || null, images, link: url, title, price, note: "", createdAt: Date.now() });
+      return { id, title, price, guess };
+    },
+    async undoWish(userId, wishId) {
+      const w = await store.getWish(wishId);
+      if (!w || w.ownerId !== userId) return false;
+      await store.deleteWish(w.id);
+      await dropImages(w.images && w.images.length ? w.images : [w.image]);
+      return true;
+    },
+  }));
   // One-off move of photos that still live inline in the database into R2.
   // Link import check for a shop: /api/admin/preview?key=<CRON_SECRET>&url=<product url>
   app.get("/api/admin/preview", async (req, res) => {
@@ -98,6 +127,13 @@ export async function createApp() {
   api.use(async (req, _res, next) => { try { await store.ensureUser(req.user); next(); } catch (e) { next(e); } });
 
   api.get("/me", async (req, res) => res.json({ user: await store.getUser(req.user.id) }));
+  // Own birthday in the profile (YYYY-MM-DD, or null to clear).
+  api.put("/me/birthday", async (req, res) => {
+    const b = req.body && req.body.birthday;
+    if (b != null && !(typeof b === "string" && /^\d{4}-\d{2}-\d{2}$/.test(b))) return res.status(400).json({ error: "bad_date" });
+    await store.setBirthday(req.user.id, b || null);
+    res.json({ birthday: b || null });
+  });
   api.get("/me/birthday", async (req, res) => res.json({ birthday: await telegramBirthdate(BOT_TOKEN, req.user.id) }));
 
   api.get("/state", async (req, res) => {
@@ -130,7 +166,9 @@ export async function createApp() {
     const w = { id, ownerId: req.user.id, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", note: cleanNote(note), createdAt: Date.now() };
     await store.createWish(w);
     for (const rid of rooms) if (await store.isMember(rid, req.user.id)) await store.addWishRoom(w.id, rid);
-    res.json({ wish: { ...pubWish(w), rooms: await store.wishRoomIds(w.id) } });
+    const shared = await store.wishRoomIds(w.id);
+    await Promise.all(shared.map(rid => notifyWishShared(BOT_TOKEN, store, req.user, w, rid)));
+    res.json({ wish: { ...pubWish(w), rooms: shared } });
   });
 
   // Edit a wish. Photos it already had come back as their public URLs (or as
@@ -176,6 +214,7 @@ export async function createApp() {
     if (!w || w.ownerId !== req.user.id) return res.status(404).json({ error: "not_found" });
     if (!(await store.isMember(roomId, req.user.id))) return res.status(403).json({ error: "not_member" });
     const roomsNow = await store.toggleWishRoom(w.id, roomId);
+    if (roomsNow.includes(roomId) && !w.giftedAt) await notifyWishShared(BOT_TOKEN, store, req.user, w, roomId);
     res.json({ rooms: roomsNow });
   });
 
@@ -341,6 +380,7 @@ export async function createApp() {
     if (cur && cur !== req.user.id) return res.status(409).json({ error: "taken" });
     if ((await store.chips(w.id)).length) return res.status(409).json({ error: "chipping" });
     await store.setReservation(w.id, req.user.id);
+    await notifyGiftPicked(BOT_TOKEN, store, w, req.user.id);
     res.json({ ok: true });
   });
 
@@ -358,6 +398,7 @@ export async function createApp() {
     if (cur && cur !== me) return res.status(409).json({ error: "taken" });
     if (cur === me) await store.clearReservation(w.id, me); // turning my solo gift into a group one
     await store.addChip(w.id, me);
+    await notifyGiftPicked(BOT_TOKEN, store, w, me);
     res.json({ ok: true });
   });
   api.delete("/wishes/:id/chip", async (req, res) => {

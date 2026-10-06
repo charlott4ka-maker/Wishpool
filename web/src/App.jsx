@@ -73,6 +73,7 @@ const api = {
   addIdea: (id, w) => apiReq("POST", "/rooms/" + id + "/ideas", w),
   deleteIdea: (id, wid) => apiReq("DELETE", "/rooms/" + id + "/ideas/" + wid),
   myBirthday: () => apiReq("GET", "/me/birthday"),
+  setBirthday: (birthday) => apiReq("PUT", "/me/birthday", { birthday }),
   leaveRoom: (id) => apiReq("POST", "/rooms/" + id + "/leave"),
   deleteRoom: (id) => apiReq("DELETE", "/rooms/" + id),
   invites: () => apiReq("GET", "/invites"),
@@ -195,6 +196,23 @@ const STR = {
   filterEmpty: { uk: "Тут поки нічого", ru: "Здесь пока ничего", en: "Nothing here yet" },
   filterEmptySub: { uk: "Відкрий бажання і обери, в яких кімнатах його показувати.", ru: "Открой желание и выбери, в каких комнатах его показывать.", en: "Open a wish and choose which rooms can see it." },
   giftedEmptySub: { uk: "Коли отримаєш подарунок, відкрий бажання і натисни «Мені подарували».", ru: "Когда получишь подарок, открой желание и нажми «Мне подарили».", en: "When you get a gift, open the wish and tap \"I got it\"." },
+  myBday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
+  myBdayEmpty: { uk: "Вкажи дату", ru: "Укажи дату", en: "Add your date" },
+  myBdayHint: { uk: "Друзі з твоїх кімнат отримають нагадування за тиждень і за день.", ru: "Друзья из твоих комнат получат напоминание за неделю и за день.", en: "Friends from your rooms get a reminder a week and a day before." },
+  myBdayToday: { uk: "Сьогодні твій день!", ru: "Сегодня твой день!", en: "It's your day!" },
+  myBdayFromTg: { uk: "Взяли дату з твого профілю Telegram", ru: "Взяли дату из твоего профиля Telegram", en: "Taken from your Telegram profile" },
+  myBdaySaved: { uk: "День народження збережено", ru: "День рождения сохранён", en: "Birthday saved" },
+  myBdayClear: { uk: "Прибрати дату", ru: "Убрать дату", en: "Remove date" },
+  bdayDate: { uk: "Дата народження", ru: "Дата рождения", en: "Date of birth" },
+  obSkip: { uk: "Пропустити", ru: "Пропустить", en: "Skip" },
+  obNext: { uk: "Далі", ru: "Дальше", en: "Next" },
+  obStart: { uk: "Почати", ru: "Начать", en: "Let's go" },
+  ob1Title: { uk: "Збирай бажання", ru: "Собирай желания", en: "Collect your wishes" },
+  ob1Text: { uk: "Додавай з фото, за посиланням з магазину або просто назвою. А можна надіслати посилання прямо боту.", ru: "Добавляй с фото, по ссылке из магазина или просто названием. А можно прислать ссылку прямо боту.", en: "Add them with a photo, a shop link or just a name. You can even send a link straight to the bot." },
+  ob2Title: { uk: "Ділись у кімнатах", ru: "Делись в комнатах", en: "Share in rooms" },
+  ob2Text: { uk: "Друзі, пара чи день народження. Ти вирішуєш, які бажання бачить кожна кімната.", ru: "Друзья, пара или день рождения. Ты решаешь, какие желания видит каждая комната.", en: "Friends, a couple or a birthday. You decide which wishes each room can see." },
+  ob3Title: { uk: "Даруйте потай", ru: "Дарите втайне", en: "Gift in secret" },
+  ob3Text: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А ти не дізнаєшся, хто і що обрав.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А ты не узнаешь, кто и что выбрал.", en: "Friends mark what they give, so nothing doubles up. And you won't know who picked what." },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
   roomBirthday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
@@ -770,7 +788,21 @@ export default function App() {
   const [overlay, setOverlay] = useState(null);
   const [toast, setToast] = useState(null);
   const online = api.online();
-  const [me, setMe] = useState(null);
+  const [me, setMe] = useState(() => { const c = online ? store.get(CACHE_KEY(), null) : null; return (c && c.me) || null; });
+  // Own birthday (profile): on the server when online, in localStorage otherwise.
+  const [localBday, setLocalBday] = useState(() => store.get("wp_birthday", null));
+  const birthday = online ? (me && me.birthday) || null : localBday;
+  const saveBirthday = async (b) => {
+    if (online) {
+      try { await api.setBirthday(b); } catch (e) { showToast(t("noConnection"), 3000); return false; }
+      setMe(m => ({ ...(m || {}), birthday: b }));
+    } else { setLocalBday(b); store.set("wp_birthday", b); }
+    if (b) { haptic("success"); showToast(t("myBdaySaved")); }
+    return true;
+  };
+  // First launch: three short intro screens (not when arriving through an invite).
+  const [onboard, setOnboard] = useState(() => !store.get("wp_onboarded", false) && !api.startRoomId());
+  const finishOnboard = () => { store.set("wp_onboarded", true); setOnboard(false); };
   // Online: start from the last state we got from the server (shown instantly),
   // then refresh in the background. Offline/local mode keeps its own keys.
   const [cached] = useState(() => online ? store.get(CACHE_KEY(), null) : null);
@@ -786,7 +818,7 @@ export default function App() {
   useEffect(() => { if (!online) store.set("wp_rooms", rooms); }, [rooms, online]);
   useEffect(() => { if (!online) store.set("wp_wishes", wishes); }, [wishes, online]);
   useEffect(() => { if (!online) store.set("wp_reserved", reserved); }, [reserved, online]);
-  useEffect(() => { if (online && !loading) store.set(CACHE_KEY(), { wishes, rooms }); }, [wishes, rooms, online, loading]);
+  useEffect(() => { if (online && !loading) store.set(CACHE_KEY(), { wishes, rooms, me }); }, [wishes, rooms, me, online, loading]);
 
   const showToast = (msg, ms = 1800) => { setToast(msg); setTimeout(() => setToast(null), ms); };
 
@@ -1034,11 +1066,12 @@ export default function App() {
                   onOpen={(id, rect) => setOverlay({ type: "room", roomId: id, from: rect ? { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom } : null })}
                   onCreate={() => setOverlay({ type: "createRoom" })} />
               )}
-              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
+              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} birthday={birthday} onBirthday={saveBirthday} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
             </>
           )}
         </div>
 
+        {onboard && <Onboarding onDone={finishOnboard} />}
         {!overlay && <TabBar tab={tab} setTab={(x) => { setTab(x); setOverlay(null); }} />}
 
         {overlay?.type === "add" && (
@@ -2667,7 +2700,83 @@ function Field({ label, value, onChange, placeholder }) {
 }
 
 /* ---------- PROFILE ---------- */
-function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
+// "My birthday" card: date, days to go, opens a sheet to set it.
+function BirthdayCard({ birthday, onSave }) {
+  const { t, lang } = useT();
+  const [open, setOpen] = useState(false);
+  const next = birthday && /^\d{4}-\d{2}-\d{2}$/.test(birthday) ? nextOccurrence(Number(birthday.slice(8)), Number(birthday.slice(5, 7))) : null;
+  const left = next ? daysUntil(next) : null;
+  const dayMonth = next ? (() => { const [y, m, d] = next.split("-").map(Number); try { return new Date(y, m - 1, d).toLocaleDateString(lang === "uk" ? "uk-UA" : lang === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "long" }); } catch (e) { return next; } })() : null;
+  return (
+    <>
+      <Card onClick={() => { haptic("light"); setOpen(true); }} style={{ marginTop: 24, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}>
+        <div style={{ width: LIST.icon, display: "flex", justifyContent: "center", flexShrink: 0, transform: "rotate(-8deg)" }}><Sticker emoji="stk:candle" size={30} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ color: C.t2, fontSize: 13, fontWeight: 600 }}>{t("myBday")}</div>
+          <div style={{ color: next ? C.t1 : "#7FB0FF", fontSize: 16, fontWeight: 700, marginTop: 4 }}>{next ? dayMonth : t("myBdayEmpty")}</div>
+        </div>
+        {left != null && (
+          <div style={{ height: 32, padding: "0 12px", borderRadius: 999, background: left === 0 ? C.blue : C.blueSoft, color: left === 0 ? "#fff" : "#7FB0FF", fontSize: 13.5, fontWeight: 700, display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>
+            {left === 0 ? t("myBdayToday") : countdownLabel(lang, t, next)}
+          </div>
+        )}
+        <ChevronRight size={20} color={C.t3} />
+      </Card>
+      {open && <div style={{ textAlign: "left" }}><BirthdaySheet birthday={birthday} onSave={onSave} onClose={() => setOpen(false)} /></div>}
+    </>
+  );
+}
+function BirthdaySheet({ birthday, onSave, onClose }) {
+  const { t } = useT();
+  const [date, setDate] = useState(birthday || "");
+  const [fromTg, setFromTg] = useState(false);
+  const [busy, setBusy] = useState(false);
+  // Nothing set yet: suggest the date from the Telegram profile, if it's visible.
+  useEffect(() => {
+    if (birthday) return;
+    let live = true;
+    api.myBirthday().then(r => {
+      const b = r && r.birthday;
+      if (live && b) { const pad = (n) => String(n).padStart(2, "0"); setDate(`${b.year || new Date().getFullYear()}-${pad(b.month)}-${pad(b.day)}`); setFromTg(true); }
+    }).catch(() => {});
+    return () => { live = false; };
+  }, []); // eslint-disable-line
+  const save = async (v) => { setBusy(true); const ok = await onSave(v); setBusy(false); if (ok) onClose(); };
+  return (
+    <Sheet title={t("myBday")} onClose={onClose}>
+      <DateField label={t("bdayDate")} value={date} onChange={(v) => { setDate(v); setFromTg(false); }} hint={fromTg ? t("myBdayFromTg") : t("myBdayHint")} />
+      <Pill full kind="primary" disabled={!date || busy} onClick={() => save(date)}>{t("saveChanges")}</Pill>
+      {birthday && (
+        <button onClick={() => save(null)} style={{ display: "block", margin: "8px auto 0", background: "none", border: "none", height: H.sm, cursor: "pointer", color: C.t2, fontSize: 14, fontWeight: 600, fontFamily: font }}>{t("myBdayClear")}</button>
+      )}
+    </Sheet>
+  );
+}
+// First-launch intro: three cards with a sticker, swipe-free, Next / Skip.
+const ONBOARD = [["stk:bag", "ob1Title", "ob1Text"], ["stk:uno", "ob2Title", "ob2Text"], ["stk:ghost", "ob3Title", "ob3Text"]];
+function Onboarding({ onDone }) {
+  const { t } = useT();
+  const [i, setI] = useState(0);
+  const [emoji, title, text] = ONBOARD[i];
+  const last = i === ONBOARD.length - 1;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 95, background: C.bg, display: "flex", flexDirection: "column", padding: "16px 16px 32px", maxWidth: 440, marginInline: "auto" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", height: H.sm }}>
+        {!last && <button onClick={onDone} style={{ background: "none", border: "none", color: C.t2, fontSize: 15, fontWeight: 600, fontFamily: font, cursor: "pointer", height: H.sm, padding: "0 8px" }}>{t("obSkip")}</button>}
+      </div>
+      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 16px", animation: "fadeUp .35s ease" }}>
+        <div style={{ transform: `rotate(${i % 2 ? 8 : -8}deg)`, animation: "pop .5s cubic-bezier(.2,.9,.3,1.25)" }}><Sticker emoji={emoji} size={120} /></div>
+        <div style={{ color: C.t1, fontSize: 28, fontWeight: 800, letterSpacing: -0.5, marginTop: 32 }}>{t(title)}</div>
+        <div style={{ color: C.t2, fontSize: 16, lineHeight: 1.45, marginTop: 12, maxWidth: 320 }}>{t(text)}</div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
+        {ONBOARD.map((_, j) => <div key={j} style={{ width: j === i ? 24 : 8, height: 8, borderRadius: 8, background: j === i ? C.blue : C.card2, transition: "all .25s ease" }} />)}
+      </div>
+      <Pill full kind="primary" onClick={() => last ? onDone() : setI(i + 1)}>{t(last ? "obStart" : "obNext")}</Pill>
+    </div>
+  );
+}
+function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, birthday, onBirthday }) {
   const { t, lang, setLang } = useT();
   const me = { name: tgUserName() || t("guest"), color: "#7B61FF", photo: tgUserPhoto() };
   const gifting = Object.values(reserved || {}).filter(v => v === "you").length;
@@ -2677,7 +2786,9 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites }) {
       <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 16 }}>{me.name}</div>
       <div style={{ color: C.t2, fontSize: 14.5, marginTop: 4 }}>{t("statsLine", { w: wishes.length, r: rooms.length })}</div>
 
-      <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+      <BirthdayCard birthday={birthday} onSave={onBirthday} />
+
+      <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
         <Card style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
           <Gift size={22} color={C.blue} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 8 }}>{wishes.reduce((n, w) => n + w.rooms.length, 0)}</div>

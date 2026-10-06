@@ -15,6 +15,8 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS reservations(wish_id text primary key, gifter_id text)`);
       await q(`CREATE TABLE IF NOT EXISTS draws(room_id text primary key, assignments jsonb, budget text, at bigint)`);
       await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lang text`);
+      await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday text`);
+      await q(`CREATE TABLE IF NOT EXISTS notices(key text primary key, at bigint)`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS event_title text`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS event_date text`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS bday_mode text`);
@@ -32,7 +34,18 @@ export function createPgStore(q) {
       const { rows } = await q(`INSERT INTO users(id,name,color,photo,lang) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name, photo=EXCLUDED.photo, lang=COALESCE(EXCLUDED.lang, users.lang) RETURNING id,name,color,photo`, [u.id, u.name, colorFor(u.id), u.photo || null, u.lang || null]);
       return rows[0];
     },
-    async getUser(id) { const { rows } = await q(`SELECT id,name,color,photo FROM users WHERE id=$1`, [id]); return rows[0] || null; },
+    async getUser(id) { const { rows } = await q(`SELECT id,name,color,photo,birthday FROM users WHERE id=$1`, [id]); return rows[0] || null; },
+    // someone who writes to the bot before ever opening the app; never overwrites a known profile
+    async ensureBotUser(u) { await q(`INSERT INTO users(id,name,color,photo,lang) VALUES($1,$2,$3,NULL,$4) ON CONFLICT(id) DO NOTHING`, [u.id, u.name, colorFor(u.id), u.lang || null]); },
+    async setBirthday(id, b) { await q(`UPDATE users SET birthday=$2 WHERE id=$1`, [id, b || null]); },
+    // birthdays falling on MM-DD (stored as YYYY-MM-DD)
+    async usersWithBirthday(mmdd) { const { rows } = await q(`SELECT id,name FROM users WHERE substr(birthday,6,5)=$1`, [mmdd]); return rows; },
+    // true at most once per `gapMs` for the same key (bot notifications must not spam)
+    async noticeOnce(key, gapMs) {
+      const now = Date.now();
+      const { rows } = await q(`INSERT INTO notices(key,at) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET at=EXCLUDED.at WHERE notices.at < $3 RETURNING key`, [key, now, now - gapMs]);
+      return rows.length > 0;
+    },
     async isMember(roomId, userId) { const { rows } = await q(`SELECT 1 FROM members WHERE room_id=$1 AND user_id=$2`, [roomId, userId]); return rows.length > 0; },
     async roomMembers(roomId) { const { rows } = await q(`SELECT u.id,u.name,u.color,u.photo FROM members m JOIN users u ON u.id=m.user_id WHERE m.room_id=$1`, [roomId]); return rows; },
     async userRoomIds(userId) { const { rows } = await q(`SELECT room_id FROM members WHERE user_id=$1`, [userId]); return rows.map(r => r.room_id); },

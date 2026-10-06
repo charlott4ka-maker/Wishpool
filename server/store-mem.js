@@ -2,7 +2,7 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set() };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {} };
   return {
     async init() {},
     async ensureUser(u) {
@@ -11,6 +11,10 @@ export function createMemStore() {
       return D.users[u.id];
     },
     async getUser(id) { return D.users[id] || null; },
+    async ensureBotUser(u) { if (!D.users[u.id]) D.users[u.id] = { id: u.id, name: u.name, color: colorFor(u.id), photo: null, lang: u.lang || null }; },
+    async setBirthday(id, b) { if (D.users[id]) D.users[id].birthday = b || null; },
+    async usersWithBirthday(mmdd) { return Object.values(D.users).filter(u => u.birthday && u.birthday.slice(5) === mmdd); },
+    async noticeOnce(key, gapMs) { const now = Date.now(); if (D.notices[key] && D.notices[key] >= now - gapMs) return false; D.notices[key] = now; return true; },
     async isMember(roomId, userId) { return D.members.some(m => m.roomId === roomId && m.userId === userId); },
     async roomMembers(roomId) { return D.members.filter(m => m.roomId === roomId).map(m => D.users[m.userId]).filter(Boolean); },
     async userRoomIds(userId) { return D.members.filter(m => m.userId === userId).map(m => m.roomId); },
