@@ -1265,7 +1265,7 @@ function RoomFolder({ room, wishes, onOpen }) {
   return (
     <div onClick={() => { haptic("light"); onOpen(box.current && box.current.getBoundingClientRect()); }} style={{ cursor: "pointer", textAlign: "center" }}>
       <div ref={box} style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
-        <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: hex(room.tint, 0.22) }} />
+        <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: hex(room.tint, 0.32) }} />
         {photos.map((src, i) => {
           const sp = spots[i];
           return (
