@@ -376,7 +376,7 @@ function StickerDefs() {
 function stickerFilter(size) {
   const want = size * 0.07;
   const w = STICKER_WIDTHS.reduce((a, b) => Math.abs(b - want) < Math.abs(a - want) ? b : a);
-  return `url(#stk-${w * 10}) drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`;
+  return `url(#stk-${w * 10}) drop-shadow(0 ${(size * 0.05).toFixed(1)}px ${(size * 0.16).toFixed(1)}px rgba(0,0,0,0.24))`;
 }
 // Image stickers (web/public/stickers/<name>.webp) are stored as "stk:<name>".
 // Their white rim is baked into the file (an SVG filter rim drifted and broke up
@@ -1170,8 +1170,8 @@ function WishTile({ w, onClick }) {
   const img = wishImages(w)[0];
   const shared = w.rooms ? w.rooms.length : 0;
   return (
-    <div onClick={() => { haptic("light"); onClick(); }} style={{ cursor: "pointer", background: C.card, borderRadius: R.card, padding: 8, border: "1px solid rgba(255,255,255,0.14)", animation: "fadeUp .3s ease", minWidth: 0 }}>
-      <div style={{ position: "relative", aspectRatio: "1", borderRadius: R.tile, overflow: "hidden", background: img ? C.card2 : "radial-gradient(120% 90% at 30% 20%, #2A2A2E 0%, #1E1E21 70%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div onClick={() => { haptic("light"); onClick(); }} style={{ cursor: "pointer", background: C.card, borderRadius: 20, padding: 8, border: "1px solid rgba(255,255,255,0.14)", animation: "fadeUp .3s ease", minWidth: 0 }}>
+      <div style={{ position: "relative", aspectRatio: "1", borderRadius: 12, overflow: "hidden", background: img ? C.card2 : "radial-gradient(120% 90% at 30% 20%, #2A2A2E 0%, #1E1E21 70%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {img
           ? <img src={img} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ transform: "rotate(-6deg)" }}><Sticker emoji={w.emoji} size={56} /></div>}
