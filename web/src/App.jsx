@@ -223,6 +223,7 @@ const STR = {
   linkHint: { uk: "Встав посилання, і ми підтягнемо назву, ціну та фото", ru: "Вставь ссылку, и мы подтянем название, цену и фото", en: "Paste a link and we'll fill in the name, price and photo" },
   linkLoading: { uk: "Шукаю товар…", ru: "Ищу товар…", en: "Looking it up…" },
   linkDone: { uk: "Готово, перевір дані", ru: "Готово, проверь данные", en: "Done, double-check the details" },
+  linkGuess: { uk: "Магазин не пускає, назву взяли з посилання. Фото і ціну додай сам", ru: "Магазин не пускает, название взяли из ссылки. Фото и цену добавь сам", en: "The shop blocks previews, so the name comes from the link. Add the photo and price yourself" },
   linkFail: { uk: "Не вдалося підтягнути, заповни вручну", ru: "Не получилось подтянуть, заполни вручную", en: "Couldn't fetch it, fill it in by hand" },
   roomLoadFailTitle: { uk: "Кімната не завантажилась", ru: "Комната не загрузилась", en: "Couldn't load the room" },
   roomLoadFailSub: { uk: "Щось пішло не так. Спробуй ще раз за мить.", ru: "Что-то пошло не так. Попробуй ещё раз через минутку.", en: "Something went wrong. Give it another try in a moment." },
@@ -2387,8 +2388,8 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
           const prev = a.image; a.image = null;
           setImages(xs => xs.filter(x => x !== prev));
         }
-        setLinkState(p.title || p.price || p.image ? "done" : "fail");
-        haptic(p.title || p.image ? "success" : "warning");
+        setLinkState(p.guess ? "guess" : p.title || p.price || p.image ? "done" : "fail");
+        haptic(!p.guess && (p.title || p.image) ? "success" : "warning");
       } catch (e) { if (lastLink.current === url) setLinkState("fail"); }
     }, 500);
     return () => clearTimeout(id);
@@ -2465,10 +2466,10 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
         )}
 
         <Field label={t("linkLabel")} value={link} onChange={setLink} placeholder="https://…" />
-        <div style={{ color: linkState === "fail" ? "#FF8A80" : linkState === "done" ? "#7EE29A" : C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ color: linkState === "fail" || linkState === "guess" ? "#FF8A80" : linkState === "done" ? "#7EE29A" : C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
           {linkState === "loading" && <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} />}
           {linkState === "done" && <Check size={13} />}
-          {linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : t("linkHint")}
+          {linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : linkState === "guess" ? t("linkGuess") : t("linkHint")}
         </div>
         <Field label={t("whatYouWant")} value={title} onChange={setTitle} placeholder={t("whatYouWantPh")} />
         <Field label={t("priceOpt")} value={price} onChange={setPrice} placeholder="4 200 ₴" />

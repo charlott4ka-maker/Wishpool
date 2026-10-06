@@ -111,7 +111,7 @@ export function titleFromPath(u) {
   const parts = decodeURIComponent(u.pathname).split("/").filter(Boolean)
     .filter(p => /[a-zа-яіїєґ]{3}/i.test(p) && !/^(ua|ru|en|uk|p|product|products|item|goods|catalog|dp)$/i.test(p));
   const best = parts.sort((a, b) => b.length - a.length)[0] || "";
-  const t = best.replace(/\.(html?|php)$/i, "").replace(/[-_+]+/g, " ").replace(/\b[a-z]*\d{4,}[a-z\d]*\b/gi, "").replace(/\s+/g, " ").trim();
+  const t = best.replace(/\.(html?|php)$/i, "").replace(/[-_+]+/g, " ").replace(/\b(?=[a-z\d]*\d)[a-z\d]{7,}\b|\b[a-z]+\d{5,}\b/gi, "").replace(/\s+/g, " ").trim();
   return t.length >= 4 ? (t[0].toUpperCase() + t.slice(1)).slice(0, 120) : "";
 }
 // Ad and analytics tags never change the page, but make it look like a bot
@@ -141,10 +141,6 @@ async function viaJina(url) {
   if (blocked(info.title)) throw new Error("jina_blocked");
   return { ...info, base: url };
 }
-const firstGood = (ps) => new Promise((resolve, reject) => {
-  let left = ps.length;
-  ps.forEach(p => p.then(v => (v && v.title ? resolve(v) : --left || reject(new Error("none"))), () => --left || reject(new Error("none"))));
-});
 // Shop CDNs sometimes refuse our server too: then ask a public image proxy.
 async function fetchImage(href, trace = []) {
   for (const src of [href, "https://wsrv.nl/?url=" + encodeURIComponent(href) + "&w=1200&output=jpg"]) {
@@ -157,32 +153,56 @@ async function fetchImage(href, trace = []) {
   return null;
 }
 
+// Shops that refuse a "browser" from a data center often still answer the
+// link-preview crawlers of messengers (that is how chats show product cards).
+const CRAWLERS = {
+  whatsapp: "WhatsApp/2.23.20.0",
+  telegram: "TelegramBot (like TwitterBot)",
+  facebook: "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+  google: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+};
+const score = (x) => !x || blocked(x.title) ? 0 : 2 + (x.imageUrl ? 2 : 0) + (x.price ? 1 : 0);
+// Runs the attempts in parallel; done as soon as one has a title and a photo,
+// otherwise the best of whatever came back.
+function best(attempts) {
+  return new Promise((resolve) => {
+    let left = attempts.length, top = null;
+    if (!left) resolve(null);
+    attempts.forEach(p => p.then(v => {
+      if (score(v) > score(top)) top = v;
+      if (score(v) >= 4) resolve(v);
+    }, () => {}).finally(() => { if (!--left) resolve(top); }));
+  });
+}
+
 export async function previewLink(raw, trace = []) {
   let url;
   try { url = cleanUrl(unwrapLink(raw)); } catch (e) { throw new Error("bad_url"); }
   await assertPublic(url);
-  let info = null, base = url.href;
-  try {
-    const page = await get(url.href, "text/html,application/xhtml+xml", 2_500_000, 6000);
-    info = parseProduct(page.buf.toString("utf8")); base = page.url.href;
-    trace.push("direct: " + (info.title || "no title"));
-  } catch (e) { console.error("preview direct failed", url.hostname, e.message); trace.push("direct failed: " + e.message); }
-  if (!info || blocked(info.title)) {
-    try {
-      const tag = (name, p) => p.then(v => (trace.push(name + ": " + v.title), v), e => { trace.push(name + " failed: " + e.message); throw e; });
-      const m = await firstGood([tag("microlink", viaMicrolink(url.href)), tag("jina", viaJina(url.href))]);
-      info = { ...m, price: m.price || (info && info.price) || "", imageUrl: m.imageUrl || (info && info.imageUrl) || "" }; base = m.base;
-    } catch (e) { console.error("preview fallbacks failed", url.hostname); if (info && blocked(info.title)) info.title = ""; }
+  const tag = (name, p) => p.then(v => (trace.push(`${name}: ${v.title || "no title"}${v.imageUrl ? " +img" : ""}${v.price ? " +price" : ""}`), v), e => { trace.push(name + " failed: " + e.message); throw e; });
+  const page = (ua) => get(url.href, "text/html,application/xhtml+xml", 2_500_000, 6000, ua)
+    .then(r => ({ ...parseProduct(r.buf.toString("utf8")), base: r.url.href }));
+  let info = await tag("direct", page()).catch(() => null);
+  if (score(info) < 4) {
+    const c = await best(Object.entries(CRAWLERS).map(([k, ua]) => tag(k, page(ua))));
+    if (score(c) > score(info)) info = { ...c, price: c.price || (info && info.price) || "" };
   }
+  if (score(info) < 4) {
+    const c = await best([tag("microlink", viaMicrolink(url.href)), tag("jina", viaJina(url.href))]);
+    if (score(c) > score(info)) info = { ...c, price: c.price || (info && info.price) || "" };
+  }
+  if (info && blocked(info.title)) info = null;
+  // The shop let nobody in: at least a name from the link itself.
+  const guess = !info || !info.title;
   const title = (info && info.title) || titleFromPath(url);
   const price = (info && info.price) || "";
   const imageUrl = info && info.imageUrl;
   if (!title && !imageUrl) throw new Error("nothing_found");
   let image = null;
   if (imageUrl) {
-    try { image = await fetchImage(new URL(imageUrl, base).href, trace); } catch (e) {}
+    try { image = await fetchImage(new URL(imageUrl, info.base || url.href).href, trace); } catch (e) {}
   }
-  return { title, price, image, url: url.href };
+  return { title, price, image, url: url.href, guess };
 }
 
 export function parseProduct(html) {
