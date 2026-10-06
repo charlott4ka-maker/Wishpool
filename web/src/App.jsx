@@ -215,6 +215,13 @@ const STR = {
   ob3Text: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А ти не дізнаєшся, хто і що обрав.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А ты не узнаешь, кто и что выбрал.", en: "Friends mark what they give, so nothing doubles up. And you won't know who picked what." },
   newWishHere: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   wishAddedRoom: { uk: "Додано в кімнату і у твій вішлист", ru: "Добавлено в комнату и в твой вишлист", en: "Added to the room and your wishlist" },
+  cancelGiftTitle: { uk: "Більше не даруєш «{name}»?", ru: "Больше не даришь «{name}»?", en: "Not giving «{name}» anymore?" },
+  cancelGiftText: { uk: "Позначку буде знято, і подарунок знову стане вільним.", ru: "Отметка снимется, и подарок снова станет свободным.", en: "Your mark is removed and the gift is free again." },
+  cancelGiftYes: { uk: "Так, не дарую", ru: "Да, не дарю", en: "Yes, cancel" },
+  cancelChipTitle: { uk: "Вийти зі збору на «{name}»?", ru: "Выйти из сбора на «{name}»?", en: "Leave the group gift for «{name}»?" },
+  cancelChipText: { uk: "Інші учасники збору залишаться.", ru: "Остальные участники сбора останутся.", en: "Everyone else stays in." },
+  cancelChipYes: { uk: "Вийти зі збору", ru: "Выйти из сбора", en: "Leave" },
+  keepIt: { uk: "Залишити", ru: "Оставить", en: "Keep it" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
   roomBirthday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
@@ -2007,15 +2014,19 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   const doChip = async (wid) => { await onChip(wid); setTick(x => x + 1); };
   const doUnchip = async (wid) => { await onUnchip(wid); setTick(x => x + 1); };
   const [giving, setGiving] = useState(null); // wish picked with "Take": solo or group?
+  const [cancelling, setCancelling] = useState(null); // { w, chip } waiting for "are you sure?"
+  // With a single possible gifter (a couple, or a room of two) there is nobody
+  // to chip in with, so "Take" just takes it.
+  const soloOnly = room.type === "couple" || members.length <= 2;
 
   const reserveRight = (w) => (
     (w.reservedByMe || reserved[w.id] === "you")
-      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
+      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => setCancelling({ w })}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
         : w.chips ? (w.chips.mine
-          ? <Pill size="sm" kind="green" icon={<Users2 size={16} />} onClick={() => doUnchip(w.id)}>{t("chipIn")} · {w.chips.count}/{w.chips.total}</Pill>
+          ? <Pill size="sm" kind="green" icon={<Users2 size={16} />} onClick={() => setCancelling({ w, chip: true })}>{t("chipIn")} · {w.chips.count}/{w.chips.total}</Pill>
           : <Pill size="sm" kind="soft" icon={<Users2 size={16} />} onClick={() => doChip(w.id)}>{t("chipJoin")} · {w.chips.count}/{w.chips.total}</Pill>)
-        : <Pill size="sm" kind="soft" onClick={() => setGiving(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 34, width: "auto", display: "block", margin: -6 }} /></Pill>
+        : <Pill size="sm" kind="soft" onClick={() => soloOnly ? doReserve(w) : setGiving(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 34, width: "auto", display: "block", margin: -6 }} /></Pill>
   );
 
   return (
@@ -2196,6 +2207,12 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           )}
         </div>
       </div>
+      {cancelling && <ConfirmSheet
+        title={t(cancelling.chip ? "cancelChipTitle" : "cancelGiftTitle", { name: cancelling.w.title })}
+        text={t(cancelling.chip ? "cancelChipText" : "cancelGiftText")}
+        yes={t(cancelling.chip ? "cancelChipYes" : "cancelGiftYes")} no={t("keepIt")}
+        onClose={() => setCancelling(null)}
+        onYes={() => { const c = cancelling; setCancelling(null); c.chip ? doUnchip(c.w.id) : doUnreserve(c.w.id); }} />}
       {giving && <GiveSheet wish={giving} onClose={() => setGiving(null)}
         onSolo={() => { const w = giving; setGiving(null); doReserve(w); }}
         onGroup={() => { const w = giving; setGiving(null); doChip(w.id); }} />}
@@ -2269,6 +2286,18 @@ function SurpriseGate({ room, onJoin }) {
   );
 }
 // "Take" on a free wish: gift it alone (reserve) or open a group chip-in.
+// "Are you sure?" as a bottom sheet: one destructive action and a way back.
+function ConfirmSheet({ title, text, yes, no, onYes, onClose }) {
+  return (
+    <Sheet title={title} onClose={onClose}>
+      {text && <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: -4, marginBottom: 24 }}>{text}</div>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <button onClick={() => { haptic("warning"); onYes(); }} style={{ height: H.lg, borderRadius: 999, border: "none", cursor: "pointer", background: "rgba(255,90,90,0.14)", color: "#FF6B6B", fontSize: 16, fontWeight: 600, fontFamily: font }}>{yes}</button>
+        <Pill full kind="ghost" onClick={onClose}>{no}</Pill>
+      </div>
+    </Sheet>
+  );
+}
 function GiveSheet({ wish, onSolo, onGroup, onClose }) {
   const { t } = useT();
   const opt = (icon, title, sub, onClick, primary) => (
@@ -2371,9 +2400,12 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
     setTargetWishes(ws => ws.map(w => w.id === wid ? { ...w, reservedByMe: false } : w));
   };
   const isMine = (w) => w.reservedByMe || reserved[w.id] === "you";
+  const [cancelling, setCancelling] = useState(null);
 
   return (
     <div style={{ position: "absolute", inset: 0, background: C.bg, zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
+      {cancelling && <ConfirmSheet title={t("cancelGiftTitle", { name: cancelling.title })} text={t("cancelGiftText")} yes={t("cancelGiftYes")} no={t("keepIt")}
+        onClose={() => setCancelling(null)} onYes={() => { const w = cancelling; setCancelling(null); doUnreserve(w.id); }} />}
       <div style={{ padding: "16px 18px", display: "flex", justifyContent: "flex-end" }}>
         <button onClick={onClose} style={{ background: C.card, border: `1px solid ${C.line}`, color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <X size={18} />
@@ -2475,7 +2507,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                 <div key={w.id} style={{ ...sepBelow(i < targetWishes.length - 1) }}>
                   <WishRow w={w} right={
                     isMine(w)
-                      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
+                      ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => setCancelling(w)}>{t("youGift")}</Pill>
                       : w.chips ? <span style={{ color: C.t3, fontSize: 12.5, fontWeight: 600 }}>{t("chipNote", { n: w.chips.count, total: w.chips.total })}</span>
                       : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 34, width: "auto", display: "block", margin: -6 }} /></Pill>
                   } />
