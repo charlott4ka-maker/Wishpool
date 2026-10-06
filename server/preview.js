@@ -132,6 +132,9 @@ async function viaMicrolink(url) {
   const j = await r.json().catch(() => null);
   if (!j || j.status !== "success" || !j.data) throw new Error("microlink_" + (j && j.code || r.status));
   if (blocked(j.data.title)) throw new Error("microlink_blocked");
+  // when it can't read the page either, it echoes the last part of the URL
+  const last = decodeURIComponent(new URL(url).pathname.split("/").filter(Boolean).pop() || "");
+  if (!/\s/.test(j.data.title || "") && (j.data.title === last || /[-_.]\w/.test(j.data.title || ""))) throw new Error("microlink_no_title");
   return { title: j.data.title || "", price: "", imageUrl: (j.data.image && j.data.image.url) || "", base: url };
 }
 async function viaJina(url) {
