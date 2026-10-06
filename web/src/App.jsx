@@ -2483,10 +2483,31 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
 /* ---------- ADD SHEET ---------- */
 // idea: a gift idea inside a birthday room (no pool, no room picker)
+// A price typed as a bare number gets the currency of the interface language:
+// hryvnia for uk/ru ("4 200 ₴"), dollars for en ("$4,200"). Anything that
+// already has a currency (typed, or filled in from a shop) stays as it is.
+function priceNum(raw, lang) {
+  const s = String(raw || "").trim();
+  if (!/^\d[\d\s.,]*$/.test(s)) return null;
+  const n = Number(s.replace(/\s/g, "").replace(/,(\d{1,2})$/, ".$1").replace(/,/g, ""));
+  if (!isFinite(n)) return null;
+  return n.toLocaleString(lang === "en" ? "en-US" : "uk-UA", { maximumFractionDigits: 2 }).replace(/\s/g, " ");
+}
+function withCurrency(raw, lang) {
+  const n = priceNum(raw, lang);
+  return n == null ? String(raw || "").trim() : lang === "en" ? "$" + n : n + " ₴";
+}
+function priceRangeText(a, b, lang, t) {
+  if (!a || !b) return withCurrency(a || b, lang);
+  const na = priceNum(a, lang), nb = priceNum(b, lang);
+  if (lang === "en") return t("priceRange", { a: na != null ? "$" + na : a, b: nb != null ? "$" + nb : b });
+  // uk/ru: the currency sign once, at the end ("від 1 000 до 2 000 ₴")
+  return t("priceRange", { a: na != null ? na : a, b: nb != null ? nb + " ₴" : b });
+}
 // "от 1 000 до 2 000 ₴" (any of our languages) -> ["1 000", "2 000 ₴"]
 const RANGE_RE = /^(?:від|от|from)?\s*(.+?)\s+(?:до|to)\s+(.+)$/i;
 function AddSheet({ rooms, onClose, onSave, idea, initial }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   // initial: editing an existing wish (same form, prefilled; rooms are set in the wish sheet)
   const init = initial || {};
   const initRange = init.price && init.price.match(RANGE_RE);
@@ -2558,7 +2579,7 @@ function AddSheet({ rooms, onClose, onSave, idea, initial }) {
     if (busy || !title.trim()) return;
     setBusy(true);
     const a = priceA.trim(), b = priceB.trim();
-    const finalPrice = priceMode === "range" ? (a && b ? t("priceRange", { a, b }) : (a || b)) : price.trim();
+    const finalPrice = priceMode === "range" ? priceRangeText(a, b, lang, t) : withCurrency(price, lang);
     try { await onSave({ emoji, images: cover === "photo" ? images : [], image: cover === "photo" ? (images[0] || null) : null, link: link.trim() || null, title: title.trim(), price: finalPrice, note: note.trim(), rooms: inRooms }); }
     catch (e) { setBusy(false); }
   };
@@ -2640,11 +2661,11 @@ function AddSheet({ rooms, onClose, onSave, idea, initial }) {
           </div>
         </div>
         {priceMode === "one" ? (
-          <Field value={price} onChange={setPrice} placeholder="4 200 ₴" />
+          <Field value={price} onChange={setPrice} placeholder={lang === "en" ? "$50" : "4 200 ₴"} />
         ) : (
           <div style={{ display: "flex", gap: 8 }}>
-            <div style={{ flex: 1 }}><Field value={priceA} onChange={setPriceA} placeholder={t("priceFrom") + " 1 000"} /></div>
-            <div style={{ flex: 1 }}><Field value={priceB} onChange={setPriceB} placeholder={t("priceTo") + " 2 000 ₴"} /></div>
+            <div style={{ flex: 1 }}><Field value={priceA} onChange={setPriceA} placeholder={t("priceFrom") + (lang === "en" ? " $20" : " 1 000")} /></div>
+            <div style={{ flex: 1 }}><Field value={priceB} onChange={setPriceB} placeholder={t("priceTo") + (lang === "en" ? " $50" : " 2 000 ₴")} /></div>
           </div>
         )}
         <TextArea label={t("noteLabel")} value={note} onChange={setNote} placeholder={t("notePh")} />
