@@ -217,11 +217,12 @@ const STR = {
   wishAddedRoom: { uk: "Додано в кімнату і у твій вішлист", ru: "Добавлено в комнату и в твой вишлист", en: "Added to the room and your wishlist" },
   cancelGiftTitle: { uk: "Скасувати подарунок?", ru: "Отменить подарок?", en: "Cancel this gift?" },
   cancelGiftText: { uk: "«{name}» знову стане вільним, і позначку буде знято.", ru: "«{name}» снова станет свободным, отметка снимется.", en: "«{name}» becomes free again and your mark is removed." },
-  cancelGiftYes: { uk: "Не дарую", ru: "Не дарю", en: "Cancel gift" },
+  cancelGiftYes: { uk: "Так, скасувати", ru: "Да, отменить", en: "Yes, cancel" },
   cancelChipTitle: { uk: "Вийти зі збору?", ru: "Выйти из сбора?", en: "Leave the group gift?" },
   cancelChipText: { uk: "На «{name}» скидаються інші, вони залишаться у зборі.", ru: "На «{name}» скидываются другие, они останутся в сборе.", en: "Others chipping in on «{name}» stay in." },
-  cancelChipYes: { uk: "Вийти зі збору", ru: "Выйти из сбора", en: "Leave" },
-  keepIt: { uk: "Залишити", ru: "Оставить", en: "Keep it" },
+  cancelChipYes: { uk: "Так, вийти", ru: "Да, выйти", en: "Yes, leave" },
+  keepChip: { uk: "Ні, скидаюся", ru: "Нет, скидываюсь", en: "No, I'm in" },
+  keepIt: { uk: "Ні, дарую", ru: "Нет, дарю", en: "No, I'm giving it" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
   roomBirthday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
@@ -2217,7 +2218,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       {cancelling && <ConfirmSheet
         title={t(cancelling.chip ? "cancelChipTitle" : "cancelGiftTitle", { name: cancelling.w.title })}
         text={t(cancelling.chip ? "cancelChipText" : "cancelGiftText", { name: cancelling.w.title })}
-        yes={t(cancelling.chip ? "cancelChipYes" : "cancelGiftYes")} no={t("keepIt")}
+        yes={t(cancelling.chip ? "cancelChipYes" : "cancelGiftYes")} no={t(cancelling.chip ? "keepChip" : "keepIt")}
         onClose={() => setCancelling(null)}
         onYes={() => { const c = cancelling; setCancelling(null); c.chip ? doUnchip(c.w.id) : doUnreserve(c.w.id); }} />}
       {giving && <GiveSheet wish={giving} onClose={() => setGiving(null)}
