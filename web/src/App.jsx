@@ -329,7 +329,7 @@ const STR = {
   editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
   coupleRoomHint: { uk: "Тільки для двох. Бачите вішлисти одне одного й обираєте потай.", ru: "Только для двоих. Видите вишлисты друг друга и выбираете втайне.", en: "Just the two of you. See each other's wishlists and pick in secret." },
-  friendsRoomHint: { uk: "Для компанії. Бронюйте подарунки, скидайтеся разом, грайте в Таємного Санту.", ru: "Для компании. Бронируйте подарки, скидывайтесь вместе, играйте в Тайного Санту.", en: "For a group. Claim gifts, chip in together, play Secret Santa." },
+  friendsRoomHint: { uk: "Для компанії. Бронюйте подарунки, скидайтеся разом або влаштуйте жеребкування, хто кому дарує.", ru: "Для компании. Бронируйте подарки, скидывайтесь вместе или устройте жеребьёвку, кто кому дарит.", en: "For a group. Claim gifts, chip in together or draw names for who gives to whom." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
@@ -381,11 +381,13 @@ function stickerFilter(size) {
 // Image stickers (web/public/stickers/<name>.webp) are stored as "stk:<name>".
 // Their white rim is baked into the file (an SVG filter rim drifted and broke up
 // on iOS at large sizes), so they only get the soft shadow here. The box is a
-// bit bigger than before because the rim now sits inside the image.
+// bit bigger than before because the rim now sits inside the image. The soft
+// shadow is baked in too (a CSS drop-shadow got cut into a box on iOS), with a
+// 20% transparent margin around the sticker that the negative margin cancels.
 function Sticker({ emoji, size, style }) {
   if (typeof emoji === "string" && emoji.startsWith("stk:")) {
     return <img src={`/stickers/${emoji.slice(4)}.webp`} alt="" draggable={false}
-      style={{ height: size * 1.24, width: size * 1.24, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: `drop-shadow(0 ${(size * 0.05).toFixed(1)}px ${(size * 0.16).toFixed(1)}px rgba(0,0,0,0.24))`, ...style }} />;
+      style={{ height: size * 1.24 * 1.4, width: size * 1.24 * 1.4, margin: -size * 1.24 * 0.2, objectFit: "contain", display: "inline-block", verticalAlign: "middle", ...style }} />;
   }
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
 }
@@ -1863,7 +1865,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         : w.chips ? (w.chips.mine
           ? <Pill size="sm" kind="green" icon={<Users2 size={16} />} onClick={() => doUnchip(w.id)}>{t("chipIn")} · {w.chips.count}/{w.chips.total}</Pill>
           : <Pill size="sm" kind="soft" icon={<Users2 size={16} />} onClick={() => doChip(w.id)}>{t("chipJoin")} · {w.chips.count}/{w.chips.total}</Pill>)
-        : <Pill size="sm" kind="soft" onClick={() => setGiving(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 22, width: "auto", display: "block" }} /></Pill>
+        : <Pill size="sm" kind="soft" onClick={() => setGiving(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 34, width: "auto", display: "block", margin: -6 }} /></Pill>
   );
 
   return (
@@ -2153,7 +2155,7 @@ function GiftTakenSheet({ title, onClose }) {
     <>
       <Sheet onClose={onClose}>
         <div style={{ textAlign: "center", paddingTop: 4 }}>
-          <img src="/stickers/basket.webp" alt="" style={{ width: 168, height: "auto", display: "block", margin: "0 auto", animation: "basketDrop .7s cubic-bezier(.2,.9,.3,1.25)" }} />
+          <img src="/stickers/basket.webp" alt="" style={{ width: 235, height: "auto", display: "block", margin: "-34px auto -33px", animation: "basketDrop .7s cubic-bezier(.2,.9,.3,1.25)" }} />
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
           <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
           <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill></div>
@@ -2334,7 +2336,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
                     isMine(w)
                       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => doUnreserve(w.id)}>{t("youGift")}</Pill>
                       : w.chips ? <span style={{ color: C.t3, fontSize: 12.5, fontWeight: 600 }}>{t("chipNote", { n: w.chips.count, total: w.chips.total })}</span>
-                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 22, width: "auto", display: "block" }} /></Pill>
+                      : <Pill size="sm" kind="soft" onClick={() => doReserve(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 34, width: "auto", display: "block", margin: -6 }} /></Pill>
                   } />
                 </div>
               )) : <div style={{ padding: 16, color: C.t3, fontSize: 13.5 }}>{t("emptyLater")}</div>}
