@@ -213,6 +213,8 @@ const STR = {
   ob2Text: { uk: "Друзі, пара чи день народження. Ти вирішуєш, які бажання бачить кожна кімната.", ru: "Друзья, пара или день рождения. Ты решаешь, какие желания видит каждая комната.", en: "Friends, a couple or a birthday. You decide which wishes each room can see." },
   ob3Title: { uk: "Даруйте потай", ru: "Дарите втайне", en: "Gift in secret" },
   ob3Text: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А ти не дізнаєшся, хто і що обрав.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А ты не узнаешь, кто и что выбрал.", en: "Friends mark what they give, so nothing doubles up. And you won't know who picked what." },
+  newWishHere: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
+  wishAddedRoom: { uk: "Додано в кімнату і у твій вішлист", ru: "Добавлено в комнату и в твой вишлист", en: "Added to the room and your wishlist" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
   roomBirthday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
@@ -311,9 +313,9 @@ const STR = {
   noWishesYet: { uk: "Поки не додав бажань", ru: "Пока не добавил желаний", en: "No wishes yet" },
   reserveNote: { uk: "Резерв бачать дарувальники, але не власник бажання", ru: "Резерв виден дарителям, но скрыт от владельца желания", en: "Reservations show to gifters but are hidden from the wish owner" },
   nothingSharedTitle: { uk: "Ти ще нічим сюди не поділився", ru: "Ты ещё ничем сюда не поделился", en: "You haven't shared anything here" },
-  nothingSharedSub: { uk: "Відкрий бажання в пулі й увімкни цю кімнату.", ru: "Открой желание в пуле и включи эту комнату.", en: "Open a wish in your pool and enable this room." },
+  nothingSharedSub: { uk: "Створи нове бажання прямо тут або обери зі своїх.", ru: "Создай новое желание прямо тут или выбери из своих.", en: "Make a new wish right here or pick one of yours." },
   visibleToAll: { uk: "видно всім", ru: "видно всем", en: "visible to all" },
-  addFromPool: { uk: "Додати з пулу", ru: "Добавить из пула", en: "Add from pool" },
+  addFromPool: { uk: "З моїх бажань", ru: "Из моих желаний", en: "From my wishes" },
   editRoomWishes: { uk: "Змінити бажання", ru: "Изменить желания", en: "Edit wishes" },
   roomWishesTitle: { uk: "Бажання в кімнаті", ru: "Желания в комнате", en: "Wishes in this room" },
   poolEmptyInRoom: { uk: "У пулі поки немає бажань. Додай їх на вкладці «Бажання», потім відзначиш тут.", ru: "В пуле пока нет желаний. Добавь их на вкладке «Желания», потом отметишь здесь.", en: "Your pool is empty. Add wishes on the Wishes tab, then check them here." },
@@ -915,12 +917,14 @@ export default function App() {
     setWishes(ws => ws.map(x => x.id === id ? { ...x, giftedAt: at } : x));
     if (gifted) { haptic("success"); showToast(t("wishGiftedToast")); } else showToast(t("wishBackToast"));
   };
-  const addWish = async (w) => {
+  // fromRoom: created inside a room; it lands in the wishlist and in that room, and we stay there
+  const addWish = async (w, fromRoom) => {
     if (online) {
       try { const r = await api.createWish(w); setWishes(ws => [r.wish, ...ws]); }
       catch (e) { showToast(t("noConnection"), 3000); throw e; }
     } else setWishes(ws => [{ ...w, id: "w" + Date.now() }, ...ws]);
-    setOverlay(null); showToast(t("wishAdded"));
+    setOverlay(fromRoom ? { type: "room", roomId: fromRoom } : null);
+    showToast(t(fromRoom ? "wishAddedRoom" : "wishAdded"));
   };
 
   const shareInvite = (room) => {
@@ -1017,7 +1021,7 @@ export default function App() {
     let handler;
     if (overlay) {
       handler = () => {
-        if (overlay.type === "draw" || overlay.type === "pool" || overlay.type === "editRoom") setOverlay({ type: "room", roomId: overlay.roomId });
+        if (overlay.type === "draw" || overlay.type === "pool" || overlay.type === "editRoom" || overlay.type === "roomWish") setOverlay({ type: "room", roomId: overlay.roomId });
         else if (overlay.type === "room" && roomCloser.current) roomCloser.current();
         else setOverlay(null);
       };
@@ -1078,6 +1082,10 @@ export default function App() {
           <AddSheet rooms={rooms} onClose={() => setOverlay(null)}
             onSave={addWish} />
         )}
+        {overlay?.type === "roomWish" && (
+          <AddSheet rooms={rooms} presetRooms={[overlay.roomId]} onClose={() => setOverlay({ type: "room", roomId: overlay.roomId })}
+            onSave={(w) => addWish(w, overlay.roomId)} />
+        )}
         {overlay?.type === "editWish" && wishes.find(w => w.id === overlay.wishId) && (
           <AddSheet rooms={rooms} initial={wishes.find(w => w.id === overlay.wishId)} onClose={() => setOverlay(null)}
             onSave={(w) => editWish(overlay.wishId, w)} />
@@ -1085,7 +1093,7 @@ export default function App() {
         {overlay?.type === "createRoom" && (
           <CreateRoomSheet online={online} onClose={() => setOverlay(null)} onCreate={createRoom} />
         )}
-        {(overlay?.type === "room" || overlay?.type === "pool" || overlay?.type === "draw" || overlay?.type === "editRoom" || overlay?.type === "idea") && (
+        {(overlay?.type === "room" || overlay?.type === "pool" || overlay?.type === "draw" || overlay?.type === "editRoom" || overlay?.type === "idea" || overlay?.type === "roomWish") && (
           <RoomDetail room={rooms.find(r => r.id === overlay.roomId)} wishes={wishes}
             reserved={reserved}
             online={online}
@@ -1094,6 +1102,7 @@ export default function App() {
             onChip={chip}
             onUnchip={unchip}
             onAddFromPool={() => setOverlay({ type: "pool", roomId: overlay.roomId })}
+            onNewWish={() => setOverlay({ type: "roomWish", roomId: overlay.roomId })}
             onAddIdea={() => setOverlay({ type: "idea", roomId: overlay.roomId })}
             refreshKey={roomRefresh}
             onError={() => showToast(t("noConnection"), 3000)}
@@ -1888,7 +1897,19 @@ function HeroButton({ onClick, label, children, style }) {
   );
 }
 /* ---------- ROOM DETAIL ---------- */
-function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onChip, onUnchip, onAddFromPool, onAddIdea, onInvite, onDraw, onEdit, onLeave, onDelete, onBack, from, closerRef, refreshKey, onError }) {
+// "Mine in this room": make a brand new wish right here (it also lands in the
+// wishlist), or pick / unpick ones from the wishlist.
+function MineActions({ has, onNew, onPool }) {
+  const { t } = useT();
+  return (
+    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+      <Pill full kind="primary" icon={<Plus size={18} />} onClick={onNew}>{t("newWishHere")}</Pill>
+      {/* the pool sheet both adds and removes, so with wishes already here it's "edit" */}
+      <Pill full kind="ghost" icon={has ? <Pencil size={17} /> : <Gift size={17} />} onClick={onPool}>{t(has ? "editRoomWishes" : "addFromPool")}</Pill>
+    </div>
+  );
+}
+function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, onChip, onUnchip, onAddFromPool, onNewWish, onAddIdea, onInvite, onDraw, onEdit, onLeave, onDelete, onBack, from, closerRef, refreshKey, onError }) {
   const { lang, t } = useT();
   // Opened from a folder: the room grows out of the folder's rectangle
   // (clip-path inset animation) and shrinks back into it on Back.
@@ -2064,11 +2085,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                   ))}
                 </Card>
               )}
-              <div style={{ marginTop: 16 }}>
-                {mine.length
-                  ? <Pill full kind="ghost" icon={<Pencil size={17} />} onClick={onAddFromPool}>{t("editRoomWishes")}</Pill>
-                  : <Pill full kind="primary" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>}
-              </div>
+              <MineActions has={mine.length > 0} onNew={onNewWish} onPool={onAddFromPool} />
             </div>
           ) : (
             /* guests: the birthday person's wishes + gift ideas added right here */
@@ -2163,12 +2180,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                   </div>
                 ))}
               </Card>}
-            <div style={{ marginTop: 16 }}>
-              {/* the sheet both adds and removes, so with wishes already here it's "edit" */}
-              {mine.length
-                ? <Pill full kind="ghost" icon={<Pencil size={17} />} onClick={onAddFromPool}>{t("editRoomWishes")}</Pill>
-                : <Pill full kind="ghost" icon={<Plus size={18} />} onClick={onAddFromPool}>{t("addFromPool")}</Pill>}
-            </div>
+            <MineActions has={mine.length > 0} onNew={onNewWish} onPool={onAddFromPool} />
           </div>
         )}
 
@@ -2506,7 +2518,7 @@ function priceRangeText(a, b, lang, t) {
 }
 // "от 1 000 до 2 000 ₴" (any of our languages) -> ["1 000", "2 000 ₴"]
 const RANGE_RE = /^(?:від|от|from)?\s*(.+?)\s+(?:до|to)\s+(.+)$/i;
-function AddSheet({ rooms, onClose, onSave, idea, initial }) {
+function AddSheet({ rooms, onClose, onSave, idea, initial, presetRooms }) {
   const { t, lang } = useT();
   // initial: editing an existing wish (same form, prefilled; rooms are set in the wish sheet)
   const init = initial || {};
@@ -2519,7 +2531,7 @@ function AddSheet({ rooms, onClose, onSave, idea, initial }) {
   const [note, setNote] = useState(init.note || "");
   const initImgs = initial ? wishImages(initial) : [];
   const [emoji, setEmoji] = useState(init.emoji && WISH_EMOJI.includes(init.emoji) ? init.emoji : WISH_EMOJI[0]);
-  const [inRooms, setInRooms] = useState([]);
+  const [inRooms, setInRooms] = useState(presetRooms || []);
   const [images, setImages] = useState(initImgs);
   const [link, setLink] = useState(init.link || "");
   const [cover, setCover] = useState(initial && !initImgs.length ? "emoji" : "photo");
