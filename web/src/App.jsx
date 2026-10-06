@@ -174,7 +174,7 @@ const STR = {
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
   roomBirthday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
-  birthdayRoomHint: { uk: "Для одного іменинника: усі обирають подарунок саме йому. Можна зробити для себе або сюрприз для друга.", ru: "Для одного именинника: все выбирают подарок именно ему. Можно сделать для себя или сюрприз для друга.", en: "For one birthday person: everyone picks a gift for them. Make it for yourself or as a surprise for a friend." },
+  birthdayRoomHint: { uk: "Подарунки для одного іменинника. Для себе або сюрпризом для друга.", ru: "Подарки для одного именинника. Для себя или сюрпризом для друга.", en: "Gifts for one birthday person. For yourself or as a surprise." },
   bdayWhose: { uk: "Чий день народження?", ru: "Чей день рождения?", en: "Whose birthday?" },
   bdayMine: { uk: "Мій", ru: "Мой", en: "Mine" },
   bdayOther: { uk: "Іншої людини", ru: "Другого человека", en: "Someone else's" },
@@ -328,8 +328,8 @@ const STR = {
   roomFull: { uk: "У цій кімнаті вже двоє, місць більше немає", ru: "В этой комнате уже двое, мест больше нет", en: "This room already has two people, no room left" },
   editRoom: { uk: "Редагувати кімнату", ru: "Редактировать комнату", en: "Edit room" },
   saveChanges: { uk: "Зберегти", ru: "Сохранить", en: "Save changes" },
-  coupleRoomHint: { uk: "Тільки для двох: ви бачите вішлисти одне одного й обираєте подарунки потай. Третього сюди не запросити.", ru: "Только для двоих: вы видите вишлисты друг друга и выбираете подарки втайне. Третьего сюда не пригласить.", en: "Just the two of you: see each other's wishlists and pick gifts in secret. No third person can join." },
-  friendsRoomHint: { uk: "Для компанії друзів чи колег. Кожен ділиться своїми бажаннями, подарунки можна бронювати чи скидатися разом, а ще провести Таємного Санту.", ru: "Для компании друзей или коллег. Каждый делится своими желаниями, подарки можно бронировать или скидываться вместе, а ещё провести Тайного Санту.", en: "For a group of friends or colleagues. Everyone shares their wishes, gifts can be claimed or chipped in on, and you can run a Secret Santa." },
+  coupleRoomHint: { uk: "Тільки для двох. Бачите вішлисти одне одного й обираєте потай.", ru: "Только для двоих. Видите вишлисты друг друга и выбираете втайне.", en: "Just the two of you. See each other's wishlists and pick in secret." },
+  friendsRoomHint: { uk: "Для компанії. Бронюйте подарунки, скидайтеся разом, грайте в Таємного Санту.", ru: "Для компании. Бронируйте подарки, скидывайтесь вместе, играйте в Тайного Санту.", en: "For a group. Claim gifts, chip in together, play Secret Santa." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
@@ -385,7 +385,7 @@ function stickerFilter(size) {
 function Sticker({ emoji, size, style }) {
   if (typeof emoji === "string" && emoji.startsWith("stk:")) {
     return <img src={`/stickers/${emoji.slice(4)}.webp`} alt="" draggable={false}
-      style={{ height: size * 1.24, width: size * 1.24, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: `drop-shadow(0 ${(size * 0.06).toFixed(1)}px ${(size * 0.12).toFixed(1)}px rgba(0,0,0,0.45))`, ...style }} />;
+      style={{ height: size * 1.24, width: size * 1.24, objectFit: "contain", display: "inline-block", verticalAlign: "middle", filter: `drop-shadow(0 ${(size * 0.05).toFixed(1)}px ${(size * 0.16).toFixed(1)}px rgba(0,0,0,0.24))`, ...style }} />;
   }
   return <span style={{ fontSize: size, lineHeight: 1, display: "inline-block", filter: stickerFilter(size), ...style }}>{emoji}</span>;
 }
@@ -1278,7 +1278,7 @@ function RoomFolder({ room, wishes, onOpen }) {
         })}
         {fp && (
           <>
-            {/* No outline: instead a soft shadow cast by the front's top edge onto
+            {photos.length > 0 && <>{/* No outline: instead a soft shadow cast by the front's top edge onto
                 the photos behind it (only outside the front), so a photo in the
                 same colour as the folder still reads as tucked inside. */}
             <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
@@ -1289,9 +1289,9 @@ function RoomFolder({ room, wishes, onOpen }) {
                 </mask>
               </defs>
               <g mask={`url(#fm-${room.id})`}>
-                <path d={fp.top} fill="none" stroke="rgba(0,0,0,0.75)" strokeWidth="12" transform="translate(0,-3)" filter={`url(#fs-${room.id})`} />
+                <path d={fp.top} fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="12" transform="translate(0,-3)" filter={`url(#fs-${room.id})`} />
               </g>
-            </svg>
+            </svg></>}
             <div style={{
               position: "absolute", inset: 0, zIndex: 3, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
               background: `linear-gradient(180deg, ${hex(room.tint, 0.42)} 0%, ${hex(room.tint, 0.26)} 100%)`,
@@ -1779,18 +1779,29 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
     if (closing.current) return;
     if (!el || !end || !el.animate) return onBack();
     closing.current = true;
-    const a = el.animate([{ clipPath: "inset(0px 0px 0px 0px round 0px)", WebkitClipPath: "inset(0px 0px 0px 0px round 0px)", opacity: 1 }, { clipPath: end, WebkitClipPath: end, opacity: 0.6 }],
-      { duration: 320, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" });
+    setTimeout(() => { try { const tg = tgWebApp(); tg && tg.setHeaderColor && tg.setHeaderColor("#000000"); } catch (e) {} }, 90);
+    // stays solid while it shrinks (no see-through double picture), then melts into the folder
+    const full = "inset(0px 0px 0px 0px round 0px)";
+    const a = el.animate([
+      { clipPath: full, WebkitClipPath: full, opacity: 1, easing: "cubic-bezier(.4,0,.2,1)" },
+      { clipPath: end, WebkitClipPath: end, opacity: 1, offset: 0.8 },
+      { clipPath: end, WebkitClipPath: end, opacity: 0 },
+    ], { duration: 380, fill: "forwards" });
     a.onfinish = () => onBack();
   };
   useEffect(() => { if (closerRef) closerRef.current = close; return () => { if (closerRef) closerRef.current = null; }; });
   const heroCd = countdownLabel(lang, t, room.eventDate);
   // Telegram's own top bar takes the hero colour while the room is open.
+  // When the room grows out of a folder, the bar turns only once the room
+  // reaches the top (and back to black as soon as it starts shrinking), so
+  // there is never a black strip between the bar and the room.
+  const headerOpen = useRef(!from);
   useEffect(() => {
     const tg = tgWebApp(); if (!tg || !tg.setHeaderColor) return;
-    const top = heroTop(room.tint);
-    try { tg.setHeaderColor(top); } catch (e) {}
-    return () => { try { tg.setHeaderColor("#000000"); } catch (e) {} };
+    const paint = () => { if (!closing.current) try { tg.setHeaderColor(heroTop(room.tint)); } catch (e) {} };
+    let id = null;
+    if (headerOpen.current) paint(); else id = setTimeout(() => { headerOpen.current = true; paint(); }, 380);
+    return () => { clearTimeout(id); try { tg.setHeaderColor("#000000"); } catch (e) {} };
   }, [room.tint]);
   const [seg, setSeg] = useState("lists");
   const [detail, setDetail] = useState(null);
