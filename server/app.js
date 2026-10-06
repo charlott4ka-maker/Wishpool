@@ -4,7 +4,7 @@ import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser, cleanEvent } from "./util.js";
 import { botRoute, ensureWebhook, remindRoute, telegramBirthdate } from "./bot.js";
-import { previewLink } from "./preview.js";
+import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, dropImages } from "./storage.js";
 
 export async function createApp() {
@@ -63,6 +63,7 @@ export async function createApp() {
   app.get("/api/admin/preview", async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret || req.query.key !== secret) return res.status(401).json({ error: "bad_key" });
+    if (req.query.probe) return res.json(await probe(String(req.query.url || "")).catch(e => ({ error: e.message })));
     const t0 = Date.now(), trace = [];
     try {
       const p = await previewLink(String(req.query.url || ""), trace);

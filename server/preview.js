@@ -21,7 +21,8 @@ async function assertPublic(u) {
   const addrs = net.isIP(host) ? [host] : (await dns.lookup(host, { all: true })).map(a => a.address);
   if (!addrs.length || addrs.some(privateIp)) throw new Error("bad_url");
 }
-async function get(url, accept, maxBytes, ms = 7000) {
+const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+async function get(url, accept, maxBytes, ms = 7000, ua = BROWSER_UA) {
   let u = new URL(url);
   for (let hop = 0; hop < 4; hop++) {
     await assertPublic(u);
@@ -29,7 +30,7 @@ async function get(url, accept, maxBytes, ms = 7000) {
       redirect: "manual", signal: AbortSignal.timeout(ms),
       // look like a regular desktop browser: many shops answer bots with 403
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        "User-Agent": ua,
         Accept: accept, "Accept-Language": "uk-UA,uk;q=0.9,ru;q=0.8,en;q=0.7",
         "Sec-Fetch-Dest": accept.startsWith("image") ? "image" : "document", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Site": "none", "Upgrade-Insecure-Requests": "1",
       },
@@ -191,4 +192,20 @@ export function parseProduct(html) {
   const currency = meta(html, ["product:price:currency", "og:price:currency", "priceCurrency"]) || ld.currency || itemprop(html, "priceCurrency") || "";
   const imageUrl = meta(html, ["og:image:secure_url", "og:image", "twitter:image"]) || ld.image || "";
   return { title, price: fmtPrice(amount, currency), imageUrl };
+}
+
+// Diagnostics for /api/admin/preview?probe=1: how each way of reading the page answers.
+export async function probe(raw) {
+  const url = cleanUrl(unwrapLink(raw));
+  const uas = { browser: BROWSER_UA, facebook: "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)", telegram: "TelegramBot (like TwitterBot)", twitter: "Twitterbot/1.0", google: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", whatsapp: "WhatsApp/2.23.20.0" };
+  const out = {};
+  await Promise.all(Object.entries(uas).map(async ([k, ua]) => {
+    try { const p = await get(url.href, "text/html,application/xhtml+xml", 2_500_000, 6000, ua); const h = p.buf.toString("utf8"); out[k] = { len: h.length, ...parseProduct(h) }; }
+    catch (e) { out[k] = e.message; }
+  }));
+  try {
+    const r = await fetch("https://r.jina.ai/" + url.href, { headers: { "X-Respond-With": "html", "X-Timeout": "8" }, signal: AbortSignal.timeout(9500) });
+    const t = await r.text(); out.jina = { status: r.status, head: t.slice(0, 300), ...parseProduct(t) };
+  } catch (e) { out.jina = e.message; }
+  return out;
 }
