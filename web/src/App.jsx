@@ -1962,6 +1962,13 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
     if (headerOpen.current) paint(); else id = setTimeout(() => { headerOpen.current = true; paint(); }, 380);
     return () => { clearTimeout(id); try { tg.setHeaderColor("#000000"); } catch (e) {} };
   }, [room.tint]);
+  // The room is its own scroll area. The page under it (the rooms list) must not
+  // scroll along: Telegram then draws a hairline under its top bar.
+  useEffect(() => {
+    const els = [document.documentElement, document.body], prev = els.map(e => e.style.overflow);
+    els.forEach(e => { e.style.overflow = "hidden"; });
+    return () => els.forEach((e, i) => { e.style.overflow = prev[i]; });
+  }, []);
   const [seg, setSeg] = useState("lists");
   const [detail, setDetail] = useState(null);
   const [tick, setTick] = useState(0);
@@ -2030,7 +2037,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
   );
 
   return (
-    <div ref={rootRef} style={{ position: "absolute", inset: 0, top: 0, background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", animation: from ? "none" : "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
+    <div ref={rootRef} style={{ position: "fixed", inset: 0, maxWidth: 440, marginInline: "auto", background: `linear-gradient(${heroTop(room.tint)} 0 50%, ${C.bg} 50% 100%)`, zIndex: 45, overflowY: "auto", overscrollBehavior: "contain", animation: from ? "none" : "fadeUp .25s ease", display: "flex", flexDirection: "column" }}>
       {/* Telegram-style hero: room-colour gradient with a faint pattern of the room's sticker */}
       <div style={{ position: "relative", overflow: "hidden", flexShrink: 0, padding: "16px 16px 40px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
         <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", height: H.sm }}>
