@@ -1362,32 +1362,34 @@ function RoomFolder({ room, wishes, onOpen }) {
     <div onClick={() => { haptic("light"); onOpen(box.current && box.current.getBoundingClientRect()); }} style={{ cursor: "pointer", textAlign: "center" }}>
       <div ref={box} style={{ position: "relative", width: "100%", aspectRatio: "1.12" }}>
         <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 16, background: hex(room.tint, 0.32) }} />
-        {photos.map((src, i) => {
-          const sp = spots[i];
-          return (
-            <div key={i} style={{
-              position: "absolute", left: sp.left, top: sp.top, width: "34%", aspectRatio: "0.82", zIndex: sp.z,
-              transform: `rotate(${sp.rot}deg)`, borderRadius: 10, border: "3px solid #fff",
-              background: `${C.card2} center / cover no-repeat url("${src}")`, boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
-            }} />
-          );
-        })}
+        {/* Photos are cut off exactly at the front's edge: nothing sits under the
+            frosted glass to smear into a dark blob. A soft shadow along that edge
+            (inside the same cut) makes them read as tucked into the folder. */}
+        {fp && photos.length > 0 && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none",
+            clipPath: `path(evenodd, "M -60 -60 H ${dim.w + 60} V ${dim.h + 60} H -60 Z ${fp.full}")`,
+            WebkitClipPath: `path(evenodd, "M -60 -60 H ${dim.w + 60} V ${dim.h + 60} H -60 Z ${fp.full}")` }}>
+            {photos.map((src, i) => {
+              const sp = spots[i];
+              return (
+                <div key={i} style={{
+                  position: "absolute", left: sp.left, top: sp.top, width: "34%", aspectRatio: "0.82", zIndex: sp.z,
+                  transform: `rotate(${sp.rot}deg)`, borderRadius: 10, border: "3px solid #fff",
+                  background: `${C.card2} center / cover no-repeat url("${src}")`, boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
+                }} />
+              );
+            })}
+            <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, overflow: "visible" }} aria-hidden="true">
+              <defs><filter id={"fs-" + room.id} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4" /></filter></defs>
+              <path d={fp.top} fill="none" stroke="rgba(0,0,0,0.4)" strokeWidth="10" filter={`url(#fs-${room.id})`} />
+            </svg>
+          </div>
+        )}
         {fp && (
           <>
-            {photos.length > 0 && <>{/* No outline: instead a soft shadow cast by the front's top edge onto
-                the photos behind it (only outside the front), so a photo in the
-                same colour as the folder still reads as tucked inside. */}
-            <svg width={dim.w} height={dim.h} style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", overflow: "visible" }} aria-hidden="true">
-              <defs>
-                <filter id={"fs-" + room.id} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="5" /></filter>
-                <mask id={"fm-" + room.id} maskUnits="userSpaceOnUse" x="0" y="0" width={dim.w} height={dim.h}>
-                  <rect width={dim.w} height={dim.h} fill="#fff" /><path d={fp.full} fill="#000" />
-                </mask>
-              </defs>
-              <g mask={`url(#fm-${room.id})`}>
-                <path d={fp.top} fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="12" transform="translate(0,-3)" filter={`url(#fs-${room.id})`} />
-              </g>
-            </svg></>}
+            {/* No outline and no separate shadow (the frosted front used to smear it
+                into a dark blob): each photo darkens towards its bottom instead, so
+                one in the folder's own colour still reads as tucked inside. */}
             <div style={{
               position: "absolute", inset: 0, zIndex: 3, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
               background: `linear-gradient(180deg, ${hex(room.tint, 0.42)} 0%, ${hex(room.tint, 0.26)} 100%)`,
