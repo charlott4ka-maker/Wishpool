@@ -215,11 +215,11 @@ const STR = {
   ob3Text: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А ти не дізнаєшся, хто і що обрав.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А ты не узнаешь, кто и что выбрал.", en: "Friends mark what they give, so nothing doubles up. And you won't know who picked what." },
   newWishHere: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   wishAddedRoom: { uk: "Додано в кімнату і у твій вішлист", ru: "Добавлено в комнату и в твой вишлист", en: "Added to the room and your wishlist" },
-  cancelGiftTitle: { uk: "Більше не даруєш «{name}»?", ru: "Больше не даришь «{name}»?", en: "Not giving «{name}» anymore?" },
-  cancelGiftText: { uk: "Позначку буде знято, і подарунок знову стане вільним.", ru: "Отметка снимется, и подарок снова станет свободным.", en: "Your mark is removed and the gift is free again." },
-  cancelGiftYes: { uk: "Так, не дарую", ru: "Да, не дарю", en: "Yes, cancel" },
-  cancelChipTitle: { uk: "Вийти зі збору на «{name}»?", ru: "Выйти из сбора на «{name}»?", en: "Leave the group gift for «{name}»?" },
-  cancelChipText: { uk: "Інші учасники збору залишаться.", ru: "Остальные участники сбора останутся.", en: "Everyone else stays in." },
+  cancelGiftTitle: { uk: "Скасувати подарунок?", ru: "Отменить подарок?", en: "Cancel this gift?" },
+  cancelGiftText: { uk: "«{name}» знову стане вільним, і позначку буде знято.", ru: "«{name}» снова станет свободным, отметка снимется.", en: "«{name}» becomes free again and your mark is removed." },
+  cancelGiftYes: { uk: "Не дарую", ru: "Не дарю", en: "Cancel gift" },
+  cancelChipTitle: { uk: "Вийти зі збору?", ru: "Выйти из сбора?", en: "Leave the group gift?" },
+  cancelChipText: { uk: "На «{name}» скидаються інші, вони залишаться у зборі.", ru: "На «{name}» скидываются другие, они останутся в сборе.", en: "Others chipping in on «{name}» stay in." },
   cancelChipYes: { uk: "Вийти зі збору", ru: "Выйти из сбора", en: "Leave" },
   keepIt: { uk: "Залишити", ru: "Оставить", en: "Keep it" },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
@@ -2216,7 +2216,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       </div>
       {cancelling && <ConfirmSheet
         title={t(cancelling.chip ? "cancelChipTitle" : "cancelGiftTitle", { name: cancelling.w.title })}
-        text={t(cancelling.chip ? "cancelChipText" : "cancelGiftText")}
+        text={t(cancelling.chip ? "cancelChipText" : "cancelGiftText", { name: cancelling.w.title })}
         yes={t(cancelling.chip ? "cancelChipYes" : "cancelGiftYes")} no={t("keepIt")}
         onClose={() => setCancelling(null)}
         onYes={() => { const c = cancelling; setCancelling(null); c.chip ? doUnchip(c.w.id) : doUnreserve(c.w.id); }} />}
@@ -2293,14 +2293,17 @@ function SurpriseGate({ room, onJoin }) {
   );
 }
 // "Take" on a free wish: gift it alone (reserve) or open a group chip-in.
-// "Are you sure?" as a bottom sheet: one destructive action and a way back.
+// "Are you sure?" as a bottom sheet: centred like the "gift taken" sheet, the
+// safe choice is the big button, the destructive one is small red text.
 function ConfirmSheet({ title, text, yes, no, onYes, onClose }) {
   return (
-    <Sheet title={title} onClose={onClose}>
-      {text && <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: -4, marginBottom: 24 }}>{text}</div>}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <button onClick={() => { haptic("warning"); onYes(); }} style={{ height: H.lg, borderRadius: 999, border: "none", cursor: "pointer", background: "rgba(255,90,90,0.14)", color: "#FF6B6B", fontSize: 16, fontWeight: 600, fontFamily: font }}>{yes}</button>
-        <Pill full kind="ghost" onClick={onClose}>{no}</Pill>
+    <Sheet onClose={onClose}>
+      <div style={{ textAlign: "center", marginTop: -8 }}>
+        <div style={{ display: "inline-block", transform: "rotate(-8deg)" }}><Sticker emoji="stk:basket" size={72} /></div>
+        <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{title}</div>
+        {text && <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{text}</div>}
+        <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{no}</Pill></div>
+        <button onClick={() => { haptic("warning"); onYes(); }} style={{ marginTop: 8, height: H.sm, padding: "0 16px", background: "none", border: "none", cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font }}>{yes}</button>
       </div>
     </Sheet>
   );
@@ -2411,7 +2414,7 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
   return (
     <div style={{ position: "absolute", inset: 0, background: C.bg, zIndex: 55, overflowY: "auto", animation: "fadeUp .2s ease" }}>
-      {cancelling && <ConfirmSheet title={t("cancelGiftTitle", { name: cancelling.title })} text={t("cancelGiftText")} yes={t("cancelGiftYes")} no={t("keepIt")}
+      {cancelling && <ConfirmSheet title={t("cancelGiftTitle", { name: cancelling.title })} text={t("cancelGiftText", { name: cancelling.title })} yes={t("cancelGiftYes")} no={t("keepIt")}
         onClose={() => setCancelling(null)} onYes={() => { const w = cancelling; setCancelling(null); doUnreserve(w.id); }} />}
       <div style={{ padding: "16px 18px", display: "flex", justifyContent: "flex-end" }}>
         <button onClick={onClose} style={{ background: C.card, border: `1px solid ${C.line}`, color: C.t2, width: H.sm, height: H.sm, borderRadius: H.sm, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
