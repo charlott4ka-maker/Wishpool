@@ -3,7 +3,7 @@ import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser, cleanEvent, cleanNote } from "./util.js";
-import { botRoute, ensureWebhook, remindRoute, telegramBirthdate, notifyWishShared, notifyGiftPicked } from "./bot.js";
+import { botRoute, ensureWebhook, ensureBotMenu, remindRoute, telegramBirthdate, notifyWishShared, notifyGiftPicked } from "./bot.js";
 import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, dropImages } from "./storage.js";
 
@@ -118,7 +118,7 @@ export async function createApp() {
   });
   // Daily Vercel cron: event reminders (a week and a day before).
   app.get("/api/cron/remind", remindRoute(BOT_TOKEN, store));
-  await ensureWebhook(BOT_TOKEN);
+  await Promise.all([ensureWebhook(BOT_TOKEN), ensureBotMenu(BOT_TOKEN)]);
 
   const api = express.Router();
   // API responses must never be conditionally cached (304) — each call needs a fresh body.

@@ -6,9 +6,9 @@ import crypto from "crypto";
 const APP_LINK = process.env.APP_LINK || "https://t.me/wishpool_bot/app";
 
 const TEXT = {
-  uk: { hi: (n) => `Привіт${n ? ", " + n : ""}! 🎁\n\nWishpool: список бажань для друзів, пари та сім'ї. Додай, що хочеш отримати, поділись у кімнаті, а друзі тихенько заберуть подарунок, щоб не було двох однакових.\n\nА ще можна просто надіслати мені посилання на товар, фото чи назву, і я додам це у твій вішлист.`, open: "Відкрити Wishpool", room: "Тебе запросили в кімнату. Відкривай 👇" },
-  ru: { hi: (n) => `Привет${n ? ", " + n : ""}! 🎁\n\nWishpool: вишлист для друзей, пары и семьи. Добавь, что хочешь получить, поделись в комнате, а друзья тихонько заберут подарок, чтобы не было двух одинаковых.\n\nА ещё можно просто прислать мне ссылку на товар, фото или название, и я добавлю это в твой вишлист.`, open: "Открыть Wishpool", room: "Тебя пригласили в комнату. Открывай 👇" },
-  en: { hi: (n) => `Hi${n ? ", " + n : ""}! 🎁\n\nWishpool is a wishlist for friends, couples and family. Add what you'd love to get, share it in a room, and friends quietly claim gifts so nobody doubles up.\n\nYou can also just send me a product link, a photo or a name, and I'll add it to your wishlist.`, open: "Open Wishpool", room: "You've been invited to a room. Tap below 👇" },
+  uk: { hi: (n) => `Привіт${n ? ", " + n : ""}! 🎁\n\nWishpool: список бажань для друзів, пари та сім'ї. Додай, що хочеш отримати, поділись у кімнаті, а друзі тихенько заберуть подарунок, щоб не було двох однакових.\n\nА ще можна просто надіслати мені посилання на товар, фото чи назву, і я додам це у твій вішлист.`, open: "Відкрити Wishpool", openHint: "Твій вішлист і кімнати тут 👇", room: "Тебе запросили в кімнату. Відкривай 👇" },
+  ru: { hi: (n) => `Привет${n ? ", " + n : ""}! 🎁\n\nWishpool: вишлист для друзей, пары и семьи. Добавь, что хочешь получить, поделись в комнате, а друзья тихонько заберут подарок, чтобы не было двух одинаковых.\n\nА ещё можно просто прислать мне ссылку на товар, фото или название, и я добавлю это в твой вишлист.`, open: "Открыть Wishpool", openHint: "Твой вишлист и комнаты тут 👇", room: "Тебя пригласили в комнату. Открывай 👇" },
+  en: { hi: (n) => `Hi${n ? ", " + n : ""}! 🎁\n\nWishpool is a wishlist for friends, couples and family. Add what you'd love to get, share it in a room, and friends quietly claim gifts so nobody doubles up.\n\nYou can also just send me a product link, a photo or a name, and I'll add it to your wishlist.`, open: "Open Wishpool", openHint: "Your wishlist and rooms are here 👇", room: "You've been invited to a room. Tap below 👇" },
 };
 const pickLang = (code) => (code || "").startsWith("uk") ? "uk" : (code || "").startsWith("ru") ? "ru" : "en";
 
@@ -62,6 +62,36 @@ async function tgFileDataUrl(token, fileId) {
 }
 
 // hooks.addWish(from, { text, url, image }) -> { id, title, price, guess }; hooks.undoWish(userId, wishId)
+// Bot menu: the button left of the input opens the Mini App; typing "/" lists
+// the commands below (in the user's Telegram language).
+const COMMANDS = {
+  uk: [["app", "Відкрити вішлист"], ["add", "Як додати бажання"], ["help", "Що вміє бот"]],
+  ru: [["app", "Открыть вишлист"], ["add", "Как добавить желание"], ["help", "Что умеет бот"]],
+  en: [["app", "Open my wishlist"], ["add", "How to add a wish"], ["help", "What the bot can do"]],
+};
+export async function ensureBotMenu(token) {
+  const base = publicUrl();
+  if (!token || !base) return;
+  try {
+    // only when something differs, so a cold start normally costs two quick reads
+    const [mine, btn] = await Promise.all([tg(token, "getMyCommands", {}), tg(token, "getChatMenuButton", {})]);
+    const same = mine && mine.ok && JSON.stringify((mine.result || []).map(c => [c.command, c.description])) === JSON.stringify(COMMANDS.en)
+      && btn && btn.result && btn.result.type === "web_app" && btn.result.web_app && btn.result.web_app.url === base;
+    if (same) return;
+    const cmds = (l) => COMMANDS[l].map(([command, description]) => ({ command, description }));
+    await Promise.all([
+      tg(token, "setMyCommands", { commands: cmds("en") }),
+      tg(token, "setMyCommands", { commands: cmds("uk"), language_code: "uk" }),
+      tg(token, "setMyCommands", { commands: cmds("ru"), language_code: "ru" }),
+      tg(token, "setChatMenuButton", { menu_button: { type: "web_app", text: "Wishpool", web_app: { url: base } } }),
+      tg(token, "setMyShortDescription", { short_description: "Wishpool · wishlists for friends, couples and birthdays" }),
+      tg(token, "setMyShortDescription", { short_description: "Wishpool · вішлисти для друзів, пари та днів народження", language_code: "uk" }),
+      tg(token, "setMyShortDescription", { short_description: "Wishpool · вишлисты для друзей, пары и дней рождения", language_code: "ru" }),
+    ]);
+    console.log("bot menu set");
+  } catch (e) { console.error("bot menu failed", e.message); }
+}
+
 export function botRoute(token, hooks = {}) {
   return async (req, res) => {
     if (!token || req.get("X-Telegram-Bot-Api-Secret-Token") !== webhookSecret(token)) return res.status(401).end();
@@ -93,6 +123,17 @@ export function botRoute(token, hooks = {}) {
           reply_markup: { inline_keyboard: [[{ text: H.open, url: link }]] },
         });
       } catch (e) { console.error("sendMessage failed", e.message); }
+      return res.json({ ok: true });
+    }
+    const cmd = (text.match(/^\/(\w+)/) || [])[1];
+    if (cmd === "app" || cmd === "add" || cmd === "help") {
+      const H = TEXT[pickLang(msg.from.language_code)];
+      try {
+        await tg(token, "sendMessage", {
+          chat_id: msg.chat.id, text: cmd === "app" ? H.openHint : L.help,
+          reply_markup: { inline_keyboard: [[{ text: H.open, url: APP_LINK }]] },
+        });
+      } catch (e) {}
       return res.json({ ok: true });
     }
     // Anything else is a wish: a link, a photo (caption = name) or a plain name.
