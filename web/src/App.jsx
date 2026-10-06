@@ -43,15 +43,15 @@ const store = {
 /* ---------- API client (multiplayer backend) ---------- */
 function tgInitData() { try { return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || ""; } catch (e) { return ""; } }
 function tgStartParam() { try { return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param) || null; } catch (e) { return null; } }
-async function apiReq(method, path, body) {
+async function apiReq(method, path, body, opts = {}) {
   const h = { "Content-Type": "application/json" };
   const d = tgInitData(); if (d) h["X-Init-Data"] = d;
   // Without a timeout a request made in airplane mode can hang forever (endless loading).
   const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
-  const timer = ctl && setTimeout(() => ctl.abort(), method === "GET" ? 10000 : 30000);
+  const timer = ctl && setTimeout(() => ctl.abort(), opts.timeout || (method === "GET" ? 10000 : 30000));
   let res;
   try { res = await fetch("/api" + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: "no-store", signal: ctl ? ctl.signal : undefined }); }
-  catch (x) { try { window.dispatchEvent(new Event("wp-net-fail")); } catch (y) {} const e = new Error("network"); e.net = true; throw e; }
+  catch (x) { if (!opts.quiet) try { window.dispatchEvent(new Event("wp-net-fail")); } catch (y) {} const e = new Error("network"); e.net = true; throw e; }
   finally { if (timer) clearTimeout(timer); }
   if (!res.ok) { let e = {}; try { e = await res.json(); } catch (x) {} throw new Error(e.error || ("http_" + res.status)); }
   return res.json();
@@ -79,7 +79,8 @@ const api = {
   unreserve: (id) => apiReq("DELETE", "/wishes/" + id + "/reserve"),
   chip: (id) => apiReq("POST", "/wishes/" + id + "/chip"),
   unchip: (id) => apiReq("DELETE", "/wishes/" + id + "/chip"),
-  preview: (url) => apiReq("GET", "/preview?url=" + encodeURIComponent(url)),
+  // slow shops + fallback services: give it longer, and a timeout here is not "offline"
+  preview: (url) => apiReq("GET", "/preview?url=" + encodeURIComponent(url), null, { timeout: 25000, quiet: true }),
   runDraw: (id, budget) => apiReq("POST", "/rooms/" + id + "/draw", { budget }),
   draw: (id) => apiReq("GET", "/rooms/" + id + "/draw"),
   gifts: () => apiReq("GET", "/gifts"),
@@ -2351,9 +2352,11 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
   const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
   const MAX_PHOTOS = 3;
-  // Paste a product link -> fill empty name/price and add the shop photo.
+  // Paste a product link -> fill name/price and add the shop photo. A newer link
+  // replaces what the previous one filled in, but never what the user typed.
   const [linkState, setLinkState] = useState(null); // null | "loading" | "done" | "fail"
   const lastLink = useRef("");
+  const auto = useRef({ title: "", price: "", image: null });
   const fill = useRef({ title, price, images });
   fill.current = { title, price, images };
   useEffect(() => {
@@ -2364,14 +2367,25 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
       try {
         const p = await api.preview(url);
         if (lastLink.current !== url) return;
-        const cur = fill.current;
-        if (p.title && !cur.title.trim()) setTitle(p.title);
-        if (p.price && !cur.price.trim()) setPrice(p.price);
-        if (p.image && cur.images.length < MAX_PHOTOS) {
+        const cur = fill.current, a = auto.current;
+        const mine = (v, prev) => !v.trim() || v === prev;
+        if (p.title && mine(cur.title, a.title)) { setTitle(p.title); a.title = p.title; }
+        if (p.price && mine(cur.price, a.price)) { setPrice(p.price); a.price = p.price; }
+        else if (!p.price && a.price && cur.price === a.price) { setPrice(""); a.price = ""; }
+        if (p.image) {
           const blob = await (await fetch(p.image)).blob();
           const small = await compressImage(blob).catch(() => p.image);
-          setImages(xs => xs.length < MAX_PHOTOS && !xs.includes(small) ? [...xs, small] : xs);
+          if (lastLink.current !== url) return;
+          const prev = a.image; a.image = small;
+          setImages(xs => {
+            const i = prev ? xs.indexOf(prev) : -1;
+            if (i >= 0) return xs.map((x, j) => j === i ? small : x);
+            return xs.length < MAX_PHOTOS && !xs.includes(small) ? [...xs, small] : xs;
+          });
           setCover("photo");
+        } else if (a.image) {
+          const prev = a.image; a.image = null;
+          setImages(xs => xs.filter(x => x !== prev));
         }
         setLinkState(p.title || p.price || p.image ? "done" : "fail");
         haptic(p.title || p.image ? "success" : "warning");

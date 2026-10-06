@@ -59,6 +59,16 @@ export async function createApp() {
   // Bot webhook (Telegram -> us): before the initData auth, it has its own secret.
   app.post("/api/tg-webhook", botRoute(BOT_TOKEN));
   // One-off move of photos that still live inline in the database into R2.
+  // Link import check for a shop: /api/admin/preview?key=<CRON_SECRET>&url=<product url>
+  app.get("/api/admin/preview", async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || req.query.key !== secret) return res.status(401).json({ error: "bad_key" });
+    const t0 = Date.now(), trace = [];
+    try {
+      const p = await previewLink(String(req.query.url || ""), trace);
+      res.json({ ms: Date.now() - t0, title: p.title, price: p.price, image: p.image ? p.image.slice(0, 40) + "… " + p.image.length : null, trace });
+    } catch (e) { res.json({ ms: Date.now() - t0, error: e.message, trace }); }
+  });
   // Open /api/admin/move-photos?key=<CRON_SECRET> a few times until "left": 0.
   app.get("/api/admin/move-photos", async (req, res, next) => {
     try {
