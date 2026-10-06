@@ -35,7 +35,9 @@ export function createMemStore() {
     async removeChip(wishId, userId) { D.chips = D.chips.filter(c => !(c.wishId === wishId && c.userId === userId)); },
     async addMember(roomId, userId) { if (!D.members.some(m => m.roomId === roomId && m.userId === userId)) D.members.push({ roomId, userId }); },
     async getWish(id) { return D.wishes[id] || null; },
-    async createWish(w) { D.wishes[w.id] = { ...w }; },
+    async createWish(w) { D.wishes[w.id] = { note: "", giftedAt: null, ...w }; },
+    async updateWish(id, w) { const x = D.wishes[id]; if (x) Object.assign(x, { emoji: w.emoji, image: w.image, images: w.images, link: w.link, title: w.title, price: w.price, note: w.note || "" }); },
+    async setGifted(id, at) { const x = D.wishes[id]; if (x) x.giftedAt = at; },
     async wishesWithInlineImages(limit) { return Object.values(D.wishes).filter(w => [w.image, ...(w.images || [])].some(x => typeof x === "string" && x.startsWith("data:image/"))).slice(0, limit); },
     async setWishImages(id, images) { const w = D.wishes[id]; if (w) { w.images = images; w.image = images[0] || null; } },
     async deleteWish(id) { delete D.wishes[id]; D.wishRooms = D.wishRooms.filter(x => x.wishId !== id); delete D.reservations[id]; D.chips = D.chips.filter(c => c.wishId !== id); },
@@ -48,7 +50,7 @@ export function createMemStore() {
     },
     async addWishRoom(wishId, roomId) { if (!D.wishRooms.some(x => x.wishId === wishId && x.roomId === roomId)) D.wishRooms.push({ wishId, roomId }); },
     async userWishes(userId) { return Object.values(D.wishes).filter(w => w.ownerId === userId && !w.roomOnly).sort((a, b) => b.createdAt - a.createdAt); },
-    async wishesSharedTo(userId, roomId) { const ids = new Set(D.wishRooms.filter(x => x.roomId === roomId).map(x => x.wishId)); return Object.values(D.wishes).filter(w => w.ownerId === userId && ids.has(w.id) && !w.roomOnly); },
+    async wishesSharedTo(userId, roomId) { const ids = new Set(D.wishRooms.filter(x => x.roomId === roomId).map(x => x.wishId)); return Object.values(D.wishes).filter(w => w.ownerId === userId && ids.has(w.id) && !w.roomOnly && !w.giftedAt); },
     async giftsByMe(userId) {
       const ids = new Set([...Object.entries(D.reservations).filter(([, g]) => g === userId).map(([wid]) => wid), ...D.chips.filter(c => c.userId === userId).map(c => c.wishId)]);
       return [...ids].map(wid => D.wishes[wid]).filter(Boolean)

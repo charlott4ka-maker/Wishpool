@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
-import { uid, cleanImages, pubUser, cleanEvent } from "./util.js";
+import { uid, cleanImages, pubUser, cleanEvent, cleanNote } from "./util.js";
 import { botRoute, ensureWebhook, remindRoute, telegramBirthdate } from "./bot.js";
 import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, dropImages } from "./storage.js";
@@ -23,7 +23,7 @@ export async function createApp() {
   const imgUrls = (w, list) => list.map((x, i) => x.startsWith("data:") ? `/api/img/${w.id}/${i}` : x);
   const pubWish = (w) => {
     const images = imgUrls(w, w.images && w.images.length ? w.images : (w.image ? [w.image] : []));
-    return { id: w.id, emoji: w.emoji, image: images[0] || null, images, link: w.link, title: w.title, price: w.price };
+    return { id: w.id, emoji: w.emoji, image: images[0] || null, images, link: w.link, title: w.title, price: w.price, note: w.note || "", giftedAt: w.giftedAt || null };
   };
   // What a gifter sees on someone else's wish: solo reservation, or a group
   // chip-in ("chips": who's in, out of `total` possible gifters in the room).
@@ -119,7 +119,7 @@ export async function createApp() {
   });
 
   api.post("/wishes", async (req, res) => {
-    const { emoji, image, images: rawImages, link, title, price, rooms = [] } = req.body || {};
+    const { emoji, image, images: rawImages, link, title, price, note, rooms = [] } = req.body || {};
     let images = cleanImages(rawImages && rawImages.length ? rawImages : (image ? [image] : []));
     if (!title) return res.status(400).json({ error: "title_required" });
     const id = uid("w");
@@ -127,10 +127,39 @@ export async function createApp() {
     if (storageOn() && images.length) {
       try { images = await storeImages(images, `w/${id}`); } catch (e) { console.error("r2 upload failed", e.message); }
     }
-    const w = { id, ownerId: req.user.id, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", createdAt: Date.now() };
+    const w = { id, ownerId: req.user.id, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", note: cleanNote(note), createdAt: Date.now() };
     await store.createWish(w);
     for (const rid of rooms) if (await store.isMember(rid, req.user.id)) await store.addWishRoom(w.id, rid);
     res.json({ wish: { ...pubWish(w), rooms: await store.wishRoomIds(w.id) } });
+  });
+
+  // Edit a wish. Photos it already had come back as their public URLs (or as
+  // /api/img/<id>/<i> for ones still stored inline) and are kept as they are.
+  api.patch("/wishes/:id", async (req, res) => {
+    const old = await store.getWish(req.params.id);
+    if (!old || old.ownerId !== req.user.id) return res.status(404).json({ error: "not_found" });
+    const { emoji, images: rawImages, link, title, price, note } = req.body || {};
+    if (!title || !String(title).trim()) return res.status(400).json({ error: "title_required" });
+    const oldImgs = old.images && old.images.length ? old.images : (old.image ? [old.image] : []);
+    const back = (x) => { const m = typeof x === "string" && x.match(new RegExp(`^/api/img/${old.id}/(\\d+)$`)); return m ? oldImgs[Number(m[1])] : x; };
+    let images = (Array.isArray(rawImages) ? rawImages.map(back) : []).filter(x => typeof x === "string" && (x.startsWith("data:image/") || /^https:\/\//.test(x)));
+    images = cleanImages(images);
+    if (storageOn() && images.length) {
+      try { images = await storeImages(images, `w/${old.id}`); } catch (e) { console.error("r2 upload failed", e.message); }
+    }
+    const w = { emoji: emoji || old.emoji, image: images[0] || null, images, link: link || null, title: String(title).trim(), price: price || "", note: cleanNote(note) };
+    await store.updateWish(old.id, w);
+    await dropImages(oldImgs.filter(x => !images.includes(x)));
+    const fresh = await store.getWish(old.id);
+    res.json({ wish: { ...pubWish(fresh), rooms: await store.wishRoomIds(old.id) } });
+  });
+  // "Got it": the wish leaves every room and moves to the "Gifted" archive (and back).
+  api.post("/wishes/:id/gifted", async (req, res) => {
+    const w = await store.getWish(req.params.id);
+    if (!w || w.ownerId !== req.user.id) return res.status(404).json({ error: "not_found" });
+    const at = req.body && req.body.gifted ? Date.now() : null;
+    await store.setGifted(w.id, at);
+    res.json({ giftedAt: at });
   });
 
   api.delete("/wishes/:id", async (req, res) => {
@@ -252,12 +281,12 @@ export async function createApp() {
     if (!r || !(await store.isMember(r.id, me))) return res.status(404).json({ error: "not_found" });
     if (r.type !== "birthday") return res.status(400).json({ error: "not_birthday" });
     if (r.celebrantId === me) return res.status(403).json({ error: "celebrant" });
-    const { emoji, images: rawImages, link, title, price } = req.body || {};
+    const { emoji, images: rawImages, link, title, price, note } = req.body || {};
     if (!title) return res.status(400).json({ error: "title_required" });
     const id = uid("w");
     let images = cleanImages(rawImages || []);
     if (storageOn() && images.length) { try { images = await storeImages(images, `w/${id}`); } catch (e) { console.error("r2 upload failed", e.message); } }
-    const w = { id, ownerId: me, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", createdAt: Date.now(), roomOnly: r.id };
+    const w = { id, ownerId: me, emoji: emoji || "🎁", image: images[0] || null, images, link: link || null, title, price: price || "", note: cleanNote(note), createdAt: Date.now(), roomOnly: r.id };
     await store.createWish(w);
     await store.addWishRoom(w.id, r.id);
     res.json({ ok: true, id });

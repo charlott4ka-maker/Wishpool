@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useContext, create
 import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw, CalendarDays, Users2,
+  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw, CalendarDays, Users2, PartyPopper, Undo2,
 } from "lucide-react";
 
 /* ---------- design tokens ---------- */
@@ -62,6 +62,8 @@ const api = {
   state: () => apiReq("GET", "/state"),
   createWish: (w) => apiReq("POST", "/wishes", w),
   deleteWish: (id) => apiReq("DELETE", "/wishes/" + id),
+  updateWish: (id, w) => apiReq("PATCH", "/wishes/" + id, w),
+  setGifted: (id, gifted) => apiReq("POST", "/wishes/" + id + "/gifted", { gifted }),
   toggleWishRoom: (id, roomId) => apiReq("POST", "/wishes/" + id + "/room", { roomId }),
   createRoom: (r) => apiReq("POST", "/rooms", r),
   updateRoom: (id, data) => apiReq("PATCH", "/rooms/" + id, data),
@@ -171,6 +173,28 @@ const STR = {
   noRoomsHint: { uk: "Поки немає кімнат. Створи на вкладці «Кімнати».", ru: "Пока нет комнат. Создай на вкладке «Комнаты».", en: "No rooms yet. Create one on the Rooms tab." },
   deleteWish: { uk: "Видалити бажання", ru: "Удалить желание", en: "Delete wish" },
   addWish: { uk: "Додати бажання", ru: "Добавить желание", en: "Add a wish" },
+  editWish: { uk: "Редагувати бажання", ru: "Изменить желание", en: "Edit wish" },
+  editShort: { uk: "Змінити", ru: "Изменить", en: "Edit" },
+  wishUpdated: { uk: "Бажання оновлено", ru: "Желание обновлено", en: "Wish updated" },
+  noteLabel: { uk: "Коментар для дарувальників", ru: "Комментарий для дарителей", en: "Note for gifters" },
+  notePh: { uk: "Розмір M, будь-який колір, крім білого", ru: "Размер M, любой цвет, кроме белого", en: "Size M, any colour but white" },
+  priceOne: { uk: "Ціна", ru: "Цена", en: "Price" },
+  priceRangeTab: { uk: "Від і до", ru: "От и до", en: "Range" },
+  priceFrom: { uk: "від", ru: "от", en: "from" },
+  priceTo: { uk: "до", ru: "до", en: "to" },
+  priceRange: { uk: "від {a} до {b}", ru: "от {a} до {b}", en: "{a} to {b}" },
+  gotIt: { uk: "Мені подарували", ru: "Мне подарили", en: "I got it" },
+  ungift: { uk: "Повернути в список", ru: "Вернуть в список", en: "Back to the list" },
+  giftedOn: { uk: "Подаровано {date}", ru: "Подарено {date}", en: "Gifted on {date}" },
+  giftedBadge: { uk: "Подаровано", ru: "Подарено", en: "Gifted" },
+  giftedHint: { uk: "Бажання зникне з кімнат і перейде в архів «Подарували».", ru: "Желание пропадёт из комнат и уйдёт в архив «Подарили».", en: "The wish leaves your rooms and moves to the Gifted archive." },
+  wishGiftedToast: { uk: "Вітаємо! Бажання в архіві", ru: "Поздравляем! Желание в архиве", en: "Congrats! Moved to the archive" },
+  wishBackToast: { uk: "Бажання знову в списку", ru: "Желание снова в списке", en: "The wish is back on the list" },
+  filterAll: { uk: "Усі", ru: "Все", en: "All" },
+  filterGifted: { uk: "Подарували", ru: "Подарили", en: "Gifted" },
+  filterEmpty: { uk: "Тут поки нічого", ru: "Здесь пока ничего", en: "Nothing here yet" },
+  filterEmptySub: { uk: "Відкрий бажання і обери, в яких кімнатах його показувати.", ru: "Открой желание и выбери, в каких комнатах его показывать.", en: "Open a wish and choose which rooms can see it." },
+  giftedEmptySub: { uk: "Коли отримаєш подарунок, відкрий бажання і натисни «Мені подарували».", ru: "Когда получишь подарок, открой желание и нажми «Мне подарили».", en: "When you get a gift, open the wish and tap \"I got it\"." },
   wishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
   wishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
   roomBirthday: { uk: "День народження", ru: "День рождения", en: "Birthday" },
@@ -701,6 +725,12 @@ const sepBelow = (show, inset = LIST.icon + LIST.gap) => show ? {
   backgroundImage: `linear-gradient(${C.line}, ${C.line})`, backgroundRepeat: "no-repeat",
   backgroundPosition: "right bottom", backgroundSize: `calc(100% - ${inset}px) 1px`,
 } : null;
+// The owner's note for gifters, as a soft quote block.
+function WishNote({ text, style, compact }) {
+  return (
+    <div style={{ background: C.card2, borderRadius: compact ? 12 : 16, padding: compact ? "8px 12px" : "12px 16px", color: C.t1, fontSize: compact ? 13 : 14.5, lineHeight: 1.4, whiteSpace: "pre-wrap", overflowWrap: "anywhere", ...style }}>{text}</div>
+  );
+}
 function WishRow({ w, right, noPhoto }) {
   const imgs = wishImages(w);
   return (
@@ -709,6 +739,7 @@ function WishRow({ w, right, noPhoto }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{w.title}</div>
         {w.price && <div style={{ color: C.t2, fontSize: 13.5, marginTop: 4 }}>{w.price}</div>}
+        {w.note && <WishNote compact text={w.note} style={{ marginTop: 8 }} />}
         {w.link && (
           <button onClick={(e) => { e.stopPropagation(); window.open(w.link, "_blank"); }}
             style={{ marginTop: 4, background: "none", border: "none", padding: 0, cursor: "pointer", color: "#7FB0FF", fontSize: 12.5, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, fontFamily: font, maxWidth: "100%" }}>
@@ -825,7 +856,7 @@ export default function App() {
 
   const [roomRefresh, setRoomRefresh] = useState(0);
   const addIdea = async (roomId, w) => {
-    try { await api.addIdea(roomId, { emoji: w.emoji, images: w.images, link: w.link, title: w.title, price: w.price }); }
+    try { await api.addIdea(roomId, { emoji: w.emoji, images: w.images, link: w.link, title: w.title, price: w.price, note: w.note }); }
     catch (e) { showToast(t("noConnection"), 3000); throw e; }
     setRoomRefresh(x => x + 1); setOverlay({ type: "room", roomId }); showToast(t("bdayIdeaAdded"));
   };
@@ -835,6 +866,22 @@ export default function App() {
     catch (e) { showToast(t("noConnection"), 3000); return; }
     await refreshState({ quiet: true });
     setOverlay({ type: "room", roomId: g.room.id });
+  };
+  const editWish = async (id, w) => {
+    if (online) {
+      try { const r = await api.updateWish(id, w); setWishes(ws => ws.map(x => x.id === id ? { ...x, ...r.wish } : x)); }
+      catch (e) { showToast(t("noConnection"), 3000); throw e; }
+    } else setWishes(ws => ws.map(x => x.id === id ? { ...x, ...w, rooms: x.rooms } : x));
+    setOverlay(null); showToast(t("wishUpdated"));
+  };
+  const setGifted = async (id, gifted) => {
+    let at = gifted ? Date.now() : null;
+    if (online) {
+      try { at = (await api.setGifted(id, gifted)).giftedAt; }
+      catch (e) { showToast(t("noConnection"), 3000); return; }
+    }
+    setWishes(ws => ws.map(x => x.id === id ? { ...x, giftedAt: at } : x));
+    if (gifted) { haptic("success"); showToast(t("wishGiftedToast")); } else showToast(t("wishBackToast"));
   };
   const addWish = async (w) => {
     if (online) {
@@ -976,6 +1023,8 @@ export default function App() {
               {tab === "pool" && (
                 <PoolScreen wishes={wishes} rooms={rooms}
                   onAdd={() => setOverlay({ type: "add" })}
+                  onEdit={(id) => setOverlay({ type: "editWish", wishId: id })}
+                  onGifted={setGifted}
                   onToggleRoom={toggleWishRoom}
                   onDelete={deleteWish}
                 />
@@ -995,6 +1044,10 @@ export default function App() {
         {overlay?.type === "add" && (
           <AddSheet rooms={rooms} onClose={() => setOverlay(null)}
             onSave={addWish} />
+        )}
+        {overlay?.type === "editWish" && wishes.find(w => w.id === overlay.wishId) && (
+          <AddSheet rooms={rooms} initial={wishes.find(w => w.id === overlay.wishId)} onClose={() => setOverlay(null)}
+            onSave={(w) => editWish(overlay.wishId, w)} />
         )}
         {overlay?.type === "createRoom" && (
           <CreateRoomSheet online={online} onClose={() => setOverlay(null)} onCreate={createRoom} />
@@ -1132,9 +1185,23 @@ function HeaderAdd({ onClick, label }) {
     }}><Plus size={24} /></button>
   );
 }
-function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
+function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onEdit, onGifted }) {
   const { t } = useT();
   const [openId, setOpenId] = useState(null);
+  // Filter row: all wishes, private ones, per room, and the "gifted" archive.
+  const [filter, setFilter] = useState("all");
+  const active = wishes.filter(w => !w.giftedAt);
+  const gifted = wishes.filter(w => w.giftedAt).sort((a, b) => b.giftedAt - a.giftedAt);
+  const roomTabs = rooms.filter(r => active.some(w => (w.rooms || []).includes(r.id)));
+  const tabs = [
+    ["all", t("filterAll"), active.length],
+    ...(active.some(w => !(w.rooms || []).length) && roomTabs.length ? [["private", t("privateShort"), active.filter(w => !(w.rooms || []).length).length]] : []),
+    ...roomTabs.map(r => [r.id, r.name, active.filter(w => (w.rooms || []).includes(r.id)).length, r]),
+    ...(gifted.length ? [["gifted", t("filterGifted"), gifted.length]] : []),
+  ];
+  const cur = tabs.some(x => x[0] === filter) ? filter : "all";
+  const shown = cur === "all" ? active : cur === "gifted" ? gifted : cur === "private"
+    ? active.filter(w => !(w.rooms || []).length) : active.filter(w => (w.rooms || []).includes(cur));
   return (
     <div style={{ animation: "fadeUp .3s ease" }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, padding: "6px 4px 24px" }}>
@@ -1145,16 +1212,31 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete }) {
         <HeaderAdd onClick={onAdd} label={t("addWish")} />
       </div>
 
+      {tabs.length > 1 && (
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", margin: "-8px -16px 16px", padding: "0 16px", scrollbarWidth: "none" }}>
+          {tabs.map(([k, label, n, r]) => (
+            <Chip key={k} active={cur === k} onClick={() => setFilter(k)}>
+              {r ? <Sticker emoji={r.emoji} size={15} /> : k === "private" ? <Lock size={14} /> : k === "gifted" ? <PartyPopper size={15} /> : null}
+              {label}<span style={{ opacity: 0.55 }}>{n}</span>
+            </Chip>
+          ))}
+        </div>
+      )}
+
       {wishes.length === 0 ? (
         <Empty emoji="stk:bag" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
+      ) : shown.length === 0 ? (
+        <Empty compact emoji={cur === "gifted" ? "stk:flower" : "stk:shell"} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
       ) : (
         /* two-column grid of product-style cards; tap opens the wish sheet */
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          {wishes.map(w => <WishTile key={w.id} w={w} onClick={() => setOpenId(w.id)} />)}
+          {shown.map(w => <WishTile key={w.id} w={w} onClick={() => setOpenId(w.id)} />)}
         </div>
       )}
       {openId && wishes.find(w => w.id === openId) && (
         <WishSheet w={wishes.find(w => w.id === openId)} rooms={rooms} onToggleRoom={onToggleRoom}
+          onEdit={() => onEdit(openId)}
+          onGifted={(g) => { setOpenId(null); onGifted(openId, g); }}
           onDelete={(id) => { setOpenId(null); onDelete(id); }} onClose={() => setOpenId(null)} />
       )}
 
@@ -1178,7 +1260,7 @@ function WishTile({ w, onClick }) {
           ? <img src={img} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ transform: "rotate(-6deg)" }}><Sticker emoji={w.emoji} size={56} /></div>}
         <div style={{ position: "absolute", left: 8, bottom: 8, height: 24, padding: "0 8px", borderRadius: 999, background: "rgba(0,0,0,0.55)", WebkitBackdropFilter: "blur(10px)", backdropFilter: "blur(10px)", color: "#fff", fontSize: 11.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-          {shared ? <><Users size={12} />{shared}</> : <><Lock size={11} />{t("privateShort")}</>}
+          {w.giftedAt ? <><PartyPopper size={12} />{t("giftedBadge")}</> : shared ? <><Users size={12} />{shared}</> : <><Lock size={11} />{t("privateShort")}</>}
         </div>
       </div>
       <div style={{ padding: "12px 4px 4px" }}>
@@ -1189,8 +1271,9 @@ function WishTile({ w, onClick }) {
   );
 }
 // Everything about one wish: photos, price, link, which rooms see it, delete.
-function WishSheet({ w, rooms, onToggleRoom, onDelete, onClose }) {
-  const { t } = useT();
+function WishSheet({ w, rooms, onToggleRoom, onDelete, onEdit, onGifted, onClose }) {
+  const { t, lang } = useT();
+  const giftedDay = w.giftedAt && (() => { const d = new Date(w.giftedAt); return fmtDate(lang, `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`); })();
   const imgs = wishImages(w);
   return (
     <Sheet title="" onClose={onClose}>
@@ -1203,6 +1286,16 @@ function WishSheet({ w, rooms, onToggleRoom, onDelete, onClose }) {
           <Link2 size={15} /><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{linkHost(w.link)}</span>
         </button>
       )}
+      {w.note && <WishNote text={w.note} style={{ marginTop: 16 }} />}
+      <div style={{ display: "flex", gap: 8, marginTop: 24 }}>
+        {!w.giftedAt && <Pill size="sm" kind="ghost" icon={<Pencil size={15} />} onClick={onEdit}>{t("editShort")}</Pill>}
+        {w.giftedAt
+          ? <Pill size="sm" kind="ghost" icon={<Undo2 size={15} />} onClick={() => onGifted(false)}>{t("ungift")}</Pill>
+          : <Pill size="sm" kind="green" icon={<PartyPopper size={15} />} onClick={() => tgConfirm(t("giftedHint"), () => onGifted(true))}>{t("gotIt")}</Pill>}
+      </div>
+      {w.giftedAt ? (
+        <div style={{ color: C.t2, fontSize: 13, marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}><PartyPopper size={14} />{t("giftedOn", { date: giftedDay })}</div>
+      ) : <>
       <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "24px 0 8px" }}>{t("showInRooms")}</div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {rooms.length === 0
@@ -1216,6 +1309,7 @@ function WishSheet({ w, rooms, onToggleRoom, onDelete, onClose }) {
       {w.rooms.length === 0 && rooms.length > 0 && (
         <div style={{ color: C.t3, fontSize: 12.5, marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} />{t("privateNote")}</div>
       )}
+      </>}
       <button onClick={() => tgConfirm(t("confirmDeleteWish"), () => onDelete(w.id))} style={{ marginTop: 16, background: "none", border: "none", height: H.sm, padding: 0, cursor: "pointer", color: "#FF5A5A", fontSize: 14, fontWeight: 600, fontFamily: font, display: "inline-flex", alignItems: "center", gap: 8 }}>
         <Trash2 size={16} /> {t("deleteWish")}
       </button>
@@ -2354,22 +2448,32 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
 
 /* ---------- ADD SHEET ---------- */
 // idea: a gift idea inside a birthday room (no pool, no room picker)
-function AddSheet({ rooms, onClose, onSave, idea }) {
+// "от 1 000 до 2 000 ₴" (any of our languages) -> ["1 000", "2 000 ₴"]
+const RANGE_RE = /^(?:від|от|from)?\s*(.+?)\s+(?:до|to)\s+(.+)$/i;
+function AddSheet({ rooms, onClose, onSave, idea, initial }) {
   const { t } = useT();
-  const [title, setTitle] = useState("");
-  const [price, setPrice] = useState("");
-  const [emoji, setEmoji] = useState(WISH_EMOJI[0]);
+  // initial: editing an existing wish (same form, prefilled; rooms are set in the wish sheet)
+  const init = initial || {};
+  const initRange = init.price && init.price.match(RANGE_RE);
+  const [title, setTitle] = useState(init.title || "");
+  const [price, setPrice] = useState(initRange ? "" : (init.price || ""));
+  const [priceMode, setPriceMode] = useState(initRange ? "range" : "one");
+  const [priceA, setPriceA] = useState(initRange ? initRange[1] : "");
+  const [priceB, setPriceB] = useState(initRange ? initRange[2] : "");
+  const [note, setNote] = useState(init.note || "");
+  const initImgs = initial ? wishImages(initial) : [];
+  const [emoji, setEmoji] = useState(init.emoji && WISH_EMOJI.includes(init.emoji) ? init.emoji : WISH_EMOJI[0]);
   const [inRooms, setInRooms] = useState([]);
-  const [images, setImages] = useState([]);
-  const [link, setLink] = useState("");
-  const [cover, setCover] = useState("photo");
+  const [images, setImages] = useState(initImgs);
+  const [link, setLink] = useState(init.link || "");
+  const [cover, setCover] = useState(initial && !initImgs.length ? "emoji" : "photo");
   const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
   const MAX_PHOTOS = 3;
   // Paste a product link -> fill name/price and add the shop photo. A newer link
   // replaces what the previous one filled in, but never what the user typed.
   const [linkState, setLinkState] = useState(null); // null | "loading" | "done" | "fail"
-  const lastLink = useRef("");
+  const lastLink = useRef((init.link || "").trim());
   const auto = useRef({ title: "", price: "", image: null });
   const fill = useRef({ title, price, images });
   fill.current = { title, price, images };
@@ -2418,7 +2522,9 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
   const submit = async () => {
     if (busy || !title.trim()) return;
     setBusy(true);
-    try { await onSave({ emoji, images: cover === "photo" ? images : [], image: cover === "photo" ? (images[0] || null) : null, link: link.trim() || null, title: title.trim(), price: price.trim(), rooms: inRooms }); }
+    const a = priceA.trim(), b = priceB.trim();
+    const finalPrice = priceMode === "range" ? (a && b ? t("priceRange", { a, b }) : (a || b)) : price.trim();
+    try { await onSave({ emoji, images: cover === "photo" ? images : [], image: cover === "photo" ? (images[0] || null) : null, link: link.trim() || null, title: title.trim(), price: finalPrice, note: note.trim(), rooms: inRooms }); }
     catch (e) { setBusy(false); }
   };
 
@@ -2427,7 +2533,7 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
       <div style={{ position: "relative", background: C.card, borderRadius: `${R.sheet}px ${R.sheet}px 0 0`, padding: "10px 16px 32px", animation: "sheetUp .3s cubic-bezier(.2,.8,.2,1)", maxWidth: 440, width: "100%", marginInline: "auto", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 18px" }} />
-        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t(idea ? "bdayNewIdea" : "newWish")}</div>
+        <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t(initial ? "editWish" : idea ? "bdayNewIdea" : "newWish")}</div>
 
         <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral style={{ marginBottom: 16, background: C.card2 }} />
 
@@ -2485,9 +2591,30 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
           {linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : linkState === "guess" ? t("linkGuess") : t("linkHint")}
         </div>
         <Field label={t("whatYouWant")} value={title} onChange={setTitle} placeholder={t("whatYouWantPh")} />
-        <Field label={t("priceOpt")} value={price} onChange={setPrice} placeholder="4 200 ₴" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div style={{ color: C.t2, fontSize: 13, fontWeight: 600 }}>{t("priceOpt")}</div>
+          <div style={{ display: "flex", gap: 4, background: C.card2, borderRadius: 999, padding: 4, height: H.sm }}>
+            {[["one", t("priceOne")], ["range", t("priceRangeTab")]].map(([k, l]) => (
+              <button key={k} onClick={() => {
+                if (k === priceMode) return; haptic("select");
+                // carry what was typed over to the other mode
+                if (k === "range") { setPriceA(price); setPriceB(""); } else setPrice(priceB || priceA);
+                setPriceMode(k);
+              }} style={{ height: H.sm - 8, padding: "0 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 600, background: priceMode === k ? "#3A3A3E" : "transparent", color: priceMode === k ? "#fff" : C.t2 }}>{l}</button>
+            ))}
+          </div>
+        </div>
+        {priceMode === "one" ? (
+          <Field value={price} onChange={setPrice} placeholder="4 200 ₴" />
+        ) : (
+          <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ flex: 1 }}><Field value={priceA} onChange={setPriceA} placeholder={t("priceFrom") + " 1 000"} /></div>
+            <div style={{ flex: 1 }}><Field value={priceB} onChange={setPriceB} placeholder={t("priceTo") + " 2 000 ₴"} /></div>
+          </div>
+        )}
+        <TextArea label={t("noteLabel")} value={note} onChange={setNote} placeholder={t("notePh")} />
 
-        {!idea && <>
+        {!idea && !initial && <>
         <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "6px 0 8px" }}>{t("showInRooms")}</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
           {rooms.filter(r => r.type !== "birthday" || r.iAmCelebrant).map(r => (
@@ -2499,19 +2626,33 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
         </div>
         <div style={{ color: C.t3, fontSize: 12.5, marginBottom: 24, display: "flex", alignItems: "center", gap: 8 }}><Lock size={13} />{t("nothingSelectedPrivate")}</div>
         </>}
-        {idea && <div style={{ height: 8 }} />}
+        {(idea || initial) && <div style={{ height: 8 }} />}
 
         <Pill full kind="primary" disabled={!title.trim() || busy} onClick={submit}>
-          {busy ? t("savingWish") : t("saveWish")}
+          {busy ? t("savingWish") : t(initial ? "saveChanges" : "saveWish")}
         </Pill>
       </div>
+    </div>
+  );
+}
+function TextArea({ label, value, onChange, placeholder }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{label}</div>
+      <textarea value={value} onChange={e => onChange(e.target.value.slice(0, 300))} placeholder={placeholder} rows={2}
+        style={{
+          width: "100%", background: C.card2, border: "1px solid transparent", borderRadius: 20, resize: "none", display: "block",
+          minHeight: 76, padding: "14px 16px", color: C.t1, fontSize: 16, lineHeight: 1.4, fontFamily: font, outline: "none",
+        }}
+        onFocus={e => e.target.style.borderColor = C.blueLine}
+        onBlur={e => e.target.style.borderColor = "transparent"} />
     </div>
   );
 }
 function Field({ label, value, onChange, placeholder }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{label}</div>
+      {label && <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{label}</div>}
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         style={{
           width: "100%", background: C.card2, border: "1px solid transparent", borderRadius: R.pill,

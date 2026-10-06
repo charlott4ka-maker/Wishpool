@@ -21,6 +21,8 @@ export function createPgStore(q) {
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS celebrant_name text`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS celebrant_id text`);
       await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS room_only text`);
+      await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS note text`);
+      await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS gifted_at bigint`);
       await q(`CREATE TABLE IF NOT EXISTS chips(wish_id text, user_id text, at bigint, primary key(wish_id,user_id))`);
       await q(`CREATE TABLE IF NOT EXISTS reminders(room_id text, day text, kind text, primary key(room_id,day,kind))`);
       await q(`CREATE TABLE IF NOT EXISTS invites(room_id text, inviter_id text, invitee_id text, at bigint, primary key(room_id, invitee_id))`);
@@ -48,7 +50,9 @@ export function createPgStore(q) {
     async removeChip(wishId, userId) { await q(`DELETE FROM chips WHERE wish_id=$1 AND user_id=$2`, [wishId, userId]); },
     async addMember(roomId, userId) { await q(`INSERT INTO members(room_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, [roomId, userId]); },
     async getWish(id) { const { rows } = await q(`SELECT * FROM wishes WHERE id=$1`, [id]); return mapWish(rows[0]); },
-    async createWish(w) { await q(`INSERT INTO wishes(id,owner_id,emoji,image,images,link,title,price,created_at,room_only) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [w.id, w.ownerId, w.emoji, w.image, JSON.stringify(w.images || []), w.link, w.title, w.price, w.createdAt, w.roomOnly || null]); },
+    async createWish(w) { await q(`INSERT INTO wishes(id,owner_id,emoji,image,images,link,title,price,created_at,room_only,note) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [w.id, w.ownerId, w.emoji, w.image, JSON.stringify(w.images || []), w.link, w.title, w.price, w.createdAt, w.roomOnly || null, w.note || ""]); },
+    async updateWish(id, w) { await q(`UPDATE wishes SET emoji=$2, image=$3, images=$4, link=$5, title=$6, price=$7, note=$8 WHERE id=$1`, [id, w.emoji, w.image, JSON.stringify(w.images || []), w.link, w.title, w.price, w.note || ""]); },
+    async setGifted(id, at) { await q(`UPDATE wishes SET gifted_at=$2 WHERE id=$1`, [id, at]); },
     async wishesWithInlineImages(limit) { const { rows } = await q(`SELECT * FROM wishes WHERE images LIKE '%data:image/%' OR image LIKE 'data:image/%' LIMIT $1`, [limit]); return rows.map(mapWish); },
     async setWishImages(id, images) { await q(`UPDATE wishes SET images=$2, image=$3 WHERE id=$1`, [id, JSON.stringify(images), images[0] || null]); },
     async deleteWish(id) { await q(`DELETE FROM wishes WHERE id=$1`, [id]); await q(`DELETE FROM wish_rooms WHERE wish_id=$1`, [id]); await q(`DELETE FROM reservations WHERE wish_id=$1`, [id]); await q(`DELETE FROM chips WHERE wish_id=$1`, [id]); },
@@ -62,7 +66,7 @@ export function createPgStore(q) {
     async addWishRoom(wishId, roomId) { await q(`INSERT INTO wish_rooms(wish_id,room_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, [wishId, roomId]); },
     // room-only gift ideas (birthday rooms) never show up in anyone's pool
     async userWishes(userId) { const { rows } = await q(`SELECT * FROM wishes WHERE owner_id=$1 AND room_only IS NULL ORDER BY created_at DESC`, [userId]); return rows.map(mapWish); },
-    async wishesSharedTo(userId, roomId) { const { rows } = await q(`SELECT w.* FROM wishes w JOIN wish_rooms wr ON wr.wish_id=w.id WHERE w.owner_id=$1 AND wr.room_id=$2 AND w.room_only IS NULL`, [userId, roomId]); return rows.map(mapWish); },
+    async wishesSharedTo(userId, roomId) { const { rows } = await q(`SELECT w.* FROM wishes w JOIN wish_rooms wr ON wr.wish_id=w.id WHERE w.owner_id=$1 AND wr.room_id=$2 AND w.room_only IS NULL AND w.gifted_at IS NULL`, [userId, roomId]); return rows.map(mapWish); },
     async giftsByMe(userId) {
       const { rows } = await q(`SELECT w.*, u.name AS owner_name, u.color AS owner_color, u.photo AS owner_photo FROM wishes w
         JOIN users u ON u.id = w.owner_id

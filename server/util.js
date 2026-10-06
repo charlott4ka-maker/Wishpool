@@ -9,7 +9,10 @@ const parseImages = (r) => {
   try { const a = JSON.parse(r.images || "null"); if (Array.isArray(a)) return a.slice(0, MAX_IMAGES); } catch {}
   return r.image ? [r.image] : [];
 };
-export const mapWish = (r) => r && ({ id: r.id, ownerId: r.owner_id, emoji: r.emoji, image: r.image, images: parseImages(r), link: r.link, title: r.title, price: r.price, createdAt: Number(r.created_at), roomOnly: r.room_only || null });
+export const mapWish = (r) => r && ({ id: r.id, ownerId: r.owner_id, emoji: r.emoji, image: r.image, images: parseImages(r), link: r.link, title: r.title, price: r.price, createdAt: Number(r.created_at), roomOnly: r.room_only || null,
+  note: r.note || "", giftedAt: r.gifted_at ? Number(r.gifted_at) : null });
+// A short note for gifters ("size M, any colour but white").
+export const cleanNote = (s) => typeof s === "string" ? s.trim().slice(0, 300) : "";
 // Accept data-URL images (from the in-app picker) or https URLs; drop anything else.
 export const cleanImages = (list) => (Array.isArray(list) ? list : [])
   .filter(x => typeof x === "string" && (/^data:image\/(jpeg|png|webp|gif);base64,/.test(x) || /^https:\/\//.test(x)))
