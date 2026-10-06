@@ -2466,7 +2466,7 @@ function AddSheet({ rooms, onClose, onSave, idea }) {
         )}
 
         <Field label={t("linkLabel")} value={link} onChange={setLink} placeholder="https://…" />
-        <div style={{ color: linkState === "fail" || linkState === "guess" ? "#FF8A80" : linkState === "done" ? "#7EE29A" : C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ color: linkState === "fail" ? "#FF8A80" : linkState === "guess" ? "#FFB27A" : linkState === "done" ? "#7EE29A" : C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
           {linkState === "loading" && <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} />}
           {linkState === "done" && <Check size={13} />}
           {linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : linkState === "guess" ? t("linkGuess") : t("linkHint")}
