@@ -15,19 +15,24 @@
 <link rel="icon" href="/about/logo.png" />
 <link rel="apple-touch-icon" href="/about/apple-touch-icon.png" />
 <link rel="preload" as="image" href="/about/pool.webp" />
+<link rel="preload" as="font" type="font/woff2" href="/about/fonts/gochi-hand-latin-400.woff2" crossorigin />
 <style>
 @font-face{font-family:Montserrat;font-weight:500;font-display:swap;src:url(/about/fonts/montserrat-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0400-04FF}
 @font-face{font-family:Montserrat;font-weight:600;font-display:swap;src:url(/about/fonts/montserrat-cyrillic-600-normal.woff2) format("woff2");unicode-range:U+0400-04FF}
 @font-face{font-family:Montserrat;font-weight:700;font-display:swap;src:url(/about/fonts/montserrat-cyrillic-700-normal.woff2) format("woff2");unicode-range:U+0400-04FF}
 @font-face{font-family:Montserrat;font-weight:800;font-display:swap;src:url(/about/fonts/montserrat-cyrillic-800-normal.woff2) format("woff2");unicode-range:U+0400-04FF}
 @font-face{font-family:Montserrat;font-weight:500;font-display:swap;src:url(/about/fonts/montserrat-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Gochi Hand";font-weight:400;font-display:swap;src:url(/about/fonts/gochi-hand-latin-400.woff2) format("woff2")}
 @font-face{font-family:Montserrat;font-weight:600;font-display:swap;src:url(/about/fonts/montserrat-latin-600-normal.woff2) format("woff2")}
 @font-face{font-family:Montserrat;font-weight:700;font-display:swap;src:url(/about/fonts/montserrat-latin-700-normal.woff2) format("woff2")}
 @font-face{font-family:Montserrat;font-weight:800;font-display:swap;src:url(/about/fonts/montserrat-latin-800-normal.woff2) format("woff2")}
 
 :root{
-  --ink:#0E2238; --ink2:#4A6178; --blue:#2E7DF6; --deep:#1663C7;
-  --card:rgba(255,255,255,0.78); --hi:inset 0 1px 0 rgba(255,255,255,0.7);
+  /* the app's dark theme (C in App.jsx) */
+  --ink:#FFFFFF; --ink2:#8A8A8E; --blue:#2E7DF6; --deep:#1663C7;
+  --card:rgba(22,22,24,0.84); --card2:#232326; --line:rgba(255,255,255,0.08);
+  --blueSoft:rgba(46,125,246,0.16); --green:#34C759; --greenSoft:rgba(52,199,89,0.16);
+  --hi:inset 0 1px 0 rgba(255,255,255,0.06);
   --lg:52px; --sm:40px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -48,28 +53,30 @@ img{display:block;-webkit-user-drag:none;user-select:none}
 
 /* header: a frosted capsule in the middle */
 header{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:30;width:min(760px,calc(100% - 32px));border-radius:999px;
-  background:rgba(255,255,255,0.16);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 32px rgba(10,60,140,.18)}
+  background:rgba(22,22,24,0.62);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 32px rgba(0,10,40,.3)}
 .bar{display:flex;align-items:center;gap:8px;height:60px;padding:0 10px 0 14px}
 .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;letter-spacing:-.3px;flex-shrink:0}
-.logo img{width:34px;height:34px}
+.logo img{width:34px;height:34px;object-fit:contain;transform:rotate(-6deg)}
+/* the wordmark is hand-lettered, the rest of the page stays Montserrat */
+.logo span{font-family:"Gochi Hand",Montserrat,cursive;font-weight:400;font-size:24px;letter-spacing:.2px;line-height:1}
 nav{display:flex;gap:4px;margin:0 auto}
 nav a{height:var(--sm);padding:0 12px;display:flex;align-items:center;border-radius:999px;font-size:14px;font-weight:600;color:rgba(255,255,255,.88);transition:background .2s}
-nav a:hover{background:rgba(255,255,255,.14)}
-.prog{position:absolute;left:24px;right:24px;bottom:0;height:2px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
-.prog i{position:absolute;inset:0;background:#fff;transform-origin:0 50%;transform:scaleX(0)}
+nav a:hover{background:rgba(255,255,255,.08)}
+.prog{position:absolute;left:24px;right:24px;bottom:0;height:2px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden}
+.prog i{position:absolute;inset:0;background:var(--blue);transform-origin:0 50%;transform:scaleX(0)}
 
 /* language: a small dropdown */
 .lang{position:relative}
-.lang>button{height:var(--sm);padding:0 12px;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font:600 14px Montserrat,sans-serif;display:flex;align-items:center;gap:6px;cursor:pointer}
+.lang>button{height:var(--sm);padding:0 12px;border:0;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;font:600 14px Montserrat,sans-serif;display:flex;align-items:center;gap:6px;cursor:pointer}
 .lang>button svg{width:16px;height:16px;transition:transform .2s}
 .lang.open>button svg.ch{transform:rotate(180deg)}
-.menu{position:absolute;right:0;top:calc(100% + 8px);min-width:160px;padding:6px;border-radius:20px;background:rgba(255,255,255,.86);
-  -webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 16px 40px rgba(10,60,140,.25);
+.menu{position:absolute;right:0;top:calc(100% + 8px);min-width:160px;padding:6px;border-radius:20px;background:rgba(35,35,38,.92);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 16px 40px rgba(0,0,0,.4);
   opacity:0;transform:translateY(-6px) scale(.98);pointer-events:none;transition:opacity .18s,transform .18s}
 .lang.open .menu{opacity:1;transform:none;pointer-events:auto}
 .menu button{width:100%;height:var(--sm);border:0;border-radius:14px;background:transparent;color:var(--ink);font:600 14px Montserrat,sans-serif;display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer}
-.menu button:hover{background:rgba(14,34,56,.06)}
+.menu button:hover{background:rgba(255,255,255,.06)}
 .menu button svg{width:16px;height:16px;color:var(--blue);opacity:0}
 .menu button.on svg{opacity:1}
 
@@ -77,10 +84,10 @@ nav a:hover{background:rgba(255,255,255,.14)}
 .btn:active{transform:scale(.97)}
 .btn.lg{height:var(--lg);padding:0 28px}
 .btn.sm{height:var(--sm);padding:0 16px;font-size:14px}
-.btn.white{background:#fff;color:var(--ink);box-shadow:0 10px 30px rgba(10,60,140,.22)}
-.btn.white:hover{box-shadow:0 14px 40px rgba(10,60,140,.3)}
+.btn.white{background:var(--blue);color:#fff;box-shadow:0 10px 30px rgba(0,20,80,.3)}
+.btn.white:hover{box-shadow:0 14px 40px rgba(0,20,80,.4)}
 .btn.blue{background:var(--blue);color:#fff;box-shadow:0 10px 30px rgba(46,125,246,.35)}
-.btn.dark{background:var(--ink);color:#fff}
+.btn.dark{background:var(--blue);color:#fff}
 .btn svg{width:18px;height:18px}
 
 main{position:relative;z-index:1}
@@ -88,16 +95,16 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 
 /* hero, laid out like the reference: big title, cards across it, line, button */
 .hero{padding:132px 16px 72px;text-align:center}
-.hero h1{font-size:clamp(44px,8.4vw,108px);font-weight:700;letter-spacing:-.045em;line-height:.98;max-width:980px;margin:0 auto;
+.hero h1{font-size:clamp(44px,8.4vw,108px);font-weight:700;letter-spacing:-.045em;line-height:.98;max-width:980px;margin:0 auto -.16em;padding-bottom:.16em;
   -webkit-mask-image:linear-gradient(180deg,#000 50%,rgba(0,0,0,.28) 100%);mask-image:linear-gradient(180deg,#000 50%,rgba(0,0,0,.28) 100%)}
 .stage{-webkit-user-select:none;user-select:none;position:relative;height:420px;max-width:1000px;margin:-56px auto 0;touch-action:pan-y}
-.hcard{position:absolute;background:#fff;color:var(--ink);border-radius:24px;padding:16px;box-shadow:0 20px 50px rgba(10,60,140,.22);text-align:left}
+.hcard{position:absolute;background:#161618;color:var(--ink);border-radius:26px;padding:16px;box-shadow:0 20px 50px rgba(0,10,40,.35);text-align:left}
 .hcard .t{font-weight:700;font-size:15px;line-height:1.35}
 .hcard .s{color:var(--ink2);font-size:12.5px;margin-top:4px}
 .hcard .row{display:flex;align-items:center;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;white-space:nowrap;border-radius:999px;background:#E9F2FF;color:var(--blue);font-weight:700;font-size:12px}
-.chip.green{background:#E3F8EA;color:#1F9D55}
-.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;box-shadow:0 0 0 2px #fff}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;white-space:nowrap;border-radius:999px;background:var(--blueSoft);color:var(--blue);font-weight:700;font-size:12px}
+.chip.green{background:var(--greenSoft);color:var(--green)}
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;box-shadow:0 0 0 2px #161618}
 .av+.av{margin-left:-8px}
 
 .folder{position:absolute;left:50%;top:50%;width:280px;height:250px;margin:-125px 0 0 -140px;z-index:3}
@@ -105,7 +112,7 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .folder .layer{position:absolute;inset:0;transform-origin:50% 100%}
 .folder .layer.sq{animation:squish .5s ease}
 .folder svg{position:absolute;inset:0;overflow:visible;filter:drop-shadow(0 26px 40px rgba(10,60,140,.35))}
-.folder .gc{position:absolute;width:92px;height:104px;border-radius:20px;background:#fff;box-shadow:0 8px 24px rgba(10,40,110,.28);display:flex;align-items:flex-start;justify-content:center;padding-top:10px}
+.folder .gc{position:absolute;width:92px;height:104px;border-radius:12px;background:var(--card2);border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding-top:10px}
 .folder .gc img{width:72px}
 .folder .on{position:absolute;width:74px;pointer-events:none;transform:rotate(var(--r));filter:drop-shadow(0 6px 10px rgba(10,40,110,.22))}
 .folder .on.pop{animation:popr .45s cubic-bezier(.2,.9,.3,1.3)}
@@ -121,22 +128,22 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .stk.pop{animation:pop .5s cubic-bezier(.2,.9,.3,1.3)}
 @keyframes bob{50%{transform:translateY(-10px) rotate(4deg)}}
 @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
-.hint{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.18);
+.hint{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;background:rgba(22,22,24,.5);
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);font-size:13px;font-weight:600;margin-top:8px}
 .hint svg{width:16px;height:16px}
 .sub{font-size:clamp(17px,2vw,21px);line-height:1.45;max-width:520px;margin:24px auto 0;color:rgba(255,255,255,.92)}
 .hero .cta{margin-top:32px}
 
-/* sections on the water: white frosted cards with dark text */
+/* sections on the water: dark frosted cards like the app */
 .kicker{font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.85}
 h2{font-size:clamp(32px,4.8vw,56px);font-weight:700;letter-spacing:-.04em;line-height:1.05;margin-top:12px;max-width:780px}
 .lead{font-size:18px;line-height:1.45;margin-top:16px;max-width:620px;color:rgba(255,255,255,.9)}
-.wcard{background:var(--card);color:var(--ink);-webkit-backdrop-filter:blur(30px) saturate(170%);backdrop-filter:blur(30px) saturate(170%);box-shadow:var(--hi),0 20px 50px rgba(10,60,140,.16)}
+.wcard{background:var(--card);color:var(--ink);-webkit-backdrop-filter:blur(30px) saturate(170%);backdrop-filter:blur(30px) saturate(170%);box-shadow:var(--hi),0 20px 50px rgba(0,10,40,.3)}
 .steps,.rooms,.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
 .card{border-radius:32px;padding:32px 24px;position:relative}
 .card .ic{width:88px;height:88px;object-fit:contain;transform:rotate(-8deg);margin:-8px 0 16px -8px;transition:transform .5s cubic-bezier(.2,.9,.3,1.3)}
 .card:hover .ic{transform:rotate(4deg) scale(1.08)}
-.num{position:absolute;right:24px;top:24px;width:var(--sm);height:var(--sm);border-radius:50%;background:#E9F2FF;color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800}
+.num{position:absolute;right:24px;top:24px;width:var(--sm);height:var(--sm);border-radius:50%;background:var(--blueSoft);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800}
 .card h3,.room h3{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .card p,.room p{color:var(--ink2);font-size:15.5px;line-height:1.5;margin-top:8px}
 .room{border-radius:32px;padding:24px;text-align:center}
@@ -144,13 +151,13 @@ h2{font-size:clamp(32px,4.8vw,56px);font-weight:700;letter-spacing:-.04em;line-h
 /* same build as the app's room folder: tinted back, photos cut at the front's edge, frosted front */
 .mini .back{position:absolute;left:8%;right:8%;top:16%;bottom:10%;border-radius:16px}
 .mini .ph{position:absolute;inset:0;z-index:2;pointer-events:none}
-.mini .ph i{position:absolute;width:34%;aspect-ratio:.82;border-radius:10px;border:3px solid #fff;box-shadow:0 4px 12px rgba(10,40,110,.3);display:flex;align-items:center;justify-content:center}
+.mini .ph i{position:absolute;width:34%;aspect-ratio:.82;border-radius:10px;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
 .mini .ph i img{width:78%}
 .mini .ph svg{position:absolute;inset:0;overflow:visible}
 .mini .fr{position:absolute;inset:0;z-index:3;-webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%)}
 .mini .st{position:absolute;left:14%;top:44%;width:58px;z-index:4;transform:rotate(-8deg)}
 .mini .avs{position:absolute;right:11%;bottom:12%;z-index:4;display:flex}
-.mini .avs b{width:24px;height:24px;border-radius:50%;color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.mini .avs b{width:24px;height:24px;border-radius:50%;color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #161618}
 .mini .avs b+b{margin-left:-8px}
 .feat{border-radius:24px;padding:24px;display:flex;gap:16px;align-items:flex-start}
 .feat img{width:60px;height:60px;object-fit:contain;flex-shrink:0;transform:rotate(-6deg)}
@@ -198,7 +205,7 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
 
 <header>
   <div class="bar">
-    <a class="logo" href="#top"><img src="/about/logo.png" alt="" />Wishpool</a>
+    <a class="logo" href="#top"><img src="/about/star.png" alt="" /><span>Wishpool</span></a>
     <nav><a href="#how" data-t="nHow"></a><a href="#rooms" data-t="nRooms"></a><a href="#feats" data-t="nFeats"></a></nav>
     <div class="sp"></div>
     <div class="lang" id="lang">
@@ -268,7 +275,7 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
     <div class="feats">
       <div class="feat wcard rv"><img src="/stickers/piggy.webp" alt="" /><div><h3 data-t="f1T"></h3><p data-t="f1P"></p></div></div>
       <div class="feat wcard rv d1"><img src="/stickers/cake.webp" alt="" /><div><h3 data-t="f2T"></h3><p data-t="f2P"></p></div></div>
-      <div class="feat wcard rv d2"><img src="/stickers/qblock.webp" alt="" /><div><h3 data-t="f3T"></h3><p data-t="f3P"></p></div></div>
+      <div class="feat wcard rv d2"><img src="/stickers/gift.webp" alt="" /><div><h3 data-t="f3T"></h3><p data-t="f3P"></p></div></div>
       <div class="feat wcard rv"><img src="/stickers/envelope.webp" alt="" /><div><h3 data-t="f4T"></h3><p data-t="f4P"></p></div></div>
       <div class="feat wcard rv d1"><img src="/stickers/note.webp" alt="" /><div><h3 data-t="f5T"></h3><p data-t="f5P"></p></div></div>
       <div class="feat wcard rv d2"><img src="/stickers/tag.webp" alt="" /><div><h3 data-t="f6T"></h3><p data-t="f6P"></p></div></div>
@@ -304,13 +311,13 @@ const T = {
     s2T: "Поділись у кімнаті", s2P: "Обери, які бажання бачить кожна кімната: друзі, пара чи день народження.",
     s3T: "Даруйте потай", s3P: "Друзі позначають, що дарують, і подарунки не повторюються. А власник бажання нічого не бачить.",
     roomsK: "Кімнати", roomsT: "Одні бажання, різні люди",
-    r1T: "Друзі", r1P: "Для компанії. Обирайте подарунки одне одному, скидайтеся разом або влаштуйте жеребкування.",
+    r1T: "Друзі", r1P: "Для компанії. Обирайте подарунки одне одному або скидайтеся разом.",
     r2T: "Пара", r2P: "Тільки для двох. Бачите вішлисти одне одного й обираєте потай.",
     r3T: "День народження", r3P: "Подарунки для одного іменинника. Для себе або сюрпризом для друга.",
     featK: "Можливості", featT: "Все, щоб подарунок був влучним",
     f1T: "Скинутися разом", f1P: "На дорогий подарунок можна зібратися компанією.",
     f2T: "Нагадування", f2P: "Бот нагадає друзям про твій день народження за тиждень і за день.",
-    f3T: "Жеребкування", f3P: "Кожному випадково випаде, кому він дарує. Як Таємний Санта, тільки зручніше.",
+    f3T: "Мені подарували", f3P: "Отримав подарунок? Бажання зникне з кімнат і перейде в архів «Подарували».",
     f4T: "Запрошення", f4P: "Одне посилання, і друзі вже у твоїй кімнаті.",
     f5T: "Коментар для дарувальників", f5P: "Розмір, колір чи «будь-який з цих двох». Щоб не гадати.",
     f6T: "Ціна від і до", f6P: "Вкажи точну ціну або діапазон, який тобі ок.",
@@ -329,13 +336,13 @@ const T = {
     s2T: "Поделись в комнате", s2P: "Выбери, какие желания видит каждая комната: друзья, пара или день рождения.",
     s3T: "Дарите втайне", s3P: "Друзья отмечают, что дарят, и подарки не повторяются. А владелец желания ничего не видит.",
     roomsK: "Комнаты", roomsT: "Одни желания, разные люди",
-    r1T: "Друзья", r1P: "Для компании. Выбирайте подарки друг другу, скидывайтесь вместе или устройте жеребьёвку.",
+    r1T: "Друзья", r1P: "Для компании. Выбирайте подарки друг другу или скидывайтесь вместе.",
     r2T: "Пара", r2P: "Только для двоих. Видите вишлисты друг друга и выбираете втайне.",
     r3T: "День рождения", r3P: "Подарки для одного именинника. Для себя или сюрпризом для друга.",
     featK: "Возможности", featT: "Всё, чтобы подарок попал в точку",
     f1T: "Скинуться вместе", f1P: "На дорогой подарок можно собраться компанией.",
     f2T: "Напоминания", f2P: "Бот напомнит друзьям о твоём дне рождения за неделю и за день.",
-    f3T: "Жеребьёвка", f3P: "Каждому случайно выпадет, кому он дарит. Как Тайный Санта, только удобнее.",
+    f3T: "Мне подарили", f3P: "Получил подарок? Желание пропадёт из комнат и уйдёт в архив «Подарили».",
     f4T: "Приглашения", f4P: "Одна ссылка, и друзья уже в твоей комнате.",
     f5T: "Комментарий для дарителей", f5P: "Размер, цвет или «любой из этих двух». Чтобы не гадать.",
     f6T: "Цена от и до", f6P: "Укажи точную цену или диапазон, который тебе ок.",
@@ -354,13 +361,13 @@ const T = {
     s2T: "Share it in a room", s2P: "Pick which wishes each room sees: friends, your partner or a birthday.",
     s3T: "Gift in secret", s3P: "Friends mark what they give, so nothing doubles up. The wish owner sees none of it.",
     roomsK: "Rooms", roomsT: "One wishlist, different people",
-    r1T: "Friends", r1P: "For a group. Pick gifts for each other, chip in together or draw names.",
+    r1T: "Friends", r1P: "For a group. Pick gifts for each other or chip in together.",
     r2T: "Couple", r2P: "Just the two of you. See each other's wishlists and pick in secret.",
     r3T: "Birthday", r3P: "Gifts for one birthday person. For yourself or as a surprise.",
     featK: "Features", featT: "Everything for the right gift",
     f1T: "Chip in together", f1P: "Team up with friends for a bigger present.",
     f2T: "Reminders", f2P: "The bot reminds your friends about your birthday a week and a day before.",
-    f3T: "Draw names", f3P: "Everyone gets someone to gift at random. Secret Santa, only easier.",
+    f3T: "I got it", f3P: "Got the gift? The wish leaves your rooms and moves to the Gifted archive.",
     f4T: "Invites", f4P: "One link and your friends are in your room.",
     f5T: "Note for gifters", f5P: "Size, colour or \"either of these two\". No guessing.",
     f6T: "Price range", f6P: "Set an exact price or a range you're happy with.",
@@ -430,12 +437,12 @@ document.querySelectorAll(".room").forEach((r, i) => {
   const t = r.dataset.tint, W = 190, H = 170, full = folderPath(W, H);
   const cut = `path(evenodd, 'M -60 -60 H ${W + 60} V ${H + 60} H -60 Z ${full}')`;
   const photos = r.dataset.photos.split(" ").map((s, k) => { const p = SPOTS[k];
-    return `<i style="left:${p.l}%;top:${p.t}%;z-index:${p.z};transform:rotate(${p.r}deg);background:${rgba(t, .14)}"><img src="/stickers/${s}.webp" alt="" /></i>`; }).join("");
+    return `<i style="left:${p.l}%;top:${p.t}%;z-index:${p.z};transform:rotate(${p.r}deg);background:#232326"><img src="/stickers/${s}.webp" alt="" /></i>`; }).join("");
   const avs = AVS.slice(0, +r.dataset.people).map(([c, l]) => `<b style="background:${c}">${l}</b>`).join("");
   r.querySelector(".mini").innerHTML = `<div class="back" style="background:${rgba(t, .32)}"></div>
     <div class="ph" style="clip-path:${cut};-webkit-clip-path:${cut}">${photos}
-      <svg width="${W}" height="${H}"><defs><filter id="fs${i}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs><path d="${folderPath(W, H, true)}" fill="none" stroke="rgba(10,40,110,.35)" stroke-width="10" filter="url(#fs${i})"/></svg></div>
-    <div class="fr" style="clip-path:path('${full}');-webkit-clip-path:path('${full}');background:linear-gradient(180deg,${rgba(t, .62)} 0%,${rgba(t, .42)} 100%)"></div>
+      <svg width="${W}" height="${H}"><defs><filter id="fs${i}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs><path d="${folderPath(W, H, true)}" fill="none" stroke="rgba(0,0,0,.4)" stroke-width="10" filter="url(#fs${i})"/></svg></div>
+    <div class="fr" style="clip-path:path('${full}');-webkit-clip-path:path('${full}');background:linear-gradient(180deg,${rgba(t, .42)} 0%,${rgba(t, .26)} 100%)"></div>
     <img class="st" src="/stickers/${r.dataset.stk}.webp" alt="" /><div class="avs">${avs}</div>`;
 });
 
@@ -444,8 +451,8 @@ function drawBadge() {
   const svg = document.getElementById("badgeSvg"), c = 75, R = 70, n = 16, a = 3.2, pts = [];
   for (let i = 0; i <= 360; i += 2) { const t = i * Math.PI / 180, r = R + a * Math.sin(n * t); pts.push(`${(c + r * Math.cos(t)).toFixed(1)},${(c + r * Math.sin(t)).toFixed(1)}`); }
   svg.innerHTML = `<defs><path id="tc" d="M ${c} ${c} m -48 0 a 48 48 0 1 1 96 0 a 48 48 0 1 1 -96 0"/></defs>
-    <polygon points="${pts.join(" ")}" fill="#fff"/>
-    <text font-family="Montserrat" font-weight="800" font-size="11.5" letter-spacing="1.6" fill="#2E7DF6"><textPath href="#tc" textLength="300">${T[lang].badge}</textPath></text>`;
+    <polygon points="${pts.join(" ")}" fill="#161618"/>
+    <text font-family="Montserrat" font-weight="800" font-size="11.5" letter-spacing="1.6" fill="#fff"><textPath href="#tc" textLength="300">${T[lang].badge}</textPath></text>`;
 }
 
 // drag stickers into the folder (mouse or finger)
