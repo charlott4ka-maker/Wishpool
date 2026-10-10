@@ -206,6 +206,13 @@ const STR = {
   bdayDate: { uk: "Дата народження", ru: "Дата рождения", en: "Date of birth" },
   obLine1: { uk: "Збирай усе, що хочеш, в одному місці", ru: "Собирай всё, что хочешь, в одном месте", en: "Everything you wish for, in one place" },
   obLine2: { uk: "Ділись із друзями й даруйте потай", ru: "Делись с друзьями и дарите втайне", en: "Share with friends and gift in secret" },
+  obSkip: { uk: "Пропустити", ru: "Пропустить", en: "Skip" },
+  obNext: { uk: "Далі", ru: "Дальше", en: "Next" },
+  obAddTitle: { uk: "Додай бажання за секунду", ru: "Добавь желание за секунду", en: "Add a wish in a second" },
+  obAddText: { uk: "Встав посилання, і ми підтягнемо фото й ціну. Або просто надішли його боту.", ru: "Вставь ссылку, и мы подтянем фото и цену. Или просто пришли её боту.", en: "Paste a link and we fill in the photo and price. Or just send it to the bot." },
+  obGiftTitle: { uk: "Даруйте потай", ru: "Дарите втайне", en: "Gift in secret" },
+  obGiftText: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А іменинник нічого не бачить.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А именинник ничего не видит.", en: "Friends mark what they give, so nothing doubles up. And the birthday person sees none of it." },
+  obSecret: { uk: "{name} не дізнається", ru: "{name} не узнает", en: "{name} won't know" },
   obStart: { uk: "Почати", ru: "Начать", en: "Let's go" },
   newWishHere: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   wishAddedRoom: { uk: "Додано в кімнату і у твій вішлист", ru: "Добавлено в комнату и в твой вишлист", en: "Added to the room and your wishlist" },
@@ -1098,6 +1105,9 @@ export default function App() {
         @keyframes obSpin{to{transform:rotate(360deg)}}
         @keyframes obSpinRev{to{transform:rotate(-360deg)}}
         @keyframes obBlink{50%{opacity:0}}
+        @keyframes obTap{0%,100%{transform:scale(1)}40%{transform:scale(.72)}}
+        @keyframes obRipple{from{transform:scale(1);opacity:.9}to{transform:scale(2.4);opacity:0}}
+        @keyframes obBurst{from{transform:translate(-50%,-50%) rotate(var(--a)) translateY(0);opacity:1}to{transform:translate(-50%,-50%) rotate(var(--a)) translateY(-46px);opacity:0}}
         @keyframes obIn{from{transform:scale(1.3) rotate(-10deg)}to{transform:none}}
         @keyframes obSquish{0%,100%{transform:none}35%{transform:scale(1.07,.88)}65%{transform:scale(.97,1.05)}}
         @keyframes obDrop{0%{transform:translate(-50%,-250px) rotate(-14deg);opacity:0}12%{opacity:1}70%{transform:translate(-50%,-20px) rotate(6deg)}100%{transform:translate(-50%,40px) rotate(0) scale(.8);opacity:1}}
@@ -2887,7 +2897,7 @@ function useTypewriter(text) {
   }, [text]);
   return text.slice(0, n);
 }
-function Onboarding({ onDone }) {
+function ObHero() {
   const { t } = useT();
   const [scene, setScene] = useState("drop"); // drop | orbit
   const [drop, setDrop] = useState(0);        // which sticker is falling now
@@ -2924,7 +2934,7 @@ function Onboarding({ onDone }) {
     </div>
   );
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 95, background: C.bg, display: "flex", flexDirection: "column", padding: "16px 16px 32px", maxWidth: 440, marginInline: "auto", overflow: "hidden" }}>
+    <>
       <div style={{ flex: 1, position: "relative", minHeight: 360 }}>
         {ring(OB_RING2, 162, 40, true)}
         {ring(OB_RING1, 100, 30, false)}
@@ -2954,7 +2964,201 @@ function Onboarding({ onDone }) {
           {line}<span style={{ animation: "obBlink 1s steps(1) infinite", color: C.t1 }}>_</span>
         </div>
       </div>
-      <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onDone}>{t("obStart")}</Pill></div>
+    </>
+  );
+}
+
+// A shrunken copy of our own UI inside a phone frame, played like a little
+// screen recording: a "finger" glides to a target, taps, things react.
+const OB_S = 0.74, OB_W = 375, OB_H = 600;
+function useScript(steps, total) {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    let timers = [];
+    const run = () => {
+      setStep(0);
+      steps.forEach((ms, i) => timers.push(setTimeout(() => setStep(i + 1), ms)));
+      timers.push(setTimeout(run, total));
+    };
+    run();
+    return () => timers.forEach(clearTimeout);
+  }, []); // eslint-disable-line
+  return step;
+}
+function MiniPhone({ children, finger, tap }) {
+  return (
+    <div style={{ width: OB_W * OB_S, height: OB_H * OB_S, borderRadius: 34, overflow: "hidden", position: "relative",
+      background: C.bg, boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 24px 60px rgba(46,125,246,0.18)" }}>
+      <div style={{ width: OB_W, height: OB_H, transform: `scale(${OB_S})`, transformOrigin: "0 0", position: "relative", pointerEvents: "none" }}>
+        {children}
+        {finger && (
+          <div style={{ position: "absolute", left: finger.x, top: finger.y, width: 0, height: 0, zIndex: 50, transition: "left .6s cubic-bezier(.4,0,.2,1), top .6s cubic-bezier(.4,0,.2,1)" }}>
+            <div key={tap} style={{ position: "absolute", left: -22, top: -22, width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.35)", border: "2px solid rgba(255,255,255,0.8)", animation: tap ? "obTap .45s ease" : "none" }} />
+            {tap > 0 && <div key={"r" + tap} style={{ position: "absolute", left: -22, top: -22, width: 44, height: 44, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.7)", animation: "obRipple .6s ease-out forwards" }} />}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+// where to put the finger: centre of a ref'd element, in the mini screen's own coordinates
+function useSpot(rootRef) {
+  return (el, dy = 0) => {
+    if (!el || !rootRef.current) return null;
+    const a = el.getBoundingClientRect(), b = rootRef.current.getBoundingClientRect();
+    return { x: (a.left + a.width / 2 - b.left) / OB_S, y: (a.top + a.height / 2 - b.top) / OB_S + dy };
+  };
+}
+const OB_GRID = [
+  { id: "g1", title: "Свічка", price: "650 ₴", emoji: "stk:candle", rooms: ["x"] },
+  { id: "g2", title: "Matcha set", price: "", emoji: "stk:matcha", rooms: [] },
+  { id: "g3", title: "Кеди", price: "3 100 ₴", emoji: "stk:sneakers", rooms: ["x"] },
+];
+function ObAddScene() {
+  const { t, lang } = useT();
+  // 1 finger to +, 2 tap, 3 sheet up, 4 link typed, 5 filled in, 6 finger to save, 7 tap, 8 sheet down + new card
+  const step = useScript([500, 1200, 1400, 1700, 3000, 3700, 4300, 4500], 7600);
+  const root = useRef(null), plus = useRef(null), save = useRef(null);
+  const spot = useSpot(root);
+  const [pos, setPos] = useState({ x: 300, y: 520 });
+  useEffect(() => {
+    if (step === 0) setPos({ x: 300, y: 520 });
+    if (step === 1) { const p = spot(plus.current); p && setPos(p); }
+    if (step === 6) { const p = spot(save.current); p && setPos(p); }
+    if (step === 8) setPos({ x: 300, y: 520 });
+  }, [step]); // eslint-disable-line
+  const tap = step >= 7 ? 2 : step >= 2 ? 1 : 0;
+  const link = useTypewriter(step >= 4 ? "rozetka.com.ua/headphones" : "");
+  const filled = step >= 5;
+  const newCard = { id: "n", title: lang === "en" ? "Headphones" : "Навушники", price: lang === "en" ? "$99" : "4 200 ₴", emoji: "stk:headphones", rooms: [] };
+  const fieldBox = (v, ph) => (
+    <div style={{ height: H.lg, borderRadius: 999, background: C.card2, padding: "0 16px", display: "flex", alignItems: "center", color: v ? C.t1 : C.t3, fontSize: 16, marginBottom: 12, overflow: "hidden", whiteSpace: "nowrap" }}>{v || ph}</div>
+  );
+  return (
+    <div ref={root}>
+      <MiniPhone finger={pos} tap={tap}>
+        <div style={{ padding: "48px 16px 16px" }}>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", padding: "6px 4px 20px" }}>
+            <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5 }}>{t("poolTitle")}</div>
+            <div ref={plus}><HeaderAdd onClick={() => {}} label="" /></div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {(step >= 8 ? [newCard, ...OB_GRID] : OB_GRID).map(w => <div key={w.id} style={{ animation: w.id === "n" ? "pop .5s cubic-bezier(.2,.9,.3,1.25)" : "none" }}><WishTile w={w} onClick={() => {}} /></div>)}
+          </div>
+        </div>
+        {/* the add sheet */}
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 470, background: C.card, borderRadius: "32px 32px 0 0", padding: "8px 16px 24px", zIndex: 10,
+          transform: step >= 3 && step < 8 ? "none" : "translateY(105%)", transition: "transform .45s cubic-bezier(.2,.8,.2,1)" }}>
+          <div style={{ width: 40, height: 4, borderRadius: 4, background: C.card2, margin: "6px auto 16px" }} />
+          <div style={{ color: C.t1, fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{t("newWish")}</div>
+          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 72, height: 72, borderRadius: 18, background: C.card2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {filled ? <div style={{ animation: "pop .4s ease" }}><Sticker emoji="stk:headphones" size={44} /></div> : <ImageIcon size={26} color={C.t3} />}
+            </div>
+          </div>
+          {fieldBox(link && "https://" + link, "https://…")}
+          <div style={{ color: filled ? "#7EE29A" : C.t3, fontSize: 12.5, marginTop: -4, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            {filled ? <><Check size={13} />{t("linkDone")}</> : step >= 4 ? <><RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} />{t("linkLoading")}</> : t("linkHint")}
+          </div>
+          {fieldBox(filled && newCard.title, t("whatYouWantPh"))}
+          {fieldBox(filled && newCard.price, lang === "en" ? "$50" : "4 200 ₴")}
+          <div ref={save}><Pill full kind="primary" onClick={() => {}}>{t("saveWish")}</Pill></div>
+        </div>
+      </MiniPhone>
+    </div>
+  );
+}
+function ObGiftScene() {
+  const { t, lang } = useT();
+  // 1 finger to folder, 2 tap, 3 room opens, 4 finger to Take, 5 tap -> gifting + confetti, 6 secret badge, 7 back
+  const step = useScript([500, 1200, 1400, 2500, 3100, 3600], 7400);
+  const root = useRef(null), folder = useRef(null), take = useRef(null);
+  const spot = useSpot(root);
+  const [pos, setPos] = useState({ x: 300, y: 520 });
+  const anya = { id: "a", name: lang === "en" ? "Anya" : "Аня", color: "#FF4D8D" };
+  const me = { id: "you", name: tgUserName() || (lang === "en" ? "Me" : "Я"), photo: tgUserPhoto(), color: "#7B61FF", you: true };
+  const room = { id: "obr", name: lang === "en" ? "Friends" : lang === "uk" ? "Друзі" : "Друзья", type: "friends", emoji: "stk:uno", tint: "#38BDF8", members: [me, anya, { id: "b", name: lang === "en" ? "Ben" : "Богдан", color: "#34C759" }] };
+  const room2 = { id: "obr2", name: lang === "en" ? "Us two" : lang === "uk" ? "Двоє" : "Двое", type: "couple", emoji: "stk:flower", tint: "#FF4D8D", members: [me, anya] };
+  const wish = { id: "ow", title: lang === "en" ? "Scented candle" : lang === "uk" ? "Аромасвічка" : "Аромасвеча", price: "650 ₴", emoji: "stk:candle" };
+  useEffect(() => {
+    if (step === 0) setPos({ x: 300, y: 520 });
+    if (step === 1) { const p = spot(folder.current); p && setPos(p); }
+    if (step === 4) { const p = spot(take.current); p && setPos(p); }
+    if (step === 7) setPos({ x: 300, y: 520 });
+  }, [step]); // eslint-disable-line
+  const tap = step >= 5 ? 2 : step >= 2 ? 1 : 0;
+  const open = step >= 3, gifting = step >= 5;
+  return (
+    <div ref={root}>
+      <MiniPhone finger={pos} tap={tap}>
+        <div style={{ padding: "48px 16px 16px" }}>
+          <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5, padding: "6px 4px 24px" }}>{t("roomsTitle")}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div ref={folder}><RoomFolder room={room} wishes={[]} onOpen={() => {}} /></div>
+            <RoomFolder room={room2} wishes={[]} onOpen={() => {}} />
+          </div>
+        </div>
+        {/* the room, growing out of the folder */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 10, background: C.bg, display: "flex", flexDirection: "column",
+          clipPath: open ? "inset(0 0 0 0 round 0px)" : "inset(130px 210px 300px 20px round 24px)", visibility: open ? "visible" : "hidden",
+          transition: open ? "clip-path .45s cubic-bezier(.2,.8,.2,1)" : "none" }}>
+          <div style={{ padding: "56px 16px 36px", textAlign: "center", background: `linear-gradient(${heroTop(room.tint)} 0, transparent 120px), ${roomHeroBg(room.tint)}` }}>
+            <div style={{ display: "flex", justifyContent: "center" }}><Sticker emoji={room.emoji} size={46} /></div>
+            <div style={{ color: "#fff", fontSize: 26, fontWeight: 800, marginTop: 12 }}>{room.name}</div>
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>{room.members.map((m, i) => <div key={m.id} style={{ marginLeft: i ? -8 : 0 }}><Avatar m={m} size={32} /></div>)}</div>
+          </div>
+          <div style={{ flex: 1, background: C.bg, borderRadius: "24px 24px 0 0", marginTop: -20, padding: "20px 16px", position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}><Avatar m={anya} size={24} /><span style={{ color: C.t1, fontSize: 15, fontWeight: 700 }}>{anya.name}</span></div>
+            <Card style={{ padding: `0 ${LIST.pad}px` }}>
+              <WishRow w={wish} right={
+                <div ref={take} style={{ position: "relative" }}>
+                  {gifting
+                    ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => {}}>{t("youGift")}</Pill>
+                    : <Pill size="sm" kind="soft" onClick={() => {}}>{t("take")}<Sticker emoji="stk:basket" size={18} style={{ margin: -8 }} /></Pill>}
+                  {gifting && Array.from({ length: 14 }, (_, i) => (
+                    <span key={i} style={{ position: "absolute", left: "50%", top: "50%", width: 7, height: 4, borderRadius: 1, background: ["#2E7DF6", "#FFD36E", "#FF7AB6", "#7CE0C3", "#fff"][i % 5],
+                      animation: "obBurst .9s ease-out forwards", "--a": `${(i / 14) * 360}deg` }} />
+                  ))}
+                </div>
+              } />
+            </Card>
+            <div style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 8, height: 36, padding: "0 14px", borderRadius: 999, background: C.card2, color: C.t1, fontSize: 13.5, fontWeight: 600,
+              opacity: step >= 6 ? 1 : 0, transform: step >= 6 ? "none" : "translateY(10px)", transition: "all .4s ease" }}>
+              <Lock size={14} />{t("obSecret", { name: anya.name })}
+            </div>
+          </div>
+        </div>
+      </MiniPhone>
+    </div>
+  );
+}
+const OB_PAGES = 3;
+function Onboarding({ onDone }) {
+  const { t } = useT();
+  const [page, setPage] = useState(0);
+  const last = page === OB_PAGES - 1;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 95, background: C.bg, display: "flex", flexDirection: "column", padding: "16px 16px 32px", maxWidth: 440, marginInline: "auto", overflow: "hidden" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", height: H.sm, flexShrink: 0 }}>
+        {!last && <button onClick={onDone} style={{ background: "none", border: "none", color: C.t2, fontSize: 15, fontWeight: 600, fontFamily: font, cursor: "pointer", height: H.sm, padding: "0 8px" }}>{t("obSkip")}</button>}
+      </div>
+      <div key={page} style={{ flex: 1, display: "flex", flexDirection: "column", animation: "fadeUp .35s ease", minHeight: 0 }}>
+        {page === 0 ? <ObHero /> : (
+          <>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
+              {page === 1 ? <ObAddScene /> : <ObGiftScene />}
+            </div>
+            <div style={{ padding: "0 4px" }}>
+              <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, letterSpacing: -0.5, marginTop: 16 }}>{t(page === 1 ? "obAddTitle" : "obGiftTitle")}</div>
+              <div style={{ color: C.t2, fontSize: 16, lineHeight: 1.4, marginTop: 8, minHeight: 44 }}>{t(page === 1 ? "obAddText" : "obGiftText")}</div>
+            </div>
+          </>
+        )}
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 8, margin: "24px 0 16px" }}>
+        {Array.from({ length: OB_PAGES }, (_, j) => <div key={j} style={{ width: j === page ? 24 : 8, height: 8, borderRadius: 8, background: j === page ? C.blue : C.card2, transition: "all .25s ease" }} />)}
+      </div>
+      <Pill full kind="primary" onClick={() => last ? onDone() : setPage(page + 1)}>{t(last ? "obStart" : "obNext")}</Pill>
     </div>
   );
 }
