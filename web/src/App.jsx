@@ -2184,7 +2184,6 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               <div>
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
                   <span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 8 }}><Sticker emoji="stk:bulb" size={18} style={{ margin: -6 }} />{t("bdayIdeas")}</span>
-                  {celName && <span style={{ color: C.t3, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 4 }}><Lock size={12} />{t("bdayIdeasHidden", { name: celName })}</span>}
                 </div>
                 {ideas.length ? (
                   <Card style={{ padding: `0 ${LIST.pad}px` }}>
