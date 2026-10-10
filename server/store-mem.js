@@ -16,7 +16,7 @@ export function createMemStore() {
         return { day: new Date(d).toISOString().slice(0, 10), active: new Set(D.events.filter(e => e.at >= d && e.at < d + DAY).map(e => e.userId)).size, new: us.filter(u => u.firstSeen >= d && u.firstSeen < d + DAY).length }; });
       const cl = {}; for (const e of D.events.filter(e => e.at >= now - 7 * DAY)) { const c = cl[e.name] || (cl[e.name] = { name: e.name, n: 0, u: new Set() }); c.n++; c.u.add(e.userId); }
       return {
-        online: us.filter(u => u.lastSeen >= now - 300000).length, total: us.filter(u => u.firstSeen).length,
+        online: us.filter(u => u.lastSeen >= now - 300000).length, total: us.length,
         active1: us.filter(u => u.lastSeen >= day0).length, active7: uniq(now - 7 * DAY), active30: uniq(now - 30 * DAY),
         new1: us.filter(u => u.firstSeen >= day0).length, new7: us.filter(u => u.firstSeen >= now - 7 * DAY).length,
         wishes: ws.length, wishes7: ws.filter(w => w.createdAt >= now - 7 * DAY).length,

@@ -48,7 +48,7 @@ export function createPgStore(q) {
       const one = async (sql, p = []) => Number((await q(sql, p)).rows[0].n) || 0;
       const [online, total, active1, active7, active30, new1, new7, wishes, wishes7, rooms, rooms7, reserved, chips, gifted, invites] = await Promise.all([
         one(`SELECT count(*) n FROM users WHERE last_seen >= $1`, [now - M5]),
-        one(`SELECT count(*) n FROM users WHERE first_seen IS NOT NULL`),
+        one(`SELECT count(*) n FROM users`),
         one(`SELECT count(*) n FROM users WHERE last_seen >= $1`, [day0]),
         one(`SELECT count(DISTINCT user_id) n FROM events WHERE at >= $1`, [now - 7 * D]),
         one(`SELECT count(DISTINCT user_id) n FROM events WHERE at >= $1`, [now - 30 * D]),
