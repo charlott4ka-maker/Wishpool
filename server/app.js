@@ -88,6 +88,23 @@ export async function createApp() {
     },
   }));
   // One-off move of photos that still live inline in the database into R2.
+  // Sticker packs through the bot (for picking mascot stickers), admin only:
+  // /api/admin/stickerset?key=..&name=UtyaDuck -> list; /api/admin/stickerfile?key=..&id=<file_id> -> the file
+  app.get("/api/admin/stickerset", async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || req.query.key !== secret) return res.status(401).json({ error: "bad_key" });
+    const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getStickerSet?name=${encodeURIComponent(String(req.query.name || ""))}`).then(x => x.json()).catch(e => ({ error: e.message }));
+    if (!r || !r.ok) return res.json(r);
+    res.json({ title: r.result.title, type: r.result.sticker_type, stickers: r.result.stickers.map((x, i) => ({ i, emoji: x.emoji, animated: x.is_animated, video: x.is_video, id: x.file_id })) });
+  });
+  app.get("/api/admin/stickerfile", async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || req.query.key !== secret) return res.status(401).json({ error: "bad_key" });
+    const f = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${encodeURIComponent(String(req.query.id || ""))}`).then(x => x.json()).catch(() => null);
+    if (!f || !f.ok) return res.status(404).json({ error: "no_file" });
+    const r = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${f.result.file_path}`);
+    res.set("Content-Type", "application/octet-stream").send(Buffer.from(await r.arrayBuffer()));
+  });
   // Link import check for a shop: /api/admin/preview?key=<CRON_SECRET>&url=<product url>
   app.get("/api/admin/preview", async (req, res) => {
     const secret = process.env.CRON_SECRET;
