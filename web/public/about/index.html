@@ -441,7 +441,7 @@ document.querySelectorAll(".room").forEach((r, i) => {
   const avs = AVS.slice(0, +r.dataset.people).map(([c, l]) => `<b style="background:${c}">${l}</b>`).join("");
   r.querySelector(".mini").innerHTML = `<div class="back" style="background:${rgba(t, .32)}"></div>
     <div class="ph" style="clip-path:${cut};-webkit-clip-path:${cut}">${photos}
-      <svg width="${W}" height="${H}"><defs><filter id="fs${i}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs><path d="${folderPath(W, H, true)}" fill="none" stroke="rgba(0,0,0,.4)" stroke-width="10" filter="url(#fs${i})"/></svg></div>
+      <svg width="${W}" height="${H}"><defs><filter id="fs${i}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="4"/></filter><clipPath id="fc${i}"><rect x="${Math.round(W * .04) + 6}" y="0" width="${Math.round(W * .92) - 12}" height="${H}"/></clipPath></defs><g clip-path="url(#fc${i})"><path d="${folderPath(W, H, true)}" fill="none" stroke="rgba(0,0,0,.4)" stroke-width="10" filter="url(#fs${i})"/></g></svg></div>
     <div class="fr" style="clip-path:path('${full}');-webkit-clip-path:path('${full}');background:linear-gradient(180deg,${rgba(t, .42)} 0%,${rgba(t, .26)} 100%)"></div>
     <img class="st" src="/stickers/${r.dataset.stk}.webp" alt="" /><div class="avs">${avs}</div>`;
 });
