@@ -21,7 +21,12 @@ export async function createApp() {
   // instead of being inlined into every JSON response: lists stay tiny and the
   // phone/CDN download each photo only once. Wish photos never change after
   // creation, so the URL can be cached forever.
-  const imgUrls = (w, list) => list.map((x, i) => x.startsWith("data:") ? `/api/img/${w.id}/${i}` : x);
+  // Photos in the bucket go out as /p/<key> on our own domain (vercel.json
+  // proxies and caches them), not as the rate-limited r2.dev address.
+  const R2PUB = () => (process.env.R2_PUBLIC_URL || "").replace(/\/+$/, "");
+  const toPublic = (x) => { const b = R2PUB(); return b && x.startsWith(b + "/") ? "/p/" + x.slice(b.length + 1) : x; };
+  const fromPublic = (x) => { const b = R2PUB(); return b && typeof x === "string" && x.startsWith("/p/") ? b + "/" + x.slice(3) : x; };
+  const imgUrls = (w, list) => list.map((x, i) => x.startsWith("data:") ? `/api/img/${w.id}/${i}` : toPublic(x));
   const pubWish = (w) => {
     const images = imgUrls(w, w.images && w.images.length ? w.images : (w.image ? [w.image] : []));
     return { id: w.id, emoji: w.emoji, image: images[0] || null, images, link: w.link, title: w.title, price: w.price, note: w.note || "", giftedAt: w.giftedAt || null };
@@ -234,7 +239,7 @@ export async function createApp() {
     if (!title || !String(title).trim()) return res.status(400).json({ error: "title_required" });
     const oldImgs = old.images && old.images.length ? old.images : (old.image ? [old.image] : []);
     const back = (x) => { const m = typeof x === "string" && x.match(new RegExp(`^/api/img/${old.id}/(\\d+)$`)); return m ? oldImgs[Number(m[1])] : x; };
-    let images = (Array.isArray(rawImages) ? rawImages.map(back) : []).filter(x => typeof x === "string" && (x.startsWith("data:image/") || /^https:\/\//.test(x)));
+    let images = (Array.isArray(rawImages) ? rawImages.map(back).map(fromPublic) : []).filter(x => typeof x === "string" && (x.startsWith("data:image/") || /^https:\/\//.test(x)));
     images = cleanImages(images);
     if (storageOn() && images.length) {
       try { images = await storeImages(images, `w/${old.id}`); } catch (e) { console.error("r2 upload failed", e.message); }
