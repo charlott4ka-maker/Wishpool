@@ -396,6 +396,7 @@ const STR = {
   friendsRoomHint: { uk: "Для компанії. Обирайте подарунки одне одному, скидайтеся разом або влаштуйте жеребкування, хто кому дарує.", ru: "Для компании. Выбирайте подарки друг другу, скидывайтесь вместе или устройте жеребьёвку, кто кому дарит.", en: "For a group. Pick gifts for each other, chip in together or draw names for who gives to whom." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
+  howItWorks: { uk: "Онбординг", ru: "Онбординг", en: "Onboarding" },
   analytics: { uk: "Аналітика", ru: "Аналитика", en: "Analytics" },
   anOnline: { uk: "Зараз в застосунку", ru: "Сейчас в приложении", en: "In the app now" },
   anOnlineSub: { uk: "за останні 5 хвилин", ru: "за последние 5 минут", en: "in the last 5 minutes" },
@@ -1180,7 +1181,7 @@ export default function App() {
                   onOpen={(id, rect) => setOverlay({ type: "room", roomId: id, from: rect ? { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom } : null })}
                   onCreate={() => setOverlay({ type: "createRoom" })} />
               )}
-              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} birthday={birthday} onBirthday={saveBirthday} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} onAnalytics={admin ? () => setOverlay({ type: "analytics" }) : null} />}
+              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} birthday={birthday} onBirthday={saveBirthday} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} onAnalytics={admin ? () => setOverlay({ type: "analytics" }) : null} onIntro={admin ? () => setOnboard(true) : null} />}
             </>
           )}
         </div>
@@ -3377,7 +3378,7 @@ function AnalyticsScreen({ onBack }) {
     </div>
   );
 }
-function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, onAnalytics, birthday, onBirthday }) {
+function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, onAnalytics, onIntro, birthday, onBirthday }) {
   const { t, lang, setLang } = useT();
   const me = { name: tgUserName() || t("guest"), color: "#7B61FF", photo: tgUserPhoto() };
   const gifting = Object.values(reserved || {}).filter(v => v === "you").length;
@@ -3410,7 +3411,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, onAnalyt
       </div>
 
       <Card style={{ marginTop: 16, padding: `0 ${LIST.pad}px` }}>
-        {[[Clock, t("history"), onHistory, "#FF9F0A"], [Link2, t("myInvites"), onInvites, "#5E5CE6"], ...(onAnalytics ? [[BarChart3, t("analytics"), onAnalytics, "#2E7DF6"]] : []), [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui"), "#2E7DF6"]].map(([Icon, l, on, bg], i, arr) => (
+        {[[Clock, t("history"), onHistory, "#FF9F0A"], [Link2, t("myInvites"), onInvites, "#5E5CE6"], ...(onIntro ? [[Sparkles, t("howItWorks"), onIntro, "#2E7DF6"]] : []), ...(onAnalytics ? [[BarChart3, t("analytics"), onAnalytics, "#2E7DF6"]] : []), [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui"), "#2E7DF6"]].map(([Icon, l, on, bg], i, arr) => (
           <div key={i} onClick={on} style={{ height: 60, display: "flex", alignItems: "center", gap: LIST.gap, cursor: "pointer", ...sepBelow(i < arr.length - 1) }}>
             <div style={{ width: LIST.icon, height: LIST.icon, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Icon size={22} color={C.t2} />
