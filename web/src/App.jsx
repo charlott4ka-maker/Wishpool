@@ -436,7 +436,47 @@ function stickerFilter(size) {
 // bit bigger than before because the rim now sits inside the image. The soft
 // shadow is baked in too (a CSS drop-shadow got cut into a box on iOS), with a
 // 20% transparent margin around the sticker that the negative margin cancels.
+// Utya, the Telegram duck, alive (Lottie): "utya:<mood>" anywhere a sticker goes.
+// The player is loaded only when a duck is on screen. The JSON comes from our
+// server (which fetches it once from Telegram); it's also kept in localStorage
+// so the offline and error screens still have their duck.
+const utyaMem = {};
+function loadUtya(name) {
+  if (!utyaMem[name]) {
+    utyaMem[name] = (async () => {
+      const key = "wp_utya_" + name;
+      try { const c = window.localStorage.getItem(key); if (c) return JSON.parse(c); } catch (e) {}
+      const r = await fetch("/api/utya/" + name);
+      if (!r.ok) throw new Error("utya_" + r.status);
+      const txt = await r.text();
+      try { if (txt.length < 150000) window.localStorage.setItem(key, txt); } catch (e) {}
+      return JSON.parse(txt);
+    })();
+    utyaMem[name].catch(() => { delete utyaMem[name]; });
+  }
+  return utyaMem[name];
+}
+const UTYA_FALLBACK = { scared: "stk:orange", boom: "stk:matcha" };
+function Utya({ name, size, style }) {
+  const box = useRef(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let anim = null, live = true;
+    Promise.all([loadUtya(name), import("lottie-web/build/player/lottie_light")]).then(([data, mod]) => {
+      if (!live || !box.current) return;
+      const lottie = mod.default || mod;
+      anim = lottie.loadAnimation({ container: box.current, renderer: "svg", loop: true, autoplay: true, animationData: data });
+    }).catch(() => live && setFailed(true));
+    return () => { live = false; if (anim) anim.destroy(); };
+  }, [name]);
+  const px = size * 1.6;
+  if (failed) return UTYA_FALLBACK[name] ? <Sticker emoji={UTYA_FALLBACK[name]} size={size} style={style} /> : <div style={{ width: px, height: px, ...style }} />;
+  return <div ref={box} style={{ width: px, height: px, display: "inline-block", verticalAlign: "middle", ...style }} />;
+}
+// Utya goes in empty states and system screens; object stickers stay for rooms and wishes.
+function warmUtya() { ["scared", "boom"].forEach(n => loadUtya(n).catch(() => {})); }
 function Sticker({ emoji, size, style }) {
+  if (typeof emoji === "string" && emoji.startsWith("utya:")) return <Utya name={emoji.slice(5)} size={size} style={style} />;
   if (typeof emoji === "string" && emoji.startsWith("stk:")) {
     return <img src={`/stickers/${emoji.slice(4)}.webp`} alt="" draggable={false}
       style={{ height: size * 1.24 * 1.4, width: size * 1.24 * 1.4, margin: -size * 1.24 * 0.2, objectFit: "contain", display: "inline-block", verticalAlign: "middle", ...style }} />;
@@ -684,7 +724,7 @@ export class CrashGuard extends React.Component {
     return (
       <div style={{ minHeight: "100vh", background: C.bg, fontFamily: font, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", textAlign: "center" }}>
         <StickerDefs />
-        <div style={{ transform: "rotate(-8deg)" }}><Sticker emoji="stk:matcha" size={120} /></div>
+        <Sticker emoji="utya:boom" size={110} />
         <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 24 }}>{tr(lang, "crashTitle")}</div>
         <div style={{ color: C.t2, fontSize: 15, fontWeight: 500, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{tr(lang, "crashSub")}</div>
         <div style={{ marginTop: 32, width: "100%", maxWidth: 320 }}>
@@ -700,7 +740,7 @@ function OfflineScreen({ busy, onRetry }) {
   const { t } = useT();
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 90, background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", textAlign: "center", animation: "fadeUp .3s ease" }}>
-      <div style={{ transform: "rotate(-8deg)" }}><Sticker emoji="stk:orange" size={120} /></div>
+      <Sticker emoji="utya:scared" size={110} />
       <div style={{ color: C.t1, fontSize: 24, fontWeight: 800, marginTop: 24 }}>{t("offlineTitle")}</div>
       <div style={{ color: C.t2, fontSize: 15, marginTop: 8, maxWidth: 280, lineHeight: 1.4 }}>{t("offlineSub")}</div>
       <div style={{ marginTop: 32, width: "100%", maxWidth: 320 }}>
@@ -815,6 +855,8 @@ export default function App() {
   // First launch: three short intro screens (not when arriving through an invite).
   const [onboard, setOnboard] = useState(() => !store.get("wp_onboarded", false) && !api.startRoomId());
   const finishOnboard = () => { store.set("wp_onboarded", true); setOnboard(false); };
+  // keep the offline / error ducks at hand before they're ever needed
+  useEffect(() => { const id = setTimeout(warmUtya, 4000); return () => clearTimeout(id); }, []);
   // Online: start from the last state we got from the server (shown instantly),
   // then refresh in the background. Offline/local mode keeps its own keys.
   const [cached] = useState(() => online ? store.get(CACHE_KEY(), null) : null);
@@ -1276,9 +1318,9 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onEdit, onGi
       )}
 
       {wishes.length === 0 ? (
-        <Empty emoji="stk:bag" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
+        <Empty emoji="utya:think" tilt={0} title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
       ) : shown.length === 0 ? (
-        <Empty compact emoji={cur === "gifted" ? "stk:gift" : "stk:shell"} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
+        <Empty compact emoji={cur === "gifted" ? "utya:sleep" : "utya:shrug"} tilt={0} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
       ) : (
         /* two-column grid of product-style cards; tap opens the wish sheet */
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1483,7 +1525,7 @@ function RoomsScreen({ rooms, wishes, onOpen, onCreate }) {
       </div>
 
       {rooms.length === 0 ? (
-        <Empty emoji="stk:ghost" tilt={6} title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
+        <Empty emoji="utya:hug" tilt={0} title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 12px" }}>
           {rooms.map(r => <RoomFolder key={r.id} room={r} wishes={wishes} onOpen={(rect) => onOpen(r.id, rect)} />)}
@@ -1749,7 +1791,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
       {inv === null ? (
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : groups.length === 0 ? (
-        <Empty compact emoji="stk:envelope" tilt={8} title={t("invitedNobody")} sub={t("invitedNobodySub")}
+        <Empty compact emoji="utya:mail" tilt={0} title={t("invitedNobody")} sub={t("invitedNobodySub")}
           action={rooms.length > 0 && <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1795,7 +1837,7 @@ function HistorySheet({ online, onClose }) {
       {gifts === null ? (
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : gifts.length === 0 ? (
-        <Empty compact emoji="stk:candle" title={t("historyEmptyTitle")} sub={t("historyEmptySub")} />
+        <Empty compact emoji="utya:sleep" tilt={0} title={t("historyEmptyTitle")} sub={t("historyEmptySub")} />
       ) : (
         <Card style={{ padding: `0 ${LIST.pad}px` }}>
           {gifts.map((w, i) => (
@@ -1821,7 +1863,7 @@ function PoolPickerSheet({ wishes, roomId, onToggle, onClose }) {
   return (
     <Sheet title={t("roomWishesTitle")} onClose={onClose}>
       {wishes.length === 0 ? (
-        <Empty compact emoji="stk:coconut" title={t("poolEmptyTitle")} sub={t("poolEmptyInRoom")} />
+        <Empty compact emoji="utya:shrug" tilt={0} title={t("poolEmptyTitle")} sub={t("poolEmptyInRoom")} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {wishes.map(w => {
@@ -2090,13 +2132,13 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
             ))}
           </Card>
         ) : failed ? (
-          <Empty emoji="stk:plumbob" tilt={0} title={t("roomLoadFailTitle")} sub={t("roomLoadFailSub")}
+          <Empty emoji="utya:flushed" tilt={0} title={t("roomLoadFailTitle")} sub={t("roomLoadFailSub")}
             action={<Pill kind="primary" icon={<RefreshCw size={17} />} onClick={() => { setLoading(true); setTick(x => x + 1); }}>{t("offlineRetry")}</Pill>} />
         ) : bday ? (
           iAmCel ? (
             /* the birthday person: only their own wishes, the gifts stay a surprise */
             <div>
-              <Empty compact emoji="stk:cake" title={t("bdayCelebrantTitle")} sub={t("bdayCelebrantSub")} />
+              <Empty compact emoji="utya:shh" tilt={0} title={t("bdayCelebrantTitle")} sub={t("bdayCelebrantSub")} />
               {mine.length > 0 && (
                 <Card style={{ padding: `0 ${LIST.pad}px`, marginTop: 8 }}>
                   {mine.map((w, i) => (
@@ -2149,7 +2191,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                     ))}
                   </Card>
                 ) : (
-                  <Empty compact emoji="stk:bulb" title={t("bdayNoIdeasTitle")} sub={t("bdayNoIdeasSub")} />
+                  <Empty compact emoji="utya:think" tilt={0} title={t("bdayNoIdeasTitle")} sub={t("bdayNoIdeasSub")} />
                 )}
                 <div style={{ marginTop: 16 }}>
                   <Pill full kind={ideas.length ? "ghost" : "primary"} icon={<Plus size={18} />} onClick={onAddIdea}>{t("bdayAddIdea")}</Pill>
@@ -2163,7 +2205,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
-              <Empty compact emoji="stk:eyes" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
+              <Empty compact emoji="utya:wave" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
                 action={<Pill kind="primary" icon={<Share2 size={17} />} onClick={onInvite}>{t("inviteFriends")}</Pill>} />
             </div>
           ) : (
@@ -2193,7 +2235,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : (
           <div>
             {mine.length === 0
-              ? <Empty emoji="stk:qblock" title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
+              ? <Empty emoji="utya:cool" tilt={0} title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
               : <Card style={{ padding: `0 ${LIST.pad}px` }}>
                 {mine.map((w, i) => (
                   <div key={w.id} style={{ ...sepBelow(i < mine.length - 1) }}>
@@ -2217,7 +2259,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           )}
         </div>
       </div>
-      {cancelling && <ConfirmSheet sticker={cancelling.chip ? "stk:piggy" : "stk:basket"}
+      {cancelling && <ConfirmSheet
         title={t(cancelling.chip ? "cancelChipTitle" : "cancelGiftTitle", { name: cancelling.w.title })}
         text={t(cancelling.chip ? "cancelChipText" : "cancelGiftText", { name: cancelling.w.title })}
         yes={t(cancelling.chip ? "cancelChipYes" : "cancelGiftYes")} no={t(cancelling.chip ? "keepChip" : "keepIt")}
@@ -2298,11 +2340,11 @@ function SurpriseGate({ room, onJoin }) {
 // "Take" on a free wish: gift it alone (reserve) or open a group chip-in.
 // "Are you sure?" as a bottom sheet: centred like the "gift taken" sheet, the
 // safe choice is the big button, the destructive one is small red text.
-function ConfirmSheet({ title, text, yes, no, onYes, onClose, sticker = "stk:basket" }) {
+function ConfirmSheet({ title, text, yes, no, onYes, onClose, sticker = "utya:sad" }) {
   return (
     <Sheet onClose={onClose}>
       <div style={{ textAlign: "center", marginTop: -8 }}>
-        <div style={{ display: "inline-block", transform: "rotate(-8deg)" }}><Sticker emoji={sticker} size={72} /></div>
+        <div style={{ display: "inline-block" }}><Sticker emoji={sticker} size={72} /></div>
         <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{title}</div>
         {text && <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{text}</div>}
         <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{no}</Pill></div>
@@ -2338,7 +2380,7 @@ function GiftTakenSheet({ title, onClose }) {
     <>
       <Sheet onClose={onClose}>
         <div style={{ textAlign: "center", paddingTop: 4 }}>
-          <img src="/stickers/basket.webp" alt="" style={{ width: 235, height: "auto", display: "block", margin: "-34px auto -33px", animation: "basketDrop .7s cubic-bezier(.2,.9,.3,1.25)" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}><Sticker emoji="utya:party" size={88} /></div>
           <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{t("giftTakenTitle", { name: title })}</div>
           <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{t("giftTakenBody")}</div>
           <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{t("giftTakenOk")}</Pill></div>
@@ -2832,7 +2874,7 @@ function BirthdaySheet({ birthday, onSave, onClose }) {
   );
 }
 // First-launch intro: three cards with a sticker, swipe-free, Next / Skip.
-const ONBOARD = [["stk:bag", "ob1Title", "ob1Text"], ["stk:picture", "ob2Title", "ob2Text"], ["stk:ghost", "ob3Title", "ob3Text"]];
+const ONBOARD = [["utya:wave", "ob1Title", "ob1Text"], ["utya:dance", "ob2Title", "ob2Text"], ["utya:shh", "ob3Title", "ob3Text"]];
 function Onboarding({ onDone }) {
   const { t } = useT();
   const [i, setI] = useState(0);
@@ -2844,7 +2886,7 @@ function Onboarding({ onDone }) {
         {!last && <button onClick={onDone} style={{ background: "none", border: "none", color: C.t2, fontSize: 15, fontWeight: 600, fontFamily: font, cursor: "pointer", height: H.sm, padding: "0 8px" }}>{t("obSkip")}</button>}
       </div>
       <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 16px", animation: "fadeUp .35s ease" }}>
-        <div style={{ transform: `rotate(${i % 2 ? 8 : -8}deg)`, animation: "pop .5s cubic-bezier(.2,.9,.3,1.25)" }}><Sticker emoji={emoji} size={120} /></div>
+        <div style={{ animation: "pop .5s cubic-bezier(.2,.9,.3,1.25)" }}><Sticker emoji={emoji} size={120} /></div>
         <div style={{ color: C.t1, fontSize: 28, fontWeight: 800, letterSpacing: -0.5, marginTop: 32 }}>{t(title)}</div>
         <div style={{ color: C.t2, fontSize: 16, lineHeight: 1.45, marginTop: 12, maxWidth: 320 }}>{t(text)}</div>
       </div>

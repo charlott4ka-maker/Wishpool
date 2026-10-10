@@ -1,3 +1,4 @@
+import zlib from "zlib";
 import express from "express";
 import cors from "cors";
 import { getStore } from "./store.js";
@@ -88,6 +89,42 @@ export async function createApp() {
     },
   }));
   // One-off move of photos that still live inline in the database into R2.
+  // Utya, Telegram's duck (sticker pack UtyaDuck), for empty states and system
+  // screens. Fetched once through the bot, un-gzipped to Lottie JSON and served
+  // with a long cache, so the CDN answers almost every request.
+  const UTYA = {
+    think: "CAACAgIAAxUAAWrJ1f9qKIslzCdtbgjqEWVNT7nsAAICAQACVp29Ck7ibIHLQOT_PQQ",
+    shrug: "CAACAgIAAxUAAWrJ1f-gV0kn0wxJ9DrPJOIScpeWAAL5AANWnb0KlWVuqyorGzY9BA",
+    wave: "CAACAgIAAxUAAWrJ1f-3JrHq57dkEsVliQRReTVoAAIBAQACVp29CiK-nw64wuY0PQQ",
+    shh: "CAACAgIAAxUAAWrJ1f-QxnlVFSn1NzUui4HtToggAAJJAgACVp29CiqXDJ0IUyEOPQQ",
+    mail: "CAACAgIAAxUAAWrJ1f-3_Zuhp7E2qzjkSc-yhOVrAAJIAgACVp29Chz1cvjcKRTQPQQ",
+    scared: "CAACAgIAAxUAAWrJ1f_mgiAyHd1Y3Dt_T_-TPQhrAAL_AANWnb0K2q36feS8QCQ9BA",
+    boom: "CAACAgIAAxUAAWrJ1f9j6OaqeIN8c3bvTbXCQDBhAAILAQACVp29Ck6x56YI--1JPQQ",
+    flushed: "CAACAgIAAxUAAWrJ1f9d5DNAmRjoaDlAz-Vc8ZL6AAL0AANWnb0KEViw9dn9VUk9BA",
+    sleep: "CAACAgIAAxUAAWrJ1f8ROWDK_Xp1_9OEGcpqq1YoAAIOAQACVp29ChGpLWjCceBoPQQ",
+    party: "CAACAgIAAxUAAWrJ1f-SgoL1HXfFY4ilbHRNBZNFAAJKAgACVp29CslqxmhgGHrwPQQ",
+    sad: "CAACAgIAAxUAAWrJ1f8yGkIr9qfKy_k896tvivz8AAJDGAACtsgpSHVLq0W9LDVYPQQ",
+    hug: "CAACAgIAAxUAAWrJ1f9OPDZcpMlb5FzOczjE30jZAAINAQACVp29Ckb9Qx0FRNeXPQQ",
+    cool: "CAACAgIAAxUAAWrJ1f_GlNJutvwWzrqFncls3nzEAAL3AANWnb0KC3IkHUj0DTA9BA",
+    dance: "CAACAgIAAxUAAWrJ1f-LBdM8xjTsaAUZaWXEAfSyAAJPAgACVp29Cs_KxolndWWVPQQ",
+  };
+  const utyaCache = new Map();
+  app.get("/api/utya/:name", async (req, res, next) => {
+    try {
+      const id = UTYA[req.params.name];
+      if (!id || !BOT_TOKEN) return res.status(404).json({ error: "not_found" });
+      let json = utyaCache.get(id);
+      if (!json) {
+        const f = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(8000) }).then(x => x.json());
+        if (!f || !f.ok) return res.status(502).json({ error: "tg_file" });
+        const r = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${f.result.file_path}`, { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) return res.status(502).json({ error: "tg_download" });
+        json = zlib.gunzipSync(Buffer.from(await r.arrayBuffer())).toString("utf8");
+        utyaCache.set(id, json);
+      }
+      res.set("Content-Type", "application/json").set("Cache-Control", "public, max-age=31536000, s-maxage=31536000, immutable").send(json);
+    } catch (e) { next(e); }
+  });
   // Sticker packs through the bot (for picking mascot stickers), admin only:
   // /api/admin/stickerset?key=..&name=UtyaDuck -> list; /api/admin/stickerfile?key=..&id=<file_id> -> the file
   app.get("/api/admin/stickerset", async (req, res) => {
