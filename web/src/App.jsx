@@ -3019,7 +3019,7 @@ function ObHero() {
   );
   return (
     <>
-      <div style={{ flex: 1, position: "relative", minHeight: 360 }}>
+      <div style={{ flex: 1, position: "relative", minHeight: 0, overflow: "hidden" }}>
         {ring(OB_RING2, 162, 40, true)}
         {ring(OB_RING1, 100, 30, false)}
         {/* the folder: back panel, the falling sticker, then the frosted front on top */}
@@ -3043,12 +3043,9 @@ function ObHero() {
         </div>
       </div>
       <div style={{ padding: "0 4px" }}>
-        {/* the brand mark: our star and the hand-lettered name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src="/about/star.png" alt="" style={{ width: 44, height: 44, objectFit: "contain", transform: "rotate(-6deg)" }} />
-          <span style={{ color: C.t1, fontFamily: '"Gochi Hand", cursive', fontWeight: 400, fontSize: 36, lineHeight: 1 }}>Wishpool</span>
-        </div>
-        <div style={{ color: C.t2, fontSize: 17, lineHeight: 1.4, marginTop: 8, minHeight: 48 }}>
+        {/* the hand-lettered name */}
+        <div style={{ color: C.t1, fontFamily: '"Gochi Hand", cursive', fontWeight: 400, fontSize: 38, lineHeight: 1.1 }}>Wishpool</div>
+        <div style={{ color: C.t2, fontSize: 17, lineHeight: 1.4, marginTop: 8, minHeight: 48, flexShrink: 0 }}>
           {line}<span style={{ animation: "obBlink 1s steps(1) infinite", color: C.t1 }}>_</span>
         </div>
       </div>
