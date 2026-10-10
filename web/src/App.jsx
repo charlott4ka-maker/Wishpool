@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useContext, create
 import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw, CalendarDays, Users2, PartyPopper, Undo2,
+  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw, CalendarDays, PartyPopper, Undo2,
 } from "lucide-react";
 
 /* ---------- design tokens ---------- */
@@ -402,7 +402,7 @@ const useT = () => useContext(LangCtx);
 // Wish icons are image stickers (web/public/stickers/<name>.webp), stored in
 // the wish's `emoji` field as "stk:<name>" and drawn by <Sticker> with the
 // same white outline as emoji. Older wishes keep their plain emoji.
-const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock"];
+const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock", "cake", "gift", "piggy"];
 const WISH_EMOJI = STICKERS.map(n => "stk:" + n);
 
 /* ---------- little ui atoms ---------- */
@@ -1266,7 +1266,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onEdit, onGi
         <div style={{ display: "flex", gap: 8, overflowX: "auto", margin: "-8px -16px 16px", padding: "0 16px", scrollbarWidth: "none" }}>
           {tabs.map(([k, label, n, r]) => (
             <Chip key={k} active={cur === k} onClick={() => setFilter(k)}>
-              {r ? <Sticker emoji={r.emoji} size={15} /> : k === "private" ? <Lock size={14} /> : k === "gifted" ? <PartyPopper size={15} /> : null}
+              {r ? <Sticker emoji={r.emoji} size={15} /> : k === "private" ? <Lock size={14} /> : k === "gifted" ? <Sticker emoji="stk:gift" size={15} /> : null}
               {label}<span style={{ opacity: 0.55 }}>{n}</span>
             </Chip>
           ))}
@@ -1276,7 +1276,7 @@ function PoolScreen({ wishes, rooms, onAdd, onToggleRoom, onDelete, onEdit, onGi
       {wishes.length === 0 ? (
         <Empty emoji="stk:bag" title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
       ) : shown.length === 0 ? (
-        <Empty compact emoji={cur === "gifted" ? "stk:flower" : "stk:shell"} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
+        <Empty compact emoji={cur === "gifted" ? "stk:gift" : "stk:shell"} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
       ) : (
         /* two-column grid of product-style cards; tap opens the wish sheet */
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1341,7 +1341,7 @@ function WishSheet({ w, rooms, onToggleRoom, onDelete, onEdit, onGifted, onClose
         {!w.giftedAt && <Pill size="sm" kind="ghost" icon={<Pencil size={15} />} onClick={onEdit}>{t("editShort")}</Pill>}
         {w.giftedAt
           ? <Pill size="sm" kind="ghost" icon={<Undo2 size={15} />} onClick={() => onGifted(false)}>{t("ungift")}</Pill>
-          : <Pill size="sm" kind="green" icon={<PartyPopper size={15} />} onClick={() => tgConfirm(t("giftedHint"), () => onGifted(true))}>{t("gotIt")}</Pill>}
+          : <Pill size="sm" kind="green" onClick={() => tgConfirm(t("giftedHint"), () => onGifted(true))}>{t("gotIt")}<Sticker emoji="stk:gift" size={18} style={{ margin: -8 }} /></Pill>}
       </div>
       {w.giftedAt ? (
         <div style={{ color: C.t2, fontSize: 13, marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}><PartyPopper size={14} />{t("giftedOn", { date: giftedDay })}</div>
@@ -2032,8 +2032,8 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
       ? <Pill size="sm" kind="green" icon={<Check size={16} />} onClick={() => setCancelling({ w })}>{t("youGift")}</Pill>
       : w.taken ? <span style={{ color: C.t3, fontSize: 13, fontWeight: 600, height: H.sm, padding: "0 12px", display: "inline-flex", alignItems: "center" }}>{t("taken")}</span>
         : w.chips ? (w.chips.mine
-          ? <Pill size="sm" kind="green" icon={<Users2 size={16} />} onClick={() => setCancelling({ w, chip: true })}>{t("chipIn")} · {w.chips.count}/{w.chips.total}</Pill>
-          : <Pill size="sm" kind="soft" icon={<Users2 size={16} />} onClick={() => doChip(w.id)}>{t("chipJoin")} · {w.chips.count}/{w.chips.total}</Pill>)
+          ? <Pill size="sm" kind="green" onClick={() => setCancelling({ w, chip: true })}>{t("chipIn")} · {w.chips.count}/{w.chips.total}<Sticker emoji="stk:piggy" size={18} style={{ margin: -8 }} /></Pill>
+          : <Pill size="sm" kind="soft" onClick={() => doChip(w.id)}>{t("chipJoin")} · {w.chips.count}/{w.chips.total}<Sticker emoji="stk:piggy" size={18} style={{ margin: -8 }} /></Pill>)
         : <Pill size="sm" kind="soft" onClick={() => soloOnly ? doReserve(w) : setGiving(w)}>{t("take")}<img src="/stickers/basket.webp" alt="" style={{ height: 34, width: "auto", display: "block", margin: -6 }} /></Pill>
   );
 
@@ -2094,7 +2094,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           iAmCel ? (
             /* the birthday person: only their own wishes, the gifts stay a surprise */
             <div>
-              <Empty compact emoji="stk:candle" title={t("bdayCelebrantTitle")} sub={t("bdayCelebrantSub")} />
+              <Empty compact emoji="stk:cake" title={t("bdayCelebrantTitle")} sub={t("bdayCelebrantSub")} />
               {mine.length > 0 && (
                 <Card style={{ padding: `0 ${LIST.pad}px`, marginTop: 8 }}>
                   {mine.map((w, i) => (
@@ -2161,7 +2161,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
         ) : seg === "lists" ? (
           others.length === 0 ? (
             <div>
-              <Empty compact emoji="👀" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
+              <Empty compact emoji="stk:eyes" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")}
                 action={<Pill kind="primary" icon={<Share2 size={17} />} onClick={onInvite}>{t("inviteFriends")}</Pill>} />
             </div>
           ) : (
@@ -2215,7 +2215,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
           )}
         </div>
       </div>
-      {cancelling && <ConfirmSheet
+      {cancelling && <ConfirmSheet sticker={cancelling.chip ? "stk:piggy" : "stk:basket"}
         title={t(cancelling.chip ? "cancelChipTitle" : "cancelGiftTitle", { name: cancelling.w.title })}
         text={t(cancelling.chip ? "cancelChipText" : "cancelGiftText", { name: cancelling.w.title })}
         yes={t(cancelling.chip ? "cancelChipYes" : "cancelGiftYes")} no={t(cancelling.chip ? "keepChip" : "keepIt")}
@@ -2296,11 +2296,11 @@ function SurpriseGate({ room, onJoin }) {
 // "Take" on a free wish: gift it alone (reserve) or open a group chip-in.
 // "Are you sure?" as a bottom sheet: centred like the "gift taken" sheet, the
 // safe choice is the big button, the destructive one is small red text.
-function ConfirmSheet({ title, text, yes, no, onYes, onClose }) {
+function ConfirmSheet({ title, text, yes, no, onYes, onClose, sticker = "stk:basket" }) {
   return (
     <Sheet onClose={onClose}>
       <div style={{ textAlign: "center", marginTop: -8 }}>
-        <div style={{ display: "inline-block", transform: "rotate(-8deg)" }}><Sticker emoji="stk:basket" size={72} /></div>
+        <div style={{ display: "inline-block", transform: "rotate(-8deg)" }}><Sticker emoji={sticker} size={72} /></div>
         <div style={{ color: C.t1, fontSize: 22, fontWeight: 800, marginTop: 16 }}>{title}</div>
         {text && <div style={{ color: C.t2, fontSize: 15, lineHeight: 1.45, marginTop: 8 }}>{text}</div>}
         <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onClose}>{no}</Pill></div>
@@ -2325,8 +2325,8 @@ function GiveSheet({ wish, onSolo, onGroup, onClose }) {
   );
   return (
     <Sheet title={t("giveHow", { name: wish.title })} onClose={onClose}>
-      {opt(<Gift size={20} />, t("giveSolo"), t("giveSoloSub"), onSolo, true)}
-      {opt(<Users2 size={20} />, t("giveGroup"), t("giveGroupSub"), onGroup, false)}
+      {opt(<Sticker emoji="stk:basket" size={22} />, t("giveSolo"), t("giveSoloSub"), onSolo, true)}
+      {opt(<Sticker emoji="stk:piggy" size={22} />, t("giveGroup"), t("giveGroupSub"), onGroup, false)}
     </Sheet>
   );
 }
@@ -2786,7 +2786,7 @@ function BirthdayCard({ birthday, onSave }) {
   return (
     <>
       <Card onClick={() => { haptic("light"); setOpen(true); }} style={{ marginTop: 24, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}>
-        <div style={{ width: LIST.icon, display: "flex", justifyContent: "center", flexShrink: 0, transform: "rotate(-8deg)" }}><Sticker emoji="stk:candle" size={30} /></div>
+        <div style={{ width: LIST.icon, display: "flex", justifyContent: "center", flexShrink: 0, transform: "rotate(-8deg)" }}><Sticker emoji="stk:cake" size={30} /></div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ color: C.t2, fontSize: 13, fontWeight: 600 }}>{t("myBday")}</div>
           <div style={{ color: next ? C.t1 : "#7FB0FF", fontSize: 16, fontWeight: 700, marginTop: 4 }}>{next ? dayMonth : t("myBdayEmpty")}</div>
