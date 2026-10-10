@@ -109,16 +109,18 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .av+.av{margin-left:-8px}
 
 .folder{position:absolute;left:50%;top:50%;width:280px;height:250px;margin:-125px 0 0 -140px;z-index:3}
-.folder .back{position:absolute;left:8%;right:8%;top:16%;bottom:10%;border-radius:22px;background:#1B4FA8}
+.folder .back{position:absolute;left:8%;right:8%;top:16%;bottom:10%;border-radius:22px;background:rgba(46,125,246,.32)}
+.folder .ph{position:absolute;inset:0}
+.folder .fr{position:absolute;inset:0;background:linear-gradient(180deg,rgba(46,125,246,.42),rgba(46,125,246,.26));-webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%)}
 .folder .layer{position:absolute;inset:0;transform-origin:50% 100%}
 .folder .layer.sq{animation:squish .5s ease}
-.folder svg{position:absolute;inset:0;overflow:visible;filter:drop-shadow(0 26px 40px rgba(10,60,140,.35))}
+.folder .ph svg{position:absolute;inset:0;overflow:visible}
 .folder .gc{position:absolute;width:92px;height:104px;border-radius:12px;background:var(--card2);border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding-top:10px}
 .folder .gc img{width:72px}
 .folder .on{position:absolute;width:80px;pointer-events:none;transform:rotate(var(--r));filter:drop-shadow(0 6px 10px rgba(10,40,110,.22))}
 .folder .on.pop{animation:popr .45s cubic-bezier(.2,.9,.3,1.3)}
 @keyframes popr{from{transform:rotate(var(--r)) scale(1.2)}to{transform:rotate(var(--r))}}
-.folder.hot svg{filter:drop-shadow(0 0 0 4px #fff) drop-shadow(0 26px 40px rgba(10,60,140,.35))}
+.folder.hot .fr{background:linear-gradient(180deg,rgba(46,125,246,.62),rgba(46,125,246,.42))}
 @keyframes squish{0%,100%{transform:none}35%{transform:scale(1.08,.86)}65%{transform:scale(.96,1.05)}}
 
 .stk{position:absolute;width:112px;z-index:4;cursor:grab;touch-action:none;animation:bob 5s ease-in-out infinite;filter:drop-shadow(0 18px 14px rgba(0,30,90,.38))}
@@ -158,8 +160,10 @@ h2{font-size:clamp(32px,4.8vw,56px);font-weight:700;letter-spacing:-.04em;line-h
 .mini .fr{position:absolute;inset:0;z-index:3;-webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%)}
 .mini .st{position:absolute;left:14%;top:44%;width:58px;z-index:4;transform:rotate(-8deg)}
 .mini .avs{position:absolute;right:11%;bottom:12%;z-index:4;display:flex}
-.mini .avs b{width:24px;height:24px;border-radius:50%;color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #161618}
+.mini .avs b{width:24px;height:24px;border-radius:50%;color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .mini .avs b+b{margin-left:-8px}
+/* each avatar except the last has a bite where the next one overlaps, like in the app */
+.mini .avs b:not(:last-child){-webkit-mask-image:radial-gradient(circle at 32px 50%,transparent 13.7px,#000 14.2px);mask-image:radial-gradient(circle at 32px 50%,transparent 13.7px,#000 14.2px)}
 .feat{border-radius:26px;padding:16px 24px 16px 16px;display:flex;gap:12px;align-items:center}
 .feat img{width:52px;height:52px;object-fit:contain;flex-shrink:0;transform:rotate(-6deg);transition:transform .5s cubic-bezier(.2,.9,.3,1.3)}
 .feat:hover img{transform:rotate(6deg) scale(1.1)}
@@ -236,8 +240,8 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
     <h1 class="rv" data-t="title"></h1>
     <div class="stage rv d1" id="stage">
       <div class="folder" id="folder">
-        <div class="layer" id="lb"><div class="back"></div><div class="gc" style="left:22%;top:6%;transform:rotate(-9deg)"><img src="/stickers/headphones.webp" alt="" /></div><div class="gc" style="left:47%;top:3%;transform:rotate(7deg)"><img src="/stickers/candle.webp" alt="" /></div><div class="gc" style="left:62%;top:10%;transform:rotate(15deg)"><img src="/stickers/sneakers.webp" alt="" /></div></div>
-        <div class="layer" id="lf"><svg width="280" height="250"><defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AA2FF"/><stop offset="1" stop-color="#2E7DF6"/></linearGradient></defs><path id="fp" fill="url(#fg)"/></svg></div>
+        <div class="layer" id="lb"><div class="back"></div><div class="ph" id="fph"><div class="gc" style="left:22%;top:6%;transform:rotate(-9deg)"><img src="/stickers/headphones.webp" alt="" /></div><div class="gc" style="left:47%;top:3%;transform:rotate(7deg)"><img src="/stickers/candle.webp" alt="" /></div><div class="gc" style="left:62%;top:10%;transform:rotate(15deg)"><img src="/stickers/sneakers.webp" alt="" /></div></div></div>
+        <div class="layer" id="lf"><div class="fr" id="ffr"></div></div>
       </div>
     </div>
     <div class="hint rv d1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg><span data-t="hint"></span></div>
@@ -413,7 +417,13 @@ function folderPath(w, h, onlyTop) {
   if (onlyTop) return top;
   return `${top} L ${x1} ${y1 - r} Q ${x1} ${y1} ${x1 - r} ${y1} L ${x0 + r} ${y1} Q ${x0} ${y1} ${x0} ${y1 - r} Z`;
 }
-document.getElementById("fp").setAttribute("d", folderPath(280, 250));
+{
+  const full = folderPath(280, 250), cut = `path(evenodd, 'M -60 -60 H 340 V 310 H -60 Z ${full}')`;
+  const ph = document.getElementById("fph"), fr = document.getElementById("ffr");
+  ph.style.clipPath = ph.style.webkitClipPath = cut;
+  fr.style.clipPath = fr.style.webkitClipPath = `path('${full}')`;
+  ph.insertAdjacentHTML("beforeend", `<svg width="280" height="250"><defs><filter id="hfs" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="5"/></filter><clipPath id="hfc"><rect x="18" y="0" width="244" height="250"/></clipPath></defs><g clip-path="url(#hfc)"><path d="${folderPath(280, 250, true)}" fill="none" stroke="rgba(0,0,0,.4)" stroke-width="12" filter="url(#hfs)"/></g></svg>`);
+}
 const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
 const SPOTS = [{ l: 33, t: 2, r: 0, z: 2 }, { l: 9, t: 16, r: -10, z: 1 }, { l: 57, t: 12, r: 9, z: 1 }];
 const AVS = [["#7B61FF", "Я"], ["#FF9F0A", "А"], ["#34C759", "Б"]];

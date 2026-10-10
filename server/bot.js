@@ -69,6 +69,11 @@ const COMMANDS = {
   ru: [["app", "Открыть вишлист"], ["add", "Как добавить желание"], ["help", "Что умеет бот"]],
   en: [["app", "Open my wishlist"], ["add", "How to add a wish"], ["help", "What the bot can do"]],
 };
+const BOT_ABOUT = {
+  uk: "Wishpool: вішлисти для друзів, пари та днів народження ⭐\n\n🎁 Додавай бажання: надішли посилання, фото або просто текст\n👥 Ділись у кімнатах: друзі бачать тільки те, що ти обрав\n🤫 Друзі домовляються, хто що дарує, а ти не знаєш, що саме обрали\n🎂 Нагадаємо про дні народження\n\nТисни «Почати» 👇",
+  ru: "Wishpool: вишлисты для друзей, пары и дней рождения ⭐\n\n🎁 Добавляй желания: пришли ссылку, фото или просто текст\n👥 Делись в комнатах: друзья видят только то, что ты выбрал\n🤫 Друзья договариваются, кто что дарит, а ты не знаешь, что именно выбрали\n🎂 Напомним о днях рождения\n\nЖми «Начать» 👇",
+  en: "Wishpool: wishlists for friends, couples and birthdays ⭐\n\n🎁 Add wishes: send a link, a photo or just text\n👥 Share in rooms: friends see only what you choose\n🤫 Friends agree on who gives what, and you never know which gift was picked\n🎂 We'll remind you about birthdays\n\nTap \"Start\" 👇",
+};
 export async function ensureBotMenu(token) {
   const base = publicUrl();
   if (!token || !base) return;
@@ -87,6 +92,12 @@ export async function ensureBotMenu(token) {
       tg(token, "setMyShortDescription", { short_description: "Wishpool · wishlists for friends, couples and birthdays" }),
       tg(token, "setMyShortDescription", { short_description: "Wishpool · вішлисти для друзів, пари та днів народження", language_code: "uk" }),
       tg(token, "setMyShortDescription", { short_description: "Wishpool · вишлисты для друзей, пары и дней рождения", language_code: "ru" }),
+      // "What can this bot do?" above the Start button, in the person's Telegram language
+      // (Ukrainian for everyone else, like the rest of the app)
+      ...Object.entries(BOT_ABOUT).flatMap(([l, text]) => [
+        tg(token, "setMyDescription", { description: text, language_code: l }),
+        ...(l === "uk" ? [tg(token, "setMyDescription", { description: text })] : []),
+      ]),
     ]);
     console.log("bot menu set");
   } catch (e) { console.error("bot menu failed", e.message); }

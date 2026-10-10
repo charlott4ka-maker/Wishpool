@@ -1138,6 +1138,7 @@ export default function App() {
     <div style={{ background: C.bg, minHeight: "100vh", display: "flex", justifyContent: "center", fontFamily: font, fontWeight: 500 }}>
       <StickerDefs />
       <style>{`
+        @font-face{font-family:"Gochi Hand";font-weight:400;font-display:swap;src:url(/gochi-hand.woff2) format("woff2")}
         *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         body,input,button,textarea,select{font-weight:500;font-family:inherit}
         input::placeholder{font-weight:500}
@@ -3025,7 +3026,7 @@ function ObHero() {
           transform: orbit ? "scale(.62) rotate(-6deg)" : "scale(1) rotate(-4deg)", transition: "transform .7s cubic-bezier(.2,.8,.2,1)" }}>
           {/* back and front bounce together on each catch; the falling sticker sits between them */}
           <div key={"b" + squish} style={{ position: "absolute", inset: 0, animation: squishAnim, transformOrigin: "50% 100%" }}>
-            <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 18, background: "#1B4FA8" }} />
+            <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 18, background: hex(C.blue, 0.32) }} />
           </div>
           {drop > 0 && !orbit && (
             <div key={"d" + drop} style={{ position: "absolute", left: "50%", top: "22%", animation: "obDrop .78s cubic-bezier(.45,0,.6,1) forwards" }}>
@@ -3033,15 +3034,19 @@ function ObHero() {
             </div>
           )}
           <div key={"f" + squish} style={{ position: "absolute", inset: 0, animation: squishAnim, transformOrigin: "50% 100%" }}>
-            <svg width={W} height={Hh} style={{ position: "absolute", inset: 0, overflow: "visible" }} aria-hidden="true">
-              <defs><linearGradient id="obf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4A93FF" /><stop offset="1" stopColor="#2E7DF6" /></linearGradient></defs>
-              <path d={fp.full} fill="url(#obf)" />
-            </svg>
+            {/* frosted front, the same glass as the room folders */}
+            <div style={{ position: "absolute", inset: 0, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
+              background: `linear-gradient(180deg, ${hex(C.blue, 0.42)} 0%, ${hex(C.blue, 0.26)} 100%)`,
+              backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)" }} />
           </div>
         </div>
       </div>
       <div style={{ padding: "0 4px" }}>
-        <div style={{ color: C.t1, fontSize: 30, fontWeight: 800, letterSpacing: -0.6 }}>Wishpool.</div>
+        {/* the brand mark: our star and the hand-lettered name */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <img src="/about/star.png" alt="" style={{ width: 44, height: 44, objectFit: "contain", transform: "rotate(-6deg)" }} />
+          <span style={{ color: C.t1, fontFamily: '"Gochi Hand", cursive', fontWeight: 400, fontSize: 36, lineHeight: 1 }}>Wishpool</span>
+        </div>
         <div style={{ color: C.t2, fontSize: 17, lineHeight: 1.4, marginTop: 8, minHeight: 48 }}>
           {line}<span style={{ animation: "obBlink 1s steps(1) infinite", color: C.t1 }}>_</span>
         </div>
