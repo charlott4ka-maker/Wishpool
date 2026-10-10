@@ -2885,7 +2885,7 @@ function BirthdaySheet({ birthday, onSave, onClose }) {
 // First-launch intro, one animated screen on a loop: wish stickers drop into
 // the folder (it bounces as it catches each one), then the folder shrinks and
 // stickers orbit around it. The line under "Wishpool." types itself out.
-const OB_DROP = ["stk:headphones", "stk:cake", "stk:kitty", "stk:gift"];
+const OB_DROP = ["stk:headphones", "stk:kitty"];
 const OB_RING1 = ["stk:ring", "stk:plane", "stk:gamepad"];
 const OB_RING2 = ["stk:matcha", "stk:sneakers", "stk:picture", "stk:lipstick"];
 function useTypewriter(text) {
@@ -2987,8 +2987,10 @@ function useScript(steps, total) {
 }
 function MiniPhone({ children, finger, tap }) {
   return (
+    // the frame melts into the background towards the bottom (outline included)
     <div style={{ width: OB_W * OB_S, height: OB_H * OB_S, borderRadius: 34, overflow: "hidden", position: "relative",
-      background: C.bg, boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 24px 60px rgba(46,125,246,0.18)" }}>
+      background: C.bg, border: "1px solid rgba(255,255,255,0.14)",
+      WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)", maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)" }}>
       <div style={{ width: OB_W, height: OB_H, transform: `scale(${OB_S})`, transformOrigin: "0 0", position: "relative", pointerEvents: "none" }}>
         {children}
         {finger && (
