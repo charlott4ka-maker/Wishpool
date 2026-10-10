@@ -8,7 +8,7 @@
 <meta property="og:title" content="Wishpool" />
 <meta property="og:description" content="Вішлисти для друзів, пари та днів народження в Telegram." />
 <meta property="og:image" content="/about/logo.png" />
-<meta name="theme-color" content="#2C9BE0" />
+<meta name="theme-color" content="#1A5FD0" />
 <link rel="icon" href="/about/logo.png" />
 <link rel="preload" as="image" href="/about/pool.webp" />
 <style>
@@ -27,17 +27,17 @@
   --lg:52px; --sm:40px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth;background:#2C9BE0}
+html{scroll-behavior:smooth;background:#1A5FD0}
 body{font-family:Montserrat,system-ui,sans-serif;font-weight:500;color:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 img{display:block;-webkit-user-drag:none;user-select:none}
 
 /* pool water: the photo plus a second, slower copy drifting over it so the light ripples */
-.water{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#2C9BE0}
+.water{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#1A5FD0}
 .water i{position:absolute;inset:-12%;background:url(/about/pool.webp) center/cover}
 .water i:nth-child(1){animation:sway 26s ease-in-out infinite alternate}
 .water i:nth-child(2){opacity:.38;mix-blend-mode:screen;transform:scale(1.25) rotate(180deg);animation:sway2 19s ease-in-out infinite alternate}
-.water b{position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,104,214,.62) 0%,rgba(30,140,230,.18) 45%,rgba(20,120,220,.38) 100%)}
+.water b{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,72,184,.86) 0%,rgba(28,104,226,.66) 45%,rgba(16,70,176,.84) 100%);mix-blend-mode:multiply}
 @keyframes sway{to{transform:translate(3%,2%) scale(1.04)}}
 @keyframes sway2{to{transform:scale(1.25) rotate(180deg) translate(4%,3%)}}
 
@@ -90,7 +90,7 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .hcard .t{font-weight:700;font-size:15px;line-height:1.35}
 .hcard .s{color:var(--ink2);font-size:12.5px;margin-top:4px}
 .hcard .row{display:flex;align-items:center;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:#E9F2FF;color:var(--blue);font-weight:700;font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;white-space:nowrap;border-radius:999px;background:#E9F2FF;color:var(--blue);font-weight:700;font-size:12px}
 .chip.green{background:#E3F8EA;color:#1F9D55}
 .av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;box-shadow:0 0 0 2px #fff}
 .av+.av{margin-left:-8px}
@@ -151,7 +151,7 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
 .badge{position:fixed;right:28px;top:50%;width:150px;height:150px;margin-top:-75px;z-index:20;display:none}
 .badge svg{position:absolute;inset:0;filter:drop-shadow(0 14px 30px rgba(10,60,140,.3))}
 .badge .spin{position:absolute;inset:0;will-change:transform}
-.badge img{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px}
+.badge img{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px 0 0 -33px;object-fit:contain;transform:rotate(-8deg)}
 @media (min-width:1180px){.badge{display:block}}
 
 .rv{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
@@ -165,7 +165,8 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
   .stage{height:440px;margin-top:8px}
   .c-wish{left:0!important;top:10%!important;width:138px!important;padding:12px!important;z-index:4}
   .c-wish img{width:54px!important}
-  .c-cand{right:0!important;left:auto!important;top:auto!important;bottom:6%;width:160px!important;padding:12px!important;z-index:4}
+  .c-cand{right:0!important;left:auto!important;top:auto!important;bottom:6%;width:auto!important;padding:12px 14px!important;z-index:4}
+  .c-cand .chip{font-size:11.5px;padding:0 10px}
   .folder{transform:scale(.72)}
   .hide-m{display:none}
   .stk{width:76px}
@@ -202,7 +203,7 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
 
 <a class="badge" href="https://t.me/wishpool_bot/app" aria-label="Wishpool">
   <div class="spin" id="badgeSpin"><svg viewBox="0 0 150 150" id="badgeSvg"></svg></div>
-  <img src="/about/logo.png" alt="" />
+  <img src="/stickers/uno.webp" alt="" />
 </a>
 
 <main id="top">
@@ -437,6 +438,7 @@ const STK = [
   { s: "lipstick", x: 8, y: 72, d: -2.4 }, { s: "gift", x: 80, y: 76, d: -3.1 },
 ];
 function squish() { [lb, lf].forEach(l => { l.classList.remove("sq"); void l.offsetWidth; l.classList.add("sq"); }); }
+if (matchMedia("(max-width:860px)").matches) Object.assign(STK[3], { x: 26, y: 82 });
 STK.forEach(o => {
   const el = document.createElement("div");
   el.className = "stk"; el.style.left = o.x + "%"; el.style.top = o.y + "%"; el.style.animationDelay = o.d + "s";
