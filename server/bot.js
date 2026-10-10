@@ -70,18 +70,19 @@ const COMMANDS = {
   en: [["app", "Open my wishlist"], ["add", "How to add a wish"], ["help", "What the bot can do"]],
 };
 const BOT_ABOUT = {
-  uk: "Wishpool: вішлисти для друзів, пари та днів народження ⭐\n\n🎁 Додавай бажання: надішли посилання, фото або просто текст\n👥 Ділись у кімнатах: друзі бачать тільки те, що ти обрав\n🤫 Друзі домовляються, хто що дарує, а ти не знаєш, що саме обрали\n🎂 Нагадаємо про дні народження\n\nТисни «Почати» 👇",
-  ru: "Wishpool: вишлисты для друзей, пары и дней рождения ⭐\n\n🎁 Добавляй желания: пришли ссылку, фото или просто текст\n👥 Делись в комнатах: друзья видят только то, что ты выбрал\n🤫 Друзья договариваются, кто что дарит, а ты не знаешь, что именно выбрали\n🎂 Напомним о днях рождения\n\nЖми «Начать» 👇",
-  en: "Wishpool: wishlists for friends, couples and birthdays ⭐\n\n🎁 Add wishes: send a link, a photo or just text\n👥 Share in rooms: friends see only what you choose\n🤫 Friends agree on who gives what, and you never know which gift was picked\n🎂 We'll remind you about birthdays\n\nTap \"Start\" 👇",
+  uk: "Wishpool: вішлисти для друзів, пари та днів народження ⭐\n\n🎁 Додавай бажання: надішли посилання, фото або просто текст\n👥 Ділись у кімнатах: друзі бачать тільки те, що ти обрав\n🤫 Друзі домовляються, хто що дарує, а ти не знаєш, що саме обрали\n🎂 Нагадаємо про дні народження\n\nВідкрий Wishpool кнопкою внизу 👇",
+  ru: "Wishpool: вишлисты для друзей, пары и дней рождения ⭐\n\n🎁 Добавляй желания: пришли ссылку, фото или просто текст\n👥 Делись в комнатах: друзья видят только то, что ты выбрал\n🤫 Друзья договариваются, кто что дарит, а ты не знаешь, что именно выбрали\n🎂 Напомним о днях рождения\n\nОткрой Wishpool кнопкой внизу 👇",
+  en: "Wishpool: wishlists for friends, couples and birthdays ⭐\n\n🎁 Add wishes: send a link, a photo or just text\n👥 Share in rooms: friends see only what you choose\n🤫 Friends agree on who gives what, and you never know which gift was picked\n🎂 We'll remind you about birthdays\n\nOpen Wishpool with the button below 👇",
 };
 export async function ensureBotMenu(token) {
   const base = publicUrl();
   if (!token || !base) return;
   try {
     // only when something differs, so a cold start normally costs two quick reads
-    const [mine, btn] = await Promise.all([tg(token, "getMyCommands", {}), tg(token, "getChatMenuButton", {})]);
+    const [mine, btn, about] = await Promise.all([tg(token, "getMyCommands", {}), tg(token, "getChatMenuButton", {}), tg(token, "getMyDescription", {})]);
     const same = mine && mine.ok && JSON.stringify((mine.result || []).map(c => [c.command, c.description])) === JSON.stringify(COMMANDS.en)
-      && btn && btn.result && btn.result.type === "web_app" && btn.result.web_app && btn.result.web_app.url === base;
+      && btn && btn.result && btn.result.type === "web_app" && btn.result.web_app && btn.result.web_app.url === base
+      && about && about.result && about.result.description === BOT_ABOUT.uk;
     if (same) return;
     const cmds = (l) => COMMANDS[l].map(([command, description]) => ({ command, description }));
     await Promise.all([
