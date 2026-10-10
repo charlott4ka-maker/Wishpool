@@ -3,6 +3,10 @@
   "outputDirectory": "web/dist",
   "rewrites": [
     {
+      "source": "/about",
+      "destination": "/about/index.html"
+    },
+    {
       "source": "/p/:path*",
       "destination": "https://pub-f403a898e7fa471f804e291a1fdc1c66.r2.dev/:path*"
     },
