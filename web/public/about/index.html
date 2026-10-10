@@ -37,6 +37,7 @@ img{display:block;-webkit-user-drag:none;user-select:none}
 .water i{position:absolute;inset:-12%;background:url(/about/pool.webp) center/cover}
 .water i:nth-child(1){animation:sway 26s ease-in-out infinite alternate}
 .water i:nth-child(2){opacity:.38;mix-blend-mode:screen;transform:scale(1.25) rotate(180deg);animation:sway2 19s ease-in-out infinite alternate}
+.water u{position:absolute;inset:0;background:linear-gradient(180deg,#0B3C9A,#061F5C);opacity:0;will-change:opacity}
 .water b{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,72,184,.86) 0%,rgba(28,104,226,.66) 45%,rgba(16,70,176,.84) 100%);mix-blend-mode:multiply}
 @keyframes sway{to{transform:translate(3%,2%) scale(1.04)}}
 @keyframes sway2{to{transform:scale(1.25) rotate(180deg) translate(4%,3%)}}
@@ -85,7 +86,7 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .hero{padding:132px 16px 72px;text-align:center}
 .hero h1{font-size:clamp(44px,8.4vw,108px);font-weight:700;letter-spacing:-.045em;line-height:.98;max-width:980px;margin:0 auto;
   -webkit-mask-image:linear-gradient(180deg,#000 50%,rgba(0,0,0,.28) 100%);mask-image:linear-gradient(180deg,#000 50%,rgba(0,0,0,.28) 100%)}
-.stage{position:relative;height:420px;max-width:1000px;margin:-56px auto 0;touch-action:pan-y}
+.stage{-webkit-user-select:none;user-select:none;position:relative;height:420px;max-width:1000px;margin:-56px auto 0;touch-action:pan-y}
 .hcard{position:absolute;background:#fff;color:var(--ink);border-radius:24px;padding:16px;box-shadow:0 20px 50px rgba(10,60,140,.22);text-align:left}
 .hcard .t{font-weight:700;font-size:15px;line-height:1.35}
 .hcard .s{color:var(--ink2);font-size:12.5px;margin-top:4px}
@@ -100,7 +101,11 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .folder .layer{position:absolute;inset:0;transform-origin:50% 100%}
 .folder .layer.sq{animation:squish .5s ease}
 .folder svg{position:absolute;inset:0;overflow:visible;filter:drop-shadow(0 26px 40px rgba(10,60,140,.35))}
-.folder .count{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);color:#fff;font-weight:700;font-size:13px;opacity:.9;white-space:nowrap}
+.folder .gc{position:absolute;width:92px;height:104px;border-radius:20px;background:#fff;box-shadow:0 8px 24px rgba(10,40,110,.28);display:flex;align-items:flex-start;justify-content:center;padding-top:10px}
+.folder .gc img{width:72px}
+.folder .on{position:absolute;width:74px;pointer-events:none;transform:rotate(var(--r));filter:drop-shadow(0 6px 10px rgba(10,40,110,.22))}
+.folder .on.pop{animation:popr .45s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes popr{from{transform:rotate(var(--r)) scale(1.2)}to{transform:rotate(var(--r))}}
 .folder.hot svg{filter:drop-shadow(0 0 0 4px #fff) drop-shadow(0 26px 40px rgba(10,60,140,.35))}
 @keyframes squish{0%,100%{transform:none}35%{transform:scale(1.08,.86)}65%{transform:scale(.96,1.05)}}
 
@@ -108,7 +113,7 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .stk img{width:100%;pointer-events:none}
 .stk.drag{cursor:grabbing;animation:none;z-index:10;transition:none}
 .stk.back{transition:left .5s cubic-bezier(.2,1.4,.4,1),top .5s cubic-bezier(.2,1.4,.4,1)}
-.stk.in{transition:left .35s ease,top .35s ease,transform .35s ease,opacity .35s ease;transform:scale(.3)!important;opacity:0;animation:none}
+.stk.in{transition:left .35s ease,top .35s ease,transform .35s ease,opacity .35s ease;transform:scale(.77)!important;animation:none}
 .stk.pop{animation:pop .5s cubic-bezier(.2,.9,.3,1.3)}
 @keyframes bob{50%{transform:translateY(-10px) rotate(4deg)}}
 @keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
@@ -163,10 +168,6 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
   .bar .sp{flex:1}
   .hero{padding-top:112px}
   .stage{height:440px;margin-top:8px}
-  .c-wish{left:0!important;top:10%!important;width:138px!important;padding:12px!important;z-index:4}
-  .c-wish img{width:54px!important}
-  .c-cand{right:0!important;left:auto!important;top:auto!important;bottom:6%;width:auto!important;padding:12px 14px!important;z-index:4}
-  .c-cand .chip{font-size:11.5px;padding:0 10px}
   .folder{transform:scale(.72)}
   .hide-m{display:none}
   .stk{width:76px}
@@ -181,7 +182,7 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
 </style>
 </head>
 <body>
-<div class="water"><i></i><i></i><b></b></div>
+<div class="water"><i></i><i></i><b></b><u id="dim"></u></div>
 
 <header>
   <div class="bar">
@@ -214,23 +215,14 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
         <div class="t" data-t="c1"></div>
         <a class="btn sm dark" style="margin-top:12px;width:100%" href="https://t.me/wishpool_bot/app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg><span data-t="c1b"></span></a>
       </div>
-      <div class="hcard c-wish" style="left:25%;top:12%;width:170px;transform:rotate(-3deg)" id="cardWish">
-        <img src="/stickers/headphones.webp" alt="" style="width:76px;margin:-6px 0 4px -4px" />
-        <div class="t" data-t="c2"></div>
-        <div class="s">4 200 ₴</div>
-      </div>
-      <div class="hcard c-cand" style="right:23%;top:58%;width:186px;transform:rotate(4deg)">
-        <div class="row"><img src="/stickers/candle.webp" alt="" style="width:40px" /><div><div class="t" data-t="c3"></div><div class="s">650 ₴</div></div></div>
-        <div class="chip green" style="margin-top:10px"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span data-t="c3b"></span></div>
-      </div>
       <div class="hcard hide-m" style="right:2%;top:20%;width:210px;transform:rotate(6deg)">
         <div class="t" data-t="c4"></div>
         <div class="row" style="margin-top:10px"><div class="av" style="background:#7B61FF">Я</div><div class="av" style="background:#FF4D8D">А</div><div class="av" style="background:#34C759">Б</div><span class="s" style="margin:0 0 0 8px" data-t="c4s"></span></div>
         <div class="chip" style="margin-top:10px" data-t="c4c"></div>
       </div>
       <div class="folder" id="folder">
-        <div class="layer" id="lb"><div class="back"></div></div>
-        <div class="layer" id="lf"><svg width="280" height="250"><defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AA2FF"/><stop offset="1" stop-color="#2E7DF6"/></linearGradient></defs><path id="fp" fill="url(#fg)"/></svg><div class="count" id="count"></div></div>
+        <div class="layer" id="lb"><div class="back"></div><div class="gc" style="left:22%;top:6%;transform:rotate(-9deg)"><img src="/stickers/headphones.webp" alt="" /></div><div class="gc" style="left:47%;top:3%;transform:rotate(7deg)"><img src="/stickers/candle.webp" alt="" /></div><div class="gc" style="left:62%;top:10%;transform:rotate(15deg)"><img src="/stickers/sneakers.webp" alt="" /></div></div>
+        <div class="layer" id="lf"><svg width="280" height="250"><defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AA2FF"/><stop offset="1" stop-color="#2E7DF6"/></linearGradient></defs><path id="fp" fill="url(#fg)"/></svg></div>
       </div>
     </div>
     <div class="hint rv d1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg><span data-t="hint"></span></div>
@@ -386,7 +378,6 @@ function apply() {
   });
   document.getElementById("langCur").textContent = L.short;
   document.querySelectorAll(".menu button").forEach(b => b.classList.toggle("on", b.dataset.l === lang));
-  document.getElementById("count").textContent = inFolder ? L.count(inFolder) : "";
   drawBadge();
 }
 const langBox = document.getElementById("lang");
@@ -397,11 +388,14 @@ document.querySelectorAll(".menu button").forEach(b => b.onclick = () => {
 });
 
 // scroll: progress line in the header, the badge spins as the page moves
-const prog = document.getElementById("prog"), spin = document.getElementById("badgeSpin");
+const dim = document.getElementById("dim"), prog = document.getElementById("prog"), spin = document.getElementById("badgeSpin");
 const onScroll = () => {
   const h = document.documentElement.scrollHeight - innerHeight;
   prog.style.transform = `scaleX(${h > 0 ? Math.min(1, scrollY / h) : 0})`;
   spin.style.transform = `rotate(${scrollY * 0.25}deg)`;
+  // light only on the first screen, then the pool gets deeper towards the bottom
+  const d = h > innerHeight * .3 ? (scrollY - innerHeight * .3) / (h - innerHeight * .3) : 0;
+  dim.style.opacity = (Math.max(0, Math.min(1, d)) * .72).toFixed(3);
 };
 addEventListener("scroll", onScroll, { passive: true }); onScroll();
 
@@ -437,6 +431,8 @@ const STK = [
   { s: "kitty", x: 18, y: 4, d: 0 }, { s: "cake", x: 70, y: 0, d: -1.2 },
   { s: "lipstick", x: 8, y: 72, d: -2.4 }, { s: "gift", x: 80, y: 76, d: -3.1 },
 ];
+// where dropped stickers land on the folder front (folder px, 280x250)
+const SLOT = [{ x: 92, y: 150, r: -10 }, { x: 190, y: 148, r: 9 }, { x: 140, y: 196, r: 4 }, { x: 222, y: 200, r: -7 }];
 function squish() { [lb, lf].forEach(l => { l.classList.remove("sq"); void l.offsetWidth; l.classList.add("sq"); }); }
 if (matchMedia("(max-width:860px)").matches) Object.assign(STK[3], { x: 26, y: 82 });
 STK.forEach(o => {
@@ -461,11 +457,16 @@ STK.forEach(o => {
     if (!el.classList.contains("drag")) return;
     el.classList.remove("drag"); folder.classList.remove("hot");
     if (moved && over(el)) {
-      const fr = folder.getBoundingClientRect(), sr = stage.getBoundingClientRect(), w = el.offsetWidth;
+      const slot = SLOT[inFolder++ % SLOT.length], fr = folder.getBoundingClientRect(), sr = stage.getBoundingClientRect(), w = el.offsetWidth, k = fr.width / 280;
       el.classList.add("in");
-      el.style.left = fr.left - sr.left + fr.width / 2 - w / 2 + "px"; el.style.top = fr.top - sr.top + fr.height * .45 - w / 2 + "px";
-      setTimeout(() => { squish(); inFolder++; document.getElementById("count").textContent = T[lang].count(inFolder); }, 300);
-      setTimeout(() => { el.classList.remove("in"); el.style.left = o.x + "%"; el.style.top = o.y + "%"; el.classList.add("pop"); }, 1500);
+      el.style.left = fr.left - sr.left + slot.x * k - w / 2 + "px"; el.style.top = fr.top - sr.top + slot.y * k - w / 2 + "px";
+      setTimeout(() => {
+        el.remove(); squish();
+        const img = document.createElement("img");
+        img.className = "on pop"; img.src = `/stickers/${o.s}.webp`; img.alt = "";
+        Object.assign(img.style, { left: slot.x - 37 + "px", top: slot.y - 37 + "px" }); img.style.setProperty("--r", slot.r + "deg");
+        lf.appendChild(img);
+      }, 330);
     } else { el.classList.add("back"); el.style.left = o.x + "%"; el.style.top = o.y + "%"; }
   };
   el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
