@@ -361,8 +361,8 @@ const STR = {
   history: { uk: "Історія подарунків", ru: "История подарков", en: "Gift history" },
   myInvites: { uk: "Мої запрошення", ru: "Мои приглашения", en: "My invites" },
   invitedByYou: { uk: "запрошений тобою", ru: "приглашён тобой", en: "invited by you" },
-  invitedNobody: { uk: "Ти ще нікого не запросила", ru: "Ты пока никого не пригласила", en: "You haven't invited anyone yet" },
-  invitedNobodySub: { uk: "Поділись кімнатою, і люди зʼявляться тут", ru: "Поделись комнатой, и люди появятся здесь", en: "Share a room and people will show up here" },
+  invitedNobody: { uk: "Поки ніхто не прийшов за твоїм запрошенням", ru: "Пока никто не пришёл по твоему приглашению", en: "Nobody has joined from your invites yet" },
+  invitedNobodySub: { uk: "Поклич друзів у Wishpool або в одну зі своїх кімнат", ru: "Позови друзей в Wishpool или в одну из своих комнат", en: "Invite friends to Wishpool or to one of your rooms" },
   loadingInv: { uk: "Завантаження…", ru: "Загрузка…", en: "Loading…" },
   creating: { uk: "Створюємо…", ru: "Создаём…", en: "Creating…" },
   savingWish: { uk: "Зберігаємо…", ru: "Сохраняем…", en: "Saving…" },
@@ -387,6 +387,11 @@ const STR = {
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
 
   linkCopied: { uk: "Посилання скопійовано", ru: "Ссылка скопирована", en: "Link copied" },
+  shareWhere: { uk: "Куди запросити?", ru: "Куда пригласить?", en: "Invite to where?" },
+  shareApp: { uk: "Просто в Wishpool", ru: "Просто в Wishpool", en: "Just to Wishpool" },
+  shareAppSub: { uk: "Посилання на застосунок, без кімнати", ru: "Ссылка на приложение, без комнаты", en: "A link to the app, no room" },
+  shareOrRoom: { uk: "Або в кімнату", ru: "Или в комнату", en: "Or to a room" },
+  inviteAppText: { uk: "Я збираю вішлист у Wishpool. Приєднуйся, щоб дарувати одне одному те, що справді хочеться 🎁", ru: "Я собираю вишлист в Wishpool. Присоединяйся, чтобы дарить друг другу то, что правда хочется 🎁", en: "I'm making a wishlist on Wishpool. Join so we can give each other things we actually want 🎁" },
   inviteText: { uk: "Залітай у кімнату «{name}» у Wishpool, зберемо вішлисти й обміняємось подарунками 🎁", ru: "Залетай в комнату «{name}» в Wishpool, соберём вишлисты и обменяемся подарками 🎁", en: "Join the «{name}» room in Wishpool, let's build wishlists and swap gifts 🎁" },
 };
 
@@ -979,11 +984,11 @@ export default function App() {
     showToast(t(fromRoom ? "wishAddedRoom" : "wishAdded"));
   };
 
+  // room: invite into that room; no room: just to the app
   const shareInvite = (room) => {
-    if (!room) return;
-    const tail = (online && me && me.id) ? `${room.id}__${me.id}` : room.id;
-    const link = `https://t.me/wishpool_bot/app?startapp=${tail}`;
-    const text = t("inviteText", { name: room.name });
+    const tail = room ? ((online && me && me.id) ? `${room.id}__${me.id}` : room.id) : "";
+    const link = `https://t.me/wishpool_bot/app${tail ? "?startapp=" + tail : ""}`;
+    const text = room ? t("inviteText", { name: room.name }) : t("inviteAppText");
     const tg = tgWebApp();
     if (tg && tg.openTelegramLink) {
       tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
@@ -1778,9 +1783,41 @@ function EditRoomSheet({ room, onClose, onSave }) {
 }
 
 /* ---------- MY INVITES (who you invited) ---------- */
+// "Share" without a room in mind: invite just to the app, or pick the room.
+function ShareChooser({ rooms, onShare, onClose }) {
+  const { t } = useT();
+  const row = (key, icon, title, sub, onClick) => (
+    <button key={key} onClick={() => { haptic("light"); onClick(); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: LIST.gap, padding: "12px 0", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontFamily: font }}>
+      {icon}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: C.t1, fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</div>
+        {sub && <div style={{ color: C.t2, fontSize: 13, marginTop: 2 }}>{sub}</div>}
+      </div>
+      <ChevronRight size={20} color={C.t3} />
+    </button>
+  );
+  return (
+    <Sheet title={t("shareWhere")} onClose={onClose}>
+      <Card style={{ padding: `4px ${LIST.pad}px` }}>
+        {row("app", <div style={{ width: LIST.icon, height: LIST.icon, borderRadius: "50%", background: C.blueSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Send size={18} color="#7FB0FF" /></div>, t("shareApp"), t("shareAppSub"), () => onShare(null))}
+      </Card>
+      {rooms.length > 0 && <>
+        <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "24px 0 8px" }}>{t("shareOrRoom")}</div>
+        <Card style={{ padding: `4px ${LIST.pad}px` }}>
+          {rooms.map((r, i) => (
+            <div key={r.id} style={{ ...sepBelow(i < rooms.length - 1) }}>
+              {row(r.id, <GlossTile emoji={r.emoji} size={LIST.icon} tint={r.tint} bare />, r.name, t("membersColon", { n: (r.members || []).length }), () => onShare(r))}
+            </div>
+          ))}
+        </Card>
+      </>}
+    </Sheet>
+  );
+}
 function InvitesSheet({ online, rooms, onShare, onClose }) {
   const { t } = useT();
   const [inv, setInv] = useState(null);
+  const [choosing, setChoosing] = useState(false);
   useEffect(() => {
     let live = true;
     if (online) { api.invites().then(d => { if (live) setInv(d.invites || []); }).catch(() => { if (live) setInv([]); }); }
@@ -1795,13 +1832,14 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
     g.people.push(x.invitee);
   });
 
+  if (choosing) return <ShareChooser rooms={rooms} onShare={(r) => { setChoosing(false); onShare(r); }} onClose={() => setChoosing(false)} />;
   return (
     <Sheet title={t("myInvites")} onClose={onClose}>
       {inv === null ? (
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : groups.length === 0 ? (
         <Empty compact emoji="utya:mail" tilt={0} title={t("invitedNobody")} sub={t("invitedNobodySub")}
-          action={rooms.length > 0 && <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>} />
+          action={<Pill kind="primary" icon={<Share2 size={16} />} onClick={() => setChoosing(true)}>{t("shareBtn")}</Pill>} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {groups.map(g => (
