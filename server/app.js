@@ -175,6 +175,12 @@ export async function createApp() {
       res.json({ moved, left: (await store.wishesWithInlineImages(1000)).length });
     } catch (e) { next(e); }
   });
+  // Who is who, to fill ADMIN_IDS: /api/admin/users?key=<CRON_SECRET>&q=<name part>
+  app.get("/api/admin/users", async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || req.query.key !== secret) return res.status(401).json({ error: "bad_key" });
+    res.json(await store.findUsers(String(req.query.q || "")));
+  });
   // Daily Vercel cron: event reminders (a week and a day before).
   app.get("/api/cron/remind", remindRoute(BOT_TOKEN, store));
   await Promise.all([ensureWebhook(BOT_TOKEN), ensureBotMenu(BOT_TOKEN)]);
@@ -184,6 +190,29 @@ export async function createApp() {
   api.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
   api.use(authMiddleware(BOT_TOKEN));
   api.use(async (req, _res, next) => { try { await store.ensureUser(req.user); next(); } catch (e) { next(e); } });
+  // "last seen" for the analytics screen; written at most once a minute per person
+  // per instance, and never allowed to fail a real request
+  const seen = new Map();
+  api.use((req, _res, next) => {
+    const now = Date.now(), id = req.user.id;
+    if (id !== "demo" && now - (seen.get(id) || 0) > 60000) { seen.set(id, now); store.touchUser(id, now).catch(() => {}); }
+    next();
+  });
+  // server-side events for the things that matter (counted even if the app's own tracking is blocked)
+  const track = (req, name) => { if (req.user.id !== "demo") store.logEvents(req.user.id, [name], Date.now()).catch(() => {}); };
+  const ADMINS = () => String(process.env.ADMIN_IDS || "").split(",").map(x => x.trim()).filter(Boolean);
+  const isAdmin = (id) => ADMINS().includes(String(id));
+
+  // clicks and screens from the app, batched: { names: ["open", "tab_rooms", ...] }
+  api.post("/ev", async (req, res) => {
+    const names = (Array.isArray(req.body && req.body.names) ? req.body.names : []).filter(x => typeof x === "string" && /^[a-z0-9_]{2,40}$/.test(x)).slice(0, 30);
+    if (names.length && req.user.id !== "demo") await store.logEvents(req.user.id, names, Date.now()).catch(() => {});
+    res.json({ ok: true });
+  });
+  api.get("/admin/stats", async (req, res) => {
+    if (!isAdmin(req.user.id)) return res.status(403).json({ error: "not_admin" });
+    res.json(await store.analytics(Date.now()));
+  });
 
   api.get("/me", async (req, res) => res.json({ user: await store.getUser(req.user.id) }));
   // Own birthday in the profile (YYYY-MM-DD, or null to clear).
@@ -210,7 +239,7 @@ export async function createApp() {
         };
       })),
     ]);
-    res.json({ me: meUser, wishes, rooms: rooms.filter(Boolean) });
+    res.json({ me: meUser, admin: isAdmin(me), wishes, rooms: rooms.filter(Boolean) });
   });
 
   api.post("/wishes", async (req, res) => {
@@ -227,6 +256,7 @@ export async function createApp() {
     for (const rid of rooms) if (await store.isMember(rid, req.user.id)) await store.addWishRoom(w.id, rid);
     const shared = await store.wishRoomIds(w.id);
     await Promise.all(shared.map(rid => notifyWishShared(BOT_TOKEN, store, req.user, w, rid)));
+    track(req, w.link ? "s_wish_link" : "s_wish");
     res.json({ wish: { ...pubWish(w), rooms: shared } });
   });
 
@@ -256,6 +286,7 @@ export async function createApp() {
     if (!w || w.ownerId !== req.user.id) return res.status(404).json({ error: "not_found" });
     const at = req.body && req.body.gifted ? Date.now() : null;
     await store.setGifted(w.id, at);
+    if (at) track(req, "s_gifted");
     res.json({ giftedAt: at });
   });
 
@@ -290,6 +321,7 @@ export async function createApp() {
     };
     await store.createRoom(r);
     await store.addMember(r.id, req.user.id);
+    track(req, "s_room_" + t);
     res.json({ room: { id: r.id } });
   });
 
@@ -325,6 +357,7 @@ export async function createApp() {
     if (inviterId && inviterId !== req.user.id && await store.isMember(r.id, inviterId)) {
       await store.recordInvite(r.id, inviterId, req.user.id);
     }
+    if (!already) track(req, "s_join");
     res.json({ room: { id: r.id } });
   });
 
@@ -440,6 +473,7 @@ export async function createApp() {
     if ((await store.chips(w.id)).length) return res.status(409).json({ error: "chipping" });
     await store.setReservation(w.id, req.user.id);
     await notifyGiftPicked(BOT_TOKEN, store, w, req.user.id);
+    track(req, "s_take");
     res.json({ ok: true });
   });
 
@@ -458,6 +492,7 @@ export async function createApp() {
     if (cur === me) await store.clearReservation(w.id, me); // turning my solo gift into a group one
     await store.addChip(w.id, me);
     await notifyGiftPicked(BOT_TOKEN, store, w, me);
+    track(req, "s_chip");
     res.json({ ok: true });
   });
   api.delete("/wishes/:id/chip", async (req, res) => {

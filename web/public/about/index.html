@@ -45,17 +45,18 @@ img{display:block;-webkit-user-drag:none;user-select:none}
 .water{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#1A5FD0}
 .water i{position:absolute;inset:-12%;background:url(/about/pool.webp) center/cover}
 .water i:nth-child(1){animation:sway 26s ease-in-out infinite alternate}
-.water i:nth-child(2){opacity:.38;mix-blend-mode:screen;transform:scale(1.25) rotate(180deg);animation:sway2 19s ease-in-out infinite alternate}
+.water i:nth-child(2){opacity:.22;mix-blend-mode:screen;transform:scale(1.25) rotate(180deg);animation:sway2 19s ease-in-out infinite alternate}
 .water u{position:absolute;inset:0;background:linear-gradient(180deg,#0B3C9A,#061F5C);opacity:0;will-change:opacity}
-.water b{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,72,184,.86) 0%,rgba(28,104,226,.66) 45%,rgba(16,70,176,.84) 100%);mix-blend-mode:multiply}
+.water b{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,90,210,.32) 0%,rgba(20,90,210,.18) 45%,rgba(10,60,170,.5) 100%);mix-blend-mode:multiply}
 @keyframes sway{to{transform:translate(3%,2%) scale(1.04)}}
 @keyframes sway2{to{transform:scale(1.25) rotate(180deg) translate(4%,3%)}}
 
 /* header: a frosted capsule in the middle */
-header{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:30;width:min(760px,calc(100% - 32px));border-radius:999px;
+header{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:30;width:min(560px,calc(100% - 32px));border-radius:999px;
   background:rgba(22,22,24,0.62);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 32px rgba(0,10,40,.3)}
 .bar{display:flex;align-items:center;gap:8px;height:60px;padding:0 10px 0 14px}
+.bar .sp{flex:1}
 .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;letter-spacing:-.3px;flex-shrink:0}
 .logo img{width:34px;height:34px;object-fit:contain;transform:rotate(-6deg)}
 /* the wordmark is hand-lettered, the rest of the page stays Montserrat */
@@ -114,13 +115,13 @@ section{max-width:1120px;margin:0 auto;padding:96px 16px}
 .folder svg{position:absolute;inset:0;overflow:visible;filter:drop-shadow(0 26px 40px rgba(10,60,140,.35))}
 .folder .gc{position:absolute;width:92px;height:104px;border-radius:12px;background:var(--card2);border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding-top:10px}
 .folder .gc img{width:72px}
-.folder .on{position:absolute;width:74px;pointer-events:none;transform:rotate(var(--r));filter:drop-shadow(0 6px 10px rgba(10,40,110,.22))}
+.folder .on{position:absolute;width:80px;pointer-events:none;transform:rotate(var(--r));filter:drop-shadow(0 6px 10px rgba(10,40,110,.22))}
 .folder .on.pop{animation:popr .45s cubic-bezier(.2,.9,.3,1.3)}
 @keyframes popr{from{transform:rotate(var(--r)) scale(1.2)}to{transform:rotate(var(--r))}}
 .folder.hot svg{filter:drop-shadow(0 0 0 4px #fff) drop-shadow(0 26px 40px rgba(10,60,140,.35))}
 @keyframes squish{0%,100%{transform:none}35%{transform:scale(1.08,.86)}65%{transform:scale(.96,1.05)}}
 
-.stk{position:absolute;width:96px;z-index:4;cursor:grab;touch-action:none;animation:bob 5s ease-in-out infinite;filter:drop-shadow(0 10px 18px rgba(10,60,140,.25))}
+.stk{position:absolute;width:112px;z-index:4;cursor:grab;touch-action:none;animation:bob 5s ease-in-out infinite;filter:drop-shadow(0 18px 14px rgba(0,30,90,.38))}
 .stk img{width:100%;pointer-events:none}
 .stk.drag{cursor:grabbing;animation:none;z-index:10;transition:none}
 .stk.back{transition:left .5s cubic-bezier(.2,1.4,.4,1),top .5s cubic-bezier(.2,1.4,.4,1)}
@@ -159,10 +160,16 @@ h2{font-size:clamp(32px,4.8vw,56px);font-weight:700;letter-spacing:-.04em;line-h
 .mini .avs{position:absolute;right:11%;bottom:12%;z-index:4;display:flex}
 .mini .avs b{width:24px;height:24px;border-radius:50%;color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #161618}
 .mini .avs b+b{margin-left:-8px}
-.feat{border-radius:24px;padding:24px;display:flex;gap:16px;align-items:flex-start}
-.feat img{width:60px;height:60px;object-fit:contain;flex-shrink:0;transform:rotate(-6deg)}
+.feat{border-radius:26px;padding:16px 24px 16px 16px;display:flex;gap:12px;align-items:center}
+.feat img{width:52px;height:52px;object-fit:contain;flex-shrink:0;transform:rotate(-6deg);transition:transform .5s cubic-bezier(.2,.9,.3,1.3)}
+.feat:hover img{transform:rotate(6deg) scale(1.1)}
 .feat h3{font-size:17px;font-weight:700}
-.feat p{color:var(--ink2);font-size:14.5px;line-height:1.45;margin-top:4px}
+/* recorded straight from the app's onboarding: the phone fades into the card, so the card is solid */
+.demos{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:48px}
+.demo{background:#161618;border-radius:32px;padding:32px 24px 28px;text-align:center;box-shadow:0 20px 50px rgba(0,10,40,.3)}
+.demo video{display:block;width:278px;max-width:100%;aspect-ratio:416/666;margin:0 auto -12px;background:#161618;clip-path:inset(0 0 3% 0)}
+.demo h3{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.demo p{color:var(--ink2);font-size:15.5px;margin-top:6px}
 .final{border-radius:40px;padding:72px 32px;text-align:center;position:relative;overflow:hidden}
 .final h2{margin:0 auto;color:var(--ink)}
 .final .lead{margin:16px auto 0;color:var(--ink2)}
@@ -171,12 +178,10 @@ h2{font-size:clamp(32px,4.8vw,56px);font-weight:700;letter-spacing:-.04em;line-h
 
 footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 16px 48px;display:flex;justify-content:space-between;gap:16px;font-size:13px;color:rgba(255,255,255,.8);flex-wrap:wrap}
 
-/* scalloped badge riding down the side while you scroll (laptops) */
-.badge{position:fixed;right:28px;top:50%;width:150px;height:150px;margin-top:-75px;z-index:20;display:none}
-.badge svg{position:absolute;inset:0;filter:drop-shadow(0 14px 30px rgba(10,60,140,.3))}
-.badge .spin{position:absolute;inset:0;will-change:transform}
-.badge img{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px 0 0 -33px;object-fit:contain;transform:rotate(-8deg)}
-@media (min-width:1180px){.badge{display:block}}
+/* our star riding down the side, turning as you scroll */
+.badge{position:fixed;right:28px;top:50%;width:132px;height:132px;margin-top:-66px;z-index:20}
+.badge img{width:100%;height:100%;object-fit:contain;will-change:transform;filter:drop-shadow(0 18px 24px rgba(0,25,80,.35))}
+@media (max-width:860px){.badge{width:60px;height:60px;right:10px;top:auto;bottom:16px;margin:0}}
 
 .rv{opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
 .rv.in{opacity:1;transform:none}
@@ -190,13 +195,17 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
   .folder{transform:scale(.72)}
   .hide-m{display:none}
   .stk{width:76px}
-  .steps,.rooms,.feats{grid-template-columns:1fr}
+  .steps,.rooms,.feats,.demos{grid-template-columns:1fr}
+  .feats{grid-template-columns:1fr 1fr;gap:12px}
+  .feat{padding:12px;gap:8px;border-radius:20px}
+  .feat img{width:40px;height:40px}
+  .feat h3{font-size:14px}
   section{padding:64px 16px}
   .final{padding:120px 24px 48px}
   .final .float{width:58px}
   .final .float:nth-of-type(n+3){display:none}
 }
-@media (min-width:861px){.bar .sp{display:none}}
+
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
 </style>
 </head>
@@ -206,7 +215,6 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
 <header>
   <div class="bar">
     <a class="logo" href="#top"><img src="/about/star.png" alt="" /><span>Wishpool</span></a>
-    <nav><a href="#how" data-t="nHow"></a><a href="#rooms" data-t="nRooms"></a><a href="#feats" data-t="nFeats"></a></nav>
     <div class="sp"></div>
     <div class="lang" id="lang">
       <button type="button" id="langBtn" aria-haspopup="listbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span id="langCur"></span><svg class="ch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -221,24 +229,12 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
   <div class="prog"><i id="prog"></i></div>
 </header>
 
-<a class="badge" href="https://t.me/wishpool_bot/app" aria-label="Wishpool">
-  <div class="spin" id="badgeSpin"><svg viewBox="0 0 150 150" id="badgeSvg"></svg></div>
-  <img src="/stickers/uno.webp" alt="" />
-</a>
+<a class="badge" href="https://t.me/wishpool_bot/app" aria-label="Wishpool"><img id="badgeSpin" src="/about/spinstar.webp" alt="" /></a>
 
 <main id="top">
   <section class="hero">
     <h1 class="rv" data-t="title"></h1>
     <div class="stage rv d1" id="stage">
-      <div class="hcard hide-m" style="left:2%;top:26%;width:230px;transform:rotate(-6deg)">
-        <div class="t" data-t="c1"></div>
-        <a class="btn sm dark" style="margin-top:12px;width:100%" href="https://t.me/wishpool_bot/app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg><span data-t="c1b"></span></a>
-      </div>
-      <div class="hcard hide-m" style="right:2%;top:20%;width:210px;transform:rotate(6deg)">
-        <div class="t" data-t="c4"></div>
-        <div class="row" style="margin-top:10px"><div class="av" style="background:#7B61FF">Я</div><div class="av" style="background:#FF4D8D">А</div><div class="av" style="background:#34C759">Б</div><span class="s" style="margin:0 0 0 8px" data-t="c4s"></span></div>
-        <div class="chip" style="margin-top:10px" data-t="c4c"></div>
-      </div>
       <div class="folder" id="folder">
         <div class="layer" id="lb"><div class="back"></div><div class="gc" style="left:22%;top:6%;transform:rotate(-9deg)"><img src="/stickers/headphones.webp" alt="" /></div><div class="gc" style="left:47%;top:3%;transform:rotate(7deg)"><img src="/stickers/candle.webp" alt="" /></div><div class="gc" style="left:62%;top:10%;transform:rotate(15deg)"><img src="/stickers/sneakers.webp" alt="" /></div></div>
         <div class="layer" id="lf"><svg width="280" height="250"><defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5AA2FF"/><stop offset="1" stop-color="#2E7DF6"/></linearGradient></defs><path id="fp" fill="url(#fg)"/></svg></div>
@@ -249,47 +245,23 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
     <div class="cta rv d2"><a class="btn lg white" href="https://t.me/wishpool_bot/app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span data-t="openTg"></span></a></div>
   </section>
 
-  <section id="how">
-    <p class="kicker rv" data-t="howK"></p>
-    <h2 class="rv d1" data-t="howT"></h2>
-    <div class="steps">
-      <div class="card wcard rv"><span class="num">1</span><img class="ic" src="/stickers/headphones.webp" alt="" /><h3 data-t="s1T"></h3><p data-t="s1P"></p></div>
-      <div class="card wcard rv d1"><span class="num">2</span><img class="ic" src="/stickers/picture.webp" alt="" /><h3 data-t="s2T"></h3><p data-t="s2P"></p></div>
-      <div class="card wcard rv d2"><span class="num">3</span><img class="ic" src="/stickers/gift.webp" alt="" /><h3 data-t="s3T"></h3><p data-t="s3P"></p></div>
-    </div>
-  </section>
-
   <section id="rooms">
     <p class="kicker rv" data-t="roomsK"></p>
     <h2 class="rv d1" data-t="roomsT"></h2>
     <div class="rooms">
-      <div class="room wcard rv" data-tint="#38BDF8" data-stk="gamepad" data-photos="headphones sneakers uno" data-people="3"><div class="mini"></div><h3 data-t="r1T"></h3><p data-t="r1P"></p></div>
-      <div class="room wcard rv d1" data-tint="#FF4D8D" data-stk="ring" data-photos="flower lipstick plane" data-people="2"><div class="mini"></div><h3 data-t="r2T"></h3><p data-t="r2P"></p></div>
-      <div class="room wcard rv d2" data-tint="#AF52DE" data-stk="cake" data-photos="gift kitty candle" data-people="3"><div class="mini"></div><h3 data-t="r3T"></h3><p data-t="r3P"></p></div>
-    </div>
-  </section>
-
-  <section id="feats">
-    <p class="kicker rv" data-t="featK"></p>
-    <h2 class="rv d1" data-t="featT"></h2>
-    <div class="feats">
-      <div class="feat wcard rv"><img src="/stickers/piggy.webp" alt="" /><div><h3 data-t="f1T"></h3><p data-t="f1P"></p></div></div>
-      <div class="feat wcard rv d1"><img src="/stickers/cake.webp" alt="" /><div><h3 data-t="f2T"></h3><p data-t="f2P"></p></div></div>
-      <div class="feat wcard rv d2"><img src="/stickers/gift.webp" alt="" /><div><h3 data-t="f3T"></h3><p data-t="f3P"></p></div></div>
-      <div class="feat wcard rv"><img src="/stickers/envelope.webp" alt="" /><div><h3 data-t="f4T"></h3><p data-t="f4P"></p></div></div>
-      <div class="feat wcard rv d1"><img src="/stickers/note.webp" alt="" /><div><h3 data-t="f5T"></h3><p data-t="f5P"></p></div></div>
-      <div class="feat wcard rv d2"><img src="/stickers/tag.webp" alt="" /><div><h3 data-t="f6T"></h3><p data-t="f6P"></p></div></div>
+      <div class="room wcard rv" data-tint="#38BDF8" data-stk="gamepad" data-photos="headphones sneakers uno" data-people="3"><div class="mini"></div><h3 data-t="r1T"></h3></div>
+      <div class="room wcard rv d1" data-tint="#FF4D8D" data-stk="ring" data-photos="flower lipstick plane" data-people="2"><div class="mini"></div><h3 data-t="r2T"></h3></div>
+      <div class="room wcard rv d2" data-tint="#AF52DE" data-stk="cake" data-photos="gift kitty candle" data-people="3"><div class="mini"></div><h3 data-t="r3T"></h3></div>
     </div>
   </section>
 
   <section>
     <div class="final wcard rv">
-      <img class="float" src="/stickers/kitty.webp" alt="" style="left:6%;top:12%" />
-      <img class="float" src="/stickers/lipstick.webp" alt="" style="right:7%;top:16%;animation-delay:-2s" />
-      <img class="float" src="/stickers/plane.webp" alt="" style="left:10%;bottom:12%;animation-delay:-4s" />
-      <img class="float" src="/stickers/matcha.webp" alt="" style="right:10%;bottom:14%;animation-delay:-3s" />
+      <img class="float" src="/about/obj/kitty.webp" alt="" style="left:6%;top:14%" />
+      <img class="float" src="/about/obj/cake.webp" alt="" style="right:7%;top:16%;animation-delay:-2s" />
+      <img class="float" src="/about/obj/gift.webp" alt="" style="left:9%;bottom:12%;animation-delay:-4s" />
+      <img class="float" src="/about/obj/uno.webp" alt="" style="right:10%;bottom:12%;animation-delay:-3s" />
       <h2 data-t="finT"></h2>
-      <p class="lead" data-t="finP"></p>
       <div class="cta"><a class="btn lg blue" href="https://t.me/wishpool_bot/app" data-t="openTg"></a></div>
     </div>
   </section>
@@ -304,9 +276,11 @@ const T = {
     title: "Місце для бажань, подарунків і сюрпризів",
     c1: "Додавай бажання за посиланням або просто надішли його боту", c1b: "Додати бажання",
     c2: "Навушники", c3: "Аромасвічка", c3b: "Хтось уже дарує", c4: "Друзі", c4s: "3 учасники", c4c: "через 12 днів",
-    hint: "Перетягни стікер у папку", sub: "Вішлисти для друзів, пари та днів народження. Подарунки не повторюються, а сюрприз залишається сюрпризом.",
+    hint: "Перетягни в папку", sub: "Вішлисти для друзів, пари та днів народження",
     count: n => `У папці: ${n}`, badge: "WISHPOOL • ВІШЛИСТИ • ПОДАРУНКИ • СЮРПРИЗИ • ",
-    howK: "Як це працює", howT: "Три кроки до подарунка, який справді хочуть",
+    howK: "Як це працює", howT: "Додай. Поділись. Даруй.",
+    d1T: "Встав посилання", d1P: "Фото і ціна підтягнуться самі",
+    d2T: "Обери подарунок", d2P: "Іменинник не дізнається",
     s1T: "Додай бажання", s1P: "Встав посилання з магазину, і фото з ціною підтягнуться самі. Або просто надішли посилання боту.",
     s2T: "Поділись у кімнаті", s2P: "Обери, які бажання бачить кожна кімната: друзі, пара чи день народження.",
     s3T: "Даруйте потай", s3P: "Друзі позначають, що дарують, і подарунки не повторюються. А власник бажання нічого не бачить.",
@@ -319,7 +293,7 @@ const T = {
     f2T: "Нагадування", f2P: "Бот нагадає друзям про твій день народження за тиждень і за день.",
     f3T: "Мені подарували", f3P: "Отримав подарунок? Бажання зникне з кімнат і перейде в архів «Подарували».",
     f4T: "Запрошення", f4P: "Одне посилання, і друзі вже у твоїй кімнаті.",
-    f5T: "Коментар для дарувальників", f5P: "Розмір, колір чи «будь-який з цих двох». Щоб не гадати.",
+    f5T: "Коментар", f5P: "Розмір, колір чи «будь-який з цих двох». Щоб не гадати.",
     f6T: "Ціна від і до", f6P: "Вкажи точну ціну або діапазон, який тобі ок.",
     finT: "Наступний подарунок буде влучним", finP: "Збери вішлист за хвилину і поділись із тими, хто тебе знає.",
     channel: "Telegram-канал авторки", short: "Укр",
@@ -329,9 +303,11 @@ const T = {
     title: "Место для желаний, подарков и сюрпризов",
     c1: "Добавляй желания по ссылке или просто пришли её боту", c1b: "Добавить желание",
     c2: "Наушники", c3: "Аромасвеча", c3b: "Кто-то уже дарит", c4: "Друзья", c4s: "3 участника", c4c: "через 12 дней",
-    hint: "Перетащи стикер в папку", sub: "Вишлисты для друзей, пары и дней рождения. Подарки не повторяются, а сюрприз остаётся сюрпризом.",
+    hint: "Перетащи в папку", sub: "Вишлисты для друзей, пары и дней рождения",
     count: n => `В папке: ${n}`, badge: "WISHPOOL • ВИШЛИСТЫ • ПОДАРКИ • СЮРПРИЗЫ • ",
-    howK: "Как это работает", howT: "Три шага к подарку, который правда хотят",
+    howK: "Как это работает", howT: "Добавь. Поделись. Дари.",
+    d1T: "Вставь ссылку", d1P: "Фото и цена подтянутся сами",
+    d2T: "Выбери подарок", d2P: "Именинник не узнает",
     s1T: "Добавь желание", s1P: "Вставь ссылку из магазина, и фото с ценой подтянутся сами. Или просто пришли ссылку боту.",
     s2T: "Поделись в комнате", s2P: "Выбери, какие желания видит каждая комната: друзья, пара или день рождения.",
     s3T: "Дарите втайне", s3P: "Друзья отмечают, что дарят, и подарки не повторяются. А владелец желания ничего не видит.",
@@ -344,7 +320,7 @@ const T = {
     f2T: "Напоминания", f2P: "Бот напомнит друзьям о твоём дне рождения за неделю и за день.",
     f3T: "Мне подарили", f3P: "Получил подарок? Желание пропадёт из комнат и уйдёт в архив «Подарили».",
     f4T: "Приглашения", f4P: "Одна ссылка, и друзья уже в твоей комнате.",
-    f5T: "Комментарий для дарителей", f5P: "Размер, цвет или «любой из этих двух». Чтобы не гадать.",
+    f5T: "Комментарий", f5P: "Размер, цвет или «любой из этих двух». Чтобы не гадать.",
     f6T: "Цена от и до", f6P: "Укажи точную цену или диапазон, который тебе ок.",
     finT: "Следующий подарок попадёт в точку", finP: "Собери вишлист за минуту и поделись с теми, кто тебя знает.",
     channel: "Telegram-канал автора", short: "Рус",
@@ -354,9 +330,11 @@ const T = {
     title: "A place for wishes, gifts and surprises",
     c1: "Add wishes with a link, or just send it to the bot", c1b: "Add a wish",
     c2: "Headphones", c3: "Scented candle", c3b: "Someone's on it", c4: "Friends", c4s: "3 members", c4c: "in 12 days",
-    hint: "Drag a sticker into the folder", sub: "Wishlists for friends, couples and birthdays. Gifts never double up, and the surprise stays a surprise.",
+    hint: "Drag into the folder", sub: "Wishlists for friends, couples and birthdays",
     count: n => `In the folder: ${n}`, badge: "WISHPOOL • WISHLISTS • GIFTS • SURPRISES • ",
-    howK: "How it works", howT: "Three steps to a gift they actually want",
+    howK: "How it works", howT: "Add. Share. Gift.",
+    d1T: "Paste a link", d1P: "Photo and price fill in",
+    d2T: "Pick a gift", d2P: "They will never know",
     s1T: "Add a wish", s1P: "Paste a shop link and the photo and price fill in. Or just send the link to the bot.",
     s2T: "Share it in a room", s2P: "Pick which wishes each room sees: friends, your partner or a birthday.",
     s3T: "Gift in secret", s3P: "Friends mark what they give, so nothing doubles up. The wish owner sees none of it.",
@@ -369,7 +347,7 @@ const T = {
     f2T: "Reminders", f2P: "The bot reminds your friends about your birthday a week and a day before.",
     f3T: "I got it", f3P: "Got the gift? The wish leaves your rooms and moves to the Gifted archive.",
     f4T: "Invites", f4P: "One link and your friends are in your room.",
-    f5T: "Note for gifters", f5P: "Size, colour or \"either of these two\". No guessing.",
+    f5T: "Notes", f5P: "Size, colour or \"either of these two\". No guessing.",
     f6T: "Price range", f6P: "Set an exact price or a range you're happy with.",
     finT: "Your next gift will be spot on", finP: "Make a wishlist in a minute and share it with the people who know you.",
     channel: "Author's Telegram channel", short: "Eng",
@@ -397,7 +375,13 @@ function apply() {
   });
   document.getElementById("langCur").textContent = L.short;
   document.querySelectorAll(".menu button").forEach(b => b.classList.toggle("on", b.dataset.l === lang));
-  drawBadge();
+  // demo videos in the page's language
+  document.querySelectorAll("video[data-v]").forEach(v => {
+    const src = `/about/demo/${v.dataset.v}_${lang}.mp4`;
+    if (v.getAttribute("src") === src) return;
+    v.poster = `/about/demo/${v.dataset.v}_${lang}.jpg`; v.src = src;
+    v.play && v.play().catch(() => {});
+  });
 }
 const langBox = document.getElementById("lang");
 document.getElementById("langBtn").onclick = e => { e.stopPropagation(); langBox.classList.toggle("open"); };
@@ -446,29 +430,21 @@ document.querySelectorAll(".room").forEach((r, i) => {
     <img class="st" src="/stickers/${r.dataset.stk}.webp" alt="" /><div class="avs">${avs}</div>`;
 });
 
-// the wavy-edged badge with text running round it
-function drawBadge() {
-  const svg = document.getElementById("badgeSvg"), c = 75, R = 70, n = 16, a = 3.2, pts = [];
-  for (let i = 0; i <= 360; i += 2) { const t = i * Math.PI / 180, r = R + a * Math.sin(n * t); pts.push(`${(c + r * Math.cos(t)).toFixed(1)},${(c + r * Math.sin(t)).toFixed(1)}`); }
-  svg.innerHTML = `<defs><path id="tc" d="M ${c} ${c} m -48 0 a 48 48 0 1 1 96 0 a 48 48 0 1 1 -96 0"/></defs>
-    <polygon points="${pts.join(" ")}" fill="#161618"/>
-    <text font-family="Montserrat" font-weight="800" font-size="11.5" letter-spacing="1.6" fill="#fff"><textPath href="#tc" textLength="300">${T[lang].badge}</textPath></text>`;
-}
 
 // drag stickers into the folder (mouse or finger)
 const stage = document.getElementById("stage"), folder = document.getElementById("folder"), lb = document.getElementById("lb"), lf = document.getElementById("lf");
 const STK = [
-  { s: "kitty", x: 18, y: 4, d: 0 }, { s: "cake", x: 70, y: 0, d: -1.2 },
-  { s: "lipstick", x: 8, y: 72, d: -2.4 }, { s: "gift", x: 80, y: 76, d: -3.1 },
+  { s: "kitty", x: 14, y: 8, d: 0 }, { s: "cake", x: 74, y: 4, d: -1.2 },
+  { s: "gift", x: 8, y: 66, d: -2.4 }, { s: "uno", x: 80, y: 66, d: -3.1 },
 ];
 // where dropped stickers land on the folder front (folder px, 280x250)
 const SLOT = [{ x: 92, y: 150, r: -10 }, { x: 190, y: 148, r: 9 }, { x: 140, y: 196, r: 4 }, { x: 222, y: 200, r: -7 }];
 function squish() { [lb, lf].forEach(l => { l.classList.remove("sq"); void l.offsetWidth; l.classList.add("sq"); }); }
-if (matchMedia("(max-width:860px)").matches) Object.assign(STK[3], { x: 26, y: 82 });
+if (matchMedia("(max-width:860px)").matches) Object.assign(STK[3], { x: 70, y: 74 });
 STK.forEach(o => {
   const el = document.createElement("div");
   el.className = "stk"; el.style.left = o.x + "%"; el.style.top = o.y + "%"; el.style.animationDelay = o.d + "s";
-  el.innerHTML = `<img src="/stickers/${o.s}.webp" alt="" />`;
+  el.innerHTML = `<img src="/about/obj/${o.s}.webp" alt="" />`;
   stage.appendChild(el);
   let sx, sy, ox, oy, moved = false;
   el.addEventListener("pointerdown", e => {
@@ -493,7 +469,7 @@ STK.forEach(o => {
       setTimeout(() => {
         el.remove(); squish();
         const img = document.createElement("img");
-        img.className = "on pop"; img.src = `/stickers/${o.s}.webp`; img.alt = "";
+        img.className = "on pop"; img.src = `/about/obj/${o.s}.webp`; img.alt = "";
         Object.assign(img.style, { left: slot.x - 37 + "px", top: slot.y - 37 + "px" }); img.style.setProperty("--r", slot.r + "deg");
         lf.appendChild(img);
       }, 330);

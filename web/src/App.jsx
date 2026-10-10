@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useContext, create
 import { createPortal } from "react-dom";
 import {
   Gift, Users, User, Plus, Check, ChevronLeft, ChevronRight, X,
-  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw, CalendarDays, PartyPopper, Undo2,
+  Share2, Lock, Dices, Sparkles, Clock, MoreHorizontal, Link2, Heart, Image as ImageIcon, Trash2, Globe, Send, Pencil, RefreshCw, CalendarDays, PartyPopper, Undo2, BarChart3,
 } from "lucide-react";
 
 /* ---------- design tokens ---------- */
@@ -56,6 +56,17 @@ async function apiReq(method, path, body, opts = {}) {
   if (!res.ok) { let e = {}; try { e = await res.json(); } catch (x) {} throw new Error(e.error || ("http_" + res.status)); }
   return res.json();
 }
+// Analytics: screens and clicks are queued and sent in small batches, never blocking the UI.
+const evQ = []; let evTimer = null;
+function flushEv() {
+  evTimer = null; if (!evQ.length) return;
+  apiReq("POST", "/ev", { names: evQ.splice(0, 30) }, { quiet: true }).catch(() => {});
+}
+function track(name) {
+  if (!tgInitData()) return;
+  evQ.push(name); if (!evTimer) evTimer = setTimeout(flushEv, 4000);
+}
+if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushEv(); });
 const api = {
   online: () => !!tgInitData(),          // true inside Telegram → real multiplayer
   startRoomId: tgStartParam,             // room id from an invite deep-link
@@ -77,6 +88,7 @@ const api = {
   leaveRoom: (id) => apiReq("POST", "/rooms/" + id + "/leave"),
   deleteRoom: (id) => apiReq("DELETE", "/rooms/" + id),
   invites: () => apiReq("GET", "/invites"),
+  stats: () => apiReq("GET", "/admin/stats"),
   room: (id) => apiReq("GET", "/rooms/" + id),
   reserve: (id) => apiReq("POST", "/wishes/" + id + "/reserve"),
   unreserve: (id) => apiReq("DELETE", "/wishes/" + id + "/reserve"),
@@ -384,6 +396,31 @@ const STR = {
   friendsRoomHint: { uk: "Для компанії. Обирайте подарунки одне одному, скидайтеся разом або влаштуйте жеребкування, хто кому дарує.", ru: "Для компании. Выбирайте подарки друг другу, скидывайтесь вместе или устройте жеребьёвку, кто кому дарит.", en: "For a group. Pick gifts for each other, chip in together or draw names for who gives to whom." },
   shareBtn: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
   language: { uk: "Мова", ru: "Язык", en: "Language" },
+  analytics: { uk: "Аналітика", ru: "Аналитика", en: "Analytics" },
+  anOnline: { uk: "Зараз в застосунку", ru: "Сейчас в приложении", en: "In the app now" },
+  anOnlineSub: { uk: "за останні 5 хвилин", ru: "за последние 5 минут", en: "in the last 5 minutes" },
+  anToday: { uk: "Сьогодні", ru: "Сегодня", en: "Today" },
+  anWeek: { uk: "За 7 днів", ru: "За 7 дней", en: "Last 7 days" },
+  anMonth: { uk: "За 30 днів", ru: "За 30 дней", en: "Last 30 days" },
+  anTotal: { uk: "Всього", ru: "Всего", en: "Total" },
+  anUsers: { uk: "Люди", ru: "Люди", en: "People" },
+  anActive: { uk: "заходили", ru: "заходили", en: "active" },
+  anNew: { uk: "нових", ru: "новых", en: "new" },
+  anVisits: { uk: "Заходили по днях", ru: "Заходили по дням", en: "Active per day" },
+  anNewDays: { uk: "Нові по днях", ru: "Новые по дням", en: "New per day" },
+  anContent: { uk: "Що створили", ru: "Что создали", en: "Created" },
+  anWishes: { uk: "Бажань", ru: "Желаний", en: "Wishes" },
+  anRooms: { uk: "Кімнат", ru: "Комнат", en: "Rooms" },
+  anTaken: { uk: "Взяли подарунок", ru: "Взяли подарок", en: "Gifts taken" },
+  anChips: { uk: "Скидаються", ru: "Скидываются", en: "Chip-ins" },
+  anGifted: { uk: "Подарували", ru: "Подарили", en: "Gifted" },
+  anJoined: { uk: "Прийшли за запрошенням", ru: "Пришли по приглашению", en: "Joined by invite" },
+  anWeekPlus: { uk: "+{n} за тиждень", ru: "+{n} за неделю", en: "+{n} this week" },
+  anClicks: { uk: "Кліки за 7 днів", ru: "Клики за 7 дней", en: "Clicks, last 7 days" },
+  anTimes: { uk: "разів", ru: "раз", en: "times" },
+  anPeople: { uk: "людей", ru: "человек", en: "people" },
+  anEmpty: { uk: "Поки немає даних. Вони з’являться, коли люди почнуть заходити.", ru: "Пока нет данных. Они появятся, когда люди начнут заходить.", en: "No data yet. It shows up once people start coming in." },
+  anForbidden: { uk: "Цей екран лише для власника.", ru: "Этот экран только для владельца.", en: "This screen is for the owner only." },
   channel: { uk: "Телеграм-канал творця", ru: "Телеграм-канал создателя", en: "Creator's Telegram channel" },
 
   linkCopied: { uk: "Посилання скопійовано", ru: "Ссылка скопирована", en: "Link copied" },
@@ -846,6 +883,11 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const online = api.online();
   const [me, setMe] = useState(() => { const c = online ? store.get(CACHE_KEY(), null) : null; return (c && c.me) || null; });
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => { track("open"); }, []);
+  const firstTab = useRef(true);
+  useEffect(() => { if (firstTab.current) { firstTab.current = false; return; } track("tab_" + tab); }, [tab]);
+  useEffect(() => { if (overlay && overlay.type) track("ov_" + overlay.type); }, [overlay && overlay.type]); // eslint-disable-line
   // Own birthday (profile): on the server when online, in localStorage otherwise.
   const [localBday, setLocalBday] = useState(() => store.get("wp_birthday", null));
   const birthday = online ? (me && me.birthday) || null : localBday;
@@ -859,7 +901,7 @@ export default function App() {
   };
   // First launch: three short intro screens (not when arriving through an invite).
   const [onboard, setOnboard] = useState(() => !store.get("wp_onboarded", false) && !api.startRoomId());
-  const finishOnboard = () => { store.set("wp_onboarded", true); setOnboard(false); };
+  const finishOnboard = () => { store.set("wp_onboarded", true); setOnboard(false); track("onboard_done"); };
   // keep the offline / error ducks at hand before they're ever needed
   useEffect(() => { const id = setTimeout(warmUtya, 4000); return () => clearTimeout(id); }, []);
   // Online: start from the last state we got from the server (shown instantly),
@@ -884,7 +926,7 @@ export default function App() {
   // netDown: the server can't be reached (no internet), so show the full-screen stub.
   const [netDown, setNetDown] = useState(() => typeof navigator !== "undefined" && navigator.onLine === false);
   const refreshState = async ({ quiet } = {}) => {
-    try { const st = await api.state(); setMe(st.me || null); setWishes(st.wishes || []); setRooms((st.rooms || []).map(fixRoom)); setNetDown(false); return true; }
+    try { const st = await api.state(); setMe(st.me || null); setAdmin(!!st.admin); setWishes(st.wishes || []); setRooms((st.rooms || []).map(fixRoom)); setNetDown(false); return true; }
     catch (e) { if (!quiet) showToast(t("noConnection"), 3000); return false; }
   };
   const [retrying, setRetrying] = useState(false);
@@ -986,6 +1028,7 @@ export default function App() {
 
   // room: invite into that room; no room: just to the app
   const shareInvite = (room) => {
+    track(room ? "share_room" : "share_app");
     const tail = room ? ((online && me && me.id) ? `${room.id}__${me.id}` : room.id) : "";
     const link = `https://t.me/wishpool_bot/app${tail ? "?startapp=" + tail : ""}`;
     const text = room ? t("inviteText", { name: room.name }) : t("inviteAppText");
@@ -1136,7 +1179,7 @@ export default function App() {
                   onOpen={(id, rect) => setOverlay({ type: "room", roomId: id, from: rect ? { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom } : null })}
                   onCreate={() => setOverlay({ type: "createRoom" })} />
               )}
-              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} birthday={birthday} onBirthday={saveBirthday} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} />}
+              {tab === "profile" && <ProfileScreen wishes={wishes} rooms={rooms} reserved={reserved} birthday={birthday} onBirthday={saveBirthday} onHistory={() => setOverlay({ type: "history" })} onInvites={() => setOverlay({ type: "invites" })} onAnalytics={admin ? () => setOverlay({ type: "analytics" }) : null} />}
             </>
           )}
         </div>
@@ -1210,6 +1253,9 @@ export default function App() {
 
         {overlay?.type === "history" && (
           <HistorySheet online={online} onClose={() => setOverlay(null)} />
+        )}
+        {overlay && overlay.type === "analytics" && (
+          <AnalyticsScreen onBack={() => setOverlay(null)} />
         )}
         {overlay?.type === "invites" && (
           <InvitesSheet online={online} rooms={rooms} onShare={shareInvite} onClose={() => setOverlay(null)} />
@@ -3068,7 +3114,7 @@ function ObAddScene() {
   const tap = step >= 7 ? 2 : step >= 2 ? 1 : 0;
   const link = useTypewriter(step >= 4 ? "rozetka.com.ua/headphones" : "");
   const filled = step >= 5;
-  const newCard = { id: "n", title: lang === "en" ? "Headphones" : "Навушники", price: lang === "en" ? "$99" : "4 200 ₴", emoji: "stk:headphones", rooms: [] };
+  const newCard = { id: "n", title: lang === "en" ? "Headphones" : lang === "ru" ? "Наушники" : "Навушники", price: lang === "en" ? "$99" : "4 200 ₴", emoji: "stk:headphones", rooms: [] };
   const fieldBox = (v, ph) => (
     <div style={{ height: H.lg, borderRadius: 999, background: C.card2, padding: "0 16px", display: "flex", alignItems: "center", color: v ? C.t1 : C.t3, fontSize: 16, marginBottom: 12, overflow: "hidden", whiteSpace: "nowrap" }}>{v || ph}</div>
   );
@@ -3200,7 +3246,133 @@ function Onboarding({ onDone }) {
     </div>
   );
 }
-function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, birthday, onBirthday }) {
+// Human names for the tracked events (raw name shown for anything new).
+const EV_NAMES = {
+  open: { uk: "Відкрили застосунок", ru: "Открыли приложение", en: "Opened the app" },
+  tab_pool: { uk: "Вкладка «Бажання»", ru: "Вкладка «Желания»", en: "Wishes tab" },
+  tab_rooms: { uk: "Вкладка «Кімнати»", ru: "Вкладка «Комнаты»", en: "Rooms tab" },
+  tab_profile: { uk: "Вкладка «Профіль»", ru: "Вкладка «Профиль»", en: "Profile tab" },
+  ov_add: { uk: "Відкрили «Нове бажання»", ru: "Открыли «Новое желание»", en: "Opened New wish" },
+  ov_editWish: { uk: "Редагування бажання", ru: "Редактирование желания", en: "Edit wish" },
+  ov_room: { uk: "Відкрили кімнату", ru: "Открыли комнату", en: "Opened a room" },
+  ov_createRoom: { uk: "Відкрили «Нова кімната»", ru: "Открыли «Новая комната»", en: "Opened New room" },
+  ov_roomWish: { uk: "Бажання з кімнати", ru: "Желание из комнаты", en: "Wish from a room" },
+  ov_pool: { uk: "Додати з моїх бажань", ru: "Добавить из моих желаний", en: "Add from my wishes" },
+  ov_idea: { uk: "Ідея подарунка", ru: "Идея подарка", en: "Gift idea" },
+  ov_history: { uk: "Історія подарунків", ru: "История подарков", en: "Gift history" },
+  ov_invites: { uk: "Мої запрошення", ru: "Мои приглашения", en: "My invites" },
+  ov_gate: { uk: "Екран запрошення", ru: "Экран приглашения", en: "Invite screen" },
+  ov_analytics: { uk: "Аналітика", ru: "Аналитика", en: "Analytics" },
+  share_room: { uk: "Поділились кімнатою", ru: "Поделились комнатой", en: "Shared a room" },
+  share_app: { uk: "Поділились застосунком", ru: "Поделились приложением", en: "Shared the app" },
+  onboard_done: { uk: "Пройшли онбординг", ru: "Прошли онбординг", en: "Finished onboarding" },
+  s_wish: { uk: "Додали бажання", ru: "Добавили желание", en: "Added a wish" },
+  s_wish_link: { uk: "Додали бажання за посиланням", ru: "Добавили желание по ссылке", en: "Added a wish by link" },
+  s_room_friends: { uk: "Створили кімнату «Друзі»", ru: "Создали комнату «Друзья»", en: "Created a Friends room" },
+  s_room_couple: { uk: "Створили кімнату «Пара»", ru: "Создали комнату «Пара»", en: "Created a Couple room" },
+  s_room_birthday: { uk: "Створили кімнату «День народження»", ru: "Создали комнату «День рождения»", en: "Created a Birthday room" },
+  s_join: { uk: "Приєднались до кімнати", ru: "Вступили в комнату", en: "Joined a room" },
+  s_take: { uk: "Взяли подарунок", ru: "Взяли подарок", en: "Took a gift" },
+  s_chip: { uk: "Скинулись", ru: "Скинулись", en: "Chipped in" },
+  s_gifted: { uk: "Позначили «Мені подарували»", ru: "Отметили «Мне подарили»", en: "Marked as gifted" },
+};
+// One measure per chart (people per day), bars from the baseline, the tapped day
+// shows its number; a single series, so no legend box: the title names it.
+function DayBars({ title, days, field, lang }) {
+  const [sel, setSel] = useState(days.length - 1);
+  const max = Math.max(1, ...days.map(d => d[field]));
+  const d = days[sel];
+  const fmt = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString(lang === "uk" ? "uk-UA" : lang === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  return (
+    <Card style={{ padding: 16, marginTop: 12 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ color: C.t2, fontSize: 13, fontWeight: 600 }}>{title}</div>
+        <div style={{ color: C.t1, fontSize: 13, fontWeight: 700 }}>{fmt(d.day)}: {d[field]}</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 96, marginTop: 12, borderBottom: `1px solid ${C.line}` }}>
+        {days.map((x, i) => (
+          <div key={x.day} onClick={() => setSel(i)} style={{ flex: 1, height: "100%", display: "flex", alignItems: "flex-end", cursor: "pointer" }}>
+            <div style={{ width: "100%", height: `${Math.max(x[field] ? 4 : 0, (x[field] / max) * 100)}%`, borderRadius: "4px 4px 0 0",
+              background: i === sel ? C.blue : hex(C.blue, 0.45), transition: "background .15s" }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", color: C.t3, fontSize: 11.5, marginTop: 8 }}>
+        <span>{fmt(days[0].day)}</span><span>{fmt(days[days.length - 1].day)}</span>
+      </div>
+    </Card>
+  );
+}
+function AnalyticsScreen({ onBack }) {
+  const { t, lang } = useT();
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState(null);
+  const load = () => api.stats().then(d => { setData(d); setErr(null); }).catch(e => setErr(e.message === "not_admin" ? "forbidden" : "net"));
+  useEffect(() => { load(); const id = setInterval(load, 30000); return () => clearInterval(id); }, []); // eslint-disable-line
+  const tile = (label, value, sub) => (
+    <Card style={{ flex: 1, padding: 16, minWidth: 0 }}>
+      <div style={{ color: C.t2, fontSize: 12.5, fontWeight: 600 }}>{label}</div>
+      <div style={{ color: C.t1, fontSize: 26, fontWeight: 800, marginTop: 4 }}>{value}</div>
+      {sub && <div style={{ color: C.t3, fontSize: 12.5, marginTop: 2 }}>{sub}</div>}
+    </Card>
+  );
+  const row = (label, value, sub, i, last) => (
+    <div key={i} style={{ minHeight: 52, display: "flex", alignItems: "center", gap: 12, ...sepBelow(!last) }}>
+      <span style={{ flex: 1, color: C.t1, fontSize: 15 }}>{label}</span>
+      {sub && <span style={{ color: C.t3, fontSize: 12.5 }}>{sub}</span>}
+      <span style={{ color: C.t1, fontSize: 15, fontWeight: 700, minWidth: 32, textAlign: "right" }}>{value}</span>
+    </div>
+  );
+  const head = (x) => <div style={{ color: C.t2, fontSize: 13, fontWeight: 600, margin: "24px 4px 8px" }}>{x}</div>;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 60, background: C.bg, overflowY: "auto", overscrollBehavior: "contain" }}>
+      <div style={{ maxWidth: 440, margin: "0 auto", padding: "16px 16px 48px", animation: "fadeUp .3s ease" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <button onClick={onBack} style={{ width: H.sm, height: H.sm, borderRadius: H.sm, border: "none", background: C.card2, color: C.t1, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ChevronLeft size={20} /></button>
+          <div style={{ color: C.t1, fontSize: 24, fontWeight: 800 }}>{t("analytics")}</div>
+        </div>
+        {err === "forbidden" ? <Empty compact emoji="utya:shh" tilt={0} title={t("anForbidden")} />
+          : !data ? (err ? <Empty compact emoji="utya:scared" tilt={0} title={t("noConnection")} /> : <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>)
+          : (
+          <>
+            <Card style={{ padding: 20, display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ width: 12, height: 12, borderRadius: 12, background: C.green, boxShadow: `0 0 0 6px ${C.greenSoft}`, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ color: C.t2, fontSize: 13, fontWeight: 600 }}>{t("anOnline")}</div>
+                <div style={{ color: C.t3, fontSize: 12.5 }}>{t("anOnlineSub")}</div>
+              </div>
+              <div style={{ color: C.t1, fontSize: 32, fontWeight: 800 }}>{data.online}</div>
+            </Card>
+            {head(t("anUsers"))}
+            <div style={{ display: "flex", gap: 12 }}>
+              {tile(t("anToday"), data.active1, `${t("anNew")}: ${data.new1}`)}
+              {tile(t("anWeek"), data.active7, `${t("anNew")}: ${data.new7}`)}
+            </div>
+            <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
+              {tile(t("anMonth"), data.active30, t("anActive"))}
+              {tile(t("anTotal"), data.total, "")}
+            </div>
+            <DayBars title={t("anVisits")} days={data.days} field="active" lang={lang} />
+            <DayBars title={t("anNewDays")} days={data.days} field="new" lang={lang} />
+            {head(t("anContent"))}
+            <Card style={{ padding: `0 ${LIST.pad}px` }}>
+              {[[t("anWishes"), data.wishes, t("anWeekPlus", { n: data.wishes7 })], [t("anRooms"), data.rooms, t("anWeekPlus", { n: data.rooms7 })],
+                [t("anTaken"), data.reserved], [t("anChips"), data.chips], [t("anGifted"), data.gifted], [t("anJoined"), data.invites]]
+                .map(([l, v, sub], i, arr) => row(l, v, sub, i, i === arr.length - 1))}
+            </Card>
+            {head(t("anClicks"))}
+            {data.clicks.length === 0 ? <Card style={{ padding: 16, color: C.t3, fontSize: 14 }}>{t("anEmpty")}</Card> : (
+              <Card style={{ padding: `0 ${LIST.pad}px` }}>
+                {data.clicks.map((c, i) => row(EV_NAMES[c.name] ? EV_NAMES[c.name][lang] : c.name, c.n, `${c.users} ${t("anPeople")}`, i, i === data.clicks.length - 1))}
+              </Card>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, onAnalytics, birthday, onBirthday }) {
   const { t, lang, setLang } = useT();
   const me = { name: tgUserName() || t("guest"), color: "#7B61FF", photo: tgUserPhoto() };
   const gifting = Object.values(reserved || {}).filter(v => v === "you").length;
@@ -3233,7 +3405,7 @@ function ProfileScreen({ wishes, rooms, reserved, onHistory, onInvites, birthday
       </div>
 
       <Card style={{ marginTop: 16, padding: `0 ${LIST.pad}px` }}>
-        {[[Clock, t("history"), onHistory, "#FF9F0A"], [Link2, t("myInvites"), onInvites, "#5E5CE6"], [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui"), "#2E7DF6"]].map(([Icon, l, on, bg], i, arr) => (
+        {[[Clock, t("history"), onHistory, "#FF9F0A"], [Link2, t("myInvites"), onInvites, "#5E5CE6"], ...(onAnalytics ? [[BarChart3, t("analytics"), onAnalytics, "#2E7DF6"]] : []), [Send, t("channel"), () => openTgLink("https://t.me/charlot4k_ui"), "#2E7DF6"]].map(([Icon, l, on, bg], i, arr) => (
           <div key={i} onClick={on} style={{ height: 60, display: "flex", alignItems: "center", gap: LIST.gap, cursor: "pointer", ...sepBelow(i < arr.length - 1) }}>
             <div style={{ width: LIST.icon, height: LIST.icon, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <Icon size={22} color={C.t2} />

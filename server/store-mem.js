@@ -2,9 +2,30 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {} };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [] };
   return {
     async init() {},
+    async findUsers(part) { return Object.values(D.users).filter(u => (u.name || "").toLowerCase().includes(part.toLowerCase())).slice(0, 20).map(u => ({ id: u.id, name: u.name })); },
+    async touchUser(id, at) { const u = D.users[id]; if (u) { u.lastSeen = at; u.firstSeen = u.firstSeen || at; } },
+    async logEvents(userId, names, at) { for (const name of names) D.events.push({ at, userId, name }); },
+    async analytics(now) {
+      const DAY = 86400000, day0 = now - (now % DAY), us = Object.values(D.users), ws = Object.values(D.wishes).filter(w => !w.roomOnly);
+      const uniq = (from) => new Set(D.events.filter(e => e.at >= from).map(e => e.userId)).size;
+      const since = day0 - 13 * DAY;
+      const days = Array.from({ length: 14 }, (_, i) => { const d = since + i * DAY;
+        return { day: new Date(d).toISOString().slice(0, 10), active: new Set(D.events.filter(e => e.at >= d && e.at < d + DAY).map(e => e.userId)).size, new: us.filter(u => u.firstSeen >= d && u.firstSeen < d + DAY).length }; });
+      const cl = {}; for (const e of D.events.filter(e => e.at >= now - 7 * DAY)) { const c = cl[e.name] || (cl[e.name] = { name: e.name, n: 0, u: new Set() }); c.n++; c.u.add(e.userId); }
+      return {
+        online: us.filter(u => u.lastSeen >= now - 300000).length, total: us.filter(u => u.firstSeen).length,
+        active1: us.filter(u => u.lastSeen >= day0).length, active7: uniq(now - 7 * DAY), active30: uniq(now - 30 * DAY),
+        new1: us.filter(u => u.firstSeen >= day0).length, new7: us.filter(u => u.firstSeen >= now - 7 * DAY).length,
+        wishes: ws.length, wishes7: ws.filter(w => w.createdAt >= now - 7 * DAY).length,
+        rooms: Object.keys(D.rooms).length, rooms7: Object.values(D.rooms).filter(r => r.createdAt >= now - 7 * DAY).length,
+        reserved: Object.keys(D.reservations).length, chips: new Set(D.chips.map(c => c.wishId)).size,
+        gifted: ws.filter(w => w.giftedAt).length, invites: D.invites.length,
+        days, clicks: Object.values(cl).sort((a, b) => b.n - a.n).slice(0, 40).map(c => ({ name: c.name, n: c.n, users: c.u.size })),
+      };
+    },
     async ensureUser(u) {
       const cur = D.users[u.id] || { id: u.id, color: colorFor(u.id) };
       D.users[u.id] = { ...cur, name: u.name, photo: u.photo || null, lang: u.lang || cur.lang || null };

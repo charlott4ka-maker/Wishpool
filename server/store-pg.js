@@ -28,6 +28,55 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS chips(wish_id text, user_id text, at bigint, primary key(wish_id,user_id))`);
       await q(`CREATE TABLE IF NOT EXISTS reminders(room_id text, day text, kind text, primary key(room_id,day,kind))`);
       await q(`CREATE TABLE IF NOT EXISTS invites(room_id text, inviter_id text, invitee_id text, at bigint, primary key(room_id, invitee_id))`);
+      // analytics: when people first/last opened the app, and a plain event log
+      await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS first_seen bigint`);
+      await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen bigint`);
+      await q(`CREATE TABLE IF NOT EXISTS events(at bigint, user_id text, name text)`);
+      await q(`CREATE INDEX IF NOT EXISTS events_at ON events(at)`);
+    },
+    async findUsers(part) { const { rows } = await q(`SELECT id,name,first_seen,last_seen FROM users WHERE name ILIKE $1 ORDER BY last_seen DESC NULLS LAST LIMIT 20`, ["%" + part + "%"]); return rows; },
+    async touchUser(id, at) { await q(`UPDATE users SET last_seen=$2, first_seen=COALESCE(first_seen,$2) WHERE id=$1`, [id, at]); },
+    async logEvents(userId, names, at) {
+      if (!names.length) return;
+      const vals = names.map((_, i) => `($1,$2,$${i + 3})`).join(",");
+      await q(`INSERT INTO events(at,user_id,name) VALUES ${vals}`, [at, userId, ...names]);
+    },
+    // everything the admin screen shows, in one go
+    async analytics(now) {
+      const D = 86400000, M5 = 5 * 60000;
+      const day0 = now - (now % D);
+      const one = async (sql, p = []) => Number((await q(sql, p)).rows[0].n) || 0;
+      const [online, total, active1, active7, active30, new1, new7, wishes, wishes7, rooms, rooms7, reserved, chips, gifted, invites] = await Promise.all([
+        one(`SELECT count(*) n FROM users WHERE last_seen >= $1`, [now - M5]),
+        one(`SELECT count(*) n FROM users WHERE first_seen IS NOT NULL`),
+        one(`SELECT count(*) n FROM users WHERE last_seen >= $1`, [day0]),
+        one(`SELECT count(DISTINCT user_id) n FROM events WHERE at >= $1`, [now - 7 * D]),
+        one(`SELECT count(DISTINCT user_id) n FROM events WHERE at >= $1`, [now - 30 * D]),
+        one(`SELECT count(*) n FROM users WHERE first_seen >= $1`, [day0]),
+        one(`SELECT count(*) n FROM users WHERE first_seen >= $1`, [now - 7 * D]),
+        one(`SELECT count(*) n FROM wishes WHERE room_only IS NULL`),
+        one(`SELECT count(*) n FROM wishes WHERE room_only IS NULL AND created_at >= $1`, [now - 7 * D]),
+        one(`SELECT count(*) n FROM rooms`),
+        one(`SELECT count(*) n FROM rooms WHERE created_at >= $1`, [now - 7 * D]),
+        one(`SELECT count(*) n FROM reservations`),
+        one(`SELECT count(DISTINCT wish_id) n FROM chips`),
+        one(`SELECT count(*) n FROM wishes WHERE gifted_at IS NOT NULL`),
+        one(`SELECT count(*) n FROM invites`),
+      ]);
+      const since = day0 - 13 * D;
+      const [act, fresh, clicks] = await Promise.all([
+        q(`SELECT (at - at % ${D}) d, count(DISTINCT user_id) n FROM events WHERE at >= $1 GROUP BY 1`, [since]),
+        q(`SELECT (first_seen - first_seen % ${D}) d, count(*) n FROM users WHERE first_seen >= $1 GROUP BY 1`, [since]),
+        q(`SELECT name, count(*) n, count(DISTINCT user_id) u FROM events WHERE at >= $1 GROUP BY name ORDER BY n DESC LIMIT 40`, [now - 7 * D]),
+      ]);
+      const byDay = (rows) => Object.fromEntries(rows.map(r => [Number(r.d), Number(r.n)]));
+      const a = byDay(act.rows), f = byDay(fresh.rows);
+      const days = Array.from({ length: 14 }, (_, i) => { const d = since + i * D; return { day: new Date(d).toISOString().slice(0, 10), active: a[d] || 0, new: f[d] || 0 }; });
+      return {
+        online, total, active1, active7, active30, new1, new7,
+        wishes, wishes7, rooms, rooms7, reserved, chips, gifted, invites,
+        days, clicks: clicks.rows.map(r => ({ name: r.name, n: Number(r.n), users: Number(r.u) })),
+      };
     },
     async ensureUser(u) {
       // name and photo are refreshed on every visit (photo goes null if the user hides it)
