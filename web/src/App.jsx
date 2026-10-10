@@ -204,15 +204,14 @@ const STR = {
   myBdaySaved: { uk: "День народження збережено", ru: "День рождения сохранён", en: "Birthday saved" },
   myBdayClear: { uk: "Прибрати дату", ru: "Убрать дату", en: "Remove date" },
   bdayDate: { uk: "Дата народження", ru: "Дата рождения", en: "Date of birth" },
-  obLine1: { uk: "Збирай усе, що хочеш, в одному місці", ru: "Собирай всё, что хочешь, в одном месте", en: "Everything you wish for, in one place" },
-  obLine2: { uk: "Ділись із друзями й даруйте потай", ru: "Делись с друзьями и дарите втайне", en: "Share with friends and gift in secret" },
+  obLine1: { uk: "Вішлисти для друзів, пари та днів народження", ru: "Вишлисты для друзей, пары и дней рождения", en: "Wishlists for friends, couples and birthdays" },
   obSkip: { uk: "Пропустити", ru: "Пропустить", en: "Skip" },
   obNext: { uk: "Далі", ru: "Дальше", en: "Next" },
   obAddTitle: { uk: "Додай бажання за секунду", ru: "Добавь желание за секунду", en: "Add a wish in a second" },
   obAddText: { uk: "Встав посилання, і ми підтягнемо фото й ціну. Або просто надішли його боту.", ru: "Вставь ссылку, и мы подтянем фото и цену. Или просто пришли её боту.", en: "Paste a link and we fill in the photo and price. Or just send it to the bot." },
   obGiftTitle: { uk: "Даруйте потай", ru: "Дарите втайне", en: "Gift in secret" },
   obGiftText: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А іменинник нічого не бачить.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А именинник ничего не видит.", en: "Friends mark what they give, so nothing doubles up. And the birthday person sees none of it." },
-  obSecret: { uk: "{name} не дізнається", ru: "{name} не узнает", en: "{name} won't know" },
+  obSecret: { uk: "Це залишиться таємницею", ru: "Это останется тайной", en: "It stays a secret" },
   obStart: { uk: "Почати", ru: "Начать", en: "Let's go" },
   newWishHere: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   wishAddedRoom: { uk: "Додано в кімнату і у твій вішлист", ru: "Добавлено в комнату и в твой вишлист", en: "Added to the room and your wishlist" },
@@ -2914,7 +2913,7 @@ function ObHero() {
     run();
     return () => timers.forEach(clearTimeout);
   }, []);
-  const line = useTypewriter(t(scene === "drop" ? "obLine1" : "obLine2"));
+  const line = useTypewriter(t("obLine1"));
   const W = 236, Hh = Math.round(236 / 1.12), fp = folderPath(W, Hh);
   const orbit = scene === "orbit";
   const squishAnim = squish ? "obSquish .5s ease" : "obIn .8s cubic-bezier(.2,.9,.3,1.2)";
@@ -3126,7 +3125,7 @@ function ObGiftScene() {
             </Card>
             <div style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 8, height: 36, padding: "0 14px", borderRadius: 999, background: C.card2, color: C.t1, fontSize: 13.5, fontWeight: 600,
               opacity: step >= 6 ? 1 : 0, transform: step >= 6 ? "none" : "translateY(10px)", transition: "all .4s ease" }}>
-              <Lock size={14} />{t("obSecret", { name: anya.name })}
+              <Lock size={14} />{t("obSecret")}
             </div>
           </div>
         </div>
