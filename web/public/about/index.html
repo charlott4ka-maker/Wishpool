@@ -261,10 +261,10 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
 
   <section>
     <div class="final wcard rv">
-      <img class="float" src="/about/obj/lipstick.webp" alt="" style="left:4%;top:10%" />
-      <img class="float" src="/about/obj/plane.webp" alt="" style="right:4%;top:12%;animation-delay:-2s" />
-      <img class="float" src="/about/obj/ring.webp" alt="" style="left:6%;bottom:10%;animation-delay:-4s" />
-      <img class="float" src="/about/obj/matcha.webp" alt="" style="right:6%;bottom:8%;animation-delay:-3s" />
+      <img class="float" src="/about/obj/lipstick-v2.webp" alt="" style="left:4%;top:10%" />
+      <img class="float" src="/about/obj/plane-v2.webp" alt="" style="right:4%;top:12%;animation-delay:-2s" />
+      <img class="float" src="/about/obj/ring-v2.webp" alt="" style="left:6%;bottom:10%;animation-delay:-4s" />
+      <img class="float" src="/about/obj/matcha-v2.webp" alt="" style="right:6%;bottom:8%;animation-delay:-3s" />
       <h2 data-t="finT"></h2>
       <div class="cta"><a class="btn lg blue" href="https://t.me/wishpool_bot/app" data-t="openTg"></a></div>
     </div>
@@ -454,7 +454,7 @@ if (matchMedia("(max-width:860px)").matches) Object.assign(STK[3], { x: 70, y: 7
 STK.forEach(o => {
   const el = document.createElement("div");
   el.className = "stk"; el.style.left = o.x + "%"; el.style.top = o.y + "%"; el.style.animationDelay = o.d + "s";
-  el.innerHTML = `<img src="/about/obj/${o.s}.webp" alt="" />`;
+  el.innerHTML = `<img src="/about/obj/${o.s}-v2.webp" alt="" />`;
   stage.appendChild(el);
   let sx, sy, ox, oy, moved = false;
   el.addEventListener("pointerdown", e => {
@@ -479,7 +479,7 @@ STK.forEach(o => {
       setTimeout(() => {
         el.remove(); squish();
         const img = document.createElement("img");
-        img.className = "on pop"; img.src = `/about/obj/${o.s}.webp`; img.alt = "";
+        img.className = "on pop"; img.src = `/about/obj/${o.s}-v2.webp`; img.alt = "";
         Object.assign(img.style, { left: slot.x - 37 + "px", top: slot.y - 37 + "px" }); img.style.setProperty("--r", slot.r + "deg");
         lf.appendChild(img);
       }, 330);
