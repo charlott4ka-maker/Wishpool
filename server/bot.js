@@ -82,7 +82,7 @@ export async function ensureBotMenu(token) {
     const [mine, btn, about] = await Promise.all([tg(token, "getMyCommands", {}), tg(token, "getChatMenuButton", {}), tg(token, "getMyDescription", {})]);
     const same = mine && mine.ok && JSON.stringify((mine.result || []).map(c => [c.command, c.description])) === JSON.stringify(COMMANDS.en)
       && btn && btn.result && btn.result.type === "web_app" && btn.result.web_app && btn.result.web_app.url === base
-      && about && about.result && about.result.description === BOT_ABOUT.uk;
+      && about && about.result && about.result.description === BOT_ABOUT.en;
     if (same) return;
     const cmds = (l) => COMMANDS[l].map(([command, description]) => ({ command, description }));
     await Promise.all([
@@ -93,11 +93,11 @@ export async function ensureBotMenu(token) {
       tg(token, "setMyShortDescription", { short_description: "Wishpool · wishlists for friends, couples and birthdays" }),
       tg(token, "setMyShortDescription", { short_description: "Wishpool · вішлисти для друзів, пари та днів народження", language_code: "uk" }),
       tg(token, "setMyShortDescription", { short_description: "Wishpool · вишлисты для друзей, пары и дней рождения", language_code: "ru" }),
-      // "What can this bot do?" above the Start button, in the person's Telegram language
-      // (Ukrainian for everyone else, like the rest of the app)
+      // "What can this bot do?" above the Start button, in the person's Telegram language;
+      // English for every other language (the store and search reach people everywhere)
       ...Object.entries(BOT_ABOUT).flatMap(([l, text]) => [
         tg(token, "setMyDescription", { description: text, language_code: l }),
-        ...(l === "uk" ? [tg(token, "setMyDescription", { description: text })] : []),
+        ...(l === "en" ? [tg(token, "setMyDescription", { description: text })] : []),
       ]),
     ]);
     console.log("bot menu set");
