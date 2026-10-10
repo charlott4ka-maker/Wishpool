@@ -402,7 +402,7 @@ const useT = () => useContext(LangCtx);
 // Wish icons are image stickers (web/public/stickers/<name>.webp), stored in
 // the wish's `emoji` field as "stk:<name>" and drawn by <Sticker> with the
 // same white outline as emoji. Older wishes keep their plain emoji.
-const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock", "cake", "gift", "piggy", "headphones", "book", "sneakers", "lipstick", "plane", "ring", "gamepad"];
+const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock", "cake", "gift", "piggy", "headphones", "book", "sneakers", "lipstick", "plane", "teddy", "ring", "picture", "gamepad"];
 const WISH_EMOJI = STICKERS.map(n => "stk:" + n);
 
 /* ---------- little ui atoms ---------- */
@@ -2832,7 +2832,7 @@ function BirthdaySheet({ birthday, onSave, onClose }) {
   );
 }
 // First-launch intro: three cards with a sticker, swipe-free, Next / Skip.
-const ONBOARD = [["stk:bag", "ob1Title", "ob1Text"], ["stk:house", "ob2Title", "ob2Text"], ["stk:ghost", "ob3Title", "ob3Text"]];
+const ONBOARD = [["stk:bag", "ob1Title", "ob1Text"], ["stk:picture", "ob2Title", "ob2Text"], ["stk:ghost", "ob3Title", "ob3Text"]];
 function Onboarding({ onDone }) {
   const { t } = useT();
   const [i, setI] = useState(0);
