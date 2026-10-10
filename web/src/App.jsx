@@ -1157,6 +1157,8 @@ export default function App() {
         @keyframes obTap{0%,100%{transform:scale(1)}40%{transform:scale(.72)}}
         @keyframes obRipple{from{transform:scale(1);opacity:.9}to{transform:scale(2.4);opacity:0}}
         @keyframes obBurst{from{transform:translate(-50%,-50%) rotate(var(--a)) translateY(0);opacity:1}to{transform:translate(-50%,-50%) rotate(var(--a)) translateY(-46px);opacity:0}}
+        /* no opacity here: iOS drops backdrop blur under a fading parent and then pops it in */
+        @keyframes obPageIn{from{transform:translateY(10px)}to{transform:none}}
         @keyframes obIn{from{transform:scale(1.3) rotate(-10deg)}to{transform:none}}
         @keyframes obSquish{0%,100%{transform:none}35%{transform:scale(1.07,.88)}65%{transform:scale(.97,1.05)}}
         @keyframes obDrop{0%{transform:translate(-50%,-250px) rotate(-14deg);opacity:0}12%{opacity:1}70%{transform:translate(-50%,-20px) rotate(6deg)}100%{transform:translate(-50%,40px) rotate(0) scale(.8);opacity:1}}
@@ -3038,7 +3040,7 @@ function ObHero() {
             {/* frosted front, the same glass as the room folders */}
             <div style={{ position: "absolute", inset: 0, clipPath: `path("${fp.full}")`, WebkitClipPath: `path("${fp.full}")`,
               background: `linear-gradient(180deg, ${hex(C.blue, 0.42)} 0%, ${hex(C.blue, 0.26)} 100%)`,
-              backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)" }} />
+              backdropFilter: "blur(10px) saturate(150%)", WebkitBackdropFilter: "blur(10px) saturate(150%)", transform: "translateZ(0)" }} />
           </div>
         </div>
       </div>
@@ -3229,7 +3231,7 @@ function Onboarding({ onDone }) {
       <div style={{ display: "flex", justifyContent: "flex-end", height: H.sm, flexShrink: 0 }}>
         {!last && <button onClick={onDone} style={{ background: "none", border: "none", color: C.t2, fontSize: 15, fontWeight: 600, fontFamily: font, cursor: "pointer", height: H.sm, padding: "0 8px" }}>{t("obSkip")}</button>}
       </div>
-      <div key={page} style={{ flex: 1, display: "flex", flexDirection: "column", animation: "fadeUp .35s ease", minHeight: 0 }}>
+      <div key={page} style={{ flex: 1, display: "flex", flexDirection: "column", animation: "obPageIn .35s ease", minHeight: 0 }}>
         {page === 0 ? <ObHero /> : (
           <>
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
