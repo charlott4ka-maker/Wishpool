@@ -2831,10 +2831,9 @@ function BirthdayCard({ birthday, onSave }) {
   return (
     <>
       <Card onClick={() => { haptic("light"); setOpen(true); }} style={{ marginTop: 24, padding: "16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}>
-        <div style={{ width: LIST.icon, display: "flex", justifyContent: "center", flexShrink: 0, transform: "rotate(-8deg)" }}><Sticker emoji="stk:cake" size={30} /></div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ color: C.t2, fontSize: 13, fontWeight: 600 }}>{t("myBday")}</div>
-          <div style={{ color: next ? C.t1 : "#7FB0FF", fontSize: 16, fontWeight: 700, marginTop: 4 }}>{next ? dayMonth : t("myBdayEmpty")}</div>
+          <div style={{ color: next ? C.t1 : "#7FB0FF", fontSize: 16, fontWeight: 700, marginTop: 4, whiteSpace: "nowrap" }}>{next ? dayMonth : t("myBdayEmpty")}</div>
         </div>
         {left != null && (
           <div style={{ height: 32, padding: "0 12px", borderRadius: 999, background: left === 0 ? C.blue : C.blueSoft, color: left === 0 ? "#fff" : "#7FB0FF", fontSize: 13.5, fontWeight: 700, display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>
