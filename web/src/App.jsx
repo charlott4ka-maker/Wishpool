@@ -204,15 +204,9 @@ const STR = {
   myBdaySaved: { uk: "День народження збережено", ru: "День рождения сохранён", en: "Birthday saved" },
   myBdayClear: { uk: "Прибрати дату", ru: "Убрать дату", en: "Remove date" },
   bdayDate: { uk: "Дата народження", ru: "Дата рождения", en: "Date of birth" },
-  obSkip: { uk: "Пропустити", ru: "Пропустить", en: "Skip" },
-  obNext: { uk: "Далі", ru: "Дальше", en: "Next" },
+  obLine1: { uk: "Збирай усе, що хочеш, в одному місці", ru: "Собирай всё, что хочешь, в одном месте", en: "Everything you wish for, in one place" },
+  obLine2: { uk: "Ділись із друзями й даруйте потай", ru: "Делись с друзьями и дарите втайне", en: "Share with friends and gift in secret" },
   obStart: { uk: "Почати", ru: "Начать", en: "Let's go" },
-  ob1Title: { uk: "Збирай бажання", ru: "Собирай желания", en: "Collect your wishes" },
-  ob1Text: { uk: "Додавай з фото, за посиланням з магазину або просто назвою. А можна надіслати посилання прямо боту.", ru: "Добавляй с фото, по ссылке из магазина или просто названием. А можно прислать ссылку прямо боту.", en: "Add them with a photo, a shop link or just a name. You can even send a link straight to the bot." },
-  ob2Title: { uk: "Ділись у кімнатах", ru: "Делись в комнатах", en: "Share in rooms" },
-  ob2Text: { uk: "Друзі, пара чи день народження. Ти вирішуєш, які бажання бачить кожна кімната.", ru: "Друзья, пара или день рождения. Ты решаешь, какие желания видит каждая комната.", en: "Friends, a couple or a birthday. You decide which wishes each room can see." },
-  ob3Title: { uk: "Даруйте потай", ru: "Дарите втайне", en: "Gift in secret" },
-  ob3Text: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А ти не дізнаєшся, хто і що обрав.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А ты не узнаешь, кто и что выбрал.", en: "Friends mark what they give, so nothing doubles up. And you won't know who picked what." },
   newWishHere: { uk: "Нове бажання", ru: "Новое желание", en: "New wish" },
   wishAddedRoom: { uk: "Додано в кімнату і у твій вішлист", ru: "Добавлено в комнату и в твой вишлист", en: "Added to the room and your wishlist" },
   cancelGiftTitle: { uk: "Скасувати подарунок?", ru: "Отменить подарок?", en: "Cancel this gift?" },
@@ -1101,6 +1095,12 @@ export default function App() {
         @keyframes glow{0%,100%{box-shadow:0 0 0 0 ${hex(C.blue,0.0)}}50%{box-shadow:0 0 40px 4px ${hex(C.blue,0.45)}}}
         @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
         @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes obSpin{to{transform:rotate(360deg)}}
+        @keyframes obSpinRev{to{transform:rotate(-360deg)}}
+        @keyframes obBlink{50%{opacity:0}}
+        @keyframes obIn{from{transform:scale(1.3) rotate(-10deg)}to{transform:none}}
+        @keyframes obSquish{0%,100%{transform:none}35%{transform:scale(1.07,.88)}65%{transform:scale(.97,1.05)}}
+        @keyframes obDrop{0%{transform:translate(-50%,-250px) rotate(-14deg);opacity:0}12%{opacity:1}70%{transform:translate(-50%,-20px) rotate(6deg)}100%{transform:translate(-50%,40px) rotate(0) scale(.8);opacity:1}}
         ::-webkit-scrollbar{display:none}
       `}</style>
 
@@ -2872,27 +2872,89 @@ function BirthdaySheet({ birthday, onSave, onClose }) {
     </Sheet>
   );
 }
-// First-launch intro: three cards with a sticker, swipe-free, Next / Skip.
-const ONBOARD = [["utya:wave", "ob1Title", "ob1Text"], ["utya:dance", "ob2Title", "ob2Text"], ["utya:shh", "ob3Title", "ob3Text"]];
+// First-launch intro, one animated screen on a loop: wish stickers drop into
+// the folder (it bounces as it catches each one), then the folder shrinks and
+// stickers orbit around it. The line under "Wishpool." types itself out.
+const OB_DROP = ["stk:headphones", "stk:cake", "stk:kitty", "stk:gift"];
+const OB_RING1 = ["stk:ring", "stk:plane", "stk:gamepad"];
+const OB_RING2 = ["stk:matcha", "stk:sneakers", "stk:picture", "stk:lipstick"];
+function useTypewriter(text) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    setN(0);
+    const id = setInterval(() => setN(x => (x >= text.length ? x : x + 1)), 38);
+    return () => clearInterval(id);
+  }, [text]);
+  return text.slice(0, n);
+}
 function Onboarding({ onDone }) {
   const { t } = useT();
-  const [i, setI] = useState(0);
-  const [emoji, title, text] = ONBOARD[i];
-  const last = i === ONBOARD.length - 1;
+  const [scene, setScene] = useState("drop"); // drop | orbit
+  const [drop, setDrop] = useState(0);        // which sticker is falling now
+  const [squish, setSquish] = useState(0);    // bumps on every catch
+  useEffect(() => {
+    let timers = [];
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    const run = () => {
+      setScene("drop");
+      OB_DROP.forEach((_, i) => { later(() => setDrop(i + 1), 600 + i * 820); later(() => setSquish(x => x + 1), 600 + i * 820 + 560); });
+      later(() => { setScene("orbit"); setDrop(0); }, 600 + OB_DROP.length * 820 + 300);
+      later(run, 600 + OB_DROP.length * 820 + 300 + 5200);
+    };
+    run();
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  const line = useTypewriter(t(scene === "drop" ? "obLine1" : "obLine2"));
+  const W = 236, Hh = Math.round(236 / 1.12), fp = folderPath(W, Hh);
+  const orbit = scene === "orbit";
+  const squishAnim = squish ? "obSquish .5s ease" : "obIn .8s cubic-bezier(.2,.9,.3,1.2)";
+  const ring = (items, r, dur, rev) => (
+    <div style={{ position: "absolute", left: "50%", top: "50%", width: r * 2, height: r * 2, marginLeft: -r, marginTop: -r, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.07)",
+      opacity: orbit ? 1 : 0, transform: orbit ? "scale(1)" : "scale(.6)", transition: "opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1)" }}>
+      <div style={{ position: "absolute", inset: 0, animation: `${rev ? "obSpinRev" : "obSpin"} ${dur}s linear infinite` }}>
+        {items.map((e, i) => {
+          const a = (i / items.length) * Math.PI * 2;
+          return (
+            <div key={e} style={{ position: "absolute", left: r + Math.cos(a) * r, top: r + Math.sin(a) * r, transform: "translate(-50%,-50%)" }}>
+              <div style={{ animation: `${rev ? "obSpin" : "obSpinRev"} ${dur}s linear infinite` }}><Sticker emoji={e} size={48} /></div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 95, background: C.bg, display: "flex", flexDirection: "column", padding: "16px 16px 32px", maxWidth: 440, marginInline: "auto" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", height: H.sm }}>
-        {!last && <button onClick={onDone} style={{ background: "none", border: "none", color: C.t2, fontSize: 15, fontWeight: 600, fontFamily: font, cursor: "pointer", height: H.sm, padding: "0 8px" }}>{t("obSkip")}</button>}
+    <div style={{ position: "fixed", inset: 0, zIndex: 95, background: C.bg, display: "flex", flexDirection: "column", padding: "16px 16px 32px", maxWidth: 440, marginInline: "auto", overflow: "hidden" }}>
+      <div style={{ flex: 1, position: "relative", minHeight: 360 }}>
+        {ring(OB_RING2, 162, 40, true)}
+        {ring(OB_RING1, 100, 30, false)}
+        {/* the folder: back panel, the falling sticker, then the frosted front on top */}
+        <div style={{ position: "absolute", left: "50%", top: "50%", width: W, height: Hh, marginLeft: -W / 2, marginTop: -Hh / 2,
+          transform: orbit ? "scale(.62) rotate(-6deg)" : "scale(1) rotate(-4deg)", transition: "transform .7s cubic-bezier(.2,.8,.2,1)" }}>
+          {/* back and front bounce together on each catch; the falling sticker sits between them */}
+          <div key={"b" + squish} style={{ position: "absolute", inset: 0, animation: squishAnim, transformOrigin: "50% 100%" }}>
+            <div style={{ position: "absolute", left: "8%", right: "8%", top: "16%", bottom: "10%", borderRadius: 18, background: "#1B4FA8" }} />
+          </div>
+          {drop > 0 && !orbit && (
+            <div key={"d" + drop} style={{ position: "absolute", left: "50%", top: "22%", animation: "obDrop .78s cubic-bezier(.45,0,.6,1) forwards" }}>
+              <Sticker emoji={OB_DROP[drop - 1]} size={84} />
+            </div>
+          )}
+          <div key={"f" + squish} style={{ position: "absolute", inset: 0, animation: squishAnim, transformOrigin: "50% 100%" }}>
+            <svg width={W} height={Hh} style={{ position: "absolute", inset: 0, overflow: "visible" }} aria-hidden="true">
+              <defs><linearGradient id="obf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4A93FF" /><stop offset="1" stopColor="#2E7DF6" /></linearGradient></defs>
+              <path d={fp.full} fill="url(#obf)" />
+            </svg>
+          </div>
+        </div>
       </div>
-      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 16px", animation: "fadeUp .35s ease" }}>
-        <div style={{ animation: "pop .5s cubic-bezier(.2,.9,.3,1.25)" }}><Sticker emoji={emoji} size={120} /></div>
-        <div style={{ color: C.t1, fontSize: 28, fontWeight: 800, letterSpacing: -0.5, marginTop: 32 }}>{t(title)}</div>
-        <div style={{ color: C.t2, fontSize: 16, lineHeight: 1.45, marginTop: 12, maxWidth: 320 }}>{t(text)}</div>
+      <div style={{ padding: "0 4px" }}>
+        <div style={{ color: C.t1, fontSize: 30, fontWeight: 800, letterSpacing: -0.6 }}>Wishpool.</div>
+        <div style={{ color: C.t2, fontSize: 17, lineHeight: 1.4, marginTop: 8, minHeight: 48 }}>
+          {line}<span style={{ animation: "obBlink 1s steps(1) infinite", color: C.t1 }}>_</span>
+        </div>
       </div>
-      <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
-        {ONBOARD.map((_, j) => <div key={j} style={{ width: j === i ? 24 : 8, height: 8, borderRadius: 8, background: j === i ? C.blue : C.card2, transition: "all .25s ease" }} />)}
-      </div>
-      <Pill full kind="primary" onClick={() => last ? onDone() : setI(i + 1)}>{t(last ? "obStart" : "obNext")}</Pill>
+      <div style={{ marginTop: 24 }}><Pill full kind="primary" onClick={onDone}>{t("obStart")}</Pill></div>
     </div>
   );
 }
