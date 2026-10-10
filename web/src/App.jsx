@@ -402,7 +402,7 @@ const useT = () => useContext(LangCtx);
 // Wish icons are image stickers (web/public/stickers/<name>.webp), stored in
 // the wish's `emoji` field as "stk:<name>" and drawn by <Sticker> with the
 // same white outline as emoji. Older wishes keep their plain emoji.
-const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock", "cake", "gift", "piggy"];
+const STICKERS = ["candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock", "cake", "gift", "piggy", "headphones", "book", "sneakers", "lipstick", "plane", "ring", "gamepad"];
 const WISH_EMOJI = STICKERS.map(n => "stk:" + n);
 
 /* ---------- little ui atoms ---------- */
@@ -756,7 +756,9 @@ const sepBelow = (show, inset = LIST.icon + LIST.gap) => show ? {
 // The owner's note for gifters, as a soft quote block.
 function WishNote({ text, style, compact }) {
   return (
-    <div style={{ background: C.card2, borderRadius: compact ? 12 : 16, padding: compact ? "8px 12px" : "12px 16px", color: C.t1, fontSize: compact ? 13 : 14.5, lineHeight: 1.4, whiteSpace: "pre-wrap", overflowWrap: "anywhere", ...style }}>{text}</div>
+    <div style={{ background: C.card2, borderRadius: compact ? 12 : 16, padding: compact ? "8px 12px" : "12px 16px", color: C.t1, fontSize: compact ? 13 : 14.5, lineHeight: 1.4, whiteSpace: "pre-wrap", overflowWrap: "anywhere", display: "flex", gap: compact ? 8 : 12, alignItems: "flex-start", ...style }}>
+      <Sticker emoji="stk:note" size={compact ? 14 : 18} style={{ margin: compact ? -5 : -6, flexShrink: 0 }} /><span style={{ minWidth: 0 }}>{text}</span>
+    </div>
   );
 }
 function WishRow({ w, right, noPhoto }) {
@@ -1747,7 +1749,7 @@ function InvitesSheet({ online, rooms, onShare, onClose }) {
       {inv === null ? (
         <div style={{ color: C.t3, fontSize: 14, padding: "18px 4px" }}>{t("loadingInv")}</div>
       ) : groups.length === 0 ? (
-        <Empty compact emoji="stk:uno" tilt={8} title={t("invitedNobody")} sub={t("invitedNobodySub")}
+        <Empty compact emoji="stk:envelope" tilt={8} title={t("invitedNobody")} sub={t("invitedNobodySub")}
           action={rooms.length > 0 && <Pill kind="primary" icon={<Share2 size={16} />} onClick={() => onShare(rooms[0])}>{t("shareBtn")}</Pill>} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -2130,7 +2132,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
               ))}
               <div>
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 4 }}>
-                  <span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700 }}>{t("bdayIdeas")}</span>
+                  <span style={{ color: C.t1, fontSize: 15.5, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 8 }}><Sticker emoji="stk:bulb" size={18} style={{ margin: -6 }} />{t("bdayIdeas")}</span>
                   {celName && <span style={{ color: C.t3, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 4 }}><Lock size={12} />{t("bdayIdeasHidden", { name: celName })}</span>}
                 </div>
                 {ideas.length ? (
@@ -2147,7 +2149,7 @@ function RoomDetail({ room, wishes, reserved, online, onReserve, onUnreserve, on
                     ))}
                   </Card>
                 ) : (
-                  <Empty compact emoji="stk:bag" title={t("bdayNoIdeasTitle")} sub={t("bdayNoIdeasSub")} />
+                  <Empty compact emoji="stk:bulb" title={t("bdayNoIdeasTitle")} sub={t("bdayNoIdeasSub")} />
                 )}
                 <div style={{ marginTop: 16 }}>
                   <Pill full kind={ideas.length ? "ghost" : "primary"} icon={<Plus size={18} />} onClick={onAddIdea}>{t("bdayAddIdea")}</Pill>
@@ -2316,7 +2318,7 @@ function GiveSheet({ wish, onSolo, onGroup, onClose }) {
       width: "100%", display: "flex", alignItems: "center", gap: 16, padding: 16, borderRadius: R.tile, border: "none", cursor: "pointer", textAlign: "left", fontFamily: font,
       background: primary ? C.blue : C.card2, color: "#fff", marginTop: 8,
     }}>
-      <div style={{ width: H.sm, height: H.sm, borderRadius: "50%", background: "rgba(255,255,255,0.16)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
+      <div style={{ width: H.sm, height: H.sm, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transform: "rotate(-8deg)" }}>{icon}</div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 16, fontWeight: 700 }}>{title}</div>
         <div style={{ fontSize: 13, fontWeight: 500, marginTop: 4, color: primary ? "rgba(255,255,255,0.8)" : C.t2, lineHeight: 1.35 }}>{sub}</div>
@@ -2325,8 +2327,8 @@ function GiveSheet({ wish, onSolo, onGroup, onClose }) {
   );
   return (
     <Sheet title={t("giveHow", { name: wish.title })} onClose={onClose}>
-      {opt(<Sticker emoji="stk:basket" size={22} />, t("giveSolo"), t("giveSoloSub"), onSolo, true)}
-      {opt(<Sticker emoji="stk:piggy" size={22} />, t("giveGroup"), t("giveGroupSub"), onGroup, false)}
+      {opt(<Sticker emoji="stk:basket" size={34} />, t("giveSolo"), t("giveSoloSub"), onSolo, true)}
+      {opt(<Sticker emoji="stk:piggy" size={34} />, t("giveGroup"), t("giveGroupSub"), onGroup, false)}
     </Sheet>
   );
 }
@@ -2699,6 +2701,7 @@ function AddSheet({ rooms, onClose, onSave, idea, initial, presetRooms }) {
         <div style={{ color: linkState === "fail" ? "#FF8A80" : linkState === "guess" ? "#FFB27A" : linkState === "done" ? "#7EE29A" : C.t3, fontSize: 12.5, marginTop: -8, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
           {linkState === "loading" && <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} />}
           {linkState === "done" && <Check size={13} />}
+          {!linkState && <Sticker emoji="stk:tag" size={14} style={{ margin: -5 }} />}
           {linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : linkState === "guess" ? t("linkGuess") : t("linkHint")}
         </div>
         <Field label={t("whatYouWant")} value={title} onChange={setTitle} placeholder={t("whatYouWantPh")} />
@@ -2829,7 +2832,7 @@ function BirthdaySheet({ birthday, onSave, onClose }) {
   );
 }
 // First-launch intro: three cards with a sticker, swipe-free, Next / Skip.
-const ONBOARD = [["stk:bag", "ob1Title", "ob1Text"], ["stk:uno", "ob2Title", "ob2Text"], ["stk:ghost", "ob3Title", "ob3Text"]];
+const ONBOARD = [["stk:bag", "ob1Title", "ob1Text"], ["stk:house", "ob2Title", "ob2Text"], ["stk:ghost", "ob3Title", "ob3Text"]];
 function Onboarding({ onDone }) {
   const { t } = useT();
   const [i, setI] = useState(0);
