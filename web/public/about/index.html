@@ -194,8 +194,11 @@ footer{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 1
 @media (max-width:860px){
   nav{display:none}
   .bar .sp{flex:1}
-  .hero{padding-top:112px}
-  .stage{height:440px;margin-top:8px}
+  .hero{padding-top:96px}
+  .stage{height:330px;margin-top:-8px}
+  .hero .hint{margin-top:0}
+  .hero .sub{margin-top:16px}
+  .hero .cta{margin-top:20px}
   .folder{transform:scale(.72)}
   .hide-m{display:none}
   .stk{width:76px}
@@ -450,7 +453,7 @@ const STK = [
 // where dropped stickers land on the folder front (folder px, 280x250)
 const SLOT = [{ x: 92, y: 150, r: -10 }, { x: 190, y: 148, r: 9 }, { x: 140, y: 196, r: 4 }, { x: 222, y: 200, r: -7 }];
 function squish() { [lb, lf].forEach(l => { l.classList.remove("sq"); void l.offsetWidth; l.classList.add("sq"); }); }
-if (matchMedia("(max-width:860px)").matches) Object.assign(STK[3], { x: 70, y: 74 });
+if (matchMedia("(max-width:860px)").matches) Object.assign(STK[3], { x: 72, y: 70 });
 STK.forEach(o => {
   const el = document.createElement("div");
   el.className = "stk"; el.style.left = o.x + "%"; el.style.top = o.y + "%"; el.style.animationDelay = o.d + "s";
