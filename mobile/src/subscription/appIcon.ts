@@ -1,8 +1,6 @@
 // Alternate app icons (Premium). Icon files are declared in app.json under the
 // expo-alternate-app-icons plugin; names here must match those entries.
 
-import { getAppIconName, setAlternateAppIcon, supportsAlternateIcons } from "expo-alternate-app-icons";
-
 import type { StickerName } from "../components/stickerAssets";
 
 export type AppIconOption = {
@@ -20,17 +18,32 @@ export const APP_ICONS: AppIconOption[] = [
   { name: "Matcha", titleKey: "iconMatcha", sticker: "matcha", tint: "#34C759" },
 ];
 
+// Required lazily: the native module isn't in Expo Go or on web, and a
+// top-level import would crash the Profile tab there.
+type IconsModule = typeof import("expo-alternate-app-icons");
+let mod: IconsModule | null | undefined;
+function icons(): IconsModule | null {
+  if (mod === undefined) {
+    try {
+      mod = require("expo-alternate-app-icons") as IconsModule;
+    } catch {
+      mod = null;
+    }
+  }
+  return mod;
+}
+
 export const appIconsSupported = (): boolean => {
   try {
-    return supportsAlternateIcons;
+    return !!icons()?.supportsAlternateIcons;
   } catch {
-    return false; // Expo Go / web: the native module isn't there
+    return false;
   }
 };
 
 export function currentAppIcon(): AppIconOption["name"] {
   try {
-    return (getAppIconName() as AppIconOption["name"]) || null;
+    return (icons()?.getAppIconName() as AppIconOption["name"]) || null;
   } catch {
     return null;
   }
@@ -39,6 +52,6 @@ export function currentAppIcon(): AppIconOption["name"] {
 export async function changeAppIcon(name: AppIconOption["name"], isPremium: boolean): Promise<boolean> {
   if (name && !isPremium) return false; // going back to the default icon is always allowed
   if (!appIconsSupported()) return false;
-  await setAlternateAppIcon(name);
+  await icons()!.setAlternateAppIcon(name);
   return true;
 }
