@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { ChevronRight, Crown, Gift, Globe, Heart, LogOut, Send, Smartphone } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../auth/AuthContext";
 import { GuestBanner } from "../../components/GuestBanner";
@@ -22,6 +23,7 @@ const ROW = 60;
 
 export default function ProfileScreen() {
   const { t, lang, setLang } = useT();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, status, signOut } = useAuth();
   const { wishes, rooms } = useWishpool();
@@ -43,7 +45,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-bg" contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingTop: 20, paddingHorizontal: 16, paddingBottom: 32 }}>
+    <ScrollView className="flex-1 bg-bg" contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
       <GuestBanner />
       <View className="items-center">
         <Avatar m={me} size={92} />

@@ -43,5 +43,15 @@ export const MOBILE_STRINGS = {
   packClassic: { uk: "Класичні", ru: "Классические", en: "Classic" },
   packParty: { uk: "Вечірка", ru: "Вечеринка", en: "Party" },
 
+  planYearly: { uk: "Рік", ru: "Год", en: "Yearly" },
+  planMonthly: { uk: "Місяць", ru: "Месяц", en: "Monthly" },
+  perMonthShort: { uk: "{price} / міс", ru: "{price} / мес", en: "{price} / month" },
+  saveBadge: { uk: "ВИГОДА {n}%", ru: "ВЫГОДА {n}%", en: "SAVE {n}%" },
+  trialCta: { uk: "Спробувати {days} безкоштовно", ru: "Попробовать {days} бесплатно", en: "Start my {days} free trial" },
+  trialThenYear: { uk: "Потім {price} на рік. Скасувати можна будь-коли", ru: "Потом {price} в год. Отменить можно в любой момент", en: "Then {price} per year. Cancel anytime" },
+  trialThenMonth: { uk: "Потім {price} на місяць. Скасувати можна будь-коли", ru: "Потом {price} в месяц. Отменить можно в любой момент", en: "Then {price} per month. Cancel anytime" },
+  legalTerms: { uk: "Умови", ru: "Условия", en: "Terms" },
+  legalPrivacy: { uk: "Конфіденційність", ru: "Конфиденциальность", en: "Privacy" },
+  restoreShort: { uk: "Відновити", ru: "Восстановить", en: "Restore" },
   buyLink: { uk: "До магазину", ru: "В магазин", en: "Go to the shop" },
 } as const;

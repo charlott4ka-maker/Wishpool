@@ -18,7 +18,7 @@ export function plural(lang: Lang, n: number, forms: string[]): string {
   return forms[2];
 }
 
-const DAY_FORMS: Record<Lang, string[]> = { uk: ["день", "дні", "днів"], ru: ["день", "дня", "дней"], en: ["day", "days"] };
+export const DAY_FORMS: Record<Lang, string[]> = { uk: ["день", "дні", "днів"], ru: ["день", "дня", "дней"], en: ["day", "days"] };
 
 export function countdownLabel(lang: Lang, t: (k: string, p?: Record<string, string | number>) => string, date?: string): string | null {
   const n = daysUntil(date);

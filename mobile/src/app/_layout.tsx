@@ -35,7 +35,7 @@ function Gate() {
             <Stack.Screen name="room/[id]" />
             <Stack.Screen name="wish/new" options={{ presentation: "formSheet", sheetGrabberVisible: true, sheetCornerRadius: 32, contentStyle: { backgroundColor: C.card } }} />
             <Stack.Screen name="room/new" options={{ presentation: "formSheet", sheetGrabberVisible: true, sheetCornerRadius: 32, contentStyle: { backgroundColor: C.card } }} />
-            <Stack.Screen name="paywall" options={{ presentation: "formSheet", sheetGrabberVisible: true, sheetCornerRadius: 32, contentStyle: { backgroundColor: C.card } }} />
+            <Stack.Screen name="paywall" options={{ presentation: "fullScreenModal" }} />
           </Stack.Protected>
           <Stack.Protected guard={!inside}>
             <Stack.Screen name="sign-in" />

@@ -22,6 +22,13 @@ export type PremiumPackage = {
   kind: string;
   title: string;
   priceString: string;
+  /** Numeric price, for "per month" and "save N%". */
+  price: number;
+  currencyCode: string;
+  /** "2,50 $" for an annual plan; null when the store doesn't give it. */
+  pricePerMonthString: string | null;
+  /** Free trial length in days (0 = no trial). */
+  trialDays: number;
   /** SDK object, passed back to purchase(). */
   raw?: unknown;
 };
@@ -56,8 +63,8 @@ function createMock(fakePurchases: boolean): PurchasesAdapter {
     async packages() {
       if (!fakePurchases) return [];
       return [
-        { id: "mock_annual", kind: "annual", title: "Wishpool Premium", priceString: "$19.99" },
-        { id: "mock_monthly", kind: "monthly", title: "Wishpool Premium", priceString: "$2.99" },
+        { id: "mock_annual", kind: "annual", title: "Wishpool Premium", priceString: "19,99 $", price: 19.99, currencyCode: "USD", pricePerMonthString: "1,67 $", trialDays: 7 },
+        { id: "mock_monthly", kind: "monthly", title: "Wishpool Premium", priceString: "2,99 $", price: 2.99, currencyCode: "USD", pricePerMonthString: "2,99 $", trialDays: 0 },
       ];
     },
     async purchase() {
@@ -73,6 +80,12 @@ function createMock(fakePurchases: boolean): PurchasesAdapter {
       return () => subs.delete(cb);
     },
   };
+}
+
+const UNIT_DAYS: Record<string, number> = { DAY: 1, WEEK: 7, MONTH: 30, YEAR: 365 };
+function trialDays(intro: { price: number; periodUnit: string; periodNumberOfUnits: number } | null): number {
+  if (!intro || intro.price > 0) return 0;
+  return (UNIT_DAYS[intro.periodUnit] || 0) * intro.periodNumberOfUnits;
 }
 
 function createRevenueCat(): PurchasesAdapter {
@@ -98,6 +111,10 @@ function createRevenueCat(): PurchasesAdapter {
         kind: String(p.packageType).toLowerCase(),
         title: p.product.title,
         priceString: p.product.priceString,
+        price: p.product.price,
+        currencyCode: p.product.currencyCode,
+        pricePerMonthString: p.product.pricePerMonthString,
+        trialDays: trialDays(p.product.introPrice),
         raw: p,
       }));
     },

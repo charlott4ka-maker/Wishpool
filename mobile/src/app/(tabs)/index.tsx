@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { Lock, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GuestBanner } from "../../components/GuestBanner";
 import { Sticker } from "../../components/Sticker";
@@ -19,6 +20,7 @@ import { C } from "../../theme/tokens";
 export default function PoolScreen() {
   const { t } = useT();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { wishes, rooms, refresh, toggleWishRoom, setGifted, deleteWish } = useWishpool();
   const [openId, setOpenId] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
@@ -49,8 +51,7 @@ export default function PoolScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 16, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}
         refreshControl={
           <RefreshControl
             tintColor={C.t2}

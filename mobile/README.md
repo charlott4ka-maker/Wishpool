@@ -4,8 +4,7 @@ Native iOS app built on the Telegram Mini App in `../web`. It is a separate
 project: nothing in `web/`, `server/`, `api/` or the Vercel config changes, and
 the Mini App keeps deploying from `main` exactly as before.
 
-Stack: Expo SDK 58, Expo Router (system native tabs: Liquid Glass on iOS 26),
-NativeWind 4 (Tailwind 3), EAS Build,
+Stack: Expo SDK 58, Expo Router, NativeWind 4 (Tailwind 3), EAS Build,
 RevenueCat (`react-native-purchases`), `expo-apple-authentication`,
 `expo-alternate-app-icons`.
 
@@ -36,7 +35,7 @@ first `eas build` asks to create the EAS project and writes its id into app.json
       wish/new.tsx           new / edit wish: link -> preview -> affiliate link on save
       paywall.tsx            Wishpool Premium
       sign-in.tsx            Apple / Telegram / e-mail / guest
-    src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder...
+    src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder, TabBar...
     src/services/
       affiliateConverter.ts  product URL -> affiliate URL (Amazon, Admitad, Rozetka, subid)
       affiliate/shops.ts     known shops and their network
@@ -51,7 +50,7 @@ first `eas build` asks to create the EAS project and writes its id into app.json
 Design tokens (colours, 52/40 control heights, radii) live in
 `tailwind.config.js` and `src/theme/tokens.ts` and match `C`/`H`/`R` in
 `web/src/App.jsx`. Font: the iOS system font (SF Pro), weights 500-800 via
-`font-m500`...`font-m800`. The tab bar is the system UITabBar with SF Symbols.
+`font-m500`...`font-m800`. The tab bar is our floating pill bar, as in the Mini App.
 
 ## Affiliate links
 

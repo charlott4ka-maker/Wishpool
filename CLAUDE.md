@@ -20,4 +20,4 @@
 ## iOS app (mobile/)
 - Separate Expo project; shares design tokens, copy and stickers with the Mini App.
 - Font: the iOS system font SF Pro (not Montserrat), weights 500-800 only.
-- Tab bar: the system native tabs (`expo-router/native-tabs`, Liquid Glass on iOS 26) with SF Symbols, no custom bar.
+- Tab bar: our own floating pill bar (`TabBar`), same as the Mini App, not the system glass tabs.
