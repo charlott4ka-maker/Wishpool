@@ -3,6 +3,7 @@
 import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 
 import { RoomFolder } from "../../../components/RoomFolder";
@@ -15,6 +16,7 @@ import { useWishpool } from "../../../store/WishpoolContext";
 export default function RoomsScreen() {
   const { t } = useT();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { rooms, wishes } = useWishpool();
   const create = () => router.push("/room/new");
   const rows: (typeof rooms)[] = [];
@@ -22,7 +24,13 @@ export default function RoomsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      <ScrollView className="flex-1 bg-bg" contentInsetAdjustmentBehavior="automatic" scrollEnabled={rooms.length > 0} contentContainerStyle={{ flexGrow: 1, paddingTop: 8, paddingHorizontal: 16, paddingBottom: 24 }}>
+      <ScrollView
+        key={rooms.length ? "list" : "empty"}
+        className="flex-1 bg-bg"
+        contentInsetAdjustmentBehavior="never"
+        scrollEnabled={rooms.length > 0}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
+      >
         <ScreenTitle title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
         {rooms.length === 0 ? (
           <Empty

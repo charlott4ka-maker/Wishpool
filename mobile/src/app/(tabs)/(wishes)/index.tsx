@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { Lock, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
 
 import { GuestBanner } from "../../../components/GuestBanner";
@@ -22,6 +23,7 @@ import { C } from "../../../theme/tokens";
 export default function PoolScreen() {
   const { t } = useT();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { wishes, rooms, refresh, toggleWishRoom, setGifted, deleteWish } = useWishpool();
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -52,9 +54,12 @@ export default function PoolScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
+        // explicit insets (iOS's automatic ones kept an old scroll offset and hid
+        // the title); remounted when the list empties so it starts at the top
+        key={wishes.length ? "list" : "empty"}
+        contentInsetAdjustmentBehavior="never"
         scrollEnabled={wishes.length > 0}
-        contentContainerStyle={{ flexGrow: 1, paddingTop: 8, paddingHorizontal: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}
         refreshControl={
           <RefreshControl
             tintColor={C.t2}
