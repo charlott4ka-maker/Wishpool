@@ -18,7 +18,7 @@ const ITEMS = [
   { route: "profile", label: "tabProfile", Icon: User },
 ] as const;
 
-export function TabBar({ state, navigateToTab }: BottomTabBarProps) {
+export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
@@ -27,13 +27,12 @@ export function TabBar({ state, navigateToTab }: BottomTabBarProps) {
       <BlurView intensity={80} tint="dark" className="flex-row gap-2 overflow-hidden rounded-full p-1.5" style={{ backgroundColor: "rgba(28,28,30,0.92)", borderWidth: 1, borderColor: C.line }}>
         {ITEMS.map(({ route, label, Icon }) => {
           const on = current === route;
-          const key = state.routes.find((r) => r.name === route)?.key;
           return (
             <Pressable
               key={route}
               onPress={() => {
                 if (!on) haptic("select");
-                if (key) navigateToTab(key);
+                navigation.navigate(route);
               }}
               className="h-lg items-center justify-center gap-0.5 rounded-full px-5"
               style={{ backgroundColor: on ? C.blueSoft : "transparent" }}

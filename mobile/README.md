@@ -4,7 +4,7 @@ Native iOS app built on the Telegram Mini App in `../web`. It is a separate
 project: nothing in `web/`, `server/`, `api/` or the Vercel config changes, and
 the Mini App keeps deploying from `main` exactly as before.
 
-Stack: Expo SDK 58, Expo Router, NativeWind 4 (Tailwind 3), EAS Build,
+Stack: Expo SDK 57 (what Expo Go in the App Store runs), Expo Router, NativeWind 4 (Tailwind 3), EAS Build,
 RevenueCat (`react-native-purchases`), `expo-apple-authentication`,
 `expo-alternate-app-icons`.
 
