@@ -12,6 +12,7 @@ import { Sticker } from "../../components/Sticker";
 import { Chip, Empty, HeaderAdd, Pill, ScreenTitle, Txt } from "../../components/ui";
 import { WishSheet } from "../../components/WishSheet";
 import { WishTile } from "../../components/WishTile";
+import { TabBarFade } from "../../components/TabBarFade";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
@@ -115,6 +116,7 @@ export default function PoolScreen() {
           </View>
         ) : null}
       </ScrollView>
+      <TabBarFade />
 
       <WishSheet
         w={open}

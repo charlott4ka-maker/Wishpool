@@ -20,4 +20,4 @@
 ## iOS app (mobile/)
 - Separate Expo project; shares design tokens, copy and stickers with the Mini App.
 - Font: the iOS system font SF Pro (not Montserrat), weights 500-800 only.
-- Tab bar: our own floating pill bar (`TabBar`), same as the Mini App, not the system glass tabs.
+- Tab bar: the system iOS tabs (`expo-router/unstable-native-tabs`, SF Symbols) with a thick dark material and a dark fade (`TabBarFade`) at the bottom of each tab screen, so content under the bar doesn't blend into it.

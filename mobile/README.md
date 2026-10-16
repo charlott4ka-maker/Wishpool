@@ -35,7 +35,7 @@ first `eas build` asks to create the EAS project and writes its id into app.json
       wish/new.tsx           new / edit wish: link -> preview -> affiliate link on save
       paywall.tsx            Wishpool Premium
       sign-in.tsx            Apple / Telegram / e-mail / guest
-    src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder, TabBar...
+    src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder, TabBarFade...
     src/services/
       affiliateConverter.ts  product URL -> affiliate URL (Amazon, Admitad, Rozetka, subid)
       affiliate/shops.ts     known shops and their network
@@ -50,7 +50,8 @@ first `eas build` asks to create the EAS project and writes its id into app.json
 Design tokens (colours, 52/40 control heights, radii) live in
 `tailwind.config.js` and `src/theme/tokens.ts` and match `C`/`H`/`R` in
 `web/src/App.jsx`. Font: the iOS system font (SF Pro), weights 500-800 via
-`font-m500`...`font-m800`. The tab bar is our floating pill bar, as in the Mini App.
+`font-m500`...`font-m800`. The tab bar is the system iOS one (native tabs, SF Symbols) with a dark
+fade under it (`TabBarFade`).
 
 ## Affiliate links
 
