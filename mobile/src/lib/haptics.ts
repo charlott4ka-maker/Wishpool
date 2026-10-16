@@ -1,8 +1,11 @@
 import * as Haptics from "expo-haptics";
 
+import { getPrefs } from "../settings/prefs";
+
 export type HapticKind = "light" | "select" | "success" | "warning" | "error";
 
 export function haptic(kind: HapticKind = "light") {
+  if (!getPrefs().haptics) return;
   const run = () => {
     switch (kind) {
       case "select":

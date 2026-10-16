@@ -38,6 +38,7 @@ function Gate() {
           <Stack.Protected guard={inside}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="room/[id]" />
+            <Stack.Screen name="settings" />
             <Stack.Screen name="wish/new" options={LARGE_SHEET} />
             <Stack.Screen name="room/new" options={LARGE_SHEET} />
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />
@@ -46,6 +47,7 @@ function Gate() {
           </Stack.Protected>
           <Stack.Protected guard={!inside}>
             <Stack.Screen name="sign-in" />
+            <Stack.Screen name="sign-in-options" options={FIT_SHEET} />
           </Stack.Protected>
         </Stack>
       </WishpoolProvider>

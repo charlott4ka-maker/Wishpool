@@ -21,9 +21,15 @@
         "NSPhotoLibraryUsageDescription": "Wishpool uses your photos so you can add pictures to your wishes.",
         "NSPhotoLibraryAddUsageDescription": "Wishpool saves wish photos to your library when you ask it to.",
         "NSCameraUsageDescription": "Wishpool uses the camera so you can photograph something you wish for.",
-        "LSApplicationQueriesSchemes": ["tg"],
+        "LSApplicationQueriesSchemes": [
+          "tg"
+        ],
         "CFBundleAllowMixedLocalizations": true,
-        "CFBundleLocalizations": ["uk", "ru", "en"]
+        "CFBundleLocalizations": [
+          "uk",
+          "ru",
+          "en"
+        ]
       }
     },
     "android": {
@@ -34,7 +40,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["android.permission.CAMERA", "android.permission.READ_MEDIA_IMAGES"],
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -48,6 +57,7 @@
       "expo-localization",
       "expo-web-browser",
       "expo-apple-authentication",
+      "expo-notifications",
       [
         "expo-secure-store",
         {
@@ -76,17 +86,26 @@
           {
             "name": "Ocean",
             "ios": "./assets/icons/ocean.png",
-            "android": { "foregroundImage": "./assets/icons/ocean-fg.png", "backgroundColor": "#1B4FA8" }
+            "android": {
+              "foregroundImage": "./assets/icons/ocean-fg.png",
+              "backgroundColor": "#1B4FA8"
+            }
           },
           {
             "name": "Blush",
             "ios": "./assets/icons/blush.png",
-            "android": { "foregroundImage": "./assets/icons/blush-fg.png", "backgroundColor": "#B0306A" }
+            "android": {
+              "foregroundImage": "./assets/icons/blush-fg.png",
+              "backgroundColor": "#B0306A"
+            }
           },
           {
             "name": "Matcha",
             "ios": "./assets/icons/matcha.png",
-            "android": { "foregroundImage": "./assets/icons/matcha-fg.png", "backgroundColor": "#1F7A3E" }
+            "android": {
+              "foregroundImage": "./assets/icons/matcha-fg.png",
+              "backgroundColor": "#1F7A3E"
+            }
           }
         ]
       ]

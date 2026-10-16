@@ -70,6 +70,8 @@ export const api = {
   // slow shops + fallback services on the server: give it longer
   preview: (url: string) =>
     req<{ title: string; price: string; image: string | null; url: string; guess: boolean }>("GET", "/preview?url=" + encodeURIComponent(url), undefined, { timeout: 25000 }),
+  // Account deletion (App Store guideline 5.1.1(v)); the backend endpoint is still to do.
+  deleteAccount: () => req("DELETE", "/me"),
   premiumStatus: () => req<{ isPremium: boolean }>("GET", "/me/premium"),
 
   auth: {

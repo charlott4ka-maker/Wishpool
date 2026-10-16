@@ -3,16 +3,17 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { ChevronRight, Crown, Gift, Globe, Heart, LogOut, Send, Smartphone } from "lucide-react-native";
+import { ChevronRight, Crown, Gift, Heart, Send, Settings, Smartphone } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../auth/AuthContext";
 import { GuestBanner } from "../../components/GuestBanner";
+import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
 import { TabBarFade } from "../../components/TabBarFade";
-import { Avatar, Card, PremiumBadge, Segmented, Txt } from "../../components/ui";
-import { LANG_SHORT, LANGS, useT } from "../../i18n";
+import { Avatar, Card, PremiumBadge, Txt } from "../../components/ui";
+import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
 import { APP_ICONS, appIconsSupported, changeAppIcon, currentAppIcon } from "../../subscription/appIcon";
@@ -21,13 +22,11 @@ import { useSubscription } from "../../subscription/SubscriptionContext";
 import { STICKER_ASSETS } from "../../components/stickerAssets";
 import { C } from "../../theme/tokens";
 
-const ROW = 60;
-
 export default function ProfileScreen() {
-  const { t, lang, setLang } = useT();
+  const { t } = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, status, signOut } = useAuth();
+  const { user } = useAuth();
   const { wishes, rooms } = useWishpool();
   const { isPremium } = useSubscription();
   const [icon, setIcon] = useState(currentAppIcon);
@@ -40,11 +39,6 @@ export default function ProfileScreen() {
     haptic("select");
     if (await changeAppIcon(name, isPremium).catch(() => false)) setIcon(name);
   };
-
-  const rows: [typeof Send, string, () => void][] = [
-    [Send, t("channel"), () => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")],
-    ...(status === "signedIn" ? [[LogOut, t("signOut"), signOut] as [typeof Send, string, () => void]] : []),
-  ];
 
   return (
     <View className="flex-1 bg-bg">
@@ -106,24 +100,11 @@ export default function ProfileScreen() {
         ) : null}
 
         <View className="mt-6">
-          <View className="mb-2 flex-row items-center gap-2">
-            <Globe size={15} color={C.t2} />
-            <Txt className="font-m600 text-[13px] text-t2">{t("language")}</Txt>
-          </View>
-          <Segmented options={LANGS.map((l) => [l, LANG_SHORT[l]])} value={lang} onChange={setLang} />
+          <SettingsGroup>
+            <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
+            <SettingsCell icon={Send} tint="#2AABEE" label={t("channel")} onPress={() => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")} />
+          </SettingsGroup>
         </View>
-
-        <Card className="mt-4 px-4">
-          {rows.map(([Icon, label, onPress], i) => (
-            <Pressable key={label} onPress={onPress} className="flex-row items-center gap-4" style={{ height: ROW, borderBottomWidth: i < rows.length - 1 ? 0.5 : 0, borderBottomColor: C.line }}>
-              <View className="w-[30px] items-center">
-                <Icon size={22} color={C.t2} />
-              </View>
-              <Txt className="flex-1 text-base">{label}</Txt>
-              <ChevronRight size={20} color={C.t3} />
-            </Pressable>
-          ))}
-        </Card>
       </ScrollView>
       <TabBarFade />
     </View>
