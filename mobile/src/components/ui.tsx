@@ -245,7 +245,7 @@ export function HeaderAdd({ onPress, label }: { onPress: () => void; label: stri
 
 export function ScreenTitle({ title, sub, right }: { title: string; sub?: string; right?: React.ReactNode }) {
   return (
-    <View className="flex-row items-end justify-between gap-3 px-1 pb-6 pt-1.5">
+    <View className={`flex-row ${sub ? "items-end" : "items-center"} justify-between gap-3 px-1 pb-6 pt-1.5`}>
       <View className="flex-1">
         <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{title}</Txt>
         {sub ? <Txt className="mt-1 text-sm text-t2">{sub}</Txt> : null}
