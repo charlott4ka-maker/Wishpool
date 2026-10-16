@@ -1,4 +1,5 @@
 // Floating pill tab bar from the Mini App: Бажання / Кімнати / Профіль.
+// Same near-opaque fill as the web one: #1C1C1E at 92% over a 20px blur.
 
 import type { BottomTabBarProps } from "expo-router/tabs";
 import { BlurView } from "expo-blur";
@@ -23,7 +24,7 @@ export function TabBar({ state, navigateToTab }: BottomTabBarProps) {
   const current = state.routes[state.index]?.name;
   return (
     <View pointerEvents="box-none" className="absolute left-0 right-0 items-center" style={{ bottom: Math.max(insets.bottom, 12) + 8 }}>
-      <BlurView intensity={40} tint="dark" className="flex-row gap-2 overflow-hidden rounded-full p-1.5" style={{ backgroundColor: "rgba(28,28,30,0.85)", borderWidth: 1, borderColor: C.line }}>
+      <BlurView intensity={80} tint="dark" className="flex-row gap-2 overflow-hidden rounded-full p-1.5" style={{ backgroundColor: "rgba(28,28,30,0.92)", borderWidth: 1, borderColor: C.line }}>
         {ITEMS.map(({ route, label, Icon }) => {
           const on = current === route;
           const key = state.routes.find((r) => r.name === route)?.key;
