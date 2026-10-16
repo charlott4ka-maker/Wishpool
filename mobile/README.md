@@ -1,0 +1,103 @@
+# Wishpool for iOS (Expo / React Native)
+
+Native iOS app built on the Telegram Mini App in `../web`. It is a separate
+project: nothing in `web/`, `server/`, `api/` or the Vercel config changes, and
+the Mini App keeps deploying from `main` exactly as before.
+
+Stack: Expo SDK 58, Expo Router, NativeWind 4 (Tailwind 3), EAS Build,
+RevenueCat (`react-native-purchases`), `expo-apple-authentication`,
+`expo-alternate-app-icons`.
+
+## Run
+
+    cd mobile
+    npm install
+    cp .env.example .env.local      # fill in what you have
+    npx expo start                  # Expo Go works in guest mode, purchases are mocked
+    npm test                        # affiliate converter + OG parser
+    npm run typecheck
+
+Sign in with Apple, RevenueCat and alternate icons are native modules, so try
+them in a development build: `npm run build:dev` (EAS, iOS simulator), or
+`npx expo run:ios` on a Mac.
+
+Release: `npm run build:ios` then `npx eas-cli@latest submit -p ios`. The
+first `eas build` asks to create the EAS project and writes its id into app.json.
+
+## Layout
+
+    src/app/                 screens (Expo Router)
+      (tabs)/index.tsx       Бажання: wish pool, filters, two-column cards
+      (tabs)/rooms.tsx       Кімнати: rooms as folders
+      (tabs)/profile.tsx     Профіль: stats, Premium, app icon, language
+      room/[id].tsx          room: friends' lists, "I'll get it" (Даруйте потай)
+      room/new.tsx           new room (Premium sticker packs locked)
+      wish/new.tsx           new / edit wish: link -> preview -> affiliate link on save
+      paywall.tsx            Wishpool Premium
+      sign-in.tsx            Apple / Telegram / e-mail / guest
+    src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder, TabBar...
+    src/services/
+      affiliateConverter.ts  product URL -> affiliate URL (Amazon, Admitad, Rozetka, subid)
+      affiliate/shops.ts     known shops and their network
+      affiliate/config.ts    tags from env
+      linkPreview.ts         OG / JSON-LD parsing (title, price, photo)
+      api.ts                 backend client (Bearer token)
+    src/subscription/        SubscriptionContext (isPremium), RevenueCat adapter, feature flags, app icons
+    src/auth/                AuthContext (Apple, Telegram, e-mail, guest)
+    src/i18n/                uk / ru / en; webStrings.ts is copied from web/src/App.jsx
+    assets/stickers/         the same WebP stickers as web/public/stickers
+
+Design tokens (colours, 52/40 control heights, radii, Montserrat 500-800) live
+in `tailwind.config.js` and `src/theme/tokens.ts` and match `C`/`H`/`R` in
+`web/src/App.jsx`.
+
+## Affiliate links
+
+`toAffiliateUrl(url)` runs when a wish is saved:
+
+| Shop | What happens |
+| --- | --- |
+| Amazon (all marketplaces) | `?tag=<EXPO_PUBLIC_AMAZON_ASSOCIATES_TAG>&ascsubtag=<tag>`, someone else's tag removed. No tag configured: link unchanged |
+| Rozetka | Admitad deeplink if `rozetka` is in `EXPO_PUBLIC_ADMITAD_LINKS`, else Rozetka Affiliate id, else `?subid=<tag>` |
+| MAKEUP, Zara, AliExpress, Notino, Answear, EVA, Allo, Comfy, Foxtrot, Epicentr, ... | Admitad deeplink `https://ad.admitad.com/g/<hash>/?ulp=<url>&subid=<tag>`, else `?subid=<tag>` |
+| H&M, Sephora, Prom, Kasta, Temu, eBay, Etsy | `?subid=<tag>` |
+| anything else | unchanged |
+
+`<tag>` is `EXPO_PUBLIC_AFFILIATE_TAG` (or `AFFILIATE_TAG` in Node), default
+`wishpool`. Links wrapped by Google/Facebook/someone's Admitad are unwrapped
+first; tracking params (utm, gclid, fbclid...) are dropped; converting twice
+gives the same link. Add a shop in `src/services/affiliate/shops.ts`.
+
+The link preview reads the page directly from the phone (no CORS on native)
+and falls back to the backend's `/api/preview` for shops that block phones.
+
+## Premium
+
+`useSubscription()` gives `isPremium`, `photoLimit`, `can(feature)`,
+`isStickerLocked(emoji)`, `packages`, `purchase`, `restore`.
+
+- Photos per wish: Free 1, Premium 3 (`PLAN_LIMITS`). The backend keeps up to 3
+  (`MAX_IMAGES` in server/util.js): raise both to go to 5.
+- Sticker packs with `isPremiumOnly: true` (`STICKER_PACKS`). The "party" pack
+  holds the 5 spare stickers as a placeholder until the exclusive 3D pack is drawn.
+- Alternate app icons: Ocean, Blush, Matcha (`app.json` plugin + `subscription/appIcon.ts`).
+
+RevenueCat: entitlement `premium`, offering `default` with monthly and annual
+packages; set `EXPO_PUBLIC_REVENUECAT_IOS_KEY`. Without a key (or in Expo Go)
+a mock store is used; in a release build without a key nothing can be bought.
+Before App Review the paywall also needs links to Terms of Use and the Privacy Policy.
+
+## Backend work needed (not done here)
+
+The server only accepts Telegram `initData` today. For the native app it needs:
+
+- `POST /api/auth/apple { identityToken, nonce, fullName?, email? }`: verify the
+  token against Apple's JWKS (audience `app.wishpool.ios`, nonce = SHA-256 of the raw nonce), return `{ token, user }`.
+- `POST /api/auth/email/start { email }` and `POST /api/auth/email/verify { email, code }`.
+- `GET /api/auth/telegram/start?redirect=wishpool://auth`: Telegram Login, then
+  redirect to `wishpool://auth?token=...&uid=...&name=...`.
+- Accept `Authorization: Bearer <token>` next to `X-Init-Data`, mapping both to the same user,
+  so one person has the same wishes in Telegram and on iPhone.
+- `GET /api/me/premium` and a RevenueCat webhook to store Premium on the user.
+
+Until then the app runs fully in guest mode (data on the phone).

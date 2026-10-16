@@ -1,0 +1,40 @@
+// Same tokens as `C`, `H`, `R` in web/src/App.jsx and tailwind.config.js.
+// Use Tailwind classes for layout; these are for props that take raw values
+// (icon colors, SVG fills, shadows, gradients).
+export const C = {
+  bg: "#000000",
+  card: "#161618",
+  card2: "#232326",
+  line: "rgba(255,255,255,0.08)",
+  t1: "#FFFFFF",
+  t2: "#8A8A8E",
+  t3: "#5A5A5E",
+  blue: "#2E7DF6",
+  blueSoft: "rgba(46,125,246,0.16)",
+  blueLine: "rgba(46,125,246,0.45)",
+  blueText: "#7FB0FF",
+  green: "#34C759",
+  greenText: "#7EE29A",
+  danger: "#FF5A5A",
+  gold: "#FFC94D",
+} as const;
+
+// Exactly two control heights.
+export const H = { lg: 52, sm: 40 } as const;
+export const R = { card: 26, tile: 18, sheet: 32, pill: 999 } as const;
+// Spacing scale: 4 / 8 / 12 / 16 / 24 / 32.
+export const S = { xs: 4, s: 8, m: 12, l: 16, xl: 24, xxl: 32 } as const;
+
+export const ROOM_COLORS = ["#2E7DF6", "#38BDF8", "#34C759", "#FF7A45", "#FF4D8D", "#AF52DE"];
+
+export function hex(h: string, a: number): string {
+  const n = h.replace("#", "");
+  const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+export function mixHex(c1: string, c2: string, k: number): string {
+  const p = (c: string) => [0, 2, 4].map((i) => parseInt(c.replace("#", "").slice(i, i + 2), 16));
+  const a = p(c1), b = p(c2);
+  return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * k).toString(16).padStart(2, "0")).join("");
+}

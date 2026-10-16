@@ -1,0 +1,98 @@
+{
+  "expo": {
+    "name": "Wishpool",
+    "slug": "wishpool",
+    "scheme": "wishpool",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
+    "primaryColor": "#2E7DF6",
+    "ios": {
+      "bundleIdentifier": "app.wishpool.ios",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Wishpool uses your photos so you can add pictures to your wishes.",
+        "NSPhotoLibraryAddUsageDescription": "Wishpool saves wish photos to your library when you ask it to.",
+        "NSCameraUsageDescription": "Wishpool uses the camera so you can photograph something you wish for.",
+        "LSApplicationQueriesSchemes": ["tg"],
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleLocalizations": ["uk", "ru", "en"]
+      }
+    },
+    "android": {
+      "package": "app.wishpool.android",
+      "adaptiveIcon": {
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["android.permission.CAMERA", "android.permission.READ_MEDIA_IMAGES"],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image",
+      "expo-font",
+      "expo-localization",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#000000"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Wishpool uses your photos so you can add pictures to your wishes.",
+          "cameraPermission": "Wishpool uses the camera so you can photograph something you wish for."
+        }
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Ocean",
+            "ios": "./assets/icons/ocean.png",
+            "android": { "foregroundImage": "./assets/icons/ocean-fg.png", "backgroundColor": "#1B4FA8" }
+          },
+          {
+            "name": "Blush",
+            "ios": "./assets/icons/blush.png",
+            "android": { "foregroundImage": "./assets/icons/blush-fg.png", "backgroundColor": "#B0306A" }
+          },
+          {
+            "name": "Matcha",
+            "ios": "./assets/icons/matcha.png",
+            "android": { "foregroundImage": "./assets/icons/matcha-fg.png", "backgroundColor": "#1F7A3E" }
+          }
+        ]
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
