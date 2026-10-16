@@ -14,6 +14,8 @@ import type { Room, Wish } from "../types";
 import { Sticker } from "./Sticker";
 import { Chip, Pill, Txt } from "./ui";
 
+const PHOTO_H = 260;
+
 export function WishDetails({
   w, rooms, onToggleRoom, onEdit, onGifted, onDelete,
 }: {
@@ -28,17 +30,21 @@ export function WishDetails({
   return (
     <>
       {imgs.length ? (
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} className="overflow-hidden rounded-card">
-          {imgs.map((src, i) => (
-            <Image key={i} source={{ uri: src }} style={{ width: width - 32, height: 260 }} contentFit="cover" />
-          ))}
-        </ScrollView>
+        // fixed height: in a fit-to-content sheet a horizontal ScrollView
+        // otherwise mis-measures and pushes everything around
+        <View style={{ height: PHOTO_H, borderRadius: 26, overflow: "hidden", backgroundColor: C.card2 }}>
+          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ height: PHOTO_H, flexGrow: 0 }}>
+            {imgs.map((src, i) => (
+              <Image key={i} source={{ uri: src }} style={{ width: width - 32, height: PHOTO_H }} contentFit="cover" />
+            ))}
+          </ScrollView>
+        </View>
       ) : (
         <View className="items-center pb-4 pt-2">
           <Sticker emoji={w.emoji} size={88} rotate={-6} />
         </View>
       )}
-      <Txt className="mt-3 font-m800 text-xl leading-6">{w.title}</Txt>
+      <Txt className="mt-4 font-m800 text-xl leading-6">{w.title}</Txt>
       {w.price ? <Txt className="mt-1 font-m700 text-[17px] text-blueText">{w.price}</Txt> : null}
       {w.link ? (
         <Pressable onPress={() => WebBrowser.openBrowserAsync(w.link!)} className="mt-3 h-sm flex-row items-center gap-2 self-start rounded-full bg-blueSoft px-4">
