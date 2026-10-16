@@ -1,6 +1,6 @@
 // iOS large titles for the Wishes and Rooms tabs: a big title that shrinks
-// into the bar as you scroll (like Settings or Mail), a blurred bar once
-// content is under it, and room for a native search field.
+// into the bar as you scroll (like Settings or Mail), and room for a native
+// search field.
 
 import { Stack } from "expo-router";
 import { Plus } from "lucide-react-native";
@@ -9,10 +9,13 @@ import { Pressable } from "react-native";
 import { haptic } from "../lib/haptics";
 import { C } from "../theme/tokens";
 
+// Solid black bar, same as the screen (a transparent bar with blur showed a
+// grey band behind the large title even when nothing was scrolled under it).
 export const LARGE_TITLE_OPTIONS = {
   headerLargeTitle: true,
-  headerTransparent: true,
-  headerBlurEffect: "systemChromeMaterialDark",
+  headerTransparent: false,
+  headerStyle: { backgroundColor: C.bg },
+  headerLargeStyle: { backgroundColor: C.bg },
   headerShadowVisible: false,
   headerLargeTitleShadowVisible: false,
   headerTintColor: C.blue,
