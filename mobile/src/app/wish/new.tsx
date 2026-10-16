@@ -170,7 +170,9 @@ export default function AddWishScreen() {
               {isPremium ? `${t("photosHint")} · ${images.length}/${photoLimit}` : t("photosLimitFree", { n: PLAN_LIMITS.premium.photosPerWish })}
             </Txt>
           </View>
-          ) : null}
+          ) : (
+            <Txt className="mt-2 text-[12.5px] text-t3">{`${t("photosHint")} · ${images.length}/${photoLimit}`}</Txt>
+          )}
         </View>
       ) : (
         <View className="mb-4">

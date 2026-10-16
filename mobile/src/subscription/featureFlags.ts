@@ -17,6 +17,8 @@ export const PLAN_LIMITS = {
 } as const;
 
 export function photoLimit(isPremium: boolean): number {
+  // While Premium is hidden everyone gets 3 photos, same as the Mini App.
+  if (!PREMIUM_ENABLED) return PLAN_LIMITS.premium.photosPerWish;
   return (isPremium ? PLAN_LIMITS.premium : PLAN_LIMITS.free).photosPerWish;
 }
 
