@@ -7,6 +7,7 @@ import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated"
 
 import { RoomFolder } from "../../../components/RoomFolder";
 import { Empty, HeaderAdd, Pill, ScreenTitle } from "../../../components/ui";
+import { StatusBarBackdrop } from "../../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { useT } from "../../../i18n";
 import { useWishpool } from "../../../store/WishpoolContext";
@@ -42,7 +43,7 @@ export default function RoomsScreen() {
               <View key={i} className="flex-row gap-3">
                 {row.map((r, j) => (
                   // folders rise in one after another
-                  <Animated.View key={r.id} className="flex-1" entering={FadeInDown.delay(Math.min(i * 2 + j, 10) * 50).springify().damping(18)} layout={LinearTransition.springify().damping(18)}>
+                  <Animated.View key={r.id} style={{ flex: 1 }} entering={FadeInDown.delay(Math.min(i * 2 + j, 10) * 50).springify().damping(18)} layout={LinearTransition.springify().damping(18)}>
                     <RoomFolder room={r} wishes={wishes} onPress={() => router.push({ pathname: "/room/[id]", params: { id: r.id } })} />
                   </Animated.View>
                 ))}
@@ -60,6 +61,7 @@ export default function RoomsScreen() {
         ) : null}
       </ScrollView>
       <TabBarFade />
+      <StatusBarBackdrop />
     </View>
   );
 }

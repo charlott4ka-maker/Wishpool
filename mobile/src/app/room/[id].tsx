@@ -137,7 +137,7 @@ export default function RoomScreen() {
           </HeroButton>
         </View>
         <View className="items-center">
-          <Animated.View entering={ZoomIn.springify().damping(12)} className="mt-1 h-20 w-20 items-center justify-center">
+          <Animated.View entering={ZoomIn.springify().damping(12)} style={{ marginTop: 4, width: 80, height: 80, alignItems: "center", justifyContent: "center" }}>
             <Sticker emoji={room.emoji} size={45} />
           </Animated.View>
           <Txt className="mt-3 text-center font-m800 text-[26px] text-white" style={{ textShadowColor: "rgba(0,0,0,0.25)", textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 } }}>{room.name}</Txt>

@@ -172,13 +172,15 @@ export function Sheet({ visible, title, onClose, children }: { visible: boolean;
  */
 export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: { emoji: string; title: string; sub?: string; action?: React.ReactNode; compact?: boolean; fill?: boolean; tilt?: number }) {
   return (
-    <Animated.View entering={FadeIn.duration(350)} className={`items-center ${fill ? "flex-1 justify-center py-8" : compact ? "p-2" : "px-6 py-12"}`}>
+    <Animated.View entering={FadeIn.duration(350)} style={fill ? { flex: 1 } : undefined}>
+    <View className={`items-center ${fill ? "flex-1 justify-center py-8" : compact ? "p-2" : "px-6 py-12"}`}>
       <Animated.View entering={ZoomIn.springify().damping(14)}>
         <Sticker emoji={emoji} size={compact ? 56 : 88} rotate={tilt} />
       </Animated.View>
       <Txt className={`mt-4 text-center font-m700 ${compact ? "text-base" : "text-lg"}`}>{title}</Txt>
       {sub ? <Txt className="mt-2 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{sub}</Txt> : null}
       {action ? <View className={fill ? "mt-8 self-stretch" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
+    </View>
     </Animated.View>
   );
 }

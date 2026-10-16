@@ -18,6 +18,26 @@ function RoundButton({ onPress, children, label, style }: { onPress: () => void;
   );
 }
 
+// The photo at its own proportions, as large as fits (92% wide, 80% tall) and
+// centred, with rounded corners on the picture itself (like max-width/max-height
+// + border-radius on the web), not on an empty letterbox around it.
+function FittedImage({ uri, maxW, maxH }: { uri: string; maxW: number; maxH: number }) {
+  const [ratio, setRatio] = useState<number | null>(null);
+  const w = ratio ? Math.min(maxW, maxH * ratio) : maxW;
+  const h = ratio ? w / ratio : maxW;
+  return (
+    <Pressable onPress={() => {}}>
+      <Image
+        source={{ uri }}
+        onLoad={(e) => e.source.width && e.source.height && setRatio(e.source.width / e.source.height)}
+        style={{ width: w, height: h, borderRadius: 16, opacity: ratio ? 1 : 0 }}
+        contentFit="cover"
+        transition={150}
+      />
+    </Pressable>
+  );
+}
+
 export function ImageLightbox({ images, start = 0, onClose }: { images: string[]; start?: number; onClose: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -44,11 +64,10 @@ export function ImageLightbox({ images, start = 0, onClose }: { images: string[]
           keyExtractor={(src, k) => src + k}
           getItemLayout={(_, k) => ({ length: width, offset: width * k, index: k })}
           onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / width))}
+          style={{ flex: 1 }}
           renderItem={({ item }) => (
             <Pressable onPress={onClose} style={{ width, height, alignItems: "center", justifyContent: "center" }}>
-              <Pressable onPress={() => {}}>
-                <Image source={{ uri: item }} style={{ width: width * 0.92, height: height * 0.8, borderRadius: 16 }} contentFit="contain" />
-              </Pressable>
+              <FittedImage uri={item} maxW={width * 0.92} maxH={height * 0.8} />
             </Pressable>
           )}
         />

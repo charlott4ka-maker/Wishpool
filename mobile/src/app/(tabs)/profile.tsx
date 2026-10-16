@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../auth/AuthContext";
 import { GuestBanner } from "../../components/GuestBanner";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
+import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
 import { Avatar, Card, PremiumBadge, Txt } from "../../components/ui";
 import { useT } from "../../i18n";
@@ -107,6 +108,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
       <TabBarFade />
+      <StatusBarBackdrop />
     </View>
   );
 }

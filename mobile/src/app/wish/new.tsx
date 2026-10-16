@@ -159,8 +159,7 @@ export default function AddWishScreen() {
                   entering={ZoomIn.springify().damping(15)}
                   exiting={ZoomOut.duration(180)}
                   layout={LinearTransition.springify().damping(18)}
-                  className="aspect-square overflow-hidden rounded-tile bg-card2"
-                  style={{ width: tile }}
+                  style={{ width: tile, aspectRatio: 1, overflow: "hidden", borderRadius: 18, backgroundColor: C.card2 }}
                 >
                   <Image source={{ uri: src }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
                   <Press

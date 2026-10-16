@@ -12,6 +12,7 @@ import { Sticker } from "../../../components/Sticker";
 import { SearchField } from "../../../components/SearchField";
 import { Chip, Empty, HeaderAdd, Pill, ScreenTitle, Txt } from "../../../components/ui";
 import { WishCard } from "../../../components/WishCard";
+import { StatusBarBackdrop } from "../../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { useT } from "../../../i18n";
 import { haptic } from "../../../lib/haptics";
@@ -106,7 +107,7 @@ export default function PoolScreen() {
                   // cards rise in one after another; layout changes animate
                   <Animated.View
                     key={w.id}
-                    className="flex-1"
+                    style={{ flex: 1 }}
                     entering={FadeInDown.delay(Math.min(i * 2 + j, 10) * 40).springify().damping(18)}
                     exiting={FadeOut.duration(160)}
                     layout={LinearTransition.springify().damping(18)}
@@ -129,6 +130,7 @@ export default function PoolScreen() {
         ) : null}
       </ScrollView>
       <TabBarFade />
+      <StatusBarBackdrop />
     </View>
   );
 }
