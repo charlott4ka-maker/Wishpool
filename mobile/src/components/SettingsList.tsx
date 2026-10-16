@@ -45,9 +45,11 @@ type CellProps = {
   /** Red label, no chevron (sign out, delete). */
   destructive?: boolean;
   chevron?: boolean;
+  /** Anything else on the right (e.g. a date picker). */
+  right?: React.ReactNode;
 };
 
-export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, destructive, chevron = !toggle && !destructive }: CellProps) {
+export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, destructive, right, chevron = !toggle && !destructive && !right }: CellProps) {
   const body = (
     <View className="flex-row items-center" style={{ height: ROW, paddingLeft: PAD, paddingRight: PAD - 4 }}>
       <View className="items-center justify-center" style={{ width: TILE, height: TILE, borderRadius: 8, backgroundColor: tint, marginRight: GAP }}>
@@ -55,6 +57,7 @@ export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, 
       </View>
       <Txt numberOfLines={1} className={`flex-1 text-base ${destructive ? "text-danger" : ""}`}>{label}</Txt>
       {value ? <Txt numberOfLines={1} className="ml-2 text-base text-t2">{value}</Txt> : null}
+      {right}
       {toggle ? (
         <Switch
           value={toggle.value}

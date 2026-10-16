@@ -37,7 +37,8 @@ export default function AddWishScreen() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  // link: shared into Wishpool from another app (ShareIntentHandler)
+  const { id, link: sharedLink } = useLocalSearchParams<{ id?: string; link?: string }>();
   const { wishes, rooms, addWish, updateWish } = useWishpool();
   const { photoLimit, isPremium } = useSubscription();
   const initial = id ? wishes.find((w) => w.id === id) : undefined;
@@ -47,7 +48,7 @@ export default function AddWishScreen() {
   const [note, setNote] = useState(initial?.note || "");
   // Editing: show the shop's own URL, not our affiliate redirect.
   const initialLink = initial?.link ? toAffiliateUrl(initial.link).clean : "";
-  const [link, setLink] = useState(initialLink);
+  const [link, setLink] = useState(initialLink || sharedLink || "");
   const [emoji, setEmoji] = useState(initial?.emoji?.startsWith("stk:") ? initial.emoji : "stk:candle");
   const [images, setImages] = useState<string[]>(initial ? wishImages(initial) : []);
   const [cover, setCover] = useState<"photo" | "emoji">(initial && !wishImages(initial).length ? "emoji" : "photo");

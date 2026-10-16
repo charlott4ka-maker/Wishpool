@@ -7,9 +7,9 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Check, ChevronLeft, Lock, ShoppingBag } from "lucide-react-native";
+import { Check, ChevronLeft, Lock, UserPlus } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Share, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Sticker } from "../../components/Sticker";
@@ -56,6 +56,15 @@ export default function RoomScreen() {
   const mine = detail ? detail.mine : wishes.filter((w) => w.rooms.includes(room.id));
   const lists = detail?.lists || [];
 
+  // The iOS share sheet (AirDrop, Messages, Telegram...). The invite link opens
+  // the room in the Telegram Mini App; a guest room only exists on this phone,
+  // so then it's an invite to Wishpool itself.
+  const invite = () => {
+    const link = online ? `https://t.me/wishpool_bot/app?startapp=${room.id}` : "https://t.me/wishpool_bot/app";
+    const text = online ? t("inviteText", { name: room.name }) : t("inviteAppText");
+    Share.share({ message: `${text}\n${link}`, url: link }).catch(() => {});
+  };
+
   // taking a gift goes through the /room/take sheet; this only gives it back
   const untake = async (w: RoomWish) => {
     haptic("light");
@@ -82,6 +91,11 @@ export default function RoomScreen() {
                   <Avatar m={m} size={28} />
                 </View>
               ))}
+            </View>
+            <View className="mt-4">
+              <Pill size="sm" kind="ghost" icon={<UserPlus size={16} color={C.t1} />} onPress={invite}>
+                {t("invite")}
+              </Pill>
             </View>
           </View>
         </LinearGradient>

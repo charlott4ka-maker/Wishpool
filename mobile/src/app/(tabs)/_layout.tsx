@@ -12,7 +12,7 @@ export default function TabsLayout() {
   const { t } = useT();
   return (
     <NativeTabs tintColor={C.blue} blurEffect="systemThickMaterialDark" disableTransparentOnScrollEdge minimizeBehavior="never">
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger name="(wishes)">
         <NativeTabs.Trigger.Icon sf={{ default: "gift", selected: "gift.fill" }} />
         <NativeTabs.Trigger.Label>{t("tabWishes")}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>

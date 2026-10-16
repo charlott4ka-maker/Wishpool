@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RoomFolder } from "../../components/RoomFolder";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Field, Pill, Segmented, Txt } from "../../components/ui";
+import { DateRow } from "../../components/DateRow";
 import { SheetHeader } from "../../components/SheetHeader";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
@@ -30,6 +31,7 @@ export default function CreateRoomScreen() {
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("stk:cake");
   const [tint, setTint] = useState(ROOM_COLORS[0]);
+  const [eventDate, setEventDate] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const label = name.trim() || t(type === "couple" ? "roomCouple" : type === "birthday" ? "roomBirthday" : "roomFriends");
 
@@ -37,7 +39,7 @@ export default function CreateRoomScreen() {
     if (busy || isStickerLocked(emoji)) return;
     setBusy(true);
     try {
-      const id = await createRoom({ name: label, type, emoji, tint, ...(type === "birthday" ? { bdayMode: "self" } : {}) } as any);
+      const id = await createRoom({ name: label, type, emoji, tint, ...(type === "birthday" ? { bdayMode: "self", eventDate: eventDate || undefined } : {}) } as any);
       haptic("success");
       router.replace({ pathname: "/room/[id]", params: { id } });
     } catch {
@@ -64,6 +66,7 @@ export default function CreateRoomScreen() {
       <Txt className="mb-4 mt-2 text-[12.5px] leading-[17px] text-t3">{t(HINT[type])}</Txt>
 
       <Field label={t("name")} value={name} onChangeText={setName} placeholder={label} />
+      {type === "birthday" ? <DateRow label={t("bdayDateLabel")} value={eventDate} onChange={setEventDate} hint={t("evHint")} minimumDate={new Date()} /> : null}
 
       <Txt className="mb-2 font-m600 text-[13px] text-t2">{t("roomSticker")}</Txt>
       <View className="mb-4">

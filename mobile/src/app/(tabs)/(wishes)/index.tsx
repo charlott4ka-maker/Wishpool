@@ -1,28 +1,28 @@
 // "Бажання": the wish pool. Filter chips (all / private / per room / gifted),
 // a two-column grid of wish cards, the wish sheet on tap.
 
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Lock, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { GuestBanner } from "../../components/GuestBanner";
-import { Sticker } from "../../components/Sticker";
-import { Chip, Empty, HeaderAdd, Pill, ScreenTitle, Txt } from "../../components/ui";
-import { WishTile } from "../../components/WishTile";
-import { TabBarFade } from "../../components/TabBarFade";
-import { useT } from "../../i18n";
-import { haptic } from "../../lib/haptics";
-import { useWishpool } from "../../store/WishpoolContext";
-import { C } from "../../theme/tokens";
+import { GuestBanner } from "../../../components/GuestBanner";
+import { Sticker } from "../../../components/Sticker";
+import { HeaderPlus } from "../../../components/LargeTitleStack";
+import { Chip, Empty, Pill, Txt } from "../../../components/ui";
+import { WishCard } from "../../../components/WishCard";
+import { TabBarFade } from "../../../components/TabBarFade";
+import { useT } from "../../../i18n";
+import { haptic } from "../../../lib/haptics";
+import { useWishpool } from "../../../store/WishpoolContext";
+import { C } from "../../../theme/tokens";
 
 export default function PoolScreen() {
   const { t } = useT();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { wishes, rooms, refresh, toggleWishRoom, setGifted, deleteWish } = useWishpool();
   const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const { tabs, shown } = useMemo(() => {
@@ -38,8 +38,9 @@ export default function PoolScreen() {
     ];
     const cur = tabs.some((x) => x.key === filter) ? filter : "all";
     const shown = cur === "all" ? active : cur === "gifted" ? gifted : cur === "private" ? priv : active.filter((w) => w.rooms.includes(cur));
-    return { tabs, shown };
-  }, [wishes, rooms, filter, t]);
+    const q = query.trim().toLowerCase();
+    return { tabs, shown: q ? shown.filter((w) => w.title.toLowerCase().includes(q) || (w.note || "").toLowerCase().includes(q)) : shown };
+  }, [wishes, rooms, filter, query, t]);
   const cur = tabs.some((x) => x.key === filter) ? filter : "all";
   const add = () => router.push("/wish/new");
 
@@ -49,7 +50,8 @@ export default function PoolScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ flexGrow: 1, paddingTop: 8, paddingHorizontal: 16, paddingBottom: 120 }}
         refreshControl={
           <RefreshControl
             tintColor={C.t2}
@@ -63,7 +65,13 @@ export default function PoolScreen() {
         }
       >
         <GuestBanner />
-        <ScreenTitle title={t("poolTitle")} right={<HeaderAdd onPress={add} label={t("addWish")} />} />
+        <Stack.Screen
+          options={{
+            title: t("poolTitle"),
+            headerRight: () => <HeaderPlus onPress={add} label={t("addWish")} />,
+            headerSearchBarOptions: { placeholder: t("searchWishes"), hideWhenScrolling: true, tintColor: C.blue, textColor: C.t1, onChangeText: (e) => setQuery(e.nativeEvent.text) },
+          }}
+        />
 
         {tabs.length > 1 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 -mt-2 mb-4" contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
@@ -97,7 +105,7 @@ export default function PoolScreen() {
             {rows.map((row, i) => (
               <View key={i} className="flex-row gap-3">
                 {row.map((w) => (
-                  <WishTile key={w.id} w={w} onPress={() => router.push({ pathname: "/wish/[id]", params: { id: w.id } })} />
+                  <WishCard key={w.id} w={w} />
                 ))}
                 {row.length === 1 ? <View className="flex-1" /> : null}
               </View>

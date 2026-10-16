@@ -5,14 +5,21 @@ import "../lib/nativewindInterop";
 import { DarkTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import Constants, { ExecutionEnvironment } from "expo-constants";
+import { ShareIntentProvider } from "expo-share-intent";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "../auth/AuthContext";
+import { ShareIntentHandler } from "../components/ShareIntentHandler";
 import { LangProvider } from "../i18n";
+import { ReminderSync } from "../settings/ReminderSync";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
+
+// The share extension's native module isn't in Expo Go.
+const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -34,6 +41,8 @@ function Gate() {
   return (
     <SubscriptionProvider userId={user?.id || null}>
       <WishpoolProvider>
+        <ShareIntentHandler ready={inside} />
+        {inside ? <ReminderSync /> : null}
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
           <Stack.Protected guard={inside}>
             <Stack.Screen name="(tabs)" />
@@ -57,6 +66,7 @@ function Gate() {
 
 export default function RootLayout() {
   return (
+    <ShareIntentProvider options={{ disabled: IN_EXPO_GO, resetOnBackground: true }}>
     <SafeAreaProvider>
       <ThemeProvider value={theme}>
         <LangProvider>
@@ -67,5 +77,6 @@ export default function RootLayout() {
         </LangProvider>
       </ThemeProvider>
     </SafeAreaProvider>
+    </ShareIntentProvider>
   );
 }

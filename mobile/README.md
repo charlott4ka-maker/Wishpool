@@ -93,6 +93,18 @@ packages; set `EXPO_PUBLIC_REVENUECAT_IOS_KEY`. Without a key (or in Expo Go)
 a mock store is used; in a release build without a key nothing can be bought.
 Before App Review the paywall also needs links to Terms of Use and the Privacy Policy.
 
+## iOS features
+
+- Onboarding (3 pages from the Mini App) on first launch, then Sign in / Continue without an account.
+- Share extension: Share → Wishpool from Safari or a shop app opens New wish with the link
+  (`expo-share-intent`; dev / store build only, not Expo Go).
+- Long press on a wish card: native preview + context menu (edit, share, I got it, delete).
+- Room invites through the iOS share sheet.
+- Native date pickers: birthday room date, my birthday in Settings.
+- Local reminders for birthday rooms (a week and a day before, 10:00), switches in Settings.
+- Large titles that collapse on scroll, and native search on Wishes and Rooms.
+- Native sheets (formSheet routes) with a close button; Settings in the iOS Settings style.
+
 ## Backend work needed (not done here)
 
 The server only accepts Telegram `initData` today. For the native app it needs:
@@ -105,5 +117,7 @@ The server only accepts Telegram `initData` today. For the native app it needs:
 - Accept `Authorization: Bearer <token>` next to `X-Init-Data`, mapping both to the same user,
   so one person has the same wishes in Telegram and on iPhone.
 - `GET /api/me/premium` and a RevenueCat webhook to store Premium on the user.
+- `DELETE /api/me` (account deletion, required by App Review).
+- Push tokens + push for new wishes / new room members (the switches exist in Settings).
 
 Until then the app runs fully in guest mode (data on the phone).

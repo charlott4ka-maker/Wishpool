@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Lock, PartyPopper, Users } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { Pressable, PressableProps, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
@@ -13,15 +13,17 @@ import { Txt } from "./ui";
 // Wishlist card: square picture (photo, or the sticker on a soft tile), two
 // lines of title, price in the accent colour, a small "where" badge. These cards
 // keep the thin light outline (the one exception to "no outlines on blocks").
-export function WishTile({ w, onPress }: { w: Wish; onPress: () => void }) {
+// `onPress` and any other props (e.g. from <Link asChild>) go to the Pressable.
+export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unknown) => void } & Omit<PressableProps, "onPress" | "children">) {
   const { t } = useT();
   const img = wishImages(w)[0];
   const shared = w.rooms ? w.rooms.length : 0;
   return (
     <Pressable
-      onPress={() => {
+      {...rest}
+      onPress={(e) => {
         haptic("light");
-        onPress();
+        onPress?.(e);
       }}
       className="flex-1 rounded-[20px] bg-card p-2 active:opacity-90"
       style={{ borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" }}

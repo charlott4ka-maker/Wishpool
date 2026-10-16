@@ -13,6 +13,8 @@ export type Prefs = {
   notifyRoomJoins: boolean;
   notifyGiftReminders: boolean;
   haptics: boolean;
+  /** "YYYY-MM-DD"; friends get reminded (once the account is connected). */
+  birthday: string | null;
 };
 
 const KEY = "wp_prefs";
@@ -23,6 +25,7 @@ const DEFAULTS: Prefs = {
   notifyRoomJoins: true,
   notifyGiftReminders: true,
   haptics: true,
+  birthday: null,
 };
 
 let current: Prefs = DEFAULTS;
