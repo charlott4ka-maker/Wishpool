@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
+import { SheetHeader } from "../../components/SheetHeader";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { toAffiliateUrl } from "../../services/affiliateConverter";
@@ -130,7 +131,7 @@ export default function AddWishScreen() {
 
   return (
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
-      <Txt className="mb-4 font-m800 text-xl">{t(initial ? "editWish" : "newWish")}</Txt>
+      <SheetHeader title={t(initial ? "editWish" : "newWish")} />
 
       <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral className="mb-4 bg-card2" />
 

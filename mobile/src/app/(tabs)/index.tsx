@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GuestBanner } from "../../components/GuestBanner";
 import { Sticker } from "../../components/Sticker";
 import { Chip, Empty, HeaderAdd, Pill, ScreenTitle, Txt } from "../../components/ui";
-import { WishSheet } from "../../components/WishSheet";
 import { WishTile } from "../../components/WishTile";
 import { TabBarFade } from "../../components/TabBarFade";
 import { useT } from "../../i18n";
@@ -23,7 +22,6 @@ export default function PoolScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { wishes, rooms, refresh, toggleWishRoom, setGifted, deleteWish } = useWishpool();
-  const [openId, setOpenId] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -43,7 +41,6 @@ export default function PoolScreen() {
     return { tabs, shown };
   }, [wishes, rooms, filter, t]);
   const cur = tabs.some((x) => x.key === filter) ? filter : "all";
-  const open = wishes.find((w) => w.id === openId) || null;
   const add = () => router.push("/wish/new");
 
   const rows: (typeof shown)[] = [];
@@ -66,7 +63,7 @@ export default function PoolScreen() {
         }
       >
         <GuestBanner />
-        <ScreenTitle title={t("poolTitle")} sub={t("poolSub")} right={<HeaderAdd onPress={add} label={t("addWish")} />} />
+        <ScreenTitle title={t("poolTitle")} right={<HeaderAdd onPress={add} label={t("addWish")} />} />
 
         {tabs.length > 1 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 -mt-2 mb-4" contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
@@ -100,7 +97,7 @@ export default function PoolScreen() {
             {rows.map((row, i) => (
               <View key={i} className="flex-row gap-3">
                 {row.map((w) => (
-                  <WishTile key={w.id} w={w} onPress={() => setOpenId(w.id)} />
+                  <WishTile key={w.id} w={w} onPress={() => router.push({ pathname: "/wish/[id]", params: { id: w.id } })} />
                 ))}
                 {row.length === 1 ? <View className="flex-1" /> : null}
               </View>
@@ -117,26 +114,6 @@ export default function PoolScreen() {
         ) : null}
       </ScrollView>
       <TabBarFade />
-
-      <WishSheet
-        w={open}
-        rooms={rooms}
-        onClose={() => setOpenId(null)}
-        onToggleRoom={toggleWishRoom}
-        onEdit={() => {
-          setOpenId(null);
-          router.push({ pathname: "/wish/new", params: { id: open!.id } });
-        }}
-        onGifted={(g) => {
-          setOpenId(null);
-          haptic(g ? "success" : "light");
-          setGifted(open!.id, g).catch(() => {});
-        }}
-        onDelete={() => {
-          setOpenId(null);
-          deleteWish(open!.id).catch(() => {});
-        }}
-      />
     </View>
   );
 }

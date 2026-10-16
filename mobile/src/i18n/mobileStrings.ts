@@ -3,6 +3,9 @@
 export const MOBILE_STRINGS = {
   signInTitle: { uk: "Вішлисти для друзів, пари та днів народження", ru: "Вишлисты для друзей, пары и дней рождения", en: "Wishlists for friends, couples and birthdays" },
   signInSub: { uk: "Увійди, щоб бажання та кімнати були з тобою на всіх пристроях і в Telegram.", ru: "Войди, чтобы желания и комнаты были с тобой на всех устройствах и в Telegram.", en: "Sign in to keep your wishes and rooms on every device and in Telegram." },
+  // The Mini App's obAddText also mentions sending links to the Telegram bot.
+  obAddTextIos: { uk: "Встав посилання, і ми підтягнемо назву, фото й ціну.", ru: "Вставь ссылку, и мы подтянем название, фото и цену.", en: "Paste a link and we fill in the name, photo and price." },
+  signInStart: { uk: "Почати", ru: "Начать", en: "Get started" },
   signInTelegram: { uk: "Увійти через Telegram", ru: "Войти через Telegram", en: "Continue with Telegram" },
   signInEmail: { uk: "Увійти через e-mail", ru: "Войти по e-mail", en: "Continue with e-mail" },
   signInGuest: { uk: "Спробувати без акаунта", ru: "Попробовать без аккаунта", en: "Try without an account" },

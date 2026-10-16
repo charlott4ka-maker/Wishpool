@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RoomFolder } from "../../components/RoomFolder";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Field, Pill, Segmented, Txt } from "../../components/ui";
+import { SheetHeader } from "../../components/SheetHeader";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
@@ -47,7 +48,7 @@ export default function CreateRoomScreen() {
 
   return (
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
-      <Txt className="mb-4 font-m800 text-xl">{t("newRoom")}</Txt>
+      <SheetHeader title={t("newRoom")} />
       <View className="mx-auto mb-4 w-1/2">
         <RoomFolder room={{ id: "preview", name: label, type, emoji, tint, members: [] }} wishes={[]} onPress={() => {}} />
       </View>

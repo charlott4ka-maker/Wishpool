@@ -18,7 +18,7 @@ import type { Room, Wish } from "../types";
 import { Sticker } from "./Sticker";
 import { Avatar, Txt } from "./ui";
 
-function folderPath(w: number, h: number) {
+export function folderPath(w: number, h: number) {
   const R0 = Math.round;
   const x0 = R0(w * 0.04), x1 = R0(w * 0.96), yT = R0(h * 0.28), yB = R0(h * 0.37), y1 = R0(h * 0.96), xt = R0(w * 0.5), r = 18, rt = 14;
   const top = `M ${x0} ${yT + rt} Q ${x0} ${yT} ${x0 + rt} ${yT} L ${xt - 10} ${yT} C ${xt} ${yT} ${xt} ${yB} ${xt + 12} ${yB} L ${x1 - r} ${yB} Q ${x1} ${yB} ${x1} ${yB + r}`;

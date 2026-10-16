@@ -1,5 +1,5 @@
 // Everything about one wish: photos, price, shop link (affiliate), which rooms
-// see it, "I got it", delete.
+// see it, "I got it", delete. Shown in the native sheet at app/wish/[id].tsx.
 
 import { Image } from "expo-image";
 import * as WebBrowser from "expo-web-browser";
@@ -12,24 +12,23 @@ import { wishImages } from "../store/WishpoolContext";
 import { C } from "../theme/tokens";
 import type { Room, Wish } from "../types";
 import { Sticker } from "./Sticker";
-import { Chip, Pill, Sheet, Txt } from "./ui";
+import { Chip, Pill, Txt } from "./ui";
 
-export function WishSheet({
-  w, rooms, onClose, onToggleRoom, onEdit, onGifted, onDelete,
+export function WishDetails({
+  w, rooms, onToggleRoom, onEdit, onGifted, onDelete,
 }: {
-  w: Wish | null; rooms: Room[]; onClose: () => void; onToggleRoom: (id: string, roomId: string) => void;
+  w: Wish; rooms: Room[]; onToggleRoom: (id: string, roomId: string) => void;
   onEdit: () => void; onGifted: (gifted: boolean) => void; onDelete: () => void;
 }) {
   const { t } = useT();
   const { width } = useWindowDimensions();
-  if (!w) return null;
   const imgs = wishImages(w);
   const confirm = (text: string, yes: () => void) => Alert.alert("", text, [{ text: t("back"), style: "cancel" }, { text: "OK", onPress: yes }]);
   const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
   return (
-    <Sheet visible onClose={onClose}>
+    <>
       {imgs.length ? (
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} className="-mt-2 overflow-hidden rounded-card">
+        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} className="overflow-hidden rounded-card">
           {imgs.map((src, i) => (
             <Image key={i} source={{ uri: src }} style={{ width: width - 32, height: 260 }} contentFit="cover" />
           ))}
@@ -91,6 +90,6 @@ export function WishSheet({
         <Trash2 size={16} color={C.danger} />
         <Txt className="font-m600 text-sm text-danger">{t("deleteWish")}</Txt>
       </Pressable>
-    </Sheet>
+    </>
   );
 }

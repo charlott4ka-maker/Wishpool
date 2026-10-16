@@ -101,12 +101,32 @@ export function CloseButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-/** Bottom sheet: every modal in Wishpool is one of these. */
+/**
+ * Bottom sheet for modals that aren't their own route (e.g. e-mail sign-in).
+ * On iOS it is the system page sheet (swipe down to close, the screen behind
+ * shrinks back); elsewhere a sliding panel. Route sheets use SheetHeader instead.
+ */
 export function Sheet({ visible, title, onClose, children }: { visible: boolean; title?: string; onClose: () => void; children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
+  if (Platform.OS === "ios") {
+    return (
+      <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+        <View className="flex-1 bg-card px-4 pt-2.5">
+          <View className="mx-auto mb-3.5 mt-1.5 h-1 w-10 rounded bg-card2" />
+          <View className="mb-4 flex-row items-center justify-between gap-3">
+            <Txt className="flex-1 font-m800 text-xl">{title || ""}</Txt>
+            <CloseButton onPress={onClose} />
+          </View>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
+            {children}
+          </ScrollView>
+        </View>
+      </Modal>
+    );
+  }
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1 justify-end">
+      <KeyboardAvoidingView className="flex-1 justify-end">
         <Pressable onPress={onClose} className="absolute inset-0 bg-black/60" />
         <View className="max-h-[88%] rounded-t-sheet bg-card px-4 pt-2.5" style={{ paddingBottom: Math.max(insets.bottom, 16) + 16 }}>
           <View className="mx-auto mb-3.5 mt-1.5 h-1 w-10 rounded bg-card2" />

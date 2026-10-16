@@ -5,10 +5,10 @@
 
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Check, ChevronLeft, Lock, ShoppingBag } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -34,7 +34,6 @@ export default function RoomScreen() {
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(online);
-  const [gift, setGift] = useState<RoomWish | null>(null);
 
   const load = useCallback(async () => {
     if (!online || !id) return;
@@ -45,21 +44,23 @@ export default function RoomScreen() {
       setLoading(false);
     }
   }, [online, id]);
-  useEffect(() => {
-    load().catch(() => {});
-  }, [load]);
+  // also reloads after the "I'll get it" sheet closes
+  useFocusEffect(
+    useCallback(() => {
+      load().catch(() => {});
+    }, [load]),
+  );
 
   if (!room) return <Empty emoji="stk:ghost" title={t("roomGone")} action={<Pill onPress={() => router.back()}>{t("back")}</Pill>} />;
 
   const mine = detail ? detail.mine : wishes.filter((w) => w.rooms.includes(room.id));
   const lists = detail?.lists || [];
 
-  const take = async (w: RoomWish) => {
-    setGift(null);
-    haptic("success");
+  // taking a gift goes through the /room/take sheet; this only gives it back
+  const untake = async (w: RoomWish) => {
+    haptic("light");
     try {
-      if (w.reservedByMe) await api.unreserve(w.id);
-      else await api.reserve(w.id);
+      await api.unreserve(w.id);
     } finally {
       load().catch(() => {});
     }
@@ -117,9 +118,9 @@ export default function RoomScreen() {
                               <Txt className="font-m600 text-[13px] text-t3">{t("taken")}</Txt>
                             </View>
                           ) : w.reservedByMe ? (
-                            <Pill size="sm" kind="green" icon={<Check size={15} color={C.greenText} />} onPress={() => take(w)}>{t("youGift")}</Pill>
+                            <Pill size="sm" kind="green" icon={<Check size={15} color={C.greenText} />} onPress={() => untake(w)}>{t("youGift")}</Pill>
                           ) : (
-                            <Pill size="sm" kind="soft" onPress={() => setGift(w)}>{t("take")}</Pill>
+                            <Pill size="sm" kind="soft" onPress={() => router.push({ pathname: "/room/take", params: { id: w.id, title: w.title, link: w.link || "" } })}>{t("take")}</Pill>
                           )}
                         </View>
                       ))}
@@ -146,21 +147,6 @@ export default function RoomScreen() {
           {seg === "lists" && lists.length > 0 ? <Txt className="mt-2 text-center text-[12.5px] text-t3">{t("reserveNote")}</Txt> : null}
         </View>
       </ScrollView>
-
-      <Sheet visible={!!gift} onClose={() => setGift(null)} title={gift ? t("giftTakenTitle", { name: gift.title }) : ""}>
-        <View className="items-center pb-4">
-          <Sticker emoji="stk:gift" size={72} rotate={-6} />
-          <Txt className="mt-4 text-center text-[14.5px] leading-5 text-t2">{t("giftTakenBody")}</Txt>
-        </View>
-        {gift?.link ? (
-          <View className="mb-3">
-            <Pill full kind="ghost" icon={<ShoppingBag size={18} color={C.t1} />} onPress={() => WebBrowser.openBrowserAsync(gift.link!)}>
-              {t("buyLink")}
-            </Pill>
-          </View>
-        ) : null}
-        <Pill full onPress={() => gift && take(gift)}>{t("giftTakenOk")}</Pill>
-      </Sheet>
     </View>
   );
 }

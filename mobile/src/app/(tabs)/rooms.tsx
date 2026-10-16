@@ -23,7 +23,7 @@ export default function RoomsScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView className="flex-1 bg-bg" contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
-        <ScreenTitle title={t("roomsTitle")} sub={t("roomsSub")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
+        <ScreenTitle title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
         {rooms.length === 0 ? (
           <Empty
             fill
