@@ -12,6 +12,8 @@ import * as WebBrowser from "expo-web-browser";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { api, AuthUser, setAuthToken } from "../services/api";
 import { secureStorage } from "./secureStorage";
 
@@ -63,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthToken(token);
     setUser(u);
     setStatus("signedIn");
+    AsyncStorage.setItem("wp_onboarded", "1").catch(() => {});
   }, []);
 
   const signInWithApple = useCallback(async () => {
@@ -113,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const continueAsGuest = useCallback(async () => {
     await secureStorage.set(GUEST_KEY, "1");
+    await AsyncStorage.setItem("wp_onboarded", "1").catch(() => {});
     setStatus("guest");
   }, []);
 

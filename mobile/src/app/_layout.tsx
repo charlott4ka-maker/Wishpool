@@ -56,8 +56,9 @@ function Gate() {
           </Stack.Protected>
           <Stack.Protected guard={!inside}>
             <Stack.Screen name="sign-in" />
-            <Stack.Screen name="sign-in-options" options={FIT_SHEET} />
           </Stack.Protected>
+          {/* open both from the welcome screen and for guests ("Sign in" in the app) */}
+          <Stack.Screen name="sign-in-options" options={FIT_SHEET} />
         </Stack>
       </WishpoolProvider>
     </SubscriptionProvider>

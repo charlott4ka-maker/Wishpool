@@ -116,7 +116,7 @@ export default function SettingsScreen() {
             </>
           ) : (
             <>
-              <SettingsCell icon={LogIn} tint="#2E7DF6" label={t("signInLogin")} onPress={signOut} />
+              <SettingsCell icon={LogIn} tint="#2E7DF6" label={t("signInLogin")} onPress={() => router.push("/sign-in-options")} />
               <SettingsCell icon={Trash2} tint="#FF3B30" label={t("setClearData")} onPress={clearLocal} destructive />
             </>
           )}
