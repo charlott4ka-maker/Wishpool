@@ -11,15 +11,15 @@ import { C } from "../theme/tokens";
 import { Txt } from "./ui";
 
 const PAD = 16;
-const TILE = 30;
-const GAP = 12;
-const ROW = 52;
+const TILE = 32;
+const GAP = 16;
+const ROW = 60;
 
 export function SettingsGroup({ title, footer, children }: { title?: string; footer?: string; children: React.ReactNode }) {
   const rows = React.Children.toArray(children).filter(Boolean);
   return (
-    <View className="mb-6">
-      {title ? <Txt className="mb-2 px-4 font-m600 text-[13px] uppercase text-t2" style={{ letterSpacing: 0.4 }}>{title}</Txt> : null}
+    <View className="mb-8">
+      {title ? <Txt className="mb-3 px-4 font-m600 text-[13px] uppercase text-t2" style={{ letterSpacing: 0.4 }}>{title}</Txt> : null}
       <View className="overflow-hidden rounded-card bg-card">
         {rows.map((row, i) => (
           <View key={i}>
@@ -28,7 +28,7 @@ export function SettingsGroup({ title, footer, children }: { title?: string; foo
           </View>
         ))}
       </View>
-      {footer ? <Txt className="mt-2 px-4 text-[12.5px] leading-[17px] text-t3">{footer}</Txt> : null}
+      {footer ? <Txt className="mt-3 px-4 text-[12.5px] leading-[18px] text-t3">{footer}</Txt> : null}
     </View>
   );
 }
@@ -51,9 +51,9 @@ type CellProps = {
 
 export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, destructive, right, chevron = !toggle && !destructive && !right }: CellProps) {
   const body = (
-    <View className="flex-row items-center" style={{ height: ROW, paddingLeft: PAD, paddingRight: PAD - 4 }}>
-      <View className="items-center justify-center" style={{ width: TILE, height: TILE, borderRadius: 8, backgroundColor: tint, marginRight: GAP }}>
-        <Icon size={18} color="#fff" strokeWidth={2.2} />
+    <View className="flex-row items-center" style={{ height: ROW, paddingLeft: PAD, paddingRight: PAD }}>
+      <View className="items-center justify-center" style={{ width: TILE, height: TILE, borderRadius: 9, backgroundColor: tint, marginRight: GAP }}>
+        <Icon size={19} color="#fff" strokeWidth={2.2} />
       </View>
       <Txt numberOfLines={1} className={`flex-1 text-base ${destructive ? "text-danger" : ""}`}>{label}</Txt>
       {value ? <Txt numberOfLines={1} className="ml-2 text-base text-t2">{value}</Txt> : null}

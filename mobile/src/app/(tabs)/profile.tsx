@@ -99,7 +99,7 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
-        <View className="mt-6">
+        <View className="mt-8">
           <SettingsGroup>
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
             <SettingsCell icon={Send} tint="#2AABEE" label={t("channel")} onPress={() => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")} />

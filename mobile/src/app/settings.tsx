@@ -84,7 +84,7 @@ export default function SettingsScreen() {
         <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel={t("back")}>
           <ChevronLeft size={22} color={C.t1} />
         </Pressable>
-        <Txt className="mb-6 mt-4 px-1 font-m800 text-[34px]" style={{ letterSpacing: -0.5 }}>{t("settings")}</Txt>
+        <Txt className="mb-8 mt-4 px-1 font-m800 text-[34px]" style={{ letterSpacing: -0.5 }}>{t("settings")}</Txt>
 
         <SettingsGroup title={t("setNotifications")} footer={t("setNotifFooter")}>
           <SettingsCell icon={Bell} tint="#FF3B30" label={t("setAllowNotif")} toggle={{ value: prefs.notifications, onChange: toggleNotifications }} />
