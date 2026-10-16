@@ -6,7 +6,6 @@ import { Lock, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, { FadeInDown, FadeOut, LinearTransition } from "react-native-reanimated";
 
 import { GuestBanner } from "../../../components/GuestBanner";
 import { Sticker } from "../../../components/Sticker";
@@ -108,17 +107,10 @@ export default function PoolScreen() {
           <View className="gap-3">
             {rows.map((row, i) => (
               <View key={i} className="flex-row gap-3">
-                {row.map((w, j) => (
-                  // cards rise in one after another; layout changes animate
-                  <Animated.View
-                    key={w.id}
-                    style={{ flex: 1 }}
-                    entering={FadeInDown.delay(Math.min(i * 2 + j, 10) * 40).springify().damping(18)}
-                    exiting={FadeOut.duration(160)}
-                    layout={LinearTransition.springify().damping(18)}
-                  >
+                {row.map((w) => (
+                  <View key={w.id} style={{ flex: 1 }}>
                     <WishCard w={w} />
-                  </Animated.View>
+                  </View>
                 ))}
                 {row.length === 1 ? <View className="flex-1" /> : null}
               </View>

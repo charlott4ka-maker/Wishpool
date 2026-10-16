@@ -3,12 +3,12 @@
 
 import { useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SheetHeader } from "../../components/SheetHeader";
-import { Empty, Txt } from "../../components/ui";
+import { Empty } from "../../components/ui";
 import { WishList, WishRow } from "../../components/WishRow";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
@@ -19,10 +19,12 @@ export default function PickWishes() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useT();
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const { wishes, toggleWishRoom } = useWishpool();
   const active = wishes.filter((w) => !w.giftedAt);
   return (
-    <ScrollView className="flex-1 bg-card" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
+    // fits its content (FIT_SHEET); a long wishlist scrolls inside
+    <ScrollView className="bg-card" style={{ maxHeight: height * 0.85 }} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 }}>
       <SheetHeader title={t("roomWishesTitle")} />
       {active.length === 0 ? (
         <Empty compact emoji="stk:ghost" tilt={0} title={t("poolEmptyTitle")} sub={t("poolEmptyInRoom")} />
@@ -57,7 +59,6 @@ export default function PickWishes() {
           </WishList>
         </View>
       )}
-      <Txt className="mt-3 text-center text-[12.5px] text-t3">{t("visibleToAll")}</Txt>
     </ScrollView>
   );
 }

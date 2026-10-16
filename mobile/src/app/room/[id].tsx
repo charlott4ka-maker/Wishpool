@@ -8,7 +8,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CalendarDays, Check, ChevronLeft, Gift, Lock, Pencil, Plus, Share2, Trash2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Share, View } from "react-native";
-import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { heroTop, RoomHeroBg } from "../../components/RoomHeroBg";
@@ -137,9 +137,9 @@ export default function RoomScreen() {
           </HeroButton>
         </View>
         <View className="items-center">
-          <Animated.View entering={ZoomIn.springify().damping(12)} style={{ marginTop: 4, width: 80, height: 80, alignItems: "center", justifyContent: "center" }}>
+          <View style={{ marginTop: 4, width: 80, height: 80, alignItems: "center", justifyContent: "center" }}>
             <Sticker emoji={room.emoji} size={45} />
-          </Animated.View>
+          </View>
           <Txt className="mt-3 text-center font-m800 text-[26px] text-white" style={{ textShadowColor: "rgba(0,0,0,0.25)", textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 } }}>{room.name}</Txt>
           {cd ? (
             <View className="mt-2 flex-row items-center gap-2 rounded-full px-3 py-1.5" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>

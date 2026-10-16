@@ -52,7 +52,7 @@ function Gate() {
             <Stack.Screen name="room/new" options={LARGE_SHEET} />
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />
             <Stack.Screen name="room/take" options={FIT_SHEET} />
-            <Stack.Screen name="room/pick" options={LARGE_SHEET} />
+            <Stack.Screen name="room/pick" options={FIT_SHEET} />
             <Stack.Screen name="paywall" options={{ presentation: "fullScreenModal" }} />
           </Stack.Protected>
           <Stack.Protected guard={!inside}>
