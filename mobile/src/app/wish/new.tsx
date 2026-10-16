@@ -10,7 +10,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, Crown, ImageIcon, Lock, Plus, RefreshCw, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import Animated, { FadeIn, LinearTransition, ZoomIn, ZoomOut } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Press } from "../../components/Press";
@@ -151,14 +151,14 @@ export default function AddWishScreen() {
       {cover === "photo" ? (
         <View className="mb-4">
           {images.length ? (
-            // 3-column grid; new photos pop in, removed ones shrink away and the rest slide over
+            // 3-column grid; photos fade in and out, the rest slide over (no bounce)
             <View className="flex-row gap-2" onLayout={(e) => setGridW(e.nativeEvent.layout.width)}>
               {images.map((src) => (
                 <Animated.View
                   key={src}
-                  entering={ZoomIn.springify().damping(15)}
-                  exiting={ZoomOut.duration(180)}
-                  layout={LinearTransition.springify().damping(18)}
+                  entering={FadeIn.duration(200)}
+                  exiting={FadeOut.duration(160)}
+                  layout={LinearTransition.duration(200)}
                   style={{ width: tile, aspectRatio: 1, overflow: "hidden", borderRadius: 18, backgroundColor: C.card2 }}
                 >
                   <Image source={{ uri: src }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
@@ -176,7 +176,7 @@ export default function AddWishScreen() {
                 </Animated.View>
               ))}
               {images.length < photoLimit ? (
-                <Animated.View layout={LinearTransition.springify().damping(18)} entering={FadeIn.duration(200)} style={{ width: tile }}>
+                <Animated.View layout={LinearTransition.duration(200)} style={{ width: tile }}>
                   <Press scaleTo={0.92} onPress={pickPhotos} className="aspect-square items-center justify-center rounded-tile bg-card2" accessibilityLabel={t("uploadPhoto")}>
                     <Plus size={24} color={C.t2} />
                   </Press>

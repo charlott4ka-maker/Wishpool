@@ -6,7 +6,7 @@
 import { Image } from "expo-image";
 import { Lock, Plus, X } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TextProps, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -174,9 +174,7 @@ export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: {
   return (
     <Animated.View entering={FadeIn.duration(350)} style={fill ? { flex: 1 } : undefined}>
     <View className={`items-center ${fill ? "flex-1 justify-center py-8" : compact ? "p-2" : "px-6 py-12"}`}>
-      <Animated.View entering={ZoomIn.springify().damping(14)}>
-        <Sticker emoji={emoji} size={compact ? 56 : 88} rotate={tilt} />
-      </Animated.View>
+      <Sticker emoji={emoji} size={compact ? 56 : 88} rotate={tilt} />
       <Txt className={`mt-4 text-center font-m700 ${compact ? "text-base" : "text-lg"}`}>{title}</Txt>
       {sub ? <Txt className="mt-2 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{sub}</Txt> : null}
       {action ? <View className={fill ? "mt-8 self-stretch" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
