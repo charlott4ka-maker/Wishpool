@@ -12,7 +12,9 @@ import { linkHost } from "../services/affiliate/urlCleanup";
 import { wishImages } from "../store/WishpoolContext";
 import { C } from "../theme/tokens";
 import type { Room, Wish } from "../types";
+import { ImageLightbox } from "./ImageLightbox";
 import { Sticker } from "./Sticker";
+import { WishNote } from "./WishRow";
 import { Chip, Pill, Txt } from "./ui";
 
 const PHOTO_H = 260;
@@ -27,6 +29,7 @@ export function WishDetails({
   const { width } = useWindowDimensions();
   const imgs = wishImages(w);
   const [cur, setCur] = useState(0);
+  const [viewer, setViewer] = useState<number | null>(null); // full-screen photo
   const confirm = (text: string, yes: () => void) => Alert.alert("", text, [{ text: t("back"), style: "cancel" }, { text: "OK", onPress: yes }]);
   const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
   return (
@@ -44,7 +47,9 @@ export function WishDetails({
             scrollEventThrottle={32}
           >
             {imgs.map((src, i) => (
-              <Image key={i} source={{ uri: src }} style={{ width: width - 32, height: PHOTO_H }} contentFit="cover" />
+              <Pressable key={i} onPress={() => setViewer(i)}>
+                <Image source={{ uri: src }} style={{ width: width - 32, height: PHOTO_H }} contentFit="cover" />
+              </Pressable>
             ))}
           </ScrollView>
           {imgs.length > 1 ? (
@@ -73,7 +78,8 @@ export function WishDetails({
           <Txt numberOfLines={1} className="font-m600 text-sm text-blueText">{linkHost(w.link)}</Txt>
         </Pressable>
       ) : null}
-      {w.note ? <Txt className="mt-4 text-[14.5px] leading-5 text-t2">{w.note}</Txt> : null}
+      {w.note ? <View className="mt-4"><WishNote text={w.note} /></View> : null}
+      {viewer != null ? <ImageLightbox images={imgs} start={viewer} onClose={() => setViewer(null)} /> : null}
       <View className="mt-6 flex-row gap-2">
         {!w.giftedAt ? <Pill size="sm" kind="ghost" icon={<Pencil size={15} color={C.t1} />} onPress={onEdit}>{t("editShort")}</Pill> : null}
         {w.giftedAt ? (

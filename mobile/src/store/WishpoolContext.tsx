@@ -23,6 +23,8 @@ type WishpoolValue = AppState & {
   setGifted: (id: string, gifted: boolean) => Promise<void>;
   toggleWishRoom: (id: string, roomId: string) => Promise<void>;
   createRoom: (r: Pick<Room, "name" | "type" | "emoji" | "tint"> & Partial<Room>) => Promise<string>;
+  /** Leave a room (or delete it for everyone when you own it). */
+  removeRoom: (id: string, asOwner: boolean) => Promise<void>;
 };
 
 const Ctx = createContext<WishpoolValue | null>(null);
@@ -142,9 +144,17 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
     [online, refresh, local, user?.name],
   );
 
+  const removeRoom = useCallback(
+    async (id: string, asOwner: boolean) => {
+      local((s) => ({ rooms: s.rooms.filter((r) => r.id !== id), wishes: s.wishes.map((w) => ({ ...w, rooms: w.rooms.filter((r) => r !== id) })) }));
+      if (online) await (asOwner ? api.deleteRoom(id) : api.leaveRoom(id)).finally(refresh);
+    },
+    [online, refresh, local],
+  );
+
   const value = useMemo<WishpoolValue>(
-    () => ({ ...state, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom }),
-    [state, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom],
+    () => ({ ...state, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom, removeRoom }),
+    [state, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom, removeRoom],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

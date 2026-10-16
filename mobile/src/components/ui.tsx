@@ -20,10 +20,12 @@ export function Txt({ className = "", ...p }: TextProps & { className?: string }
   return <Text {...p} className={`${hasFont ? "" : "font-m500"} ${hasColor ? "" : "text-t1"} ${className}`} />;
 }
 
-type PillKind = "primary" | "ghost" | "soft" | "green" | "gold";
+type PillKind = "primary" | "ghost" | "glass" | "soft" | "green" | "gold";
 const PILL: Record<PillKind, { box: string; text: string }> = {
   primary: { box: "bg-blue", text: "text-white" },
   ghost: { box: "bg-white/10", text: "text-t1" },
+  // on the coloured room hero
+  glass: { box: "bg-white/20", text: "text-white" },
   soft: { box: "bg-blueSoft", text: "text-blueText" },
   green: { box: "bg-greenSoft", text: "text-greenText" },
   gold: { box: "bg-gold", text: "text-black" },
@@ -33,6 +35,7 @@ const PILL: Record<PillKind, { box: string; text: string }> = {
 const PILL_BORDER: Partial<Record<PillKind, { borderWidth: number; borderColor: string }>> = {
   soft: { borderWidth: 1, borderColor: C.blueLine },
   green: { borderWidth: 1, borderColor: "rgba(52,199,89,0.4)" },
+  glass: { borderWidth: 1, borderColor: "rgba(255,255,255,0.28)" },
 };
 
 export function Pill({
@@ -187,7 +190,7 @@ export function Field({
         autoFocus={autoFocus}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
-        className={`rounded-tile bg-card2 px-4 font-m500 text-[16px] text-t1 ${multiline ? "min-h-[88px]" : "h-lg"}`}
+        className={`bg-card2 px-4 font-m500 text-[16px] text-t1 ${multiline ? "min-h-[76px] rounded-[20px]" : "h-lg rounded-full"}`}
         // fontSize only: a line height (text-base sets 24) pushes iOS input text down
         style={{ borderWidth: 1, borderColor: focus ? C.blueLine : "transparent", textAlignVertical: multiline ? "top" : "center", paddingTop: multiline ? 14 : 0, paddingBottom: multiline ? 14 : 0 }}
       />

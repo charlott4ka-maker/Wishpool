@@ -18,6 +18,7 @@ import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
 import { SheetHeader } from "../../components/SheetHeader";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
+import { priceRangeText, RANGE_RE, withCurrency } from "../../lib/price";
 import { toAffiliateUrl } from "../../services/affiliateConverter";
 import { fetchLinkPreview } from "../../services/linkPreview";
 import { useWishpool, wishImages } from "../../store/WishpoolContext";
@@ -34,17 +35,23 @@ async function toDataUrl(uri: string): Promise<string> {
 }
 
 export default function AddWishScreen() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // link: shared into Wishpool from another app (ShareIntentHandler)
-  const { id, link: sharedLink } = useLocalSearchParams<{ id?: string; link?: string }>();
+  // room: "New wish" from inside a room puts it in that room right away
+  const { id, link: sharedLink, room: presetRoom } = useLocalSearchParams<{ id?: string; link?: string; room?: string }>();
   const { wishes, rooms, addWish, updateWish } = useWishpool();
   const { photoLimit, isPremium } = useSubscription();
   const initial = id ? wishes.find((w) => w.id === id) : undefined;
 
   const [title, setTitle] = useState(initial?.title || "");
-  const [price, setPrice] = useState(initial?.price || "");
+  // "Price" or "From / to", like the Mini App; an existing range is split back
+  const initRange = initial?.price ? initial.price.match(RANGE_RE) : null;
+  const [price, setPrice] = useState(initRange ? "" : initial?.price || "");
+  const [priceMode, setPriceMode] = useState<"one" | "range">(initRange ? "range" : "one");
+  const [priceA, setPriceA] = useState(initRange ? initRange[1] : "");
+  const [priceB, setPriceB] = useState(initRange ? initRange[2] : "");
   const [note, setNote] = useState(initial?.note || "");
   // Editing: show the shop's own URL, not our affiliate redirect.
   const initialLink = initial?.link ? toAffiliateUrl(initial.link).clean : "";
@@ -52,7 +59,7 @@ export default function AddWishScreen() {
   const [emoji, setEmoji] = useState(initial?.emoji?.startsWith("stk:") ? initial.emoji : "stk:candle");
   const [images, setImages] = useState<string[]>(initial ? wishImages(initial) : []);
   const [cover, setCover] = useState<"photo" | "emoji">(initial && !wishImages(initial).length ? "emoji" : "photo");
-  const [inRooms, setInRooms] = useState<string[]>([]);
+  const [inRooms, setInRooms] = useState<string[]>(presetRoom ? [presetRoom] : []);
   const [busy, setBusy] = useState(false);
   const [linkState, setLinkState] = useState<LinkState>(null);
 
@@ -115,7 +122,7 @@ export default function AddWishScreen() {
       // Convert the shop's final URL (short links resolved by the preview) when we have it.
       const raw = link.trim();
       const affiliate = raw ? toAffiliateUrl(resolved.current && raw === lastLink.current ? resolved.current : raw).url : null;
-      const data = { emoji, images: pics, image: pics[0] || null, link: affiliate, title: title.trim(), price: price.trim(), note: note.trim(), rooms: inRooms };
+      const data = { emoji, images: pics, image: pics[0] || null, link: affiliate, title: title.trim(), price: priceMode === "range" ? priceRangeText(priceA.trim(), priceB.trim(), lang, t) : withCurrency(price, lang), note: note.trim(), rooms: inRooms };
       if (initial) await updateWish(initial.id, data);
       else await addWish(data);
       haptic("success");
@@ -163,6 +170,7 @@ export default function AddWishScreen() {
             <Pressable onPress={pickPhotos} className="items-center gap-2 rounded-card bg-card2 p-6">
               <ImageIcon size={26} color={C.t2} />
               <Txt className="font-m600 text-sm text-t2">{t("uploadPhoto")}</Txt>
+              <Txt className="text-[12.5px] text-t3">{t("photosHint")}</Txt>
             </Pressable>
           )}
           {PREMIUM_ENABLED ? (
@@ -172,9 +180,9 @@ export default function AddWishScreen() {
               {isPremium ? `${t("photosHint")} · ${images.length}/${photoLimit}` : t("photosLimitFree", { n: PLAN_LIMITS.premium.photosPerWish })}
             </Txt>
           </View>
-          ) : (
+          ) : images.length ? (
             <Txt className="mt-2 text-[12.5px] text-t3">{`${t("photosHint")} · ${images.length}/${photoLimit}`}</Txt>
-          )}
+          ) : null}
         </View>
       ) : (
         <View className="mb-4">
@@ -188,7 +196,42 @@ export default function AddWishScreen() {
         <Txt className="flex-1 text-[12.5px]" style={{ color: hintColor }}>{hint}</Txt>
       </View>
       <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} />
-      <Field label={t("priceOpt")} value={price} onChangeText={setPrice} placeholder="4 200 ₴" />
+      <View className="mb-2 flex-row items-center justify-between">
+        <Txt className="font-m600 text-[13px] text-t2">{t("priceOpt")}</Txt>
+        <View className="h-sm flex-row gap-1 rounded-full bg-card2 p-1">
+          {([["one", t("priceOne")], ["range", t("priceRangeTab")]] as const).map(([k, l]) => (
+            <Pressable
+              key={k}
+              onPress={() => {
+                if (k === priceMode) return;
+                haptic("select");
+                // carry what was typed over to the other mode
+                if (k === "range") {
+                  setPriceA(price);
+                  setPriceB("");
+                } else setPrice(priceB || priceA);
+                setPriceMode(k);
+              }}
+              className="justify-center rounded-full px-3"
+              style={{ backgroundColor: priceMode === k ? "#3A3A3E" : "transparent" }}
+            >
+              <Txt className={`font-m600 text-[12.5px] ${priceMode === k ? "text-white" : "text-t2"}`}>{l}</Txt>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      {priceMode === "one" ? (
+        <Field value={price} onChangeText={setPrice} placeholder={lang === "en" ? "$50" : "4 200 ₴"} />
+      ) : (
+        <View className="flex-row gap-2">
+          <View className="flex-1">
+            <Field value={priceA} onChangeText={setPriceA} placeholder={t("priceFrom") + (lang === "en" ? " $20" : " 1 000")} />
+          </View>
+          <View className="flex-1">
+            <Field value={priceB} onChangeText={setPriceB} placeholder={t("priceTo") + (lang === "en" ? " $50" : " 2 000 ₴")} />
+          </View>
+        </View>
+      )}
       <Field label={t("noteLabel")} value={note} onChangeText={setNote} placeholder={t("notePh")} multiline />
 
       {!initial ? (

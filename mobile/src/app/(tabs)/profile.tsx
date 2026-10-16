@@ -32,7 +32,6 @@ export default function ProfileScreen() {
   const [icon, setIcon] = useState(currentAppIcon);
   const me = { name: user?.name || t("guest"), color: "#7B61FF", photo: user?.photo };
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
-  const gifted = wishes.filter((w) => w.giftedAt).length;
 
   const pickIcon = async (name: (typeof APP_ICONS)[number]["name"]) => {
     if (name && !isPremium) return router.push("/paywall");
@@ -58,8 +57,9 @@ export default function ProfileScreen() {
           </Card>
           <Card className="flex-1 items-center p-5">
             <Heart size={22} color="#FF4D8D" />
-            <Txt className="mt-2 font-m800 text-[22px]">{gifted}</Txt>
-            <Txt className="text-[12.5px] text-t2">{t("filterGifted")}</Txt>
+            {/* gifts you took in rooms; needs reservations from the backend, 0 for now */}
+            <Txt className="mt-2 font-m800 text-[22px]">{0}</Txt>
+            <Txt className="text-[12.5px] text-t2">{t("giftingStat")}</Txt>
           </Card>
         </View>
 
