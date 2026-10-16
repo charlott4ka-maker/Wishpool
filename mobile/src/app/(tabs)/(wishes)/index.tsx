@@ -51,7 +51,8 @@ export default function PoolScreen() {
     <View className="flex-1 bg-bg">
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ flexGrow: 1, paddingTop: 8, paddingHorizontal: 16, paddingBottom: 120 }}
+        scrollEnabled={wishes.length > 0}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: 8, paddingHorizontal: 16, paddingBottom: 24 }}
         refreshControl={
           <RefreshControl
             tintColor={C.t2}
@@ -69,7 +70,10 @@ export default function PoolScreen() {
           options={{
             title: t("poolTitle"),
             headerRight: () => <HeaderPlus onPress={add} label={t("addWish")} />,
-            headerSearchBarOptions: { placeholder: t("searchWishes"), hideWhenScrolling: true, tintColor: C.blue, textColor: C.t1, onChangeText: (e) => setQuery(e.nativeEvent.text) },
+            // search only once there is something to search
+            headerSearchBarOptions: wishes.length
+              ? { placeholder: t("searchWishes"), hideWhenScrolling: true, tintColor: C.blue, textColor: C.t1, onChangeText: (e) => setQuery(e.nativeEvent.text) }
+              : undefined,
           }}
         />
 

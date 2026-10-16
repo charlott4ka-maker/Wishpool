@@ -51,7 +51,7 @@ type CellProps = {
 
 export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, destructive, right, chevron = !toggle && !destructive && !right }: CellProps) {
   const body = (
-    <View className="flex-row items-center" style={{ height: ROW, paddingLeft: PAD, paddingRight: PAD }}>
+    <View className="flex-row" style={{ height: ROW, alignItems: "center", paddingLeft: PAD, paddingRight: PAD }}>
       <View className="items-center justify-center" style={{ width: TILE, height: TILE, borderRadius: 9, backgroundColor: tint, marginRight: GAP }}>
         <Icon size={19} color="#fff" strokeWidth={2.2} />
       </View>
@@ -59,6 +59,7 @@ export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, 
       {value ? <Txt numberOfLines={1} className="ml-2 text-base text-t2">{value}</Txt> : null}
       {right}
       {toggle ? (
+        <View style={{ height: ROW, justifyContent: "center", alignItems: "flex-end", marginLeft: 8 }}>
         <Switch
           value={toggle.value}
           disabled={toggle.disabled}
@@ -68,7 +69,9 @@ export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, 
           }}
           trackColor={{ true: C.green, false: "#39393D" }}
           ios_backgroundColor="#39393D"
+          style={{ alignSelf: "center" }}
         />
+        </View>
       ) : null}
       {chevron ? <ChevronRight size={20} color={C.t3} style={{ marginLeft: 4 }} /> : null}
     </View>
