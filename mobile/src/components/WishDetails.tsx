@@ -4,6 +4,7 @@
 import { Image } from "expo-image";
 import * as WebBrowser from "expo-web-browser";
 import { Link2, Lock, PartyPopper, Pencil, Trash2, Undo2 } from "lucide-react-native";
+import { useState } from "react";
 import { Alert, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 
 import { useT } from "../i18n";
@@ -25,6 +26,7 @@ export function WishDetails({
   const { t } = useT();
   const { width } = useWindowDimensions();
   const imgs = wishImages(w);
+  const [cur, setCur] = useState(0);
   const confirm = (text: string, yes: () => void) => Alert.alert("", text, [{ text: t("back"), style: "cancel" }, { text: "OK", onPress: yes }]);
   const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
   return (
@@ -32,12 +34,31 @@ export function WishDetails({
       {imgs.length ? (
         // fixed height: in a fit-to-content sheet a horizontal ScrollView
         // otherwise mis-measures and pushes everything around
-        <View style={{ height: PHOTO_H, borderRadius: 26, overflow: "hidden", backgroundColor: C.card2 }}>
-          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ height: PHOTO_H, flexGrow: 0 }}>
+        <View style={{ height: PHOTO_H, marginTop: -8, borderRadius: 26, overflow: "hidden", backgroundColor: C.card2 }}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            style={{ height: PHOTO_H, flexGrow: 0 }}
+            onScroll={(e) => setCur(Math.round(e.nativeEvent.contentOffset.x / (width - 32)))}
+            scrollEventThrottle={32}
+          >
             {imgs.map((src, i) => (
               <Image key={i} source={{ uri: src }} style={{ width: width - 32, height: PHOTO_H }} contentFit="cover" />
             ))}
           </ScrollView>
+          {imgs.length > 1 ? (
+            <>
+              <View pointerEvents="none" className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1">
+                <Txt className="font-m600 text-[12.5px] text-white">{cur + 1}/{imgs.length}</Txt>
+              </View>
+              <View pointerEvents="none" className="absolute bottom-2.5 left-0 right-0 flex-row justify-center gap-2">
+                {imgs.map((_, i) => (
+                  <View key={i} style={{ width: i === cur ? 18 : 6, height: 6, borderRadius: 6, backgroundColor: i === cur ? "#fff" : "rgba(255,255,255,0.5)" }} />
+                ))}
+              </View>
+            </>
+          ) : null}
         </View>
       ) : (
         <View className="items-center pb-4 pt-2">

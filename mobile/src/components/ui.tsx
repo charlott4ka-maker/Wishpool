@@ -29,6 +29,12 @@ const PILL: Record<PillKind, { box: string; text: string }> = {
   gold: { box: "bg-gold", text: "text-black" },
 };
 
+// soft / green carry a thin border, as in the Mini App's Pill
+const PILL_BORDER: Partial<Record<PillKind, { borderWidth: number; borderColor: string }>> = {
+  soft: { borderWidth: 1, borderColor: C.blueLine },
+  green: { borderWidth: 1, borderColor: "rgba(52,199,89,0.4)" },
+};
+
 export function Pill({
   children, onPress, kind = "primary", icon, disabled, full, size = "lg",
 }: { children?: React.ReactNode; onPress?: () => void; kind?: PillKind; icon?: React.ReactNode; disabled?: boolean; full?: boolean; size?: "lg" | "sm" }) {
@@ -41,7 +47,7 @@ export function Pill({
         onPress?.();
       }}
       className={`${k.box} ${size === "lg" ? "h-lg" : "h-sm"} ${full ? "w-full" : size === "lg" ? "px-6" : "px-4"} flex-row items-center justify-center gap-2 rounded-full active:opacity-80`}
-      style={{ opacity: disabled ? 0.45 : 1 }}
+      style={{ opacity: disabled ? 0.45 : 1, ...PILL_BORDER[kind] }}
     >
       {icon}
       {typeof children === "string" ? <Txt className={`font-m600 ${k.text} ${size === "lg" ? "text-base" : "text-sm"}`}>{children}</Txt> : children}

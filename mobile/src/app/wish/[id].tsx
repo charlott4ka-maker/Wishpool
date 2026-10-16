@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CloseButton } from "../../components/ui";
+import { SheetHeader } from "../../components/SheetHeader";
 import { WishDetails } from "../../components/WishDetails";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
@@ -18,10 +18,8 @@ export default function WishScreen() {
   const w = wishes.find((x) => x.id === id);
   return (
     <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
-      {/* the close button sits over the photo / sticker, the sheet has no title */}
-      <View style={{ position: "absolute", top: 32, right: 24, zIndex: 10 }}>
-        <CloseButton onPress={() => router.back()} />
-      </View>
+      {/* like the Mini App: an untitled header row with the close button, photos below */}
+      <SheetHeader />
       {w ? (
         <WishDetails
           w={w}
