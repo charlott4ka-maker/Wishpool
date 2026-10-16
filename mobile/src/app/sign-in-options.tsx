@@ -1,9 +1,9 @@
-// "Sign in" sheet from the welcome screen: Apple first (as App Review expects
-// next to other social logins), Telegram, e-mail. Signing in for the first
+// "Sign in" sheet from the welcome screen: Sign in with Apple, or e-mail.
+// (Telegram sign-in was dropped from the iOS app; the AuthContext method stays.) Signing in for the first
 // time creates the account, so there is no separate "register".
 
 import * as AppleAuthentication from "expo-apple-authentication";
-import { Mail, Send } from "lucide-react-native";
+import { Mail } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +19,7 @@ import { C, H } from "../theme/tokens";
 export default function SignInOptions() {
   const { t } = useT();
   const insets = useSafeAreaInsets();
-  const { appleAvailable, signInWithApple, signInWithTelegram } = useAuth();
+  const { appleAvailable, signInWithApple } = useAuth();
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState(false);
   const ready = api.configured();
@@ -52,9 +52,6 @@ export default function SignInOptions() {
             onPress={run(signInWithApple)}
           />
         ) : null}
-        <Pill full icon={<Send size={18} color="#fff" />} disabled={busy} onPress={run(signInWithTelegram)}>
-          {t("signInTelegram")}
-        </Pill>
         <Pill full kind="ghost" icon={<Mail size={18} color={C.t1} />} disabled={busy} onPress={run(async () => setEmail(true))}>
           {t("signInEmail")}
         </Pill>

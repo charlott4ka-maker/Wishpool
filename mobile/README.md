@@ -34,7 +34,7 @@ first `eas build` asks to create the EAS project and writes its id into app.json
       room/new.tsx           new room (Premium sticker packs locked)
       wish/new.tsx           new / edit wish: link -> preview -> affiliate link on save
       paywall.tsx            Wishpool Premium
-      sign-in.tsx            Apple / Telegram / e-mail / guest
+      sign-in.tsx            onboarding, then Sign in (Apple / e-mail) or guest
     src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder, TabBarFade...
     src/services/
       affiliateConverter.ts  product URL -> affiliate URL (Amazon, Admitad, Rozetka, subid)
