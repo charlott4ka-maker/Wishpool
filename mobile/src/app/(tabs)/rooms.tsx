@@ -20,10 +20,21 @@ export default function RoomsScreen() {
   for (let i = 0; i < rooms.length; i += 2) rows.push(rooms.slice(i, i + 2));
 
   return (
-    <ScrollView className="flex-1 bg-bg" contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
+    <ScrollView className="flex-1 bg-bg" contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
       <ScreenTitle title={t("roomsTitle")} sub={t("roomsSub")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
       {rooms.length === 0 ? (
-        <Empty emoji="stk:kitty" tilt={0} title={t("roomsEmptyTitle")} sub={t("roomsEmptySub")} />
+        <Empty
+          fill
+          emoji="stk:kitty"
+          tilt={0}
+          title={t("roomsEmptyTitle")}
+          sub={t("roomsEmptySub")}
+          action={
+            <Pill full icon={<Plus size={19} color="#fff" />} onPress={create}>
+              {t("createRoom")}
+            </Pill>
+          }
+        />
       ) : (
         <View className="gap-6">
           {rows.map((row, i) => (
@@ -36,11 +47,13 @@ export default function RoomsScreen() {
           ))}
         </View>
       )}
-      <View className="mt-6">
-        <Pill full icon={<Plus size={19} color="#fff" />} onPress={create}>
-          {t("createRoom")}
-        </Pill>
-      </View>
+      {rooms.length ? (
+        <View className="mt-6">
+          <Pill full icon={<Plus size={19} color="#fff" />} onPress={create}>
+            {t("createRoom")}
+          </Pill>
+        </View>
+      ) : null}
     </ScrollView>
   );
 }

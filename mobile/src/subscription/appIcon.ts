@@ -1,6 +1,8 @@
 // Alternate app icons (Premium). Icon files are declared in app.json under the
 // expo-alternate-app-icons plugin; names here must match those entries.
 
+import { requireOptionalNativeModule } from "expo";
+
 import type { StickerName } from "../components/stickerAssets";
 
 export type AppIconOption = {
@@ -18,17 +20,14 @@ export const APP_ICONS: AppIconOption[] = [
   { name: "Matcha", titleKey: "iconMatcha", sticker: "matcha", tint: "#34C759" },
 ];
 
-// Required lazily: the native module isn't in Expo Go or on web, and a
-// top-level import would crash the Profile tab there.
+// The native module isn't in Expo Go or on web. Importing the package there
+// throws (and Expo Go shows it as a red error even inside try/catch), so check
+// for the native side first and only then load the package.
 type IconsModule = typeof import("expo-alternate-app-icons");
 let mod: IconsModule | null | undefined;
 function icons(): IconsModule | null {
   if (mod === undefined) {
-    try {
-      mod = require("expo-alternate-app-icons") as IconsModule;
-    } catch {
-      mod = null;
-    }
+    mod = requireOptionalNativeModule("ExpoAlternateAppIcons") ? (require("expo-alternate-app-icons") as IconsModule) : null;
   }
   return mod;
 }

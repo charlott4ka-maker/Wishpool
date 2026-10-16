@@ -123,14 +123,18 @@ export function Sheet({ visible, title, onClose, children }: { visible: boolean;
   );
 }
 
-/** Empty lists and errors: a tilted sticker, a title, a line of text and an optional action. */
-export function Empty({ emoji, title, sub, action, compact, tilt = -8 }: { emoji: string; title: string; sub?: string; action?: React.ReactNode; compact?: boolean; tilt?: number }) {
+/**
+ * Empty lists and errors: a tilted sticker, a title, a line of text and an optional action.
+ * `fill`: takes all the space left on the screen and sits in its middle, with a
+ * full-width action 32 below the text (the screen's own CTA moves in here).
+ */
+export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: { emoji: string; title: string; sub?: string; action?: React.ReactNode; compact?: boolean; fill?: boolean; tilt?: number }) {
   return (
-    <View className={`items-center ${compact ? "p-2" : "px-6 py-12"}`}>
+    <View className={`items-center ${fill ? "flex-1 justify-center py-8" : compact ? "p-2" : "px-6 py-12"}`}>
       <Sticker emoji={emoji} size={compact ? 56 : 88} rotate={tilt} />
       <Txt className={`mt-4 text-center font-m700 ${compact ? "text-base" : "text-lg"}`}>{title}</Txt>
       {sub ? <Txt className="mt-2 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{sub}</Txt> : null}
-      {action ? <View className={compact ? "mt-4" : "mt-6"}>{action}</View> : null}
+      {action ? <View className={fill ? "mt-8 self-stretch" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
     </View>
   );
 }

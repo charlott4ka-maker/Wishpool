@@ -51,7 +51,7 @@ export default function PoolScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}
         refreshControl={
           <RefreshControl
             tintColor={C.t2}
@@ -80,7 +80,18 @@ export default function PoolScreen() {
         ) : null}
 
         {wishes.length === 0 ? (
-          <Empty emoji="stk:bear" tilt={0} title={t("poolEmptyTitle")} sub={t("poolEmptySub")} />
+          <Empty
+            fill
+            emoji="stk:bear"
+            tilt={0}
+            title={t("poolEmptyTitle")}
+            sub={t("poolEmptySub")}
+            action={
+              <Pill full icon={<Plus size={19} color="#fff" />} onPress={add}>
+                {t("addWish")}
+              </Pill>
+            }
+          />
         ) : shown.length === 0 ? (
           <Empty compact emoji={cur === "gifted" ? "stk:candle" : "stk:ghost"} tilt={0} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
         ) : (
@@ -96,11 +107,13 @@ export default function PoolScreen() {
           </View>
         )}
 
-        <View className="mt-6">
-          <Pill full icon={<Plus size={19} color="#fff" />} onPress={add}>
-            {t("addWish")}
-          </Pill>
-        </View>
+        {wishes.length ? (
+          <View className="mt-6">
+            <Pill full icon={<Plus size={19} color="#fff" />} onPress={add}>
+              {t("addWish")}
+            </Pill>
+          </View>
+        ) : null}
       </ScrollView>
 
       <WishSheet
