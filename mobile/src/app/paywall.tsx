@@ -3,7 +3,7 @@
 // "save N%" badge), one big button, and Terms | Privacy | Restore underneath.
 
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Check, Images, Smartphone, Sparkles, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
@@ -15,7 +15,7 @@ import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { DAY_FORMS, plural } from "../lib/dates";
 import { haptic } from "../lib/haptics";
-import { PLAN_LIMITS } from "../subscription/featureFlags";
+import { PLAN_LIMITS, PREMIUM_ENABLED } from "../subscription/featureFlags";
 import type { PremiumPackage } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
@@ -26,7 +26,12 @@ const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || "";
 
 const ORDER: Record<string, number> = { annual: 0, monthly: 1 };
 
-export default function Paywall() {
+export default function PaywallRoute() {
+  // Hidden while Premium is off, even if something links here.
+  return PREMIUM_ENABLED ? <Paywall /> : <Redirect href="/" />;
+}
+
+function Paywall() {
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

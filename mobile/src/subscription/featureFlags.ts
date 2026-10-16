@@ -3,6 +3,10 @@
 
 import type { StickerName } from "../components/stickerAssets";
 
+// Premium is hidden for now: no paywall, no Premium card, no locked packs or
+// icons, no upsell hints. Everything stays in the code; flip to true to bring it back.
+export const PREMIUM_ENABLED = false;
+
 export type PremiumFeature = "stickerPacks" | "extraPhotos" | "appIcons";
 
 export const PLAN_LIMITS = {

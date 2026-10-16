@@ -74,6 +74,10 @@ and falls back to the backend's `/api/preview` for shops that block phones.
 
 ## Premium
 
+Hidden for now: `PREMIUM_ENABLED = false` in `src/subscription/featureFlags.ts`
+turns off the paywall, the Premium card, locked sticker packs, app icons and
+upsell hints. Set it to `true` to bring all of it back.
+
 `useSubscription()` gives `isPremium`, `photoLimit`, `can(feature)`,
 `isStickerLocked(emoji)`, `packages`, `purchase`, `restore`.
 

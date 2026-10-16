@@ -15,6 +15,7 @@ import { LANG_SHORT, LANGS, useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
 import { APP_ICONS, appIconsSupported, changeAppIcon, currentAppIcon } from "../../subscription/appIcon";
+import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { STICKER_ASSETS } from "../../components/stickerAssets";
 import { C } from "../../theme/tokens";
@@ -66,6 +67,7 @@ export default function ProfileScreen() {
         </Card>
       </View>
 
+      {PREMIUM_ENABLED ? (
       <Card className="mt-3 flex-row items-center gap-4 p-4" onPress={() => router.push("/paywall")}>
         <View className="h-sm w-sm items-center justify-center rounded-full bg-gold/20">
           <Crown size={20} color={C.gold} />
@@ -76,8 +78,9 @@ export default function ProfileScreen() {
         </View>
         <ChevronRight size={20} color={C.t3} />
       </Card>
+      ) : null}
 
-      {appIconsSupported() ? (
+      {PREMIUM_ENABLED && appIconsSupported() ? (
         <View className="mt-6">
           <View className="mb-2 flex-row items-center gap-2">
             <Smartphone size={15} color={C.t2} />

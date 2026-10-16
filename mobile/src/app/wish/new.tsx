@@ -20,7 +20,7 @@ import { haptic } from "../../lib/haptics";
 import { toAffiliateUrl } from "../../services/affiliateConverter";
 import { fetchLinkPreview } from "../../services/linkPreview";
 import { useWishpool, wishImages } from "../../store/WishpoolContext";
-import { PLAN_LIMITS } from "../../subscription/featureFlags";
+import { PLAN_LIMITS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C } from "../../theme/tokens";
 
@@ -150,7 +150,7 @@ export default function AddWishScreen() {
                 <Pressable onPress={pickPhotos} className="aspect-square flex-1 items-center justify-center rounded-tile bg-card2" style={{ maxWidth: "33%" }} accessibilityLabel={t("uploadPhoto")}>
                   <Plus size={24} color={C.t2} />
                 </Pressable>
-              ) : !isPremium ? (
+              ) : PREMIUM_ENABLED && !isPremium ? (
                 <Pressable onPress={() => router.push("/paywall")} className="aspect-square flex-1 items-center justify-center gap-1 rounded-tile bg-gold/10" style={{ maxWidth: "33%" }}>
                   <Lock size={18} color={C.gold} />
                   <Txt className="font-m600 text-[11.5px] text-gold">Premium</Txt>
@@ -163,12 +163,14 @@ export default function AddWishScreen() {
               <Txt className="font-m600 text-sm text-t2">{t("uploadPhoto")}</Txt>
             </Pressable>
           )}
+          {PREMIUM_ENABLED ? (
           <View className="mt-2 flex-row items-center gap-1">
             {!isPremium ? <Crown size={12} color={C.t3} /> : null}
             <Txt className="text-[12.5px] text-t3">
               {isPremium ? `${t("photosHint")} · ${images.length}/${photoLimit}` : t("photosLimitFree", { n: PLAN_LIMITS.premium.photosPerWish })}
             </Txt>
           </View>
+          ) : null}
         </View>
       ) : (
         <View className="mb-4">

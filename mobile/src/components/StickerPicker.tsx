@@ -6,7 +6,7 @@ import { Pressable, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
-import { STICKER_PACKS, stickerId } from "../subscription/featureFlags";
+import { PREMIUM_ENABLED, STICKER_PACKS, stickerId } from "../subscription/featureFlags";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
 import { Sticker } from "./Sticker";
@@ -18,11 +18,11 @@ export function StickerPicker({ value, onChange, size = 28 }: { value: string; o
   const router = useRouter();
   return (
     <View className="gap-4">
-      {STICKER_PACKS.map((pack) => {
+      {STICKER_PACKS.filter((p) => PREMIUM_ENABLED || !p.isPremiumOnly).map((pack, _i, packs) => {
         const locked = pack.isPremiumOnly && !isPremium;
         return (
           <View key={pack.id}>
-            {STICKER_PACKS.length > 1 ? (
+            {packs.length > 1 ? (
               <View className="mb-2 flex-row items-center gap-2">
                 <Txt className="font-m600 text-[13px] text-t2">{t(pack.titleKey)}</Txt>
                 {pack.isPremiumOnly ? <PremiumBadge label={t("premiumOnly")} /> : null}
