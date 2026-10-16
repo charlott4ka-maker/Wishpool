@@ -181,8 +181,9 @@ export function Field({
         autoFocus={autoFocus}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
-        className={`rounded-tile bg-card2 px-4 font-m500 text-base text-t1 ${multiline ? "min-h-[88px] py-3" : "h-lg"}`}
-        style={{ borderWidth: 1, borderColor: focus ? C.blueLine : "transparent", textAlignVertical: multiline ? "top" : "center" }}
+        className={`rounded-tile bg-card2 px-4 font-m500 text-[16px] text-t1 ${multiline ? "min-h-[88px]" : "h-lg"}`}
+        // fontSize only: a line height (text-base sets 24) pushes iOS input text down
+        style={{ borderWidth: 1, borderColor: focus ? C.blueLine : "transparent", textAlignVertical: multiline ? "top" : "center", paddingTop: multiline ? 14 : 0, paddingBottom: multiline ? 14 : 0 }}
       />
     </View>
   );

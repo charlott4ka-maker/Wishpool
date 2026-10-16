@@ -2,11 +2,11 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-import { Stack } from "expo-router";
+import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, FileText, Gift, Globe, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate } from "lucide-react-native";
-import { ActionSheetIOS, Alert, Linking, Platform, ScrollView, View } from "react-native";
+import { Bell, Cake, ChevronLeft, FileText, Gift, Globe, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate } from "lucide-react-native";
+import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
@@ -25,6 +25,7 @@ const LANG_NAME: Record<Lang, string> = { uk: "Українська", ru: "Ру�
 
 export default function SettingsScreen() {
   const { t, lang, setLang } = useT();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const prefs = usePrefs();
   const { status, signOut } = useAuth();
@@ -79,9 +80,13 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      {/* standard iOS large title + back button (options in app/_layout.tsx) */}
-      <Stack.Screen options={{ title: t("settings") }} />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: insets.bottom + 32 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 32 }}>
+        <View className="mb-6 flex-row items-center gap-3">
+          <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel={t("back")}>
+            <ChevronLeft size={22} color={C.t1} />
+          </Pressable>
+          <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("settings")}</Txt>
+        </View>
 
         <SettingsGroup title={t("setNotifications")} footer={t("setNotifFooter")}>
           <SettingsCell icon={Bell} tint="#FF3B30" label={t("setAllowNotif")} toggle={{ value: prefs.notifications, onChange: toggleNotifications }} />

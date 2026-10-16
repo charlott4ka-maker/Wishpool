@@ -1,46 +1,11 @@
-// iOS large titles for the Wishes and Rooms tabs: a big title that shrinks
-// into the bar as you scroll (like Settings or Mail), and room for a native
-// search field.
+// Stack for the Wishes and Rooms tabs (room for pushed screens later). No
+// native bar: the screens draw our own 26pt title with a round "+" next to it,
+// the same size as in the Mini App (the iOS 34pt large title was too big).
 
 import { Stack } from "expo-router";
-import { Plus } from "lucide-react-native";
-import { Pressable } from "react-native";
 
-import { haptic } from "../lib/haptics";
 import { C } from "../theme/tokens";
 
-// Solid black bar, same as the screen (a transparent bar with blur showed a
-// grey band behind the large title even when nothing was scrolled under it).
-export const LARGE_TITLE_OPTIONS = {
-  headerLargeTitle: true,
-  headerTransparent: false,
-  headerStyle: { backgroundColor: C.bg },
-  headerLargeStyle: { backgroundColor: C.bg },
-  headerShadowVisible: false,
-  headerLargeTitleShadowVisible: false,
-  headerTintColor: C.blue,
-  headerTitleStyle: { color: C.t1 },
-  headerLargeTitleStyle: { color: C.t1 },
-  contentStyle: { backgroundColor: C.bg },
-} as const;
-
 export function LargeTitleStack() {
-  return <Stack screenOptions={LARGE_TITLE_OPTIONS} />;
-}
-
-/** "+" in the bar's right corner. */
-export function HeaderPlus({ onPress, label }: { onPress: () => void; label: string }) {
-  return (
-    <Pressable
-      onPress={() => {
-        haptic("light");
-        onPress();
-      }}
-      accessibilityLabel={label}
-      hitSlop={8}
-      className="h-sm w-sm items-center justify-center"
-    >
-      <Plus size={24} color={C.t1} />
-    </Pressable>
-  );
+  return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }} />;
 }

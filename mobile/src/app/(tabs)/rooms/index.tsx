@@ -1,12 +1,11 @@
 // "Кімнати": rooms as folders in a two-column grid.
 
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 
 import { RoomFolder } from "../../../components/RoomFolder";
-import { HeaderPlus } from "../../../components/LargeTitleStack";
-import { Empty, Pill } from "../../../components/ui";
+import { Empty, HeaderAdd, Pill, ScreenTitle } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { useT } from "../../../i18n";
 import { useWishpool } from "../../../store/WishpoolContext";
@@ -22,12 +21,7 @@ export default function RoomsScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView className="flex-1 bg-bg" contentInsetAdjustmentBehavior="automatic" scrollEnabled={rooms.length > 0} contentContainerStyle={{ flexGrow: 1, paddingTop: 8, paddingHorizontal: 16, paddingBottom: 24 }}>
-        <Stack.Screen
-          options={{
-            title: t("roomsTitle"),
-            headerRight: () => <HeaderPlus onPress={create} label={t("createRoom")} />,
-          }}
-        />
+        <ScreenTitle title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
         {rooms.length === 0 ? (
           <Empty
             fill

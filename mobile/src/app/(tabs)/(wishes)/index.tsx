@@ -1,15 +1,15 @@
 // "Бажання": the wish pool. Filter chips (all / private / per room / gifted),
 // a two-column grid of wish cards, the wish sheet on tap.
 
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Lock, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 
 import { GuestBanner } from "../../../components/GuestBanner";
 import { Sticker } from "../../../components/Sticker";
-import { HeaderPlus } from "../../../components/LargeTitleStack";
-import { Chip, Empty, Pill, Txt } from "../../../components/ui";
+import { SearchField } from "../../../components/SearchField";
+import { Chip, Empty, HeaderAdd, Pill, ScreenTitle, Txt } from "../../../components/ui";
 import { WishCard } from "../../../components/WishCard";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { useT } from "../../../i18n";
@@ -66,16 +66,9 @@ export default function PoolScreen() {
         }
       >
         <GuestBanner />
-        <Stack.Screen
-          options={{
-            title: t("poolTitle"),
-            headerRight: () => <HeaderPlus onPress={add} label={t("addWish")} />,
-            // search only once there is something to search
-            headerSearchBarOptions: wishes.length
-              ? { placeholder: t("searchWishes"), hideWhenScrolling: true, tintColor: C.blue, textColor: C.t1, onChangeText: (e) => setQuery(e.nativeEvent.text) }
-              : undefined,
-          }}
-        />
+        <ScreenTitle title={t("poolTitle")} right={<HeaderAdd onPress={add} label={t("addWish")} />} />
+        {/* search only once there is something to search */}
+        {wishes.length ? <SearchField value={query} onChangeText={setQuery} placeholder={t("searchWishes")} /> : null}
 
         {tabs.length > 1 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 -mt-2 mb-4" contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>

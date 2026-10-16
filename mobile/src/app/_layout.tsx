@@ -13,7 +13,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../auth/AuthContext";
 import { ShareIntentHandler } from "../components/ShareIntentHandler";
 import { LangProvider } from "../i18n";
-import { LARGE_TITLE_OPTIONS } from "../components/LargeTitleStack";
 import { ReminderSync } from "../settings/ReminderSync";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
@@ -48,7 +47,7 @@ function Gate() {
           <Stack.Protected guard={inside}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="room/[id]" />
-            <Stack.Screen name="settings" options={{ ...LARGE_TITLE_OPTIONS, headerShown: true, headerBackButtonDisplayMode: "minimal" }} />
+            <Stack.Screen name="settings" />
             <Stack.Screen name="wish/new" options={LARGE_SHEET} />
             <Stack.Screen name="room/new" options={LARGE_SHEET} />
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />

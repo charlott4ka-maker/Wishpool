@@ -1,9 +1,9 @@
-// A wish card on the wishlist that opens the wish sheet on tap, and on long
-// press shows the native iOS preview with a context menu (edit, share, I got
-// it, delete).
+// A wish card on the wishlist: tap opens the wish sheet, long press opens the
+// iOS action sheet (edit, share, I got it, delete). The native Link preview was
+// dropped: its wrapper broke the card's size in the grid.
 
-import { Link, useRouter } from "expo-router";
-import { Alert, Share, View } from "react-native";
+import { useRouter } from "expo-router";
+import { ActionSheetIOS, Alert, Platform, Share } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
@@ -17,9 +17,15 @@ export function WishCard({ w }: { w: Wish }) {
   const router = useRouter();
   const { setGifted, deleteWish } = useWishpool();
 
+  const open = () => router.push({ pathname: "/wish/[id]", params: { id: w.id } });
+  const edit = () => router.push({ pathname: "/wish/new", params: { id: w.id } });
   const share = () => {
     const parts = [w.title, w.price, w.link].filter(Boolean);
     Share.share({ message: parts.join("\n"), url: w.link || undefined }).catch(() => {});
+  };
+  const gifted = () => {
+    haptic(w.giftedAt ? "light" : "success");
+    setGifted(w.id, !w.giftedAt).catch(() => {});
   };
   const remove = () =>
     Alert.alert(t("confirmDeleteWish"), "", [
@@ -27,36 +33,24 @@ export function WishCard({ w }: { w: Wish }) {
       { text: t("setDelete"), style: "destructive", onPress: () => deleteWish(w.id).catch(() => {}) },
     ]);
 
-  return (
-    <View className="flex-1">
-      <Link href={{ pathname: "/wish/[id]", params: { id: w.id } }} asChild>
-        <Link.Trigger>
-          <WishTile w={w} />
-        </Link.Trigger>
-        <Link.Preview />
-        <Link.Menu title={w.link ? linkHost(w.link) : undefined}>
-          {!w.giftedAt ? (
-            <Link.MenuAction icon="pencil" onPress={() => router.push({ pathname: "/wish/new", params: { id: w.id } })}>
-              {t("editShort")}
-            </Link.MenuAction>
-          ) : null}
-          <Link.MenuAction icon="square.and.arrow.up" onPress={share}>
-            {t("shareBtn")}
-          </Link.MenuAction>
-          <Link.MenuAction
-            icon={w.giftedAt ? "arrow.uturn.backward" : "gift"}
-            onPress={() => {
-              haptic(w.giftedAt ? "light" : "success");
-              setGifted(w.id, !w.giftedAt).catch(() => {});
-            }}
-          >
-            {t(w.giftedAt ? "ungift" : "gotIt")}
-          </Link.MenuAction>
-          <Link.MenuAction icon="trash" destructive onPress={remove}>
-            {t("deleteWish")}
-          </Link.MenuAction>
-        </Link.Menu>
-      </Link>
-    </View>
-  );
+  const menu = () => {
+    haptic("select");
+    const actions: [string, () => void][] = [
+      ...(!w.giftedAt ? [[t("editShort"), edit] as [string, () => void]] : []),
+      [t("shareBtn"), share],
+      [t(w.giftedAt ? "ungift" : "gotIt"), gifted],
+      [t("deleteWish"), remove],
+    ];
+    const options = [...actions.map((a) => a[0]), t("setCancel")];
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { title: w.title, message: w.link ? linkHost(w.link) : undefined, options, destructiveButtonIndex: actions.length - 1, cancelButtonIndex: actions.length, userInterfaceStyle: "dark" },
+        (i) => i < actions.length && actions[i][1](),
+      );
+    } else {
+      Alert.alert(w.title, "", [...actions.map(([text, onPress]) => ({ text, onPress })), { text: t("setCancel"), style: "cancel" as const }]);
+    }
+  };
+
+  return <WishTile w={w} onPress={open} onLongPress={menu} delayLongPress={350} />;
 }
