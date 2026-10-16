@@ -54,7 +54,8 @@ export default function SignIn() {
       </View>
       <Txt className="mt-6 text-center font-m800 text-[28px] leading-[34px]" style={{ letterSpacing: -0.5 }}>Wishpool</Txt>
       <Txt className="mt-2 text-center font-m600 text-base">{t("signInTitle")}</Txt>
-      <Txt className="mx-auto mt-2 max-w-[300px] text-center text-[14.5px] leading-5 text-t2">{t("obGiftText")}</Txt>
+      <Txt className="mt-6 text-center font-m700 text-base">{t("obGiftTitle")}</Txt>
+      <Txt className="mx-auto mt-1 max-w-[300px] text-center text-[14.5px] leading-5 text-t2">{t("obGiftText")}</Txt>
 
       <View className="flex-1" />
 

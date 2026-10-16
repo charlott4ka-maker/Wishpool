@@ -16,3 +16,8 @@
 - Icons: lucide-react (the user prefers these over SF-style icons).
 - Modals are bottom sheets (`Sheet`).
 - No em/en dashes in UI copy (uk/ru/en).
+
+## iOS app (mobile/)
+- Separate Expo project; shares design tokens, copy and stickers with the Mini App.
+- Font: the iOS system font SF Pro (not Montserrat), weights 500-800 only.
+- Tab bar: the system native tabs (`expo-router/native-tabs`, Liquid Glass on iOS 26) with SF Symbols, no custom bar.

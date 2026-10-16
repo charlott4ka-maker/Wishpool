@@ -2,12 +2,6 @@ import "react-native-url-polyfill/auto";
 import "../global.css";
 import "../lib/nativewindInterop";
 
-// Only the four weights we use (500 is the lightest), not the whole family.
-import { Montserrat_500Medium } from "@expo-google-fonts/montserrat/500Medium";
-import { Montserrat_600SemiBold } from "@expo-google-fonts/montserrat/600SemiBold";
-import { Montserrat_700Bold } from "@expo-google-fonts/montserrat/700Bold";
-import { Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat/800ExtraBold";
-import { useFonts } from "expo-font";
 import { DarkTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -26,8 +20,7 @@ const theme = { ...DarkTheme, colors: { ...DarkTheme.colors, background: C.bg, c
 
 function Gate() {
   const { status, user } = useAuth();
-  const [fontsLoaded] = useFonts({ Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_800ExtraBold });
-  const ready = fontsLoaded && status !== "loading";
+  const ready = status !== "loading";
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);

@@ -1,4 +1,5 @@
-// Design tokens mirror `C`, `H` and `R` in web/src/App.jsx so both apps look the same.
+// Design tokens mirror `C`, `H` and `R` in web/src/App.jsx so both apps look the same
+// (except the font: the iOS app uses the system SF Pro, the Mini App Montserrat).
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{ts,tsx}"],
@@ -23,13 +24,13 @@ module.exports = {
         danger: "#FF5A5A",
         gold: "#FFC94D",
       },
-      // Montserrat only, and never Regular: the lightest weight is Medium (500).
-      // On native each weight is its own font file, so weights are font families.
-      fontFamily: {
-        m500: ["Montserrat_500Medium"],
-        m600: ["Montserrat_600SemiBold"],
-        m700: ["Montserrat_700Bold"],
-        m800: ["Montserrat_800ExtraBold"],
+      // iOS system font (SF Pro), never Regular: the lightest weight is Medium (500).
+      // font-m500..font-m800 are kept as class names so weights read the same as in the Mini App.
+      fontWeight: {
+        m500: "500",
+        m600: "600",
+        m700: "700",
+        m800: "800",
       },
       // Buttons and controls come in exactly two heights.
       height: { lg: 52, sm: 40 },

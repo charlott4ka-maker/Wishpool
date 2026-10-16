@@ -1,6 +1,6 @@
 // Building blocks matching the Mini App's atoms (Pill, Chip, Segmented, Card,
 // Sheet, Empty, Field, Avatar). Rules from CLAUDE.md apply here too:
-// Montserrat, never Regular; controls are 52 or 40 high; 4/8/12/16/24/32 spacing;
+// SF Pro (system font), never Regular; controls are 52 or 40 high; 4/8/12/16/24/32 spacing;
 // no outlines on blocks; modals are bottom sheets.
 
 import { Image } from "expo-image";
@@ -13,7 +13,7 @@ import { haptic } from "../lib/haptics";
 import { C, H } from "../theme/tokens";
 import { Sticker } from "./Sticker";
 
-/** Text with Montserrat Medium by default. Pass a font-m600/700/800 class for heavier weights. */
+/** Text in SF Pro Medium by default. Pass a font-m600/700/800 class for heavier weights. */
 export function Txt({ className = "", ...p }: TextProps & { className?: string }) {
   const hasFont = /\bfont-m\d00\b/.test(className);
   const hasColor = /\btext-(t1|t2|t3|blue|blueText|green|greenText|danger|gold|white)\b/.test(className);

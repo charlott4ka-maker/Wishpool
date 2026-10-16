@@ -252,7 +252,7 @@ export const WEB_STRINGS = {
     "en": "Paste a link and we fill in the photo and price. Or just send it to the bot."
   },
   "obGiftTitle": {
-    "uk": "Даруйте потай",
+    "uk": "Даруй таємно",
     "ru": "Дарите втайне",
     "en": "Gift in secret"
   },

@@ -4,7 +4,8 @@ Native iOS app built on the Telegram Mini App in `../web`. It is a separate
 project: nothing in `web/`, `server/`, `api/` or the Vercel config changes, and
 the Mini App keeps deploying from `main` exactly as before.
 
-Stack: Expo SDK 58, Expo Router, NativeWind 4 (Tailwind 3), EAS Build,
+Stack: Expo SDK 58, Expo Router (system native tabs: Liquid Glass on iOS 26),
+NativeWind 4 (Tailwind 3), EAS Build,
 RevenueCat (`react-native-purchases`), `expo-apple-authentication`,
 `expo-alternate-app-icons`.
 
@@ -30,12 +31,12 @@ first `eas build` asks to create the EAS project and writes its id into app.json
       (tabs)/index.tsx       Бажання: wish pool, filters, two-column cards
       (tabs)/rooms.tsx       Кімнати: rooms as folders
       (tabs)/profile.tsx     Профіль: stats, Premium, app icon, language
-      room/[id].tsx          room: friends' lists, "I'll get it" (Даруйте потай)
+      room/[id].tsx          room: friends' lists, "I'll get it" (Даруй таємно)
       room/new.tsx           new room (Premium sticker packs locked)
       wish/new.tsx           new / edit wish: link -> preview -> affiliate link on save
       paywall.tsx            Wishpool Premium
       sign-in.tsx            Apple / Telegram / e-mail / guest
-    src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder, TabBar...
+    src/components/          Sticker, Pill, Chip, Segmented, Sheet, WishTile, RoomFolder...
     src/services/
       affiliateConverter.ts  product URL -> affiliate URL (Amazon, Admitad, Rozetka, subid)
       affiliate/shops.ts     known shops and their network
@@ -47,9 +48,10 @@ first `eas build` asks to create the EAS project and writes its id into app.json
     src/i18n/                uk / ru / en; webStrings.ts is copied from web/src/App.jsx
     assets/stickers/         the same WebP stickers as web/public/stickers
 
-Design tokens (colours, 52/40 control heights, radii, Montserrat 500-800) live
-in `tailwind.config.js` and `src/theme/tokens.ts` and match `C`/`H`/`R` in
-`web/src/App.jsx`.
+Design tokens (colours, 52/40 control heights, radii) live in
+`tailwind.config.js` and `src/theme/tokens.ts` and match `C`/`H`/`R` in
+`web/src/App.jsx`. Font: the iOS system font (SF Pro), weights 500-800 via
+`font-m500`...`font-m800`. The tab bar is the system UITabBar with SF Symbols.
 
 ## Affiliate links
 

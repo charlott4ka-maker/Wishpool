@@ -1,4 +1,4 @@
-// One room. Friends' lists with "I'll get it" (Даруйте потай): a gift taken by
+// One room. Friends' lists with "I'll get it" (Даруй таємно): a gift taken by
 // someone shows as "Taken" to the other gifters, while the wish owner never
 // sees it (the backend hides reservations from the owner). "My items here"
 // lists what you shared into the room.

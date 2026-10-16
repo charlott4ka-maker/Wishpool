@@ -221,7 +221,7 @@ const STR = {
   obNext: { uk: "Далі", ru: "Дальше", en: "Next" },
   obAddTitle: { uk: "Додай бажання за секунду", ru: "Добавь желание за секунду", en: "Add a wish in a second" },
   obAddText: { uk: "Встав посилання, і ми підтягнемо фото й ціну. Або просто надішли його боту.", ru: "Вставь ссылку, и мы подтянем фото и цену. Или просто пришли её боту.", en: "Paste a link and we fill in the photo and price. Or just send it to the bot." },
-  obGiftTitle: { uk: "Даруйте потай", ru: "Дарите втайне", en: "Gift in secret" },
+  obGiftTitle: { uk: "Даруй таємно", ru: "Дарите втайне", en: "Gift in secret" },
   obGiftText: { uk: "Друзі позначають, що дарують, і подарунки не повторюються. А іменинник нічого не бачить.", ru: "Друзья отмечают, что дарят, и подарки не повторяются. А именинник ничего не видит.", en: "Friends mark what they give, so nothing doubles up. And the birthday person sees none of it." },
   obSecret: { uk: "Це залишиться таємницею", ru: "Это останется тайной", en: "It stays a secret" },
   obStart: { uk: "Почати", ru: "Начать", en: "Let's go" },
