@@ -1,21 +1,20 @@
-// New room, laid out like CreateRoomSheet in the Mini App: a live preview of
-// the room's hero, sticker, colour, type chips with a hint, for a birthday
+// New room, laid out like CreateRoomSheet in the Mini App (but with the room
+// folder as the live preview), sticker, colour, type chips with a hint, for a birthday
 // "Whose birthday?" + name + date, then the room name.
 
 import { useRouter } from "expo-router";
-import { CalendarDays, Check, Plus } from "lucide-react-native";
+import { Check, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateRow } from "../../components/DateRow";
-import { RoomHeroBg } from "../../components/RoomHeroBg";
+import { RoomFolder } from "../../components/RoomFolder";
 import { SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
 import { useT } from "../../i18n";
-import { countdownLabel } from "../../lib/dates";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
@@ -29,25 +28,6 @@ const PRESETS: { type: RoomType; key: string; hint: string }[] = [
 ];
 
 const Label = ({ children }: { children: string }) => <Txt className="mb-2 font-m600 text-[13px] text-t2">{children}</Txt>;
-
-// The room's hero in miniature (RoomPreview in the Mini App).
-function RoomPreview({ emoji, tint, name, eventDate }: { emoji: string; tint: string; name: string; eventDate: string | null }) {
-  const { lang, t } = useT();
-  const cd = countdownLabel(lang, t, eventDate || undefined);
-  return (
-    <View className="mb-6 items-center overflow-hidden rounded-card px-4 py-6">
-      <RoomHeroBg tint={tint} />
-      <Sticker emoji={emoji} size={52} />
-      <Txt numberOfLines={1} className="mt-3 font-m800 text-xl text-white">{name}</Txt>
-      {cd ? (
-        <View className="mt-2 flex-row items-center gap-2 rounded-full px-3 py-1.5" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
-          <CalendarDays size={15} color="#fff" />
-          <Txt className="font-m600 text-[13.5px] text-white">{cd}</Txt>
-        </View>
-      ) : null}
-    </View>
-  );
-}
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
@@ -112,7 +92,10 @@ export default function CreateRoomScreen() {
   return (
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
       <SheetHeader title={t("newRoom")} />
-      <RoomPreview emoji={emoji} tint={tint} name={title} eventDate={bday ? date : null} />
+      {/* live preview: the room as a folder, like on the Rooms tab */}
+      <View className="mx-auto mb-6 w-1/2">
+        <RoomFolder room={{ id: "preview", name: title, type: preset.type, emoji, tint, members: [], eventDate: bday && date ? date : undefined }} wishes={[]} onPress={() => {}} />
+      </View>
 
       <Label>{t("roomSticker")}</Label>
       <View className="mb-4">
