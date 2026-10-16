@@ -10,8 +10,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, Crown, ImageIcon, Lock, Plus, RefreshCw, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
+import Animated, { FadeIn, LinearTransition, ZoomIn, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Press } from "../../components/Press";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
@@ -62,6 +64,8 @@ export default function AddWishScreen() {
   const [inRooms, setInRooms] = useState<string[]>(presetRoom ? [presetRoom] : []);
   const [busy, setBusy] = useState(false);
   const [linkState, setLinkState] = useState<LinkState>(null);
+  const [gridW, setGridW] = useState(0);
+  const tile = gridW ? (gridW - 16) / 3 : "31%";
 
   // A newer link replaces what the previous one filled in, never what the user typed.
   const lastLink = useRef(initialLink.trim());
@@ -109,6 +113,7 @@ export default function AddWishScreen() {
   const pickPhotos = async () => {
     const left = photoLimit - images.length;
     if (left <= 0) return;
+    haptic("light");
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: left > 1, selectionLimit: left, quality: 1 });
     if (res.canceled) return;
     setImages((xs) => [...xs, ...res.assets.map((a) => a.uri)].slice(0, photoLimit));
@@ -146,32 +151,52 @@ export default function AddWishScreen() {
       {cover === "photo" ? (
         <View className="mb-4">
           {images.length ? (
-            <View className="flex-row gap-2">
-              {images.map((src, i) => (
-                <View key={src + i} className="aspect-square flex-1 overflow-hidden rounded-tile bg-card2" style={{ maxWidth: "33%" }}>
-                  <Image source={{ uri: src }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-                  <Pressable onPress={() => setImages((xs) => xs.filter((_, j) => j !== i))} className="absolute right-1.5 top-1.5 h-7 w-7 items-center justify-center rounded-full bg-black/60" accessibilityLabel={t("remove")}>
+            // 3-column grid; new photos pop in, removed ones shrink away and the rest slide over
+            <View className="flex-row gap-2" onLayout={(e) => setGridW(e.nativeEvent.layout.width)}>
+              {images.map((src) => (
+                <Animated.View
+                  key={src}
+                  entering={ZoomIn.springify().damping(15)}
+                  exiting={ZoomOut.duration(180)}
+                  layout={LinearTransition.springify().damping(18)}
+                  className="aspect-square overflow-hidden rounded-tile bg-card2"
+                  style={{ width: tile }}
+                >
+                  <Image source={{ uri: src }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
+                  <Press
+                    scaleTo={0.85}
+                    onPress={() => {
+                      haptic("light");
+                      setImages((xs) => xs.filter((x) => x !== src));
+                    }}
+                    className="absolute right-1.5 top-1.5 h-7 w-7 items-center justify-center rounded-full bg-black/60"
+                    accessibilityLabel={t("remove")}
+                  >
                     <X size={15} color="#fff" />
-                  </Pressable>
-                </View>
+                  </Press>
+                </Animated.View>
               ))}
               {images.length < photoLimit ? (
-                <Pressable onPress={pickPhotos} className="aspect-square flex-1 items-center justify-center rounded-tile bg-card2" style={{ maxWidth: "33%" }} accessibilityLabel={t("uploadPhoto")}>
-                  <Plus size={24} color={C.t2} />
-                </Pressable>
+                <Animated.View layout={LinearTransition.springify().damping(18)} entering={FadeIn.duration(200)} style={{ width: tile }}>
+                  <Press scaleTo={0.92} onPress={pickPhotos} className="aspect-square items-center justify-center rounded-tile bg-card2" accessibilityLabel={t("uploadPhoto")}>
+                    <Plus size={24} color={C.t2} />
+                  </Press>
+                </Animated.View>
               ) : PREMIUM_ENABLED && !isPremium ? (
-                <Pressable onPress={() => router.push("/paywall")} className="aspect-square flex-1 items-center justify-center gap-1 rounded-tile bg-gold/10" style={{ maxWidth: "33%" }}>
+                <Press onPress={() => router.push("/paywall")} className="aspect-square items-center justify-center gap-1 rounded-tile bg-gold/10" style={{ width: tile }}>
                   <Lock size={18} color={C.gold} />
                   <Txt className="font-m600 text-[11.5px] text-gold">Premium</Txt>
-                </Pressable>
+                </Press>
               ) : null}
             </View>
           ) : (
-            <Pressable onPress={pickPhotos} className="items-center gap-2 rounded-card bg-card2 p-6">
-              <ImageIcon size={26} color={C.t2} />
-              <Txt className="font-m600 text-sm text-t2">{t("uploadPhoto")}</Txt>
-              <Txt className="text-[12.5px] text-t3">{t("photosHint")}</Txt>
-            </Pressable>
+            <Animated.View entering={FadeIn.duration(220)}>
+              <Press scaleTo={0.97} onPress={pickPhotos} className="items-center gap-2 rounded-card bg-card2 p-6">
+                <ImageIcon size={26} color={C.t2} />
+                <Txt className="font-m600 text-sm text-t2">{t("uploadPhoto")}</Txt>
+                <Txt className="text-[12.5px] text-t3">{t("photosHint")}</Txt>
+              </Press>
+            </Animated.View>
           )}
           {PREMIUM_ENABLED ? (
           <View className="mt-2 flex-row items-center gap-1">

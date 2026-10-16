@@ -3,6 +3,7 @@
 import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
+import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 
 import { RoomFolder } from "../../../components/RoomFolder";
 import { Empty, HeaderAdd, Pill, ScreenTitle } from "../../../components/ui";
@@ -39,8 +40,11 @@ export default function RoomsScreen() {
           <View className="gap-6">
             {rows.map((row, i) => (
               <View key={i} className="flex-row gap-3">
-                {row.map((r) => (
-                  <RoomFolder key={r.id} room={r} wishes={wishes} onPress={() => router.push({ pathname: "/room/[id]", params: { id: r.id } })} />
+                {row.map((r, j) => (
+                  // folders rise in one after another
+                  <Animated.View key={r.id} className="flex-1" entering={FadeInDown.delay(Math.min(i * 2 + j, 10) * 50).springify().damping(18)} layout={LinearTransition.springify().damping(18)}>
+                    <RoomFolder room={r} wishes={wishes} onPress={() => router.push({ pathname: "/room/[id]", params: { id: r.id } })} />
+                  </Animated.View>
                 ))}
                 {row.length === 1 ? <View className="flex-1" /> : null}
               </View>

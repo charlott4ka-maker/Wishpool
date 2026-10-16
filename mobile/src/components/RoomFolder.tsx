@@ -6,7 +6,7 @@
 import { Image } from "expo-image";
 import { CalendarDays } from "lucide-react-native";
 import { useState } from "react";
-import { LayoutChangeEvent, Pressable, View } from "react-native";
+import { LayoutChangeEvent, View } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
 import { useT } from "../i18n";
@@ -15,6 +15,7 @@ import { haptic } from "../lib/haptics";
 import { wishImages } from "../store/WishpoolContext";
 import { C, hex, mixHex } from "../theme/tokens";
 import type { Room, Wish } from "../types";
+import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { Avatar, Txt } from "./ui";
 
@@ -47,7 +48,8 @@ export function RoomFolder({ room, wishes, onPress }: { room: Room; wishes: Wish
   const frontBottom = mixHex(C.card, room.tint, 0.38);
 
   return (
-    <Pressable
+    <Press
+      scaleTo={0.96}
       onPress={() => {
         haptic("light");
         onPress();
@@ -110,6 +112,6 @@ export function RoomFolder({ room, wishes, onPress }: { room: Room; wishes: Wish
           <Txt className="text-[12.5px] text-t2">{t("membersColon", { n: members.length })}</Txt>
         </View>
       )}
-    </Pressable>
+    </Press>
   );
 }

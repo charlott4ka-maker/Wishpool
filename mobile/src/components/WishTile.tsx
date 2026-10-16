@@ -1,12 +1,13 @@
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Lock, PartyPopper, Users } from "lucide-react-native";
-import { Pressable, PressableProps, View } from "react-native";
+import { PressableProps, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { wishImages } from "../store/WishpoolContext";
 import type { Wish } from "../types";
+import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { Txt } from "./ui";
 
@@ -19,13 +20,14 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
   const img = wishImages(w)[0];
   const shared = w.rooms ? w.rooms.length : 0;
   return (
-    <Pressable
+    <Press
       {...rest}
+      scaleTo={0.97}
       onPress={(e) => {
         haptic("light");
         onPress?.(e);
       }}
-      className="flex-1 rounded-[20px] bg-card p-2 active:opacity-90"
+      className="flex-1 rounded-[20px] bg-card p-2"
       style={{ borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" }}
     >
       <View className="aspect-square items-center justify-center overflow-hidden rounded-xl bg-card2">
@@ -53,6 +55,6 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
         <Txt numberOfLines={2} className="min-h-[37px] font-m600 text-[14.5px] leading-[19px]">{w.title}</Txt>
         <Txt className={`mt-1 font-m700 text-sm ${w.price ? "text-blueText" : "text-t3"}`}>{w.price || " "}</Txt>
       </View>
-    </Pressable>
+    </Press>
   );
 }

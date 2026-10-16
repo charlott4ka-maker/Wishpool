@@ -8,6 +8,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CalendarDays, Check, ChevronLeft, Gift, Lock, Pencil, Plus, Share2, Trash2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Share, View } from "react-native";
+import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { heroTop, RoomHeroBg } from "../../components/RoomHeroBg";
@@ -136,9 +137,9 @@ export default function RoomScreen() {
           </HeroButton>
         </View>
         <View className="items-center">
-          <View className="mt-1 h-20 w-20 items-center justify-center">
+          <Animated.View entering={ZoomIn.springify().damping(12)} className="mt-1 h-20 w-20 items-center justify-center">
             <Sticker emoji={room.emoji} size={45} />
-          </View>
+          </Animated.View>
           <Txt className="mt-3 text-center font-m800 text-[26px] text-white" style={{ textShadowColor: "rgba(0,0,0,0.25)", textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 } }}>{room.name}</Txt>
           {cd ? (
             <View className="mt-2 flex-row items-center gap-2 rounded-full px-3 py-1.5" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
@@ -179,8 +180,8 @@ export default function RoomScreen() {
             <Empty compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} action={<Pill icon={<Share2 size={17} color="#fff" />} onPress={invite}>{t("inviteFriends")}</Pill>} />
           ) : (
             <View className="gap-6">
-              {lists.map(({ member, wishes: ws }) => (
-                <View key={member.id}>
+              {lists.map(({ member, wishes: ws }, i) => (
+                <Animated.View key={member.id} entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(18)}>
                   <View className="mb-1 flex-row items-center gap-3">
                     <Avatar m={member} size={28} />
                     <Txt className="font-m700 text-[15.5px]">{member.name}</Txt>
@@ -192,7 +193,7 @@ export default function RoomScreen() {
                       <Txt className="text-[13.5px] text-t3">{t("noWishesYet")}</Txt>
                     </View>
                   )}
-                </View>
+                </Animated.View>
               ))}
               <View className="mt-1 flex-row items-center justify-center gap-2">
                 <Lock size={13} color={C.t3} />
@@ -201,7 +202,7 @@ export default function RoomScreen() {
             </View>
           )
         ) : (
-          <View>
+          <Animated.View entering={FadeIn.duration(220)}>
             {mine.length === 0 ? (
               <Empty compact emoji="stk:gift" tilt={0} title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
             ) : (
@@ -220,7 +221,7 @@ export default function RoomScreen() {
                 {t(mine.length ? "editRoomWishes" : "addFromPool")}
               </Pill>
             </View>
-          </View>
+          </Animated.View>
         )}
 
         <View className="mt-auto items-center pt-4">

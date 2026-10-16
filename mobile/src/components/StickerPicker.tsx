@@ -2,13 +2,14 @@
 // paywall instead of selecting.
 
 import { useRouter } from "expo-router";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { PREMIUM_ENABLED, STICKER_PACKS, stickerId } from "../subscription/featureFlags";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
+import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { PremiumBadge, Txt } from "./ui";
 
@@ -34,7 +35,8 @@ export function StickerPicker({ value, onChange, size = 28 }: { value: string; o
                 const on = value === e;
                 return (
                   <View key={n} style={{ width: `${100 / 7}%`, padding: 4 }}>
-                    <Pressable
+                    <Press
+                      scaleTo={0.85}
                       onPress={() => {
                         if (locked) return router.push("/paywall");
                         haptic("select");
@@ -44,7 +46,7 @@ export function StickerPicker({ value, onChange, size = 28 }: { value: string; o
                       style={{ backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent", opacity: locked ? 0.45 : 1 }}
                     >
                       <Sticker emoji={e} size={size} />
-                    </Pressable>
+                    </Press>
                   </View>
                 );
               })}

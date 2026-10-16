@@ -5,12 +5,14 @@
 
 import { Image } from "expo-image";
 import { Lock, Plus, X } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring, ZoomIn } from "react-native-reanimated";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TextProps, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { haptic } from "../lib/haptics";
 import { C, H } from "../theme/tokens";
+import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 
 /** Text in SF Pro Medium by default. Pass a font-m600/700/800 class for heavier weights. */
@@ -43,24 +45,24 @@ export function Pill({
 }: { children?: React.ReactNode; onPress?: () => void; kind?: PillKind; icon?: React.ReactNode; disabled?: boolean; full?: boolean; size?: "lg" | "sm" }) {
   const k = PILL[kind];
   return (
-    <Pressable
+    <Press
       disabled={disabled}
       onPress={() => {
         haptic("light");
         onPress?.();
       }}
-      className={`${k.box} ${size === "lg" ? "h-lg" : "h-sm"} ${full ? "w-full" : size === "lg" ? "px-6" : "px-4"} flex-row items-center justify-center gap-2 rounded-full active:opacity-80`}
+      className={`${k.box} ${size === "lg" ? "h-lg" : "h-sm"} ${full ? "w-full" : size === "lg" ? "px-6" : "px-4"} flex-row items-center justify-center gap-2 rounded-full`}
       style={{ opacity: disabled ? 0.45 : 1, ...PILL_BORDER[kind] }}
     >
       {icon}
       {typeof children === "string" ? <Txt className={`font-m600 ${k.text} ${size === "lg" ? "text-base" : "text-sm"}`}>{children}</Txt> : children}
-    </Pressable>
+    </Press>
   );
 }
 
 export function Chip({ children, active, onPress, color }: { children: React.ReactNode; active?: boolean; onPress?: () => void; color?: string }) {
   return (
-    <Pressable
+    <Press
       onPress={() => {
         haptic("select");
         onPress?.();
@@ -70,13 +72,25 @@ export function Chip({ children, active, onPress, color }: { children: React.Rea
     >
       {color ? <View style={{ width: 7, height: 7, borderRadius: 7, backgroundColor: color }} /> : null}
       {React.Children.map(children, (c) => (typeof c === "string" || typeof c === "number" ? <Txt className={`font-m600 text-sm ${active ? "text-blueText" : "text-t2"}`}>{c}</Txt> : c))}
-    </Pressable>
+    </Press>
   );
 }
 
+// The selected segment is a pill that slides (spring) to the tapped option.
 export function Segmented<K extends string>({ options, value, onChange, neutral, className = "" }: { options: [K, string][]; value: K; onChange: (k: K) => void; neutral?: boolean; className?: string }) {
+  const [w, setW] = useState(0);
+  const idx = Math.max(0, options.findIndex(([k]) => k === value));
+  const x = useSharedValue(0);
+  const segW = w ? (w - 12 - 4 * (options.length - 1)) / options.length : 0;
+  useEffect(() => {
+    x.value = withSpring(idx * (segW + 4), { damping: 18, stiffness: 220, mass: 0.7 });
+  }, [idx, segW]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
-    <View className={`h-lg flex-row gap-1 rounded-full bg-card p-1.5 ${className}`}>
+    <View className={`h-lg flex-row gap-1 rounded-full bg-card p-1.5 ${className}`} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      {segW ? (
+        <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 6, top: 6, bottom: 6, width: segW, borderRadius: 999, backgroundColor: neutral ? "#3A3A3E" : C.blue }, pill]} />
+      ) : null}
       {options.map(([k, l]) => {
         const on = value === k;
         return (
@@ -87,7 +101,6 @@ export function Segmented<K extends string>({ options, value, onChange, neutral,
               onChange(k);
             }}
             className="flex-1 items-center justify-center rounded-full px-2"
-            style={{ backgroundColor: on ? (neutral ? "#3A3A3E" : C.blue) : "transparent" }}
           >
             <Txt className={`font-m600 text-sm ${on ? "text-white" : "text-t2"}`}>{l}</Txt>
           </Pressable>
@@ -99,14 +112,14 @@ export function Segmented<K extends string>({ options, value, onChange, neutral,
 
 export function Card({ children, className = "", style, onPress }: { children: React.ReactNode; className?: string; style?: ViewStyle; onPress?: () => void }) {
   const cls = `rounded-card bg-card ${className}`;
-  return onPress ? <Pressable onPress={onPress} className={cls} style={style}>{children}</Pressable> : <View className={cls} style={style}>{children}</View>;
+  return onPress ? <Press onPress={onPress} scaleTo={0.98} className={cls} style={style}>{children}</Press> : <View className={cls} style={style}>{children}</View>;
 }
 
 export function CloseButton({ onPress }: { onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel="Close">
+    <Press onPress={onPress} scaleTo={0.88} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel="Close">
       <X size={18} color={C.t2} />
-    </Pressable>
+    </Press>
   );
 }
 
@@ -159,12 +172,14 @@ export function Sheet({ visible, title, onClose, children }: { visible: boolean;
  */
 export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: { emoji: string; title: string; sub?: string; action?: React.ReactNode; compact?: boolean; fill?: boolean; tilt?: number }) {
   return (
-    <View className={`items-center ${fill ? "flex-1 justify-center py-8" : compact ? "p-2" : "px-6 py-12"}`}>
-      <Sticker emoji={emoji} size={compact ? 56 : 88} rotate={tilt} />
+    <Animated.View entering={FadeIn.duration(350)} className={`items-center ${fill ? "flex-1 justify-center py-8" : compact ? "p-2" : "px-6 py-12"}`}>
+      <Animated.View entering={ZoomIn.springify().damping(14)}>
+        <Sticker emoji={emoji} size={compact ? 56 : 88} rotate={tilt} />
+      </Animated.View>
       <Txt className={`mt-4 text-center font-m700 ${compact ? "text-base" : "text-lg"}`}>{title}</Txt>
       {sub ? <Txt className="mt-2 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{sub}</Txt> : null}
       {action ? <View className={fill ? "mt-8 self-stretch" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -215,7 +230,7 @@ export function Avatar({ m, size = 34 }: { m: AvatarMember; size?: number }) {
 /** Round "+" next to a screen title. */
 export function HeaderAdd({ onPress, label }: { onPress: () => void; label: string }) {
   return (
-    <Pressable
+    <Press scaleTo={0.9}
       onPress={() => {
         haptic("light");
         onPress();
@@ -224,7 +239,7 @@ export function HeaderAdd({ onPress, label }: { onPress: () => void; label: stri
       className="h-lg w-lg items-center justify-center rounded-full bg-card2"
     >
       <Plus size={24} color={C.t1} />
-    </Pressable>
+    </Press>
   );
 }
 
