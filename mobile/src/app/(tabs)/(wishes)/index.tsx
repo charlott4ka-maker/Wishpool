@@ -13,6 +13,7 @@ import { SearchField } from "../../../components/SearchField";
 import { Chip, Empty, HeaderAdd, Pill, Txt } from "../../../components/ui";
 import { WishGridSkeleton } from "../../../components/Skeleton";
 import { WishCard } from "../../../components/WishCard";
+import { SwipeGuard, SwipeTabs } from "../../../components/SwipeTabs";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
@@ -73,6 +74,8 @@ export default function PoolScreen() {
   for (let i = 0; i < shown.length; i += 2) rows.push(shown.slice(i, i + 2));
 
   return (
+    // swipe left: Rooms (not while searching, the tab bar is hidden then)
+    <SwipeTabs next="/rooms" disabled={searching}>
     <View className="flex-1 bg-bg">
       <TabHeader title={t("poolTitle")} right={<HeaderAdd onPress={add} label={t("addWish")} />} searching={searching && wishes.length > 0}>
         {/* search only once there is something to search; while it's active the title folds away */}
@@ -112,6 +115,7 @@ export default function PoolScreen() {
         >
           <Block grow style={{ paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}>
           {tabs.length > 1 && !searchMiss ? (
+            <SwipeGuard>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 mb-4" style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
               {tabs.map((x) => (
                 <Chip key={x.key} active={cur === x.key} onPress={() => setFilter(x.key)}>
@@ -121,6 +125,7 @@ export default function PoolScreen() {
                 </Chip>
               ))}
             </ScrollView>
+            </SwipeGuard>
           ) : null}
 
           {!ready ? (
@@ -175,5 +180,6 @@ export default function PoolScreen() {
       </View>
       <TabBarFade />
     </View>
+    </SwipeTabs>
   );
 }

@@ -8,6 +8,7 @@ import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated"
 
 import { RoomFolder } from "../../../components/RoomFolder";
 import { RoomGridSkeleton } from "../../../components/Skeleton";
+import { SwipeTabs } from "../../../components/SwipeTabs";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
@@ -25,6 +26,7 @@ export default function RoomsScreen() {
   for (let i = 0; i < rooms.length; i += 2) rows.push(rooms.slice(i, i + 2));
 
   return (
+    <SwipeTabs prev="/" next="/profile">
     <View className="flex-1 bg-bg">
       <TabHeader title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
       {/* fixed content frame (see Wishes): the gap under the header and the fill under the tab bar stay put */}
@@ -73,5 +75,6 @@ export default function RoomsScreen() {
       </View>
       <TabBarFade />
     </View>
+    </SwipeTabs>
   );
 }

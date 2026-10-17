@@ -15,21 +15,42 @@ import { ObHero } from "./ObHero";
 
 const PAGES = 3;
 
-function PageIn({ children }: { children: React.ReactNode }) {
+function PageIn({ children, from = 24 }: { children: React.ReactNode; from?: number }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(v, { toValue: 1, duration: 350, useNativeDriver: true }).start();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  return <Animated.View style={{ flex: 1, opacity: v, transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] }}>{children}</Animated.View>;
+  return <Animated.View style={{ flex: 1, opacity: v, transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }) }] }}>{children}</Animated.View>;
 }
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const [page, setPage] = useState(0);
+  const [back, setBack] = useState(false); // last move was backwards: the page slides in from the left
   const last = page === PAGES - 1;
+  // swipe left / right flips pages (watching touches only, the button still works)
+  const touch = useRef<{ x: number; y: number; t: number } | null>(null);
+  const go = (to: number) => {
+    if (to < 0 || to >= PAGES || to === page) return;
+    haptic("select");
+    setBack(to < page);
+    setPage(to);
+  };
   return (
-    <View className="flex-1 bg-card px-4" style={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}>
+    <View
+      className="flex-1 bg-card px-4"
+      style={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}
+      onTouchStart={(e) => (touch.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY, t: Date.now() })}
+      onTouchEnd={(e) => {
+        const s = touch.current;
+        touch.current = null;
+        if (!s) return;
+        const dx = e.nativeEvent.pageX - s.x, dy = e.nativeEvent.pageY - s.y;
+        if (Date.now() - s.t > 500 || Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+        go(dx < 0 ? page + 1 : page - 1);
+      }}
+    >
       <View className="h-sm flex-row justify-end">
         {!last ? (
           <Pressable onPress={onDone} className="h-sm justify-center px-2">
@@ -37,7 +58,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           </Pressable>
         ) : null}
       </View>
-      <PageIn key={page}>
+      <PageIn key={page} from={back ? -24 : 24}>
         {page === 0 ? (
           <ObHero />
         ) : (
@@ -59,10 +80,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         full
         onPress={() => {
           if (last) onDone();
-          else {
-            haptic("select");
-            setPage(page + 1);
-          }
+          else go(page + 1);
         }}
       >
         {t(last ? "obStart" : "obNext")}
