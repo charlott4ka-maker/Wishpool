@@ -51,6 +51,8 @@ export default function PoolScreen() {
   const add = () => router.push("/wish/new");
 
   const searchMiss = !!query.trim() && shown.length === 0;
+  const hasList = ready && wishes.length > 0;
+  const chips = tabs.length > 1;
   const rows: (typeof shown)[] = [];
   for (let i = 0; i < shown.length; i += 2) rows.push(shown.slice(i, i + 2));
 
@@ -81,53 +83,65 @@ export default function PoolScreen() {
             />
           }
         >
-          {guest ? <GuestBanner onClose={closeGuest} /> : null}
-          {/* the content block; with the guest strip it covers the strip's lower part */}
-          <Block grow style={{ marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}>
-          {tabs.length > 1 && !searchMiss ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 mb-4" style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-              {tabs.map((x) => (
-                <Chip key={x.key} active={cur === x.key} onPress={() => setFilter(x.key)}>
-                  {x.emoji ? <Sticker emoji={x.emoji} size={15} /> : x.key === "private" ? <Lock size={14} color={cur === x.key ? C.blueText : C.t2} /> : null}
-                  {x.label}
-                  <Txt className={`font-m600 text-sm opacity-60 ${cur === x.key ? "text-blueText" : "text-t2"}`}>{x.n}</Txt>
-                </Chip>
-              ))}
-            </ScrollView>
-          ) : null}
-
-          {!ready ? (
-            <WishGridSkeleton />
-          ) : wishes.length === 0 ? (
-            <Empty
-              fill
-              emoji="stk:bear"
-              tilt={0}
-              title={t("poolEmptyTitle")}
-              sub={t("poolEmptySub")}
-              action={
-                <Pill full icon={<Plus size={19} color="#fff" />} onPress={add}>
-                  {t("addWish")}
-                </Pill>
-              }
-            />
-          ) : searchMiss ? null : shown.length === 0 ? (
-            <Empty compact emoji={cur === "gifted" ? "stk:candle" : "stk:ghost"} tilt={0} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
-          ) : (
-            <View className="gap-3">
-              {rows.map((row, i) => (
-                <View key={i} className="flex-row gap-3">
-                  {row.map((w) => (
-                    <View key={w.id} style={{ flex: 1 }}>
-                      <WishCard w={w} />
+          {/* Layout: blocks on the page with 4pt gaps. While the list is
+              empty or loading it's one block down to the bottom; with wishes
+              the chips get a block and the cards are glass blocks themselves.
+              The guest strip peeks out from behind the block under it. */}
+          {guest ? <GuestBanner onClose={closeGuest} overlap={!hasList || chips} /> : null}
+          {!hasList ? (
+            <Block grow style={{ marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, paddingBottom: insets.bottom + 90 }}>
+              {!ready ? (
+                <WishGridSkeleton />
+              ) : (
+                <Empty
+                  fill
+                  emoji="stk:bear"
+                  tilt={0}
+                  title={t("poolEmptyTitle")}
+                  sub={t("poolEmptySub")}
+                  action={
+                    <Pill full icon={<Plus size={19} color="#fff" />} onPress={add}>
+                      {t("addWish")}
+                    </Pill>
+                  }
+                />
+              )}
+            </Block>
+          ) : searchMiss ? null : (
+            <View style={{ paddingBottom: 120 }}>
+              {chips ? (
+                <Block style={{ marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, paddingHorizontal: 0, paddingVertical: 12 }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+                    {tabs.map((x) => (
+                      <Chip key={x.key} active={cur === x.key} onPress={() => setFilter(x.key)}>
+                        {x.emoji ? <Sticker emoji={x.emoji} size={15} /> : x.key === "private" ? <Lock size={14} color={cur === x.key ? C.blueText : C.t2} /> : null}
+                        {x.label}
+                        <Txt className={`font-m600 text-sm opacity-60 ${cur === x.key ? "text-blueText" : "text-t2"}`}>{x.n}</Txt>
+                      </Chip>
+                    ))}
+                  </ScrollView>
+                </Block>
+              ) : null}
+              {shown.length === 0 ? (
+                <Block style={{ marginTop: BLOCK_GAP }}>
+                  <Empty compact emoji={cur === "gifted" ? "stk:candle" : "stk:ghost"} tilt={0} title={t("filterEmpty")} sub={t(cur === "gifted" ? "giftedEmptySub" : "filterEmptySub")} />
+                </Block>
+              ) : (
+                <View style={{ marginTop: BLOCK_GAP, gap: BLOCK_GAP }}>
+                  {rows.map((row, i) => (
+                    <View key={i} style={{ flexDirection: "row", gap: BLOCK_GAP }}>
+                      {row.map((w) => (
+                        <View key={w.id} style={{ flex: 1 }}>
+                          <WishCard w={w} />
+                        </View>
+                      ))}
+                      {row.length === 1 ? <View className="flex-1" /> : null}
                     </View>
                   ))}
-                  {row.length === 1 ? <View className="flex-1" /> : null}
                 </View>
-              ))}
+              )}
             </View>
           )}
-          </Block>
         </ScrollView>
 
         {/* nothing matches the search: text and a button, centred between the

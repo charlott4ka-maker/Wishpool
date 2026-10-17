@@ -21,4 +21,5 @@
 - Separate Expo project; shares design tokens, copy and stickers with the Mini App.
 - Font: the iOS system font SF Pro (not Montserrat), weights 500-800 only.
 - Tab bar: the system iOS tabs (`expo-router/unstable-native-tabs`, SF Symbols) with a thick dark material and a dark fade (`TabBarFade`) at the bottom of each tab screen, so content under the bar doesn't blend into it.
+- Layout: blocks (`#15181D`) on a lighter page (`#222831`) with 4pt gaps; the tab header is the top block, rounded only at the bottom; the guest sign-in prompt is a blue strip peeking out from behind the block below it. Wish cards are glass blocks of their own (block fill at ~50% with a soft left-to-right gradient and a thin light outline).
 - Never put `className` on Reanimated views (`Animated.View`, `createAnimatedComponent`): NativeWind doesn't style them on device. Animated views get plain `style`; for press springs use `Press` (styled Pressable inside a transform-only Animated.View).

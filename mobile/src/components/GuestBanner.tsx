@@ -37,7 +37,8 @@ export function useGuestBanner(): [boolean, () => void] {
   return [status === "guest" && !hidden, close];
 }
 
-export function GuestBanner({ onClose }: { onClose: () => void }) {
+/** overlap: a block below covers its lower part; otherwise it is a block of its own. */
+export function GuestBanner({ onClose, overlap = true }: { onClose: () => void; overlap?: boolean }) {
   const router = useRouter();
   const { t } = useT();
   return (
@@ -46,7 +47,7 @@ export function GuestBanner({ onClose }: { onClose: () => void }) {
         colors={[C.brand, C.brand2]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={{ borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, paddingTop: 14, paddingBottom: 14 + GUEST_OVERLAP, paddingHorizontal: 16 }}
+        style={{ borderRadius: overlap ? 0 : BLOCK_R, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, paddingTop: 14, paddingBottom: 14 + (overlap ? GUEST_OVERLAP : 0), paddingHorizontal: 16 }}
       >
         {/* centred, clear of the close button on the right */}
         <View className="flex-row items-center justify-center gap-2 px-10">
