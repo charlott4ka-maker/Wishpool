@@ -37,11 +37,14 @@ export function GuestBanner() {
         colors={[C.brand, C.brand2]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={{ borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, paddingTop: 14, paddingBottom: 14 + GUEST_OVERLAP, paddingLeft: 16, paddingRight: 12 }}
+        style={{ borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, paddingTop: 10, paddingBottom: 10 + GUEST_OVERLAP, paddingLeft: 16, paddingRight: 12 }}
       >
         <View className="flex-row items-center gap-3">
           <Txt numberOfLines={1} className="flex-1 font-m700 text-[15px] text-white">{t("guestBanner")}</Txt>
-          <ChevronRight size={20} color="#fff" strokeWidth={1.5} />
+          {/* round translucent button, like the close one it replaced */}
+          <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.15)" }}>
+            <ChevronRight size={16} color="#fff" strokeWidth={1.5} />
+          </View>
         </View>
       </LinearGradient>
     </Pressable>
