@@ -198,8 +198,10 @@ export default function RoomScreen() {
           loading ? (
             <RoomListSkeleton />
           ) : others.length === 0 || lists.length === 0 ? (
-            // centred in the space left under the tabs
-            <Empty fill compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} />
+            // centred in the space under the tabs, lifted a little (optical centre)
+            <View style={{ flex: 1, paddingBottom: 72 }}>
+              <Empty fill compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} />
+            </View>
           ) : (
             <View className="gap-6">
               {lists.map(({ member, wishes: ws }, i) => (

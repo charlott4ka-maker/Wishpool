@@ -3,7 +3,7 @@
 
 import { useRouter } from "expo-router";
 import { Lock, Plus } from "lucide-react-native";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RefreshControl, ScrollView, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,6 +16,7 @@ import { WishCard } from "../../../components/WishCard";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
+import { setSearchMode } from "../../../lib/searchMode";
 import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
 import { C } from "../../../theme/tokens";
@@ -27,7 +28,13 @@ export default function PoolScreen() {
   const { wishes, rooms, ready, refresh } = useWishpool();
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
-  const [searching, setSearching] = useState(false);
+  const [searching, setSearchingState] = useState(false);
+  // the tab layout hides the tab bar while the search is open
+  const setSearching = (v: boolean) => {
+    setSearchingState(v);
+    setSearchMode(v);
+  };
+  useEffect(() => () => setSearchMode(false), []);
   const [refreshing, setRefreshing] = useState(false);
   const kb = useKeyboardHeight();
   // Where the content frame really ends on screen, so the "nothing found"
@@ -37,7 +44,7 @@ export default function PoolScreen() {
   const { height: winH } = useWindowDimensions();
   const [frameBottom, setFrameBottom] = useState(winH);
   const measureFrame = () => frame.current?.measureInWindow((_x, y, _w, h) => setFrameBottom(y + h));
-  const covered = winH - (kb > 0 ? kb : insets.bottom + 49); // top edge of what covers the screen
+  const covered = winH - (kb > 0 ? kb : searching ? insets.bottom : insets.bottom + 49); // top edge of what covers the screen (no tab bar while searching)
   const missBottom = Math.max(0, frameBottom - covered);
   // the sign-in strip steps aside while searching
   const guest = useGuestBanner() && !searching;

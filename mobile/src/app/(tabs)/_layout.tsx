@@ -6,12 +6,15 @@
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { useT } from "../../i18n";
+import { useSearchMode } from "../../lib/searchMode";
 import { C } from "../../theme/tokens";
 
 export default function TabsLayout() {
   const { t } = useT();
+  // hidden while the Wishes search is open; closing it brings the bar back
+  const searching = useSearchMode();
   return (
-    <NativeTabs tintColor={C.blue} blurEffect="systemThickMaterialDark" disableTransparentOnScrollEdge minimizeBehavior="never">
+    <NativeTabs tintColor={C.blue} blurEffect="systemThickMaterialDark" disableTransparentOnScrollEdge minimizeBehavior="never" hidden={searching}>
       <NativeTabs.Trigger name="(wishes)">
         <NativeTabs.Trigger.Icon sf={{ default: "gift", selected: "gift.fill" }} />
         <NativeTabs.Trigger.Label>{t("tabWishes")}</NativeTabs.Trigger.Label>
