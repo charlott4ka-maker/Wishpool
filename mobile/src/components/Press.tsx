@@ -41,7 +41,9 @@ export function Press({ scaleTo = 0.96, dim = false, onPressIn, onPressOut, clas
       <Pressable
         {...rest}
         disabled={disabled}
-        className={className.replace(/(^|\s)(self-start|self-center)(?=\s|$)/g, " ")}
+        // flex-1 on the inner Pressable would mean flex-basis 0 in the column
+        // wrapper and collapse its height in a row; grow keeps the content height
+        className={className.replace(/(^|\s)(self-start|self-center)(?=\s|$)/g, " ").replace(/(^|\s)flex-1(?=\s|$)/g, " grow")}
         onPressIn={(e) => {
           s.value = withSpring(scaleTo, SPRING);
           if (dim) o.value = withTiming(0.85, { duration: 90 });

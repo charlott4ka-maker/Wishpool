@@ -1,15 +1,15 @@
 // Onboarding page 3 ("Даруй таємно"): the finger opens a room folder, taps
 // "I'll get it" on a friend's wish, confetti, and a "it stays a secret" badge.
 
-import { LinearGradient } from "expo-linear-gradient";
 import { Check, Lock } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, View } from "react-native";
 
 import { useT } from "../../i18n";
-import { C, hex, mixHex } from "../../theme/tokens";
+import { C } from "../../theme/tokens";
 import type { Room } from "../../types";
 import { RoomFolder } from "../RoomFolder";
+import { RoomHeroBg } from "../RoomHeroBg";
 import { Sticker } from "../Sticker";
 import { Avatar, Card, Pill, Txt } from "../ui";
 import { Appear, measureSpot, MiniPhone, REST, Spot, useScript } from "./shared";
@@ -96,7 +96,9 @@ export function ObGiftScene() {
           ],
         }}
       >
-        <LinearGradient colors={[mixHex(room.tint, "#000000", 0.25), hex(room.tint, 0.18), C.bg]} style={{ paddingTop: 56, paddingBottom: 36, alignItems: "center" }}>
+        {/* the same mesh hero and rounded content sheet as the real room screen */}
+        <View style={{ paddingTop: 56, paddingBottom: 48, alignItems: "center", overflow: "hidden" }}>
+          <RoomHeroBg tint={room.tint} />
           <Sticker emoji={room.emoji} size={46} />
           <Txt className="mt-3 font-m800 text-[26px] text-white">{room.name}</Txt>
           <View className="mt-3 flex-row">
@@ -106,8 +108,8 @@ export function ObGiftScene() {
               </View>
             ))}
           </View>
-        </LinearGradient>
-        <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+        </View>
+        <View style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: C.bg, paddingHorizontal: 16, paddingTop: 20 }}>
           <View className="mb-2 flex-row items-center gap-2">
             <Avatar m={anya} size={24} />
             <Txt className="font-m700 text-[15px]">{anya.name}</Txt>
