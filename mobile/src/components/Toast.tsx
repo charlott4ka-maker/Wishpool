@@ -10,6 +10,7 @@
 import { Check, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
+import Svg, { Circle, Rect } from "react-native-svg";
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -31,8 +32,18 @@ export const toast = { success: show("success"), error: show("error"), info: sho
 const LOOK: Record<Kind, { bg: string; glow: string | null; Icon: typeof Check | null }> = {
   success: { bg: C.blue, glow: C.blue, Icon: Check },
   error: { bg: "#FF453A", glow: "#FF453A", Icon: X },
-  info: { bg: "#636366", glow: null, Icon: null }, // a bold "i" on the filled circle
+  info: { bg: "#636366", glow: null, Icon: null }, // the standard filled info glyph (InfoGlyph)
 };
+
+/** White dot and stem of the "i", drawn so it sits dead centre in the circle. */
+function InfoGlyph() {
+  return (
+    <Svg width={28} height={28} viewBox="0 0 28 28">
+      <Circle cx={14} cy={8.6} r={1.9} fill="#fff" />
+      <Rect x={12.3} y={12} width={3.4} height={9.5} rx={1.7} fill="#fff" />
+    </Svg>
+  );
+}
 
 export function ToastHost({ inSheet }: { inSheet?: boolean }) {
   const insets = useSafeAreaInsets();
@@ -80,7 +91,7 @@ export function ToastHost({ inSheet }: { inSheet?: boolean }) {
         }}
       >
         <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: bg, alignItems: "center", justifyContent: "center", shadowColor: glow || "transparent", shadowOpacity: glow ? 0.45 : 0, shadowRadius: 8 }}>
-          {Icon ? <Icon size={16} color="#fff" strokeWidth={3} /> : <Txt className="font-m800 text-[16px] text-white">i</Txt>}
+          {Icon ? <Icon size={16} color="#fff" strokeWidth={3} /> : <InfoGlyph />}
         </View>
         <Txt numberOfLines={2} className="shrink font-m600 text-[15px]">{item.text}</Txt>
         {item.action ? (
