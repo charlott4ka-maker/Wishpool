@@ -34,6 +34,9 @@ export type Room = {
   eventTitle?: string;
   eventDate?: string;
   iAmCelebrant?: boolean;
+  /** birthday rooms: whose birthday it is, and the celebrant's name when it's someone else's */
+  bdayMode?: "self" | "other";
+  celebrantName?: string;
   sharedCount?: number;
 };
 

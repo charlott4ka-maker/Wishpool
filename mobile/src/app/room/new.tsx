@@ -1,8 +1,9 @@
-// New room, laid out like CreateRoomSheet in the Mini App (but with the room
+// New room (or, with ?id=, editing one: name, sticker, colour and a birthday
+// room's date / name; the type stays), laid out like CreateRoomSheet in the Mini App (but with the room
 // folder as the live preview), sticker, colour, type chips with a hint, for a birthday
 // "Whose birthday?" + name + date, then the room name.
 
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -61,15 +62,17 @@ export default function CreateRoomScreen() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { createRoom } = useWishpool();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { rooms, createRoom, updateRoom } = useWishpool();
+  const editing = id ? rooms.find((r) => r.id === id) : undefined;
   const { isStickerLocked } = useSubscription();
-  const [preset, setPreset] = useState(PRESETS[0]);
-  const [emoji, setEmoji] = useState("stk:candle");
-  const [tint, setTint] = useState(ROOM_COLORS[0]);
-  const [name, setName] = useState("");
-  const [mode, setMode] = useState<"self" | "other">("self"); // birthday: mine or someone else's
-  const [celName, setCelName] = useState("");
-  const [date, setDate] = useState<string | null>(null);
+  const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
+  const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
+  const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
+  const [name, setName] = useState(editing?.name || "");
+  const [mode, setMode] = useState<"self" | "other">(editing?.bdayMode === "other" ? "other" : "self"); // birthday: mine or someone else's
+  const [celName, setCelName] = useState(editing?.celebrantName || "");
+  const [date, setDate] = useState<string | null>(editing?.eventDate || null);
   const [busy, setBusy] = useState(false);
   const bday = preset.type === "birthday";
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
@@ -87,6 +90,13 @@ export default function CreateRoomScreen() {
     setBusy(true);
     const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : {};
     try {
+      if (editing) {
+        await updateRoom(editing.id, { name: title, emoji, tint, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : {}) });
+        haptic("success");
+        router.back();
+        toast.success(t("toastSaved"), { root: true });
+        return;
+      }
       const id = await createRoom({ name: title, type: preset.type, emoji, tint, ...extra } as Parameters<typeof createRoom>[0]);
       haptic("success");
       router.replace({ pathname: "/room/[id]", params: { id } });
@@ -103,10 +113,10 @@ export default function CreateRoomScreen() {
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
-      <SheetHeader title={t("newRoom")} />
+      <SheetHeader title={t(editing ? "editRoom" : "newRoom")} />
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto mb-6 w-1/2">
-        <RoomFolder room={{ id: "preview", name: title, type: preset.type, emoji, tint, members: [], eventDate: bday && date ? date : undefined }} wishes={[]} onPress={() => {}} />
+        <RoomFolder room={{ id: "preview", name: title, type: preset.type, emoji, tint, members: editing?.members || [], eventDate: bday && date ? date : undefined }} wishes={[]} onPress={() => {}} />
       </View>
 
       <Label>{t("roomSticker")}</Label>
@@ -117,21 +127,30 @@ export default function CreateRoomScreen() {
       <Label>{t("roomColor")}</Label>
       <ColorPicker value={tint} onChange={setTint} />
 
-      <Label>{t("roomType")}</Label>
-      <View className="mb-2 flex-row flex-wrap gap-2">
-        {PRESETS.map((p) => (
-          <Chip key={p.type} active={preset.type === p.type} onPress={() => setPreset(p)}>
-            {t(p.key)}
-          </Chip>
-        ))}
-      </View>
-      <Txt className="mb-4 text-[13px] leading-[19px] text-t2">{t(preset.hint)}</Txt>
+      {/* the type is set when the room is made */}
+      {!editing ? (
+        <>
+          <Label>{t("roomType")}</Label>
+          <View className="mb-2 flex-row flex-wrap gap-2">
+            {PRESETS.map((p) => (
+              <Chip key={p.type} active={preset.type === p.type} onPress={() => setPreset(p)}>
+                {t(p.key)}
+              </Chip>
+            ))}
+          </View>
+          <Txt className="mb-4 text-[13px] leading-[19px] text-t2">{t(preset.hint)}</Txt>
+        </>
+      ) : null}
 
       {bday ? (
         <View>
-          <Label>{t("bdayWhose")}</Label>
-          <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral fill={C.card2} className="mb-2" />
-          <Txt className="mb-4 text-[12.5px] leading-[18px] text-t3">{t(mode === "self" ? "bdayMineNote" : "bdayOtherNote")}</Txt>
+          {!editing ? (
+            <>
+              <Label>{t("bdayWhose")}</Label>
+              <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral fill={C.card2} className="mb-2" />
+              <Txt className="mb-4 text-[12.5px] leading-[18px] text-t3">{t(mode === "self" ? "bdayMineNote" : "bdayOtherNote")}</Txt>
+            </>
+          ) : null}
           {mode === "other" ? <Field label={t("bdayNameLabel")} value={celName} onChangeText={setCelName} placeholder={t("bdayNamePh")} error={tried && !celName.trim() && t("requiredField")} /> : null}
           <DateRow label={t("bdayDateLabel")} value={date} onChange={setDate} hint={t("evHint")} minimumDate={new Date()} error={tried && !date && t("requiredDate")} />
         </View>
@@ -139,8 +158,8 @@ export default function CreateRoomScreen() {
 
       <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
 
-      <Pill full icon={<Plus size={18} color="#fff" />} onPress={submit}>
-        {busy ? t("creating") : t("createRoom")}
+      <Pill full icon={editing ? undefined : <Plus size={18} color="#fff" />} onPress={submit}>
+        {editing ? t("saveChanges") : busy ? t("creating") : t("createRoom")}
       </Pill>
     </ScrollView>
     <ToastHost inSheet />

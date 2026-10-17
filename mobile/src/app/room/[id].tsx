@@ -6,9 +6,9 @@
 
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { CalendarDays, Check, ChevronLeft, Gift, Lock, Pencil, Plus, Share2, Trash2, X } from "lucide-react-native";
+import { CalendarDays, Check, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, Share, View } from "react-native";
+import { ActionSheetIOS, Alert, Platform, ScrollView, Share, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -112,6 +112,25 @@ export default function RoomScreen() {
       </Pill>
     );
 
+  const openMenu = () => {
+    haptic("select");
+    const actions: [string, () => void][] = isOwner
+      ? [
+          [t("editRoom"), () => router.push({ pathname: "/room/new", params: { id: room.id } })],
+          [t("deleteRoom"), leaveOrDelete],
+        ]
+      : [[t("leaveRoom"), leaveOrDelete]];
+    const options = [...actions.map((a) => a[0]), t("setCancel")];
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { title: room.name, options, destructiveButtonIndex: actions.length - 1, cancelButtonIndex: actions.length, userInterfaceStyle: "dark" },
+        (i) => i < actions.length && actions[i][1](),
+      );
+    } else {
+      Alert.alert(room.name, "", [...actions.map(([text, onPress]) => ({ text, onPress })), { text: t("setCancel"), style: "cancel" as const }]);
+    }
+  };
+
   const leaveOrDelete = () =>
     Alert.alert(t(isOwner ? "confirmDelete" : "confirmLeave"), "", [
       { text: t("setCancel"), style: "cancel" },
@@ -136,6 +155,10 @@ export default function RoomScreen() {
         <View className="flex-row items-center justify-between" style={{ height: H.sm }}>
           <GlassCircle onPress={() => router.back()} label={t("back")}>
             <SymbolView name="chevron.left" size={19} weight="semibold" tintColor="#fff" fallback={<ChevronLeft size={20} color="#fff" />} />
+          </GlassCircle>
+          {/* ⋯ menu: edit / delete for the owner, leave for everyone else */}
+          <GlassCircle onPress={openMenu} label={t("more")}>
+            <SymbolView name="ellipsis" size={19} weight="semibold" tintColor="#fff" fallback={<Ellipsis size={20} color="#fff" />} />
           </GlassCircle>
         </View>
         <View className="items-center">
@@ -240,12 +263,6 @@ export default function RoomScreen() {
           </Animated.View>
         )}
 
-        <View className="mt-auto items-center pt-4">
-          <Pressable onPress={leaveOrDelete} className="h-sm flex-row items-center gap-2 px-3">
-            {isOwner ? <Trash2 size={16} color={C.danger} /> : <X size={16} color={C.t2} />}
-            <Txt className={`font-m600 text-sm ${isOwner ? "text-danger" : "text-t2"}`}>{t(isOwner ? "deleteRoom" : "leaveRoom")}</Txt>
-          </Pressable>
-        </View>
       </View>
     </ScrollView>
   );

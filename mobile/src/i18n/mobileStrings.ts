@@ -52,6 +52,7 @@ export const MOBILE_STRINGS = {
   toastError: { uk: "Не вийшло, спробуй ще раз", ru: "Не получилось, попробуй ещё раз", en: "Something went wrong, try again" },
   toastLeftRoom: { uk: "Ти більше не в цій кімнаті", ru: "Ты больше не в этой комнате", en: "You left the room" },
   toastRoomDeleted: { uk: "Кімнату видалено", ru: "Комната удалена", en: "Room deleted" },
+  more: { uk: "Ще", ru: "Ещё", en: "More" },
   closeBtn: { uk: "Закрити", ru: "Закрыть", en: "Close" },
   // no "(optional)" in labels on iOS: required fields say so when missed
   priceOpt: { uk: "Ціна", ru: "Цена", en: "Price" },

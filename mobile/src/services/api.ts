@@ -61,6 +61,7 @@ export const api = {
   setGifted: (id: string, gifted: boolean) => req("POST", "/wishes/" + id + "/gifted", { gifted }),
   toggleWishRoom: (id: string, roomId: string) => req("POST", "/wishes/" + id + "/room", { roomId }),
   createRoom: (r: Partial<Room>) => req<{ room: { id: string } }>("POST", "/rooms", r),
+  updateRoom: (id: string, r: Partial<Room>) => req("PATCH", "/rooms/" + id, r),
   leaveRoom: (id: string) => req("POST", "/rooms/" + id + "/leave"),
   deleteRoom: (id: string) => req("DELETE", "/rooms/" + id),
   joinRoom: (id: string) => req("POST", "/rooms/" + id + "/join", {}),
