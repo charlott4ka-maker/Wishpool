@@ -2,9 +2,10 @@
 // a typewriter line, a looping step script, and a shrunken phone that plays a
 // little "screen recording" of our own UI with a finger that taps things.
 
+import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Easing, View } from "react-native";
+import { Animated, Easing, Platform, View } from "react-native";
 
 import { C } from "../../theme/tokens";
 
@@ -82,14 +83,18 @@ function Finger({ pos, tap }: { pos: Spot; tap: number }) {
   );
 }
 
+const WEB_MASK = "linear-gradient(180deg, #000 55%, transparent 100%)";
+
 /**
- * Our real UI at 375×600, scaled down into a phone outline that melts into the
- * background towards the bottom. Children are laid out in unscaled coordinates;
+ * Our real UI at 375×600, scaled down into a phone outline. Like the Mini App's
+ * mask-image, the whole phone (outline included) melts into the background
+ * towards the bottom. Children are laid out in unscaled coordinates;
  * `rootRef` is the box to measure finger targets against.
  */
 export function MiniPhone({ children, finger, tap, rootRef }: { children: React.ReactNode; finger: Spot; tap: number; rootRef: React.RefObject<View | null> }) {
-  return (
-    <View style={{ width: OB_W * OB_S, height: OB_H * OB_S, borderRadius: 34, overflow: "hidden", backgroundColor: C.bg, borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" }}>
+  const size = { width: OB_W * OB_S, height: OB_H * OB_S };
+  const phone = (
+    <View style={{ ...size, borderRadius: 34, overflow: "hidden", backgroundColor: C.bg, borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" }}>
       <View
         ref={rootRef}
         collapsable={false}
@@ -99,8 +104,14 @@ export function MiniPhone({ children, finger, tap, rootRef }: { children: React.
         {children}
         <Finger pos={finger} tap={tap} />
       </View>
-      <LinearGradient pointerEvents="none" colors={["transparent", C.bg]} locations={[0.55, 1]} style={{ position: "absolute", left: -2, right: -2, top: 0, bottom: -2 }} />
     </View>
+  );
+  // MaskedView is native only; the web preview uses the CSS mask like the Mini App
+  if (Platform.OS === "web") return <View style={{ ...size, ...({ maskImage: WEB_MASK, WebkitMaskImage: WEB_MASK } as object) }}>{phone}</View>;
+  return (
+    <MaskedView style={size} maskElement={<LinearGradient colors={["#000", "#000", "transparent"]} locations={[0, 0.55, 1]} style={size} />}>
+      {phone}
+    </MaskedView>
   );
 }
 
