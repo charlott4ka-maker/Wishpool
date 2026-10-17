@@ -3,8 +3,8 @@
 
 import { useRouter } from "expo-router";
 import { Lock, Plus } from "lucide-react-native";
-import { useMemo, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { RefreshControl, ScrollView, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GUEST_OVERLAP, GuestBanner, useGuestBanner } from "../../../components/GuestBanner";
@@ -30,6 +30,15 @@ export default function PoolScreen() {
   const [searching, setSearching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const kb = useKeyboardHeight();
+  // Where the content frame really ends on screen, so the "nothing found"
+  // state centres between the header and whatever covers the frame's bottom:
+  // the keyboard, or the tab bar once it's down.
+  const frame = useRef<View>(null);
+  const { height: winH } = useWindowDimensions();
+  const [frameBottom, setFrameBottom] = useState(winH);
+  const measureFrame = () => frame.current?.measureInWindow((_x, y, _w, h) => setFrameBottom(y + h));
+  const covered = winH - (kb > 0 ? kb : insets.bottom + 49); // top edge of what covers the screen
+  const missBottom = Math.max(0, frameBottom - covered);
   // the sign-in strip steps aside while searching
   const guest = useGuestBanner() && !searching;
 
@@ -69,7 +78,11 @@ export default function PoolScreen() {
       {/* The content block is a fixed frame (rounded top, block fill down to the
           bottom) and the list scrolls inside it, so the 4pt gap under the header
           and the block's fill under the tab bar stay put while scrolling. */}
-      <View style={{ flex: 1, marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}>
+      <View
+        ref={frame}
+        onLayout={measureFrame}
+        style={{ flex: 1, marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}
+      >
         <ScrollView
           // remounted when the list empties so it starts at the top
           key={wishes.length ? "list" : "empty"}
@@ -140,7 +153,7 @@ export default function PoolScreen() {
         {/* nothing matches the search: eyes, text and a button, centred between the
             header and the keyboard (or the tab bar once it's hidden) */}
         {searchMiss ? (
-          <View pointerEvents="box-none" className="absolute left-0 right-0 top-0 items-center justify-center px-8" style={{ bottom: Math.max(kb, insets.bottom + 49) }}>
+          <View pointerEvents="box-none" className="absolute left-0 right-0 top-0 items-center justify-center px-8" style={{ bottom: missBottom }}>
             {/* looking around and finding nothing */}
             <Sticker emoji="stk:eyes" size={72} />
             <Txt className="mt-6 text-center font-m700 text-lg">{t("searchEmptyTitle")}</Txt>
