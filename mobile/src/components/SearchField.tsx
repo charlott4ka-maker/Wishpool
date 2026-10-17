@@ -5,7 +5,7 @@ import { C } from "../theme/tokens";
 
 export function SearchField({ value, onChangeText, placeholder }: { value: string; onChangeText: (v: string) => void; placeholder: string }) {
   return (
-    <View className="mb-4 h-sm flex-row items-center gap-2 rounded-full bg-card px-4">
+    <View className="mb-3 h-sm flex-row items-center gap-2 rounded-full bg-card2 px-4">
       <Search size={17} color={C.t3} />
       <TextInput
         value={value}

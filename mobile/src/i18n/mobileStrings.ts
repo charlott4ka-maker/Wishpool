@@ -39,6 +39,8 @@ export const MOBILE_STRINGS = {
   remindDayTitle: { uk: "Завтра: {name}", ru: "Завтра: {name}", en: "Tomorrow: {name}" },
   remindDayBody: { uk: "Подарунок уже готовий? Зазирни в кімнату", ru: "Подарок уже готов? Загляни в комнату", en: "Got the gift ready? Have a look at the room" },
   searchWishes: { uk: "Пошук бажань", ru: "Поиск желаний", en: "Search wishes" },
+  searchEmptyTitle: { uk: "Нічого не знайшли", ru: "Ничего не нашли", en: "Nothing found" },
+  searchEmptySub: { uk: "Спробуй інше слово або додай нове бажання.", ru: "Попробуй другое слово или добавь новое желание.", en: "Try another word or add a new wish." },
   searchRooms: { uk: "Пошук кімнат", ru: "Поиск комнат", en: "Search rooms" },
   signInTelegram: { uk: "Увійти через Telegram", ru: "Войти через Telegram", en: "Continue with Telegram" },
   signInEmail: { uk: "Увійти через e-mail", ru: "Войти по e-mail", en: "Continue with e-mail" },

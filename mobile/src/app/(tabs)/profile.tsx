@@ -2,13 +2,13 @@
 
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
-import { ChevronRight, Crown, Gift, Heart, Send, Settings, Smartphone } from "lucide-react-native";
+import { ChevronRight, Crown, Gift, Heart, Settings, Smartphone } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../auth/AuthContext";
+import { BirthdayCard } from "../../components/BirthdayCard";
 import { GuestBanner } from "../../components/GuestBanner";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
 import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
@@ -64,6 +64,10 @@ export default function ProfileScreen() {
           </Card>
         </View>
 
+        <View className="mt-3">
+          <BirthdayCard />
+        </View>
+
         {PREMIUM_ENABLED ? (
         <Card className="mt-3 flex-row items-center gap-4 p-4" onPress={() => router.push("/paywall")}>
           <View className="h-sm w-sm items-center justify-center rounded-full bg-gold/20">
@@ -103,7 +107,6 @@ export default function ProfileScreen() {
         <View className="mt-8">
           <SettingsGroup>
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
-            <SettingsCell icon={Send} tint="#2AABEE" label={t("channel")} onPress={() => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")} />
           </SettingsGroup>
         </View>
       </ScrollView>

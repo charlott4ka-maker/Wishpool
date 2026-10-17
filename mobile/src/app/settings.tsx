@@ -10,7 +10,6 @@ import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View }
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
-import { DatePill } from "../components/DateRow";
 import { SettingsCell, SettingsGroup } from "../components/SettingsList";
 import { Txt } from "../components/ui";
 import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
@@ -98,7 +97,6 @@ export default function SettingsScreen() {
 
         <SettingsGroup title={t("setGeneral")}>
           <SettingsCell icon={Globe} tint="#5856D6" label={t("language")} value={LANG_SHORT[lang]} onPress={pickLanguage} />
-          <SettingsCell icon={Cake} tint="#FF9500" label={t("myBday")} right={<DatePill value={prefs.birthday} onChange={(d) => setPref("birthday", d)} maximumDate={new Date()} />} />
           <SettingsCell icon={Vibrate} tint="#FF2D55" label={t("setHaptics")} toggle={{ value: prefs.haptics, onChange: (v) => setPref("haptics", v) }} />
         </SettingsGroup>
 

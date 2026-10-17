@@ -7,9 +7,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 
 import { RoomFolder } from "../../../components/RoomFolder";
-import { Empty, HeaderAdd, Pill, ScreenTitle } from "../../../components/ui";
-import { StatusBarBackdrop } from "../../../components/StatusBarBackdrop";
+import { Empty, HeaderAdd, Pill } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
+import { TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
 import { useWishpool } from "../../../store/WishpoolContext";
 
@@ -24,14 +24,14 @@ export default function RoomsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
+      <TabHeader title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
       <ScrollView
         key={rooms.length ? "list" : "empty"}
         className="flex-1 bg-bg"
         contentInsetAdjustmentBehavior="never"
         scrollEnabled={rooms.length > 0}
-        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
       >
-        <ScreenTitle title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
         {rooms.length === 0 ? (
           <Empty
             fill
@@ -69,7 +69,6 @@ export default function RoomsScreen() {
         ) : null}
       </ScrollView>
       <TabBarFade />
-      <StatusBarBackdrop />
     </View>
   );
 }
