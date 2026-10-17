@@ -31,5 +31,5 @@
 - Icons in small round buttons: even sizes so they sit dead centre, 1.5px stroke (`absoluteStrokeWidth`).
 - Motion: no bounce on things appearing (photos, stickers, cards); springs are fine for presses and for the segmented control, which stretches like the iOS tab bar selection.
 - Forms: no greyed-out (disabled) action buttons in sheets; a tap with a required field missing outlines that field in red (`Field error`, `DateRow error`) with an error haptic.
-- Search (Wishes): while it's active the title row folds away, the field moves up with an iOS "Cancel", and the sign-in strip hides.
+- Search (Wishes): while it's active the title row folds away, the field moves up, and the sign-in strip hides. No "Cancel" text: the × inside the field clears it and closes the search.
 - Never put `className` on Reanimated views (`Animated.View`, `createAnimatedComponent`): NativeWind doesn't style them on device. Animated views get plain `style`; for press springs use `Press` (styled Pressable inside a transform-only Animated.View).

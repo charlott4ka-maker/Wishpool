@@ -61,7 +61,7 @@ export default function PoolScreen() {
       <TabHeader title={t("poolTitle")} right={<HeaderAdd onPress={add} label={t("addWish")} />} searching={searching && wishes.length > 0}>
         {/* search only once there is something to search; while it's active the title folds away */}
         {wishes.length ? (
-          <SearchField value={query} onChangeText={setQuery} placeholder={t("searchWishes")} active={searching} onFocusChange={setSearching} cancelLabel={t("setCancel")} />
+          <SearchField value={query} onChangeText={setQuery} placeholder={t("searchWishes")} active={searching} onFocusChange={setSearching} />
         ) : null}
       </TabHeader>
       {/* the guest strip stays put; the content block below overlaps its lower part */}
