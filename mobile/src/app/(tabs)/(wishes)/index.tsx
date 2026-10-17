@@ -14,7 +14,7 @@ import { Chip, Empty, HeaderAdd, Pill, Txt } from "../../../components/ui";
 import { WishGridSkeleton } from "../../../components/Skeleton";
 import { WishCard } from "../../../components/WishCard";
 import { TabBarFade } from "../../../components/TabBarFade";
-import { Block, BLOCK_GAP, TabHeader } from "../../../components/TabHeader";
+import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
 import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
@@ -60,7 +60,12 @@ export default function PoolScreen() {
         {/* search only once there is something to search */}
         {wishes.length ? <SearchField value={query} onChangeText={setQuery} placeholder={t("searchWishes")} /> : null}
       </TabHeader>
-      <View className="flex-1">
+      {/* the guest strip stays put; the content block below overlaps its lower part */}
+      {guest ? <GuestBanner /> : null}
+      {/* The content block is a fixed frame (rounded top, block fill down to the
+          bottom) and the list scrolls inside it, so the 4pt gap under the header
+          and the block's fill under the tab bar stay put while scrolling. */}
+      <View style={{ flex: 1, marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}>
         <ScrollView
           // remounted when the list empties so it starts at the top
           key={wishes.length ? "list" : "empty"}
@@ -81,9 +86,7 @@ export default function PoolScreen() {
             />
           }
         >
-          {guest ? <GuestBanner /> : null}
-          {/* the content block; with the guest strip it covers the strip's lower part */}
-          <Block grow style={{ marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}>
+          <Block grow style={{ paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}>
           {tabs.length > 1 && !searchMiss ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 mb-4" style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
               {tabs.map((x) => (

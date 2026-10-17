@@ -10,9 +10,10 @@ import { RoomFolder } from "../../../components/RoomFolder";
 import { RoomGridSkeleton } from "../../../components/Skeleton";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
-import { Block, BLOCK_GAP, TabHeader } from "../../../components/TabHeader";
+import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
 import { useWishpool } from "../../../store/WishpoolContext";
+import { C } from "../../../theme/tokens";
 
 export default function RoomsScreen() {
   const { t } = useT();
@@ -26,12 +27,14 @@ export default function RoomsScreen() {
   return (
     <View className="flex-1 bg-bg">
       <TabHeader title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
+      {/* fixed content frame (see Wishes): the gap under the header and the fill under the tab bar stay put */}
+      <View style={{ flex: 1, marginTop: BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}>
       <ScrollView
         key={rooms.length ? "list" : "empty"}
-        className="flex-1 bg-bg"
+        className="flex-1"
         contentInsetAdjustmentBehavior="never"
         scrollEnabled={rooms.length > 0}
-        contentContainerStyle={{ flexGrow: 1, paddingTop: BLOCK_GAP }}
+        contentContainerStyle={{ flexGrow: 1 }}
       >
         {/* one content block down to the bottom; extra top room for the photos peeking out of the folders */}
         <Block grow style={{ paddingTop: 24, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}>
@@ -67,6 +70,7 @@ export default function RoomsScreen() {
         )}
         </Block>
       </ScrollView>
+      </View>
       <TabBarFade />
     </View>
   );
