@@ -90,7 +90,7 @@ export default function PoolScreen() {
         onLayout={measureFrame}
         style={{ flex: 1, marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}
       >
-        <ScrollView
+        <ScrollView showsVerticalScrollIndicator={false}
           // remounted when the list empties so it starts at the top
           key={wishes.length ? "list" : "empty"}
           contentInsetAdjustmentBehavior="never"

@@ -23,7 +23,7 @@ export default function PickWishes() {
   const active = wishes.filter((w) => !w.giftedAt);
   return (
     // fits its content (FIT_SHEET); a long wishlist scrolls inside
-    <ScrollView className="bg-card" style={{ maxHeight: height * 0.85 }} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 }}>
+    <ScrollView showsVerticalScrollIndicator={false} className="bg-card" style={{ maxHeight: height * 0.85 }} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 }}>
       <SheetHeader title={t("roomWishesTitle")} />
       {active.length === 0 ? (
         <Empty compact emoji="stk:ghost" tilt={0} title={t("poolEmptyTitle")} sub={t("poolEmptyInRoom")} />

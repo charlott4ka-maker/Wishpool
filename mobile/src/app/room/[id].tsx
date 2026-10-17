@@ -147,7 +147,7 @@ export default function RoomScreen() {
     ]);
 
   return (
-    <ScrollView className="flex-1" style={{ backgroundColor: C.card }} contentContainerStyle={{ flexGrow: 1 }}>
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1" style={{ backgroundColor: C.card }} contentContainerStyle={{ flexGrow: 1 }}>
       {/* overscroll at the top shows the hero colour, not black */}
       <View pointerEvents="none" style={{ position: "absolute", top: -1000, left: 0, right: 0, height: 1000, backgroundColor: heroTop(room.tint) }} />
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>

@@ -29,7 +29,7 @@ export default function RoomsScreen() {
       <TabHeader title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
       {/* fixed content frame (see Wishes): the gap under the header and the fill under the tab bar stay put */}
       <View style={{ flex: 1, marginTop: BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}>
-      <ScrollView
+      <ScrollView showsVerticalScrollIndicator={false}
         key={rooms.length ? "list" : "empty"}
         className="flex-1"
         contentInsetAdjustmentBehavior="never"
