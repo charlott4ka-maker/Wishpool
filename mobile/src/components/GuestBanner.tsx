@@ -4,7 +4,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { LogIn, X } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 
@@ -50,7 +50,6 @@ export function GuestBanner({ onClose }: { onClose: () => void }) {
       >
         {/* centred, clear of the close button on the right */}
         <View className="flex-row items-center justify-center gap-2 px-10">
-          <LogIn size={18} color="#fff" />
           <Txt numberOfLines={1} className="shrink font-m700 text-[15px] text-white">{t("guestBanner")}</Txt>
         </View>
         <Pressable onPress={onClose} hitSlop={8} accessibilityLabel={t("closeBtn")} className="absolute right-3 top-2.5 h-8 w-8 items-center justify-center rounded-full bg-white/15">
