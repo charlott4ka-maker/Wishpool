@@ -98,7 +98,7 @@ export default function SettingsScreen() {
         <SettingsGroup title={t("setNotifications")} footer={t("setNotifFooter")}>
           <SettingsCell icon={Bell} tint="#FF3B30" label={t("setAllowNotif")} toggle={{ value: prefs.notifications, onChange: toggleNotifications }} />
           <SettingsCell icon={Cake} tint="#FF9500" label={t("setBirthdays")} toggle={{ value: prefs.notifyBirthdays && !sub, disabled: sub, onChange: (v) => setPref("notifyBirthdays", v) }} />
-          <SettingsCell icon={Gift} tint="#2E7DF6" label={t("setNewWishes")} toggle={{ value: prefs.notifyNewWishes && !sub, disabled: sub, onChange: (v) => setPref("notifyNewWishes", v) }} />
+          <SettingsCell icon={Gift} tint="#0A82F9" label={t("setNewWishes")} toggle={{ value: prefs.notifyNewWishes && !sub, disabled: sub, onChange: (v) => setPref("notifyNewWishes", v) }} />
           <SettingsCell icon={UserPlus} tint="#34C759" label={t("setRoomJoins")} toggle={{ value: prefs.notifyRoomJoins && !sub, disabled: sub, onChange: (v) => setPref("notifyRoomJoins", v) }} />
           <SettingsCell icon={Sparkles} tint="#AF52DE" label={t("setGiftReminders")} toggle={{ value: prefs.notifyGiftReminders && !sub, disabled: sub, onChange: (v) => setPref("notifyGiftReminders", v) }} />
         </SettingsGroup>
@@ -109,7 +109,7 @@ export default function SettingsScreen() {
         </SettingsGroup>
 
         <SettingsGroup title={t("setAbout")}>
-          <SettingsCell icon={Sparkles} tint="#2E7DF6" label={t("howItWorks")} onPress={() => router.push("/onboarding")} />
+          <SettingsCell icon={Sparkles} tint="#0A82F9" label={t("howItWorks")} onPress={() => router.push("/onboarding")} />
           <SettingsCell icon={Send} tint="#2AABEE" label={t("channel")} onPress={() => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")} />
           <SettingsCell icon={FileText} tint="#8E8E93" label={t("legalTerms")} onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)} />
           {PRIVACY_URL ? <SettingsCell icon={Shield} tint="#8E8E93" label={t("legalPrivacy")} onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)} /> : null}
@@ -123,7 +123,7 @@ export default function SettingsScreen() {
             </>
           ) : (
             <>
-              <SettingsCell icon={LogIn} tint="#2E7DF6" label={t("signInLogin")} onPress={() => router.push("/sign-in-options")} />
+              <SettingsCell icon={LogIn} tint="#0A82F9" label={t("signInLogin")} onPress={() => router.push("/sign-in-options")} />
               <SettingsCell icon={Trash2} tint="#FF3B30" label={t("setClearData")} onPress={clearLocal} destructive />
             </>
           )}

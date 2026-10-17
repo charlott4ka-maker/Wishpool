@@ -15,7 +15,7 @@ export type AppIconOption = {
 
 export const APP_ICONS: AppIconOption[] = [
   { name: null, titleKey: "iconClassic", sticker: "gift", tint: "#161618" },
-  { name: "Ocean", titleKey: "iconOcean", sticker: "gift", tint: "#2E7DF6" },
+  { name: "Ocean", titleKey: "iconOcean", sticker: "gift", tint: "#0A82F9" },
   { name: "Blush", titleKey: "iconBlush", sticker: "kitty", tint: "#FF4D8D" },
   { name: "Matcha", titleKey: "iconMatcha", sticker: "matcha", tint: "#34C759" },
 ];

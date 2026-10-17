@@ -14,7 +14,7 @@ import { Sticker } from "../Sticker";
 import { Avatar, Card, Pill, Txt } from "../ui";
 import { Appear, measureSpot, MiniPhone, REST, Spot, useScript } from "./shared";
 
-const CONFETTI = ["#2E7DF6", "#FFD36E", "#FF7AB6", "#7CE0C3", "#FFFFFF"];
+const CONFETTI = ["#0A82F9", "#FFD36E", "#FF7AB6", "#7CE0C3", "#FFFFFF"];
 
 function Burst() {
   const v = useRef(new Animated.Value(0)).current;
