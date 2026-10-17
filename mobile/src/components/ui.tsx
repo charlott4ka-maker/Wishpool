@@ -163,7 +163,9 @@ export function GlassCircle({ size = H.sm, onPress, label, children }: { size?: 
       ) : (
         <>
           <BlurView intensity={30} tint="dark" style={[round, { zIndex: -1 }]} />
-          <View style={[round, { backgroundColor: "rgba(255,255,255,0.10)", zIndex: -1 }]} />
+          <View style={[round, { backgroundColor: "rgba(255,255,255,0.08)", zIndex: -1 }]} />
+          {/* no system glass (older iOS / Expo Go): light falling from the top so it still reads as glass */}
+          <LinearGradient colors={["rgba(255,255,255,0.20)", "rgba(255,255,255,0.02)"]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={[round, { zIndex: -1 }]} />
         </>
       )}
       {children}
