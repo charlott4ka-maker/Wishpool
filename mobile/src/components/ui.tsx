@@ -41,8 +41,6 @@ const PILL: Record<PillKind, { box: string; text: string }> = {
 const PILL_BORDER: Partial<Record<PillKind, ViewStyle>> = {
   soft: { borderWidth: 1, borderColor: C.blueLine },
   green: { borderWidth: 1, borderColor: "rgba(52,199,89,0.4)" },
-  // liquid-glass rim: catches the light along the top and left, dimmer below
-  glass: { borderWidth: 1, borderTopColor: "rgba(255,255,255,0.5)", borderLeftColor: "rgba(255,255,255,0.32)", borderRightColor: "rgba(255,255,255,0.18)", borderBottomColor: "rgba(255,255,255,0.26)" },
 };
 
 export function Pill({

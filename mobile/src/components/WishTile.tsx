@@ -16,13 +16,12 @@ import { Txt } from "./ui";
 
 // Wishlist card: square picture (photo, or the sticker on a soft tile), two
 // lines of title, price in the accent colour, a small "where" badge. These cards
-// keep the thin light outline (the one exception to "no outlines on blocks"),
-// on a glass fill (GlassFill), inside the content block with the chips.
+// sit on a glass fill (GlassFill), no outline, inside the content block with the chips.
 /**
  * The card's glass, in layers: the #222831 underlay with the wish's own
  * picture, big and faint, as something for the glass to frost; then the glass
- * itself (a blur with the block fill #15181D at 50%); then the rim light,
- * brighter along the top-left edges like light catching glass.
+ * itself (a blur with the block fill #15181D at 50%) and a soft sheen. No
+ * outline: the glass alone shapes the card.
  */
 function GlassFill({ source }: { source: ImageSource | number | null }) {
   return (
@@ -33,12 +32,6 @@ function GlassFill({ source }: { source: ImageSource | number | null }) {
       <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: hex(C.card, 0.5) }]} />
       <LinearGradient colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 0.6 }} style={StyleSheet.absoluteFill} />
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          { borderRadius: 24, borderWidth: 1, borderTopColor: "rgba(255,255,255,0.18)", borderLeftColor: "rgba(255,255,255,0.12)", borderRightColor: "rgba(255,255,255,0.06)", borderBottomColor: "rgba(255,255,255,0.04)" },
-        ]}
-      />
     </View>
   );
 }
