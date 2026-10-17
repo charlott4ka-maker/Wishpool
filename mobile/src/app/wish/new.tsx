@@ -284,7 +284,7 @@ export default function AddWishScreen() {
       ) : null}
       <Field label={t("linkLabel")} value={link} onChangeText={setLink} placeholder="https://…" keyboardType="url" autoCapitalize="none" />
       <View className="-mt-2 mb-4 flex-row items-center gap-2">
-        {linkState === "loading" ? <RefreshCw size={13} color={hintColor} /> : linkState === "done" ? <Check size={13} color={hintColor} /> : !linkState ? <Sticker emoji="stk:tag" size={14} style={{ margin: -5 }} /> : null}
+        {linkState === "loading" ? <RefreshCw size={13} color={hintColor} /> : linkState === "done" ? <Check size={13} color={hintColor} /> : null}
         <Txt className="flex-1 text-[12.5px]" style={{ color: hintColor }}>{hint}</Txt>
       </View>
       <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} error={tried && !title.trim() && t("requiredField")} />
