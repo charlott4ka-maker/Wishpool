@@ -9,11 +9,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../auth/AuthContext";
 import { BirthdayCard } from "../../components/BirthdayCard";
-import { GuestBanner } from "../../components/GuestBanner";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
 import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
-import { Avatar, Card, PremiumBadge, Txt } from "../../components/ui";
+import { Avatar, Card, Pill, PremiumBadge, Txt } from "../../components/ui";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
@@ -27,7 +26,7 @@ export default function ProfileScreen() {
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, status } = useAuth();
   const { wishes, rooms } = useWishpool();
   const { isPremium } = useSubscription();
   const [icon, setIcon] = useState(currentAppIcon);
@@ -43,7 +42,6 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1 bg-bg">
       <ScrollView className="flex-1 bg-bg" contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
-        <GuestBanner />
         <View className="items-center">
           <Avatar m={me} size={92} />
           <Txt className="mt-4 font-m800 text-2xl">{me.name}</Txt>
@@ -109,6 +107,12 @@ export default function ProfileScreen() {
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
           </SettingsGroup>
         </View>
+        {/* guest: just the button, the data-on-this-phone note lives on Wishes */}
+        {status === "guest" ? (
+          <View>
+            <Pill full onPress={() => router.push("/sign-in-options")}>{t("signInLogin")}</Pill>
+          </View>
+        ) : null}
       </ScrollView>
       <TabBarFade />
       <StatusBarBackdrop />
