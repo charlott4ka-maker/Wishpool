@@ -22,7 +22,7 @@ import { C, hex } from "../theme/tokens";
 
 // Apple's standard EULA unless we publish our own terms.
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
-const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || "";
+const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || "https://wishpool.clickbrickk.com/privacy";
 
 const ORDER: Record<string, number> = { annual: 0, monthly: 1 };
 

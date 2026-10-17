@@ -1,5 +1,5 @@
-// Edit your name and photo (tap the avatar on the profile). Kept on the phone
-// in prefs; with an account it's also sent to the server (PATCH /me).
+// Edit your name and photo (tap the avatar on the profile). A guest keeps them
+// on the phone in prefs; with an account they go to the server (PATCH /me).
 
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
@@ -25,7 +25,7 @@ export default function ProfileEdit() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { online } = useWishpool();
   const prefs = usePrefs();
   const [name, setName] = useState(prefs.displayName || user?.name || "");
@@ -41,14 +41,33 @@ export default function ProfileEdit() {
     setPhoto(`data:image/jpeg;base64,${r.base64}`);
   };
 
-  const save = () => {
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
     if (!name.trim()) {
       setTried(true);
       return haptic("error");
     }
-    setPref("displayName", name.trim());
-    setPref("avatar", photo);
-    if (online) api.updateMe({ name: name.trim(), photo }).catch(() => {});
+    if (busy) return;
+    if (online) {
+      // the account's name and photo are what friends see in rooms
+      setBusy(true);
+      try {
+        const res = await api.updateMe({ name: name.trim(), photo });
+        if (user) await updateUser({ ...user, name: res.user.name, photo: res.user.photo || null });
+        setPref("displayName", null);
+        setPref("avatar", null);
+      } catch (e) {
+        setBusy(false);
+        if ((e as Error)?.message !== "photo_not_saved") return toast.error(t("toastError"));
+        // the name went through on its own
+        await api.updateMe({ name: name.trim() }).then((res) => user && updateUser({ ...user, name: res.user.name })).catch(() => {});
+        toast.error(t("photoNotSaved"), { root: true });
+        return router.back();
+      }
+    } else {
+      setPref("displayName", name.trim());
+      setPref("avatar", photo);
+    }
     haptic("success");
     router.back();
     toast.success(t("toastSaved"), { root: true });

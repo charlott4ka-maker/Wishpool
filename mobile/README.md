@@ -43,7 +43,7 @@ first `eas build` asks to create the EAS project and writes its id into app.json
       linkPreview.ts         OG / JSON-LD parsing (title, price, photo)
       api.ts                 backend client (Bearer token)
     src/subscription/        SubscriptionContext (isPremium), RevenueCat adapter, feature flags, app icons
-    src/auth/                AuthContext (Apple, Telegram, e-mail, guest)
+    src/auth/                AuthContext (Apple, e-mail, guest)
     src/i18n/                uk / ru / en; webStrings.ts is copied from web/src/App.jsx
     assets/stickers/         the same WebP stickers as web/public/stickers
 
@@ -105,19 +105,16 @@ Before App Review the paywall also needs links to Terms of Use and the Privacy P
 - Large titles that collapse on scroll, and native search on Wishes and Rooms.
 - Native sheets (formSheet routes) with a close button; Settings in the iOS Settings style.
 
-## Backend work needed (not done here)
+## Backend (server/, same deployment as the Mini App)
 
-The server only accepts Telegram `initData` today. For the native app it needs:
+- Sign-in: `server/native-auth.js`.
+  - `POST /api/auth/apple`: the Apple identity token is checked against Apple's keys (audience `app.wishpool.ios`, or `host.exp.Exponent` in Expo Go; nonce = SHA-256 of the raw nonce).
+  - `POST /api/auth/email/start|verify`: a 6-digit code by e-mail through Resend.
+  - Both return `{ token, user }`; the app sends `Authorization: Bearer <token>`. Apple and the same e-mail open one account.
+- `PATCH /api/me` (name, photo), `DELETE /api/me` (everything goes; owned rooms pass to another member), `POST /api/sign-out`.
+- Invites: `https://wishpool.clickbrickk.com/join/<roomId>?from=<userId>` is a universal link (`/.well-known/apple-app-site-association`, needs `APPLE_TEAM_ID`). Without the app, the page sends people to the Telegram Mini App.
+- iPhone accounts and Telegram accounts are separate for now; rooms are shared, so both can be in one room.
+- Vercel env: `RESEND_API_KEY`, `MAIL_FROM`, `APPLE_TEAM_ID`, `REVIEW_EMAIL`, `REVIEW_CODE` (and the existing `DATABASE_URL`, `R2_*` for avatars).
+- Test: `cd server && npm i --no-save @electric-sql/pglite && node native-auth.test.mjs` (add `PGLITE_TEST=1` for Postgres).
 
-- `POST /api/auth/apple { identityToken, nonce, fullName?, email? }`: verify the
-  token against Apple's JWKS (audience `app.wishpool.ios`, nonce = SHA-256 of the raw nonce), return `{ token, user }`.
-- `POST /api/auth/email/start { email }` and `POST /api/auth/email/verify { email, code }`.
-- `GET /api/auth/telegram/start?redirect=wishpool://auth`: Telegram Login, then
-  redirect to `wishpool://auth?token=...&uid=...&name=...`.
-- Accept `Authorization: Bearer <token>` next to `X-Init-Data`, mapping both to the same user,
-  so one person has the same wishes in Telegram and on iPhone.
-- `GET /api/me/premium` and a RevenueCat webhook to store Premium on the user.
-- `DELETE /api/me` (account deletion, required by App Review).
-- Push tokens + push for new wishes / new room members (the switches exist in Settings).
-
-Until then the app runs fully in guest mode (data on the phone).
+Still to do: `GET /api/me/premium` with a RevenueCat webhook, and push notifications.

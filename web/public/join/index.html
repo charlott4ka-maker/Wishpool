@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wishpool</title>
+<meta name="description" content="An invite to a room on Wishpool: wishlists for friends, couples and birthdays." />
+<meta property="og:title" content="Wishpool" />
+<meta property="og:description" content="An invite to a room on Wishpool: wishlists for friends, couples and birthdays." />
+<meta property="og:image" content="https://wishpool.clickbrickk.com/about/og3.jpg" />
+<meta name="theme-color" content="#15181D" />
+<link rel="icon" href="/about/logo.png" />
+<link rel="stylesheet" href="/pages.css" />
+<style>
+body{min-height:100vh;display:flex;align-items:center}
+.wrap{width:100%;max-width:420px}
+.card{text-align:center;padding:32px 24px}
+.card img{width:96px;height:96px;margin:0 auto 16px}
+.card p{color:var(--t2)}
+</style>
+</head>
+<body>
+<!-- https://<domain>/join/<roomId>?from=<inviterId>
+     With the iOS app installed this address opens the app (universal link) and the page is never seen.
+     Everyone else lands here: the same room opens in the Telegram Mini App, or in the app by its scheme. -->
+<div class="wrap">
+  <div class="block card">
+    <img src="/about/star.png" alt="" />
+    <h1 data-l="uk">Тебе запрошують у кімнату</h1>
+    <h1 data-l="ru">Тебя зовут в комнату</h1>
+    <h1 data-l="en">You're invited to a room</h1>
+    <p data-l="uk">Вішлисти друзів і подарунки без повторів у Wishpool.</p>
+    <p data-l="ru">Вишлисты друзей и подарки без повторов в Wishpool.</p>
+    <p data-l="en">Your friends' wishlists and gifts without duplicates, in Wishpool.</p>
+    <div class="btns">
+      <a class="btn" id="tg">
+        <span data-l="uk">Відкрити в Telegram</span><span data-l="ru">Открыть в Telegram</span><span data-l="en">Open in Telegram</span>
+      </a>
+      <a class="btn ghost" id="ios">
+        <span data-l="uk">У застосунку для iPhone</span><span data-l="ru">В приложении для iPhone</span><span data-l="en">In the iPhone app</span>
+      </a>
+    </div>
+  </div>
+</div>
+<script src="/pages.js"></script>
+<script>
+(function () {
+  var id = (location.pathname.match(/^\/join\/([\w-]{1,64})/) || [])[1] || "";
+  var from = new URLSearchParams(location.search).get("from") || "";
+  if (!/^[\w-]{0,64}$/.test(from)) from = "";
+  // the Mini App reads "<room>__<inviter>" from startapp
+  var tail = id ? (from ? id + "__" + from : id) : "";
+  document.getElementById("tg").href = "https://t.me/wishpool_bot/app" + (tail ? "?startapp=" + tail : "");
+  var ios = document.getElementById("ios");
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) && id) ios.href = "wishpool://join/" + id + (from ? "?from=" + from : "");
+  else ios.style.display = "none";
+})();
+</script>
+</body>
+</html>

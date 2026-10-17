@@ -2,7 +2,7 @@ import "react-native-url-polyfill/auto";
 import "../global.css";
 import "../lib/nativewindInterop";
 
-import { DarkTheme, Stack, ThemeProvider } from "expo-router";
+import { DarkTheme, Stack, ThemeProvider, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import Constants, { ExecutionEnvironment } from "expo-constants";
@@ -15,6 +15,7 @@ import { ShareIntentHandler } from "../components/ShareIntentHandler";
 import { LangProvider } from "../i18n";
 import { ReminderSync } from "../settings/ReminderSync";
 import { ToastHost } from "../components/Toast";
+import { joinSheet, takePendingJoin } from "../lib/pendingJoin";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
@@ -37,8 +38,21 @@ function Gate() {
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
-  if (!ready) return null;
   const inside = status === "signedIn" || status === "guest";
+  // an invite opened before signing in comes back once there's an account
+  const router = useRouter();
+  useEffect(() => {
+    if (status !== "signedIn") return;
+    // after the screens settle: the invite sheet may have stayed open through sign-in
+    const timer = setTimeout(() => {
+      if (joinSheet.open) return;
+      takePendingJoin().then((p) => {
+        if (p && !joinSheet.open) router.push({ pathname: "/join/[id]", params: p.from ? { id: p.id, from: p.from } : { id: p.id } });
+      });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [status, router]);
+  if (!ready) return null;
   return (
     <SubscriptionProvider userId={user?.id || null}>
       <WishpoolProvider>
@@ -63,6 +77,7 @@ function Gate() {
           </Stack.Protected>
           {/* open both from the welcome screen and for guests ("Sign in" in the app) */}
           <Stack.Screen name="sign-in-options" options={FIT_SHEET} />
+          <Stack.Screen name="join/[id]" options={FIT_SHEET} />
           <Stack.Screen name="onboarding" options={{ presentation: "fullScreenModal" }} />
         </Stack>
       </WishpoolProvider>

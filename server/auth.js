@@ -36,8 +36,18 @@ export function safePhoto(url) {
 // In production BOT_TOKEN must be set, and only verified Telegram initData is accepted —
 // the X-Dev-User / demo fallback below is never reachable once a BOT_TOKEN is configured,
 // since it would otherwise let anyone impersonate any user id.
-export function authMiddleware(botToken) {
-  return (req, res, next) => {
+// The iOS app sends "Authorization: Bearer <session token>" instead (see native-auth.js).
+export function authMiddleware(botToken, store, hashToken) {
+  return async (req, res, next) => {
+    const bearer = (req.get("Authorization") || "").match(/^Bearer\s+(\S{20,200})$/);
+    if (bearer) {
+      try {
+        const u = await store.sessionUser(hashToken(bearer[1]));
+        if (!u) return res.status(401).json({ error: "bad_session" });
+        req.user = { id: u.id, name: u.name, photo: u.photo || null, lang: u.lang || null, native: true };
+        return next();
+      } catch (e) { return next(e); }
+    }
     if (botToken) {
       const initData = req.get("X-Init-Data");
       const u = initData && verifyInitData(initData, botToken);

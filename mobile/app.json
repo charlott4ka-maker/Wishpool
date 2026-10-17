@@ -7,8 +7,8 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#000000",
-    "primaryColor": "#2E7DF6",
+    "backgroundColor": "#15181D",
+    "primaryColor": "#0A82F9",
     "ios": {
       "bundleIdentifier": "app.wishpool.ios",
       "buildNumber": "1",
@@ -30,7 +30,10 @@
           "ru",
           "en"
         ]
-      }
+      },
+      "associatedDomains": [
+        "applinks:wishpool.clickbrickk.com"
+      ]
     },
     "android": {
       "package": "app.wishpool.android",
@@ -70,7 +73,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000000"
+          "backgroundColor": "#15181D"
         }
       ],
       [

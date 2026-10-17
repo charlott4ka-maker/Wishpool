@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wishpool Support</title>
+<meta name="theme-color" content="#15181D" />
+<link rel="icon" href="/about/logo.png" />
+<link rel="stylesheet" href="/pages.css" />
+</head>
+<body>
+<span hidden data-title="uk">Підтримка Wishpool</span>
+<span hidden data-title="ru">Поддержка Wishpool</span>
+<span hidden data-title="en">Wishpool Support</span>
+<div class="wrap">
+  <div class="block top">
+    <a class="logo" href="/about"><img src="/about/star.png" alt="" />Wishpool</a>
+    <div class="langs"><button data-set="uk">UA</button><button data-set="ru">RU</button><button data-set="en">EN</button></div>
+  </div>
+
+  <div class="block" data-l="en">
+    <h1>Support</h1>
+    <p>Something not working, or an idea? Write to us and we'll reply within a couple of days.</p>
+    <div class="btns"><a class="btn mail">E-mail us</a></div>
+    <h2>How do I sign in?</h2>
+    <p>Profile › Sign in: with Apple, or with a one-time code sent to your e-mail. Signing in with Apple and with the same e-mail by code opens the same account.</p>
+    <h2>How do I invite friends?</h2>
+    <p>Open a room and tap Invite. Friends with the iPhone app join right in it; everyone else opens the room in Telegram.</p>
+    <h2>Can the birthday person see who gifts what?</h2>
+    <p>No. Gift picks are hidden from the person they're for.</p>
+    <h2>How do I delete my account?</h2>
+    <p>Settings › Delete account. Everything is deleted at once. See also the <a href="/privacy">Privacy Policy</a>.</p>
+  </div>
+
+  <div class="block" data-l="uk">
+    <h1>Підтримка</h1>
+    <p>Щось не працює або є ідея? Напиши нам, відповімо протягом пари днів.</p>
+    <div class="btns"><a class="btn mail">Написати на пошту</a></div>
+    <h2>Як увійти?</h2>
+    <p>Профіль › Увійти: через Apple або кодом, який прийде на пошту. Вхід через Apple і кодом на ту саму пошту відкривають один акаунт.</p>
+    <h2>Як запросити друзів?</h2>
+    <p>Відкрий кімнату і натисни «Запросити». Друзі із застосунком для iPhone потраплять одразу в неї, решта відкриє кімнату в Telegram.</p>
+    <h2>Чи бачить іменинник, хто що дарує?</h2>
+    <p>Ні. Вибрані подарунки приховані від людини, якій їх дарують.</p>
+    <h2>Як видалити акаунт?</h2>
+    <p>Налаштування › Видалити акаунт. Усе видаляється одразу. Див. також <a href="/privacy">Політику конфіденційності</a>.</p>
+  </div>
+
+  <div class="block" data-l="ru">
+    <h1>Поддержка</h1>
+    <p>Что-то не работает или есть идея? Напиши нам, ответим в течение пары дней.</p>
+    <div class="btns"><a class="btn mail">Написать на почту</a></div>
+    <h2>Как войти?</h2>
+    <p>Профиль › Войти: через Apple или кодом, который придёт на почту. Вход через Apple и кодом на ту же почту открывают один аккаунт.</p>
+    <h2>Как пригласить друзей?</h2>
+    <p>Открой комнату и нажми «Пригласить». Друзья с приложением для iPhone попадут сразу в неё, остальные откроют комнату в Telegram.</p>
+    <h2>Видит ли именинник, кто что дарит?</h2>
+    <p>Нет. Выбранные подарки скрыты от человека, которому их дарят.</p>
+    <h2>Как удалить аккаунт?</h2>
+    <p>Настройки › Удалить аккаунт. Всё удаляется сразу. См. также <a href="/privacy">Политику конфиденциальности</a>.</p>
+  </div>
+  <p class="muted" style="text-align:center;margin-top:12px" id="addr"></p>
+</div>
+<script src="/pages.js"></script>
+<script>
+// the one place the support address lives
+var SUPPORT_EMAIL = "support@wishpool.clickbrickk.com";
+document.querySelectorAll("a.mail").forEach(function (a) { a.href = "mailto:" + SUPPORT_EMAIL + "?subject=Wishpool"; });
+document.getElementById("addr").textContent = SUPPORT_EMAIL;
+</script>
+</body>
+</html>

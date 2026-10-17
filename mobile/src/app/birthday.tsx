@@ -1,5 +1,6 @@
 // Sheet to set or remove your birthday (BirthdaySheet in the Mini App), with
-// the iOS inline calendar. Kept on the phone in prefs for now.
+// the iOS inline calendar. Kept on the phone in prefs; with an account it goes
+// to the server too, so friends in your rooms get reminded.
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
@@ -13,7 +14,9 @@ import { Pill, Txt } from "../components/ui";
 import { toast } from "../components/Toast";
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
+import { api } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
+import { useWishpool } from "../store/WishpoolContext";
 import { C } from "../theme/tokens";
 
 const LOCALE = { uk: "uk-UA", ru: "ru-RU", en: "en-US" } as const;
@@ -23,9 +26,11 @@ export default function BirthdaySheet() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { birthday } = usePrefs();
+  const { online } = useWishpool();
   const [date, setDate] = useState<Date>(fromISODate(birthday) || new Date(2000, 0, 1));
   const save = (v: string | null) => {
     setPref("birthday", v);
+    if (online) api.setBirthday(v).catch(() => {});
     haptic("success");
     router.back();
     if (v) toast.success(t("myBdaySaved"), { root: true });

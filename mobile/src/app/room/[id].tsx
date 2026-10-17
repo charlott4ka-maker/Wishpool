@@ -22,7 +22,8 @@ import { toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { countdownLabel } from "../../lib/dates";
 import { haptic } from "../../lib/haptics";
-import { api } from "../../services/api";
+import { useAuth } from "../../auth/AuthContext";
+import { api, SITE_URL } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { C, H } from "../../theme/tokens";
 import type { Member, Wish } from "../../types";
@@ -36,6 +37,7 @@ export default function RoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { rooms, wishes, online, removeRoom } = useWishpool();
+  const { user } = useAuth();
   const room = rooms.find((r) => r.id === id);
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -68,10 +70,11 @@ export default function RoomScreen() {
   const cd = countdownLabel(lang, t, room.eventDate);
 
   // The iOS share sheet (AirDrop, Messages, Telegram...). The link opens the
-  // room in the Telegram Mini App; a guest room only exists on this phone, so
-  // then it's an invite to Wishpool itself.
+  // room in the iPhone app when it's installed, otherwise its web page sends
+  // people on to the Telegram Mini App. A guest room only exists on this
+  // phone, so then it's an invite to Wishpool itself.
   const invite = () => {
-    const link = online ? `https://t.me/wishpool_bot/app?startapp=${room.id}` : "https://t.me/wishpool_bot/app";
+    const link = online ? `${SITE_URL}/join/${room.id}${user?.id ? "?from=" + encodeURIComponent(user.id) : ""}` : "https://t.me/wishpool_bot/app";
     const text = online ? t("inviteText", { name: room.name }) : t("inviteAppText");
     Share.share({ message: `${text}\n${link}`, url: link }).catch(() => {});
   };

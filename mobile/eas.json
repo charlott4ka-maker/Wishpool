@@ -7,16 +7,28 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ios": { "simulator": true },
-      "env": { "EXPO_PUBLIC_REVENUECAT_MOCK": "1" }
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_REVENUECAT_MOCK": "1"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://wishpool.clickbrickk.com",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://wishpool.clickbrickk.com/privacy"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://wishpool.clickbrickk.com",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://wishpool.clickbrickk.com/privacy"
+      }
     }
   },
   "submit": {

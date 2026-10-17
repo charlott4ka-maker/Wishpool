@@ -2,9 +2,38 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [] };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {} };
   return {
     async init() {},
+    async identityUser(provider, subject) { return D.identities[provider + ":" + subject] || null; },
+    async addIdentity(provider, subject, userId) { const k = provider + ":" + subject; if (!D.identities[k]) D.identities[k] = userId; },
+    async createSession(hash, userId) { D.sessions[hash] = userId; },
+    async sessionUser(hash) { const id = D.sessions[hash]; return (id && D.users[id]) || null; },
+    async dropSession(hash) { delete D.sessions[hash]; },
+    async saveEmailCode(email, codeHash, expires) { D.emailCodes[email] = { codeHash, expires, attempts: 0 }; },
+    async getEmailCode(email) { return D.emailCodes[email] || null; },
+    async bumpEmailCode(email) { if (D.emailCodes[email]) D.emailCodes[email].attempts++; },
+    async dropEmailCode(email) { delete D.emailCodes[email]; },
+    async updateProfile(id, { name, photo }) { const u = D.users[id]; if (!u) return; if (name != null) u.name = name; if (photo !== undefined) u.photo = photo; },
+    async deleteUser(id) {
+      for (const r of Object.values(D.rooms).filter(r => r.ownerId === id)) {
+        const next = D.members.find(m => m.roomId === r.id && m.userId !== id);
+        if (next) r.ownerId = next.userId; else await this.deleteRoom(r.id);
+      }
+      for (const r of Object.values(D.rooms)) if (r.celebrantId === id) r.celebrantId = null;
+      const photos = [];
+      for (const w of Object.values(D.wishes).filter(w => w.ownerId === id)) { photos.push(...(w.images && w.images.length ? w.images : [w.image]).filter(Boolean)); await this.deleteWish(w.id); }
+      for (const [wid, g] of Object.entries(D.reservations)) if (g === id) delete D.reservations[wid];
+      D.chips = D.chips.filter(c => c.userId !== id);
+      D.members = D.members.filter(m => m.userId !== id);
+      D.invites = D.invites.filter(i => i.inviterId !== id && i.inviteeId !== id);
+      D.events = D.events.filter(e => e.userId !== id);
+      for (const [k, v] of Object.entries(D.sessions)) if (v === id) delete D.sessions[k];
+      for (const [k, v] of Object.entries(D.identities)) if (v === id) delete D.identities[k];
+      if (D.users[id] && D.users[id].photo) photos.push(D.users[id].photo);
+      delete D.users[id];
+      return photos;
+    },
     async findUsers(part) { return Object.values(D.users).filter(u => (u.name || "").toLowerCase().includes(part.toLowerCase())).slice(0, 20).map(u => ({ id: u.id, name: u.name })); },
     async touchUser(id, at) { const u = D.users[id]; if (u) { u.lastSeen = at; u.firstSeen = u.firstSeen || at; } },
     async logEvents(userId, names, at) { for (const name of names) D.events.push({ at, userId, name }); },

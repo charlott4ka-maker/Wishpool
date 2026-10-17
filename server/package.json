@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
-  "scripts": { "start": "node index.js" },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node native-auth.test.mjs"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",

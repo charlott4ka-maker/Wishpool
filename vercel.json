@@ -11,6 +11,22 @@
       "destination": "https://pub-f403a898e7fa471f804e291a1fdc1c66.r2.dev/:path*"
     },
     {
+      "source": "/join/:id",
+      "destination": "/join/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy/index.html"
+    },
+    {
+      "source": "/support",
+      "destination": "/support/index.html"
+    },
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "destination": "/api/index"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/index"
     }

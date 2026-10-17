@@ -6,7 +6,8 @@ import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser, cleanEvent, cleanNote } from "./util.js";
 import { botRoute, ensureWebhook, ensureBotMenu, remindRoute, telegramBirthdate, notifyWishShared, notifyGiftPicked } from "./bot.js";
 import { previewLink, probe } from "./preview.js";
-import { storageOn, storeImages, dropImages } from "./storage.js";
+import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
+import { nativeAuthRoutes, hashToken } from "./native-auth.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -185,11 +186,24 @@ export async function createApp() {
   app.get("/api/cron/remind", remindRoute(BOT_TOKEN, store));
   await Promise.all([ensureWebhook(BOT_TOKEN), ensureBotMenu(BOT_TOKEN)]);
 
+  // iOS universal links: https://<domain>/join/<roomId> opens the room in the app
+  // when it's installed (the web page at that address covers everyone else).
+  app.get("/.well-known/apple-app-site-association", (_req, res) => {
+    const team = process.env.APPLE_TEAM_ID;
+    if (!team) return res.status(404).end();
+    const appID = `${team}.${process.env.IOS_BUNDLE_ID || "app.wishpool.ios"}`;
+    res.set("Content-Type", "application/json").set("Cache-Control", "public, max-age=3600");
+    res.send(JSON.stringify({ applinks: { apps: [], details: [{ appID, appIDs: [appID], paths: ["/join/*"], components: [{ "/": "/join/*" }] }] } }));
+  });
+  // Sign-in for the iOS app (Apple, e-mail code), before the auth below.
+  app.use("/api/auth", nativeAuthRoutes(store));
+
   const api = express.Router();
   // API responses must never be conditionally cached (304) — each call needs a fresh body.
   api.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
-  api.use(authMiddleware(BOT_TOKEN));
-  api.use(async (req, _res, next) => { try { await store.ensureUser(req.user); next(); } catch (e) { next(e); } });
+  api.use(authMiddleware(BOT_TOKEN, store, hashToken));
+  // Telegram brings a fresh name and photo on every visit; iOS accounts already live in the database.
+  api.use(async (req, _res, next) => { try { if (!req.user.native) await store.ensureUser(req.user); next(); } catch (e) { next(e); } });
   // "last seen" for the analytics screen; written at most once a minute per person
   // per instance, and never allowed to fail a real request
   const seen = new Map();
@@ -221,6 +235,39 @@ export async function createApp() {
     if (b != null && !(typeof b === "string" && /^\d{4}-\d{2}-\d{2}$/.test(b))) return res.status(400).json({ error: "bad_date" });
     await store.setBirthday(req.user.id, b || null);
     res.json({ birthday: b || null });
+  });
+  // iOS app profile: name and photo (a data URL goes to the bucket; null removes it).
+  api.patch("/me", async (req, res, next) => {
+    try {
+      const b = req.body || {};
+      const name = typeof b.name === "string" ? cleanName(b.name) : undefined;
+      if (name !== undefined && !name) return res.status(400).json({ error: "name_required" });
+      let photo;
+      if (b.photo === null) photo = null;
+      else if (typeof b.photo === "string" && /^https:\/\//.test(b.photo)) photo = undefined; // unchanged
+      else if (typeof b.photo === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(b.photo)) {
+        if (!storageOn() || b.photo.length > 1.5e6) return res.status(400).json({ error: "photo_not_saved" });
+        photo = await storeImage(b.photo, `u/${req.user.id}`);
+      }
+      const old = await store.getUser(req.user.id);
+      await store.updateProfile(req.user.id, { name, photo });
+      if (photo !== undefined && old && old.photo && old.photo !== photo) await dropImages([old.photo]);
+      res.json({ user: await store.getUser(req.user.id) });
+    } catch (e) { next(e); }
+  });
+  // Delete the account and everything in it (App Store guideline 5.1.1(v)).
+  api.delete("/me", async (req, res, next) => {
+    try {
+      if (req.user.id === "demo") return res.status(400).json({ error: "demo" });
+      const photos = await store.deleteUser(req.user.id);
+      await dropImages(photos);
+      res.json({ ok: true });
+    } catch (e) { next(e); }
+  });
+  api.post("/sign-out", async (req, res) => {
+    const bearer = (req.get("Authorization") || "").match(/^Bearer\s+(\S+)$/);
+    if (bearer) await store.dropSession(hashToken(bearer[1]));
+    res.json({ ok: true });
   });
   api.get("/me/birthday", async (req, res) => res.json({ birthday: await telegramBirthdate(BOT_TOKEN, req.user.id) }));
 

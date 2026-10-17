@@ -1,0 +1,31 @@
+/* Small static pages (/join, /privacy, /support): the iOS app's dark blocks and blue. */
+@font-face{font-family:Montserrat;font-weight:500;font-display:swap;src:url(/about/fonts/montserrat-cyrillic-500-normal.woff2) format("woff2");unicode-range:U+0400-04FF}
+@font-face{font-family:Montserrat;font-weight:700;font-display:swap;src:url(/about/fonts/montserrat-cyrillic-700-normal.woff2) format("woff2");unicode-range:U+0400-04FF}
+@font-face{font-family:Montserrat;font-weight:800;font-display:swap;src:url(/about/fonts/montserrat-cyrillic-800-normal.woff2) format("woff2");unicode-range:U+0400-04FF}
+@font-face{font-family:Montserrat;font-weight:500;font-display:swap;src:url(/about/fonts/montserrat-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:Montserrat;font-weight:700;font-display:swap;src:url(/about/fonts/montserrat-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Montserrat;font-weight:800;font-display:swap;src:url(/about/fonts/montserrat-latin-800-normal.woff2) format("woff2")}
+:root{--bg:#222831;--block:#15181D;--raised:#1E2228;--t1:#fff;--t2:#8B93A3;--t3:#626B7D;--blue:#0A82F9}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{font-family:Montserrat,system-ui,sans-serif;font-weight:500;color:var(--t1);-webkit-font-smoothing:antialiased;line-height:1.55;padding:16px 16px 48px}
+a{color:var(--blue);text-decoration:none}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:4px}
+.block{background:var(--block);border-radius:24px;padding:24px}
+.top{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;color:var(--t1)}
+.logo img{width:32px;height:32px}
+.langs{display:flex;gap:4px;background:var(--bg);border-radius:999px;padding:4px}
+.langs button{font:inherit;font-weight:700;font-size:13px;color:var(--t2);background:none;border:0;border-radius:999px;height:32px;padding:0 12px;cursor:pointer}
+.langs button.on{background:#353C49;color:var(--t1)}
+h1{font-weight:800;font-size:28px;line-height:1.2;letter-spacing:-.5px;margin-bottom:8px}
+h2{font-weight:700;font-size:17px;margin:24px 0 8px}
+p,li{color:#C9CED8;font-size:15px}
+p+p{margin-top:8px}
+ul{padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.muted{color:var(--t2);font-size:13px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 16px;text-align:center;border-radius:999px;background:var(--blue);color:#fff;font-weight:700;font-size:16px}
+.btn.ghost{background:#2D3440}
+.btns{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+[data-l]{display:none}
+html[lang=uk] [data-l=uk],html[lang=ru] [data-l=ru],html[lang=en] [data-l=en]{display:block}

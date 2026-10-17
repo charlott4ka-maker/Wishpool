@@ -1,10 +1,10 @@
 // "Sign in" sheet from the welcome screen: Sign in with Apple, or e-mail.
-// (Telegram sign-in was dropped from the iOS app; the AuthContext method stays.) Signing in for the first
-// time creates the account, so there is no separate "register".
+// Signing in for the first time creates the account, so there is no separate "register".
 
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Mail } from "lucide-react-native";
-import { useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { Alert, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,7 +19,12 @@ import { C, H } from "../theme/tokens";
 export default function SignInOptions() {
   const { t } = useT();
   const insets = useSafeAreaInsets();
-  const { appleAvailable, signInWithApple } = useAuth();
+  const router = useRouter();
+  const { status, appleAvailable, signInWithApple } = useAuth();
+  // signed in: this sheet has done its job
+  useEffect(() => {
+    if (status === "signedIn" && router.canGoBack()) router.back();
+  }, [status, router]);
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState(false);
   const ready = api.configured();

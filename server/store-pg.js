@@ -33,6 +33,46 @@ export function createPgStore(q) {
       await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen bigint`);
       await q(`CREATE TABLE IF NOT EXISTS events(at bigint, user_id text, name text)`);
       await q(`CREATE INDEX IF NOT EXISTS events_at ON events(at)`);
+      // iOS app accounts: Apple ID / e-mail -> user, session tokens (hashed), e-mail codes
+      await q(`CREATE TABLE IF NOT EXISTS identities(provider text, subject text, user_id text, primary key(provider,subject))`);
+      await q(`CREATE TABLE IF NOT EXISTS sessions(token_hash text primary key, user_id text, created_at bigint)`);
+      await q(`CREATE TABLE IF NOT EXISTS email_codes(email text primary key, code_hash text, expires bigint, attempts int)`);
+    },
+    async identityUser(provider, subject) { const { rows } = await q(`SELECT user_id FROM identities WHERE provider=$1 AND subject=$2`, [provider, subject]); return rows[0] ? rows[0].user_id : null; },
+    async addIdentity(provider, subject, userId) { await q(`INSERT INTO identities(provider,subject,user_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`, [provider, subject, userId]); },
+    async createSession(hash, userId) { await q(`INSERT INTO sessions(token_hash,user_id,created_at) VALUES($1,$2,$3)`, [hash, userId, Date.now()]); },
+    async sessionUser(hash) { const { rows } = await q(`SELECT u.id,u.name,u.color,u.photo,u.lang FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1`, [hash]); return rows[0] || null; },
+    async dropSession(hash) { await q(`DELETE FROM sessions WHERE token_hash=$1`, [hash]); },
+    async saveEmailCode(email, codeHash, expires) { await q(`INSERT INTO email_codes(email,code_hash,expires,attempts) VALUES($1,$2,$3,0) ON CONFLICT(email) DO UPDATE SET code_hash=EXCLUDED.code_hash, expires=EXCLUDED.expires, attempts=0`, [email, codeHash, expires]); },
+    async getEmailCode(email) { const { rows } = await q(`SELECT code_hash,expires,attempts FROM email_codes WHERE email=$1`, [email]); return rows[0] ? { codeHash: rows[0].code_hash, expires: Number(rows[0].expires), attempts: Number(rows[0].attempts) } : null; },
+    async bumpEmailCode(email) { await q(`UPDATE email_codes SET attempts=attempts+1 WHERE email=$1`, [email]); },
+    async dropEmailCode(email) { await q(`DELETE FROM email_codes WHERE email=$1`, [email]); },
+    async updateProfile(id, { name, photo }) { await q(`UPDATE users SET name=COALESCE($2,name), photo=CASE WHEN $3 THEN $4 ELSE photo END WHERE id=$1`, [id, name ?? null, photo !== undefined, photo ?? null]); },
+    // Account deletion: rooms they own go to another member (or away, when they
+    // were alone), everything else of theirs is removed. Returns photo URLs to drop.
+    async deleteUser(id) {
+      const { rows: owned } = await q(`SELECT id FROM rooms WHERE owner_id=$1`, [id]);
+      for (const { id: rid } of owned) {
+        const { rows: next } = await q(`SELECT user_id FROM members WHERE room_id=$1 AND user_id<>$2 LIMIT 1`, [rid, id]);
+        if (next[0]) await q(`UPDATE rooms SET owner_id=$2 WHERE id=$1`, [rid, next[0].user_id]);
+        else await this.deleteRoom(rid);
+      }
+      await q(`UPDATE rooms SET celebrant_id=NULL WHERE celebrant_id=$1`, [id]);
+      const { rows: ws } = await q(`SELECT * FROM wishes WHERE owner_id=$1`, [id]);
+      const photos = ws.map(mapWish).flatMap(w => w.images && w.images.length ? w.images : [w.image]).filter(Boolean);
+      await q(`DELETE FROM wish_rooms WHERE wish_id IN (SELECT id FROM wishes WHERE owner_id=$1)`, [id]);
+      await q(`DELETE FROM reservations WHERE wish_id IN (SELECT id FROM wishes WHERE owner_id=$1) OR gifter_id=$1`, [id]);
+      await q(`DELETE FROM chips WHERE wish_id IN (SELECT id FROM wishes WHERE owner_id=$1) OR user_id=$1`, [id]);
+      await q(`DELETE FROM wishes WHERE owner_id=$1`, [id]);
+      await q(`DELETE FROM members WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM invites WHERE inviter_id=$1 OR invitee_id=$1`, [id]);
+      await q(`DELETE FROM events WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM sessions WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM identities WHERE user_id=$1`, [id]);
+      const { rows: u } = await q(`SELECT photo FROM users WHERE id=$1`, [id]);
+      if (u[0] && u[0].photo) photos.push(u[0].photo);
+      await q(`DELETE FROM users WHERE id=$1`, [id]);
+      return photos;
     },
     async findUsers(part) { const { rows } = await q(`SELECT id,name,first_seen,last_seen FROM users WHERE name ILIKE $1 ORDER BY last_seen DESC NULLS LAST LIMIT 20`, ["%" + part + "%"]); return rows; },
     async touchUser(id, at) { await q(`UPDATE users SET last_seen=$2, first_seen=COALESCE(first_seen,$2) WHERE id=$1`, [id, at]); },

@@ -31,7 +31,7 @@ Wishpool допомагає дарувати те, що справді хоче�
 Красиво і зручно
 Темна тема, стікери, папки кімнат з фото бажань і зрозумілий інтерфейс у стилі iOS.
 
-Можна почати без акаунта: бажання збережуться на телефоні. Увійди через Apple або e-mail, щоб вони були з тобою на всіх пристроях і в Telegram.
+Можна почати без акаунта: бажання збережуться на телефоні. Увійди через Apple або e-mail, щоб вони були з тобою на всіх пристроях.
 
 **Ключові слова** (100, через кому, без пробілів):
 вішлист,бажання,подарунки,день народження,список,сюрприз,друзі,пара,подарунок,таємно,wishlist
@@ -68,7 +68,7 @@ Wishpool помогает дарить то, что правда хочется.
 Красиво и удобно
 Тёмная тема, стикеры, папки комнат с фото желаний и понятный интерфейс в стиле iOS.
 
-Можно начать без аккаунта: желания сохранятся на телефоне. Войди через Apple или e-mail, чтобы они были с тобой на всех устройствах и в Telegram.
+Можно начать без аккаунта: желания сохранятся на телефоне. Войди через Apple или e-mail, чтобы они были с тобой на всех устройствах.
 
 **Ключевые слова** (100):
 вишлист,желания,подарки,день рождения,список,сюрприз,друзья,пара,подарок,тайно,wishlist
@@ -105,7 +105,7 @@ Add your date and friends in your rooms get a reminder a week and a day before.
 Made to feel good
 Dark theme, stickers, room folders with your wishes peeking out, and a clean iOS-style design.
 
-Start without an account: your wishes stay on this phone. Sign in with Apple or e-mail to keep them on every device and in Telegram.
+Start without an account: your wishes stay on this phone. Sign in with Apple or e-mail to keep them on every device.
 
 **Keywords** (100):
 wishlist,wish list,gifts,birthday,gift ideas,secret santa,surprise,friends,couple,registry
@@ -117,7 +117,7 @@ The first Wishpool for iPhone: wishlists, rooms, secret gifting and birthday rem
 
 ## Скриншоты (5 штук, как у Maps.me: заголовок, строка под ним, телефон с экраном)
 
-Размер для App Store: 1290 × 2796 (iPhone 6.7"/6.9"). Фон: наш синий градиент `#047DFB` → `#2290F6`, заголовок белый жирный, строка под ним белая на 80%. Звезда-талисман может выглядывать из угла, как лиса у Maps.me.
+Размер для App Store: 1320 × 2868 (6.9") или 1290 × 2796 (6.7"). Другие размеры App Store Connect не примет. Фон: наш синий градиент `#047DFB` → `#2290F6`, заголовок белый жирный, строка под ним белая на 80%. Звезда-талисман может выглядывать из угла, как лиса у Maps.me.
 
 | # | Заголовок | Строка под ним | Какой экран снять |
 |---|---|---|---|
@@ -130,3 +130,37 @@ The first Wishpool for iPhone: wishlists, rooms, secret gifting and birthday rem
 Те же подписи на русском: 1) Вишлисты, которые хочется дарить / Для друзей, пары и дней рождения; 2) Желание за секунду / Вставь ссылку, остальное заполним мы; 3) Комнаты для своих / Выбирай, кто что видит; 4) Дари тайно / Подарки не повторяются, сюрприз сохраняется; 5) Ничего не забудешь / Напомним о днях рождения друзей.
 
 Английские: 1) Wishlists worth gifting / For friends, couples and birthdays; 2) A wish in seconds / Paste a link, we fill in the rest; 3) Rooms for your people / You choose who sees what; 4) Gift in secret / No duplicates, the surprise stays; 5) Never forget a birthday / We remind you about your friends.
+
+---
+
+## Ссылки для App Store Connect
+
+- **Privacy Policy URL:** https://wishpool.clickbrickk.com/privacy
+- **Support URL:** https://wishpool.clickbrickk.com/support
+- **Marketing URL** (не обязательно): https://wishpool.clickbrickk.com/about
+
+## App Privacy (анкета «Конфиденциальность приложения»)
+
+«Собираете ли вы данные?»: **Да**. Ни один тип данных **не используется для отслеживания** (Tracking: No), все **связаны с пользователем** (Linked to the user), цель у всех: **App Functionality**, у «Product Interaction» ещё **Analytics**.
+
+| Раздел Apple | Тип | Зачем |
+|---|---|---|
+| Contact Info | Name | имя в профиле и в комнатах |
+| Contact Info | Email Address | вход по коду и через Apple |
+| User Content | Photos or Videos | фото желаний и аватар |
+| User Content | Other User Content | желания, заметки, комнаты, день рождения |
+| Identifiers | User ID | ID аккаунта (Apple / e-mail) |
+| Usage Data | Product Interaction | события в приложении (например «создана комната»), App Functionality + Analytics |
+
+Не отмечать: Location, Health, Financial Info, Contacts, Browsing History, Search History, Purchases (пока Premium выключен), Diagnostics (своих краш-репортов нет), Advertising Data.
+
+## App Review: данные для проверяющих
+
+В «App Review Information» → «Sign-in required»: включить и написать:
+
+- **User name:** адрес из переменной `REVIEW_EMAIL` на Vercel (например `review@wishpool.clickbrickk.com`)
+- **Password:** код из `REVIEW_CODE` (6 цифр)
+- **Notes:**
+  > Sign in: Profile › Sign in › Continue with e-mail. Enter the e-mail above, tap "Send code", then enter the 6-digit code from the Password field (this review account doesn't receive a real e-mail). The app also works without an account (Continue without an account). To see rooms and secret gifting, open Rooms, create a room, and invite another account with the Invite button. Account deletion: Settings › Delete account.
+
+Перед отправкой стоит создать в этом аккаунте пару желаний и комнату, чтобы проверяющим было что посмотреть.

@@ -1,14 +1,12 @@
-// Sign-in for the native app. Three ways in, same Wishpool account behind them:
-//   - Sign in with Apple (required by App Review when other social logins exist)
-//   - Telegram (Telegram Login in a browser session, back via wishpool://auth)
+// Sign-in for the native app. Two ways in, same Wishpool account behind them
+// when the e-mail matches (server/native-auth.js):
+//   - Sign in with Apple
 //   - e-mail with a one-time code
 // plus "try without an account": a local-only guest mode, like the Mini App
 // outside Telegram. The session token lives in the iOS Keychain (SecureStore).
 
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
-import * as Linking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 
@@ -28,11 +26,12 @@ type AuthValue = {
   user: AuthUser | null;
   appleAvailable: boolean;
   signInWithApple: () => Promise<boolean>;
-  signInWithTelegram: () => Promise<boolean>;
-  startEmail: (email: string) => Promise<void>;
+  startEmail: (email: string, lang: string) => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   continueAsGuest: () => Promise<void>;
   signOut: () => Promise<void>;
+  /** The account's name / photo changed on the server (profile editor). */
+  updateUser: (u: AuthUser) => Promise<void>;
 };
 
 const AuthCtx = createContext<AuthValue | null>(null);
@@ -90,20 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [finish]);
 
-  const signInWithTelegram = useCallback(async () => {
-    const redirect = Linking.createURL("auth");
-    const res = await WebBrowser.openAuthSessionAsync(api.auth.telegramStartUrl(redirect), redirect);
-    if (res.type !== "success") return false;
-    const { queryParams } = Linking.parse(res.url);
-    const token = typeof queryParams?.token === "string" ? queryParams.token : null;
-    if (!token) throw new Error("telegram_no_token");
-    const name = typeof queryParams?.name === "string" ? queryParams.name : "";
-    await finish(token, { id: String(queryParams?.uid || ""), name });
-    return true;
-  }, [finish]);
-
-  const startEmail = useCallback(async (email: string) => {
-    await api.auth.emailStart(email.trim().toLowerCase());
+  const startEmail = useCallback(async (email: string, lang: string) => {
+    await api.auth.emailStart(email.trim().toLowerCase(), lang);
   }, []);
 
   const verifyEmail = useCallback(
@@ -121,15 +108,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (status === "signedIn") await api.signOut().catch(() => {}); // the session dies on the server too
     await Promise.all([TOKEN_KEY, USER_KEY, GUEST_KEY].map((k) => secureStorage.remove(k)));
     setAuthToken(null);
     setUser(null);
     setStatus("signedOut");
+  }, [status]);
+
+  const updateUser = useCallback(async (u: AuthUser) => {
+    await secureStorage.set(USER_KEY, JSON.stringify(u));
+    setUser(u);
   }, []);
 
   const value = useMemo<AuthValue>(
-    () => ({ status, user, appleAvailable, signInWithApple, signInWithTelegram, startEmail, verifyEmail, continueAsGuest, signOut }),
-    [status, user, appleAvailable, signInWithApple, signInWithTelegram, startEmail, verifyEmail, continueAsGuest, signOut],
+    () => ({ status, user, appleAvailable, signInWithApple, startEmail, verifyEmail, continueAsGuest, signOut, updateUser }),
+    [status, user, appleAvailable, signInWithApple, startEmail, verifyEmail, continueAsGuest, signOut, updateUser],
   );
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }

@@ -2,16 +2,15 @@
 // Mini App (web/src/App.jsx), but authenticated with a session token
 // (Authorization: Bearer) instead of Telegram initData.
 //
-// Native auth endpoints the backend needs (see mobile/README.md, "Backend"):
+// Native sign-in (server/native-auth.js):
 //   POST /api/auth/apple           { identityToken, fullName?, nonce } -> { token, user }
-//   POST /api/auth/email/start     { email }                           -> { ok }
+//   POST /api/auth/email/start     { email, lang }                     -> { ok }
 //   POST /api/auth/email/verify    { email, code }                     -> { token, user }
-//   GET  /api/auth/telegram/start?redirect=wishpool://auth             -> Telegram Login, then
-//        302 to wishpool://auth?token=...
 
 import type { AppState, NewWish, Room, Wish } from "../types";
 
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL || "").replace(/\/+$/, "");
+export const SITE_URL = "https://wishpool.clickbrickk.com";
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL || SITE_URL).replace(/\/+$/, "");
 
 let token: string | null = null;
 export function setAuthToken(t: string | null) {
@@ -49,7 +48,7 @@ async function req<T>(method: string, path: string, body?: unknown, opts: { time
   return res.json() as Promise<T>;
 }
 
-export type AuthUser = { id: string; name: string; photo?: string | null; email?: string | null };
+export type AuthUser = { id: string; name: string; photo?: string | null; color?: string; email?: string | null };
 export type AuthResponse = { token: string; user: AuthUser };
 
 export const api = {
@@ -64,7 +63,10 @@ export const api = {
   updateRoom: (id: string, r: Partial<Room>) => req("PATCH", "/rooms/" + id, r),
   leaveRoom: (id: string) => req("POST", "/rooms/" + id + "/leave"),
   deleteRoom: (id: string) => req("DELETE", "/rooms/" + id),
-  joinRoom: (id: string) => req("POST", "/rooms/" + id + "/join", {}),
+  joinRoom: (id: string, b: { inviterId?: string; asCelebrant?: boolean } = {}) => req<{ room: { id: string } }>("POST", "/rooms/" + id + "/join", b),
+  /** What an invite shows before joining: name, sticker, colour, members, is it a surprise. */
+  peekRoom: (id: string) =>
+    req<{ room: Room & { member: boolean; memberCount: number; hasCelebrant: boolean } }>("GET", "/rooms/" + id + "/peek"),
   room: (id: string) => req<any>("GET", "/rooms/" + id),
   reserve: (id: string) => req("POST", "/wishes/" + id + "/reserve"),
   unreserve: (id: string) => req("DELETE", "/wishes/" + id + "/reserve"),
@@ -73,17 +75,18 @@ export const api = {
   // slow shops + fallback services on the server: give it longer
   preview: (url: string) =>
     req<{ title: string; price: string; image: string | null; url: string; guess: boolean }>("GET", "/preview?url=" + encodeURIComponent(url), undefined, { timeout: 25000 }),
-  // Account deletion (App Store guideline 5.1.1(v)); the backend endpoint is still to do.
+  // Account deletion (App Store guideline 5.1.1(v)): everything goes at once.
   deleteAccount: () => req("DELETE", "/me"),
-  /** Name / photo from the profile editor. Needs PATCH /api/me on the backend. */
-  updateMe: (b: { name?: string; photo?: string | null }) => req("PATCH", "/me", b),
+  /** Name / photo from the profile editor (photo: a JPEG data URL, an unchanged https URL, or null). */
+  updateMe: (b: { name?: string; photo?: string | null }) => req<{ user: AuthUser }>("PATCH", "/me", b),
+  setBirthday: (birthday: string | null) => req("PUT", "/me/birthday", { birthday }),
+  signOut: () => req("POST", "/sign-out", {}, { timeout: 5000 }),
   premiumStatus: () => req<{ isPremium: boolean }>("GET", "/me/premium"),
 
   auth: {
     apple: (b: { identityToken: string; nonce: string; fullName?: string | null; email?: string | null }) =>
       req<AuthResponse>("POST", "/auth/apple", b, { auth: false }),
-    emailStart: (email: string) => req<{ ok: boolean }>("POST", "/auth/email/start", { email }, { auth: false }),
+    emailStart: (email: string, lang: string) => req<{ ok: boolean }>("POST", "/auth/email/start", { email, lang }, { auth: false }),
     emailVerify: (email: string, code: string) => req<AuthResponse>("POST", "/auth/email/verify", { email, code }, { auth: false }),
-    telegramStartUrl: (redirect: string) => `${API_URL}/api/auth/telegram/start?redirect=${encodeURIComponent(redirect)}`,
   },
 };

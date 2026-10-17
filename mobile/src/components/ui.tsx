@@ -247,12 +247,14 @@ export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: {
 }
 
 export function Field({
-  label, value, onChangeText, placeholder, multiline, keyboardType, autoCapitalize, autoFocus, error,
+  label, value, onChangeText, placeholder, multiline, keyboardType, autoCapitalize, autoFocus, error, textContentType,
 }: {
   label?: string; value: string; onChangeText: (v: string) => void; placeholder?: string; multiline?: boolean;
   keyboardType?: "default" | "email-address" | "url" | "number-pad"; autoCapitalize?: "none" | "sentences"; autoFocus?: boolean;
   /** Required and still empty after a tap on the action: a red outline and this text under it. */
   error?: string | false;
+  /** iOS autofill, e.g. "oneTimeCode" to offer the code from Mail. */
+  textContentType?: "oneTimeCode" | "emailAddress" | "name";
 }) {
   const [focus, setFocus] = useState(false);
   return (
@@ -268,6 +270,7 @@ export function Field({
         autoCapitalize={autoCapitalize}
         autoCorrect={keyboardType ? false : undefined}
         autoFocus={autoFocus}
+        textContentType={textContentType}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         className={`bg-card2 px-4 font-m500 text-[16px] text-t1 ${multiline ? "min-h-[76px] rounded-[20px]" : "h-lg rounded-full"}`}

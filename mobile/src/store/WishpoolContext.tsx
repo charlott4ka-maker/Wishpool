@@ -1,12 +1,15 @@
 // Wishes and rooms for the whole app. Signed in: the Wishpool backend (the
-// same data as in Telegram). Guest: kept on the phone only, like the Mini App
-// outside Telegram, so the app can be tried before signing in.
+// server the Telegram Mini App uses too). Guest: kept on the phone only, like
+// the Mini App outside Telegram, so the app can be tried before signing in.
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "../auth/AuthContext";
+import { toast } from "../components/Toast";
+import { useT } from "../i18n";
 import { api } from "../services/api";
+import { getPrefs, setPref } from "../settings/prefs";
 import type { AppState, NewWish, Room, Wish } from "../types";
 
 const LOCAL_KEY = "wp_local_state";
@@ -32,8 +35,42 @@ type WishpoolValue = AppState & {
 const Ctx = createContext<WishpoolValue | null>(null);
 const EMPTY: AppState = { wishes: [], rooms: [] };
 
+type ServerMe = { id: string; name: string; photo?: string | null; birthday?: string | null };
+
+// A guest who signs in keeps what they made: the phone's rooms and wishes move
+// into the account once (what's left is saved after each step, so a lost
+// connection halfway never uploads anything twice). Demo content stays behind.
+async function moveLocalToAccount(): Promise<boolean> {
+  if (getPrefs().demo) return false;
+  const raw = await AsyncStorage.getItem(LOCAL_KEY).catch(() => null);
+  const left: AppState = raw ? JSON.parse(raw) : EMPTY;
+  if (!left.wishes.length && !left.rooms.length) return false;
+  const save = () => AsyncStorage.setItem(LOCAL_KEY, JSON.stringify(left));
+  const ids: Record<string, string> = {};
+  while (left.rooms.length) {
+    const r = left.rooms[0];
+    const res = await api.createRoom({ name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle, eventDate: r.eventDate, bdayMode: r.bdayMode, celebrantName: r.celebrantName });
+    ids[r.id] = res.room.id;
+    left.rooms.shift();
+    left.wishes = left.wishes.map((w) => ({ ...w, rooms: w.rooms.map((x) => (x === r.id ? res.room.id : x)) }));
+    await save();
+  }
+  // oldest first, so the newest ends up on top as before
+  while (left.wishes.length) {
+    const w = left.wishes[left.wishes.length - 1];
+    const res = await api.createWish({ emoji: w.emoji, image: w.image, images: w.images, link: w.link, title: w.title, price: w.price, note: w.note, rooms: w.rooms.filter((x) => Object.values(ids).includes(x)) });
+    if (w.giftedAt && res.wish) await api.setGifted(res.wish.id, true).catch(() => {});
+    left.wishes.pop();
+    await save();
+  }
+  await AsyncStorage.removeItem(LOCAL_KEY);
+  return true;
+}
+
 export function WishpoolProvider({ children }: { children: React.ReactNode }) {
-  const { status, user } = useAuth();
+  const { status, user, updateUser } = useAuth();
+  const { t } = useT();
+  const synced = useRef<string | null>(null);
   const online = status === "signedIn" && api.configured();
   const [state, setState] = useState<AppState>(EMPTY);
   const [ready, setReady] = useState(false);
@@ -65,6 +102,10 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
       if (online) {
         const cached = await AsyncStorage.getItem(CACHE_KEY).catch(() => null);
         if (cached && live) setState(JSON.parse(cached));
+        if (user && synced.current !== user.id) {
+          synced.current = user.id;
+          await syncAccount().catch(() => {});
+        }
       }
       await refresh().catch(() => {});
       if (live) setReady(true);
@@ -73,6 +114,25 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
       live = false;
     };
   }, [status, user?.id, online, refresh]);
+
+  // Once per sign-in: the guest's things move in, and the profile (name, photo,
+  // birthday) set on this phone meets the one on the server.
+  const syncAccount = async () => {
+    if (await moveLocalToAccount().catch(() => false)) toast.info(t("movedToAccount"), { root: true });
+    const p = getPrefs();
+    if (!p.demo && (p.displayName || p.avatar)) {
+      const res = await api.updateMe({ ...(p.displayName ? { name: p.displayName } : {}), ...(p.avatar ? { photo: p.avatar } : {}) }).catch(() => null);
+      if (res) {
+        setPref("displayName", null);
+        setPref("avatar", null);
+      }
+    }
+    const me = ((await api.state()) as { me?: ServerMe }).me;
+    if (!me || !user) return;
+    if (me.name !== user.name || (me.photo || null) !== (user.photo || null)) await updateUser({ ...user, name: me.name, photo: me.photo || null });
+    if (me.birthday && me.birthday !== p.birthday) setPref("birthday", me.birthday);
+    else if (!me.birthday && p.birthday) await api.setBirthday(p.birthday).catch(() => {});
+  };
 
   // Local mode: apply the change to the in-memory state and save it.
   const local = useCallback(
