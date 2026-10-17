@@ -76,10 +76,10 @@ export function ToastHost({ inSheet }: { inSheet?: boolean }) {
         style={{
           flexDirection: "row", alignItems: "center", gap: 12, minHeight: 52, maxWidth: "100%", paddingLeft: 12, paddingRight: item.action ? 8 : 20, borderRadius: 26,
           backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: glow ? glow + "59" : "rgba(255,255,255,0.08)",
-          shadowColor: glow || "#000", shadowOpacity: glow ? 0.55 : 0.4, shadowRadius: glow ? 18 : 12, shadowOffset: { width: 0, height: 4 },
+          shadowColor: glow || "#000", shadowOpacity: glow ? 0.28 : 0.4, shadowRadius: glow ? 18 : 12, shadowOffset: { width: 0, height: 4 },
         }}
       >
-        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: bg, alignItems: "center", justifyContent: "center", shadowColor: glow || "transparent", shadowOpacity: glow ? 0.9 : 0, shadowRadius: 8 }}>
+        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: bg, alignItems: "center", justifyContent: "center", shadowColor: glow || "transparent", shadowOpacity: glow ? 0.45 : 0, shadowRadius: 8 }}>
           {Icon ? <Icon size={16} color="#fff" strokeWidth={3} /> : <Txt className="font-m800 text-[16px] text-white">i</Txt>}
         </View>
         <Txt numberOfLines={2} className="shrink font-m600 text-[15px]">{item.text}</Txt>
