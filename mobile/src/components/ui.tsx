@@ -159,15 +159,16 @@ export function GlassCircle({ size = H.sm, onPress, label, children }: { size?: 
   return (
     <Press onPress={onPress} scaleTo={0.9} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
       {LiquidGlass ? (
-        <LiquidGlass glassEffectStyle="regular" colorScheme="dark" isInteractive style={[round, { zIndex: -1 }]} />
+        // a light tint: on a flat dark sheet the bare system glass is almost invisible
+        <LiquidGlass glassEffectStyle="regular" colorScheme="dark" tintColor="rgba(255,255,255,0.10)" isInteractive style={[round, { zIndex: -1 }]} />
       ) : (
         <>
           <BlurView intensity={30} tint="dark" style={[round, { zIndex: -1 }]} />
           <View style={[round, { backgroundColor: "rgba(255,255,255,0.08)", zIndex: -1 }]} />
-          {/* no system glass (older iOS / Expo Go): light falling from the top so it still reads as glass */}
-          <LinearGradient colors={["rgba(255,255,255,0.20)", "rgba(255,255,255,0.02)"]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={[round, { zIndex: -1 }]} />
         </>
       )}
+      {/* light falling from the top, so it reads as glass even over a flat fill */}
+      <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.20)", "rgba(255,255,255,0.02)"]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={[round, { zIndex: -1 }]} />
       {children}
     </Press>
   );
