@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, Mask, Rect } from "react-native-svg";
 
 import { haptic } from "../lib/haptics";
+import { LiquidGlass } from "../lib/liquidGlass";
 import { C, H } from "../theme/tokens";
 import { Press } from "./Press";
 import { Sticker } from "./Sticker";
@@ -31,7 +32,7 @@ const PILL: Record<PillKind, { box: string; text: string }> = {
   primary: { box: "bg-blue", text: "text-white" },
   ghost: { box: "bg-white/10", text: "text-t1" },
   // on the coloured room hero
-  glass: { box: "overflow-hidden bg-white/10", text: "text-white" },
+  glass: { box: "overflow-hidden", text: "text-white" },
   soft: { box: "bg-blueSoft", text: "text-blueText" },
   green: { box: "bg-greenSoft", text: "text-greenText" },
   gold: { box: "bg-gold", text: "text-black" },
@@ -57,10 +58,14 @@ export function Pill({
       className={`${k.box} ${size === "lg" ? "h-lg" : "h-sm"} ${full ? "w-full" : size === "lg" ? "px-6" : "px-4"} flex-row items-center justify-center gap-2 rounded-full`}
       style={{ opacity: disabled ? 0.45 : 1, ...PILL_BORDER[kind] }}
     >
-      {/* glass: a dark frost over whatever is behind it (e.g. the room hero), a soft top sheen */}
-      {kind === "glass" ? (
+      {/* glass: the system Liquid Glass (its own light rim) on iOS 26, else a
+          white 10% frost over a blur with a soft top sheen */}
+      {kind === "glass" && LiquidGlass ? (
+        <LiquidGlass glassEffectStyle="clear" colorScheme="dark" isInteractive style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, borderRadius: 999, zIndex: -1 }} />
+      ) : kind === "glass" ? (
         <>
           <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 }} />
+          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(255,255,255,0.10)", zIndex: -1 }} />
           <LinearGradient colors={["rgba(255,255,255,0.10)", "rgba(255,255,255,0)"]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 }} />
         </>
       ) : null}

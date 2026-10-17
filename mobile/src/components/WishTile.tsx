@@ -6,6 +6,7 @@ import { PressableProps, StyleSheet, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
+import { LiquidGlass } from "../lib/liquidGlass";
 import { wishImages } from "../store/WishpoolContext";
 import type { Wish } from "../types";
 import { C, hex } from "../theme/tokens";
@@ -29,7 +30,12 @@ function GlassFill({ source }: { source: ImageSource | number | null }) {
       {source ? (
         <Image source={source} contentFit="cover" style={{ position: "absolute", left: "-20%", top: "-10%", width: "140%", height: "90%", opacity: 0.35 }} />
       ) : null}
-      <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+      {LiquidGlass ? (
+        // the system glass brings its own edge light
+        <LiquidGlass glassEffectStyle="regular" colorScheme="dark" style={[StyleSheet.absoluteFill, { borderRadius: 24 }]} />
+      ) : (
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+      )}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: hex(C.card, 0.5) }]} />
       <LinearGradient colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 0.6 }} style={StyleSheet.absoluteFill} />
     </View>
