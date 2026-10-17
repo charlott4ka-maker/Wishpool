@@ -173,12 +173,11 @@ export function GlassCircle({ size = H.sm, onPress, label, children, system = tr
   );
 }
 
-// In native sheets the system glass doesn't show (the button came out flat), so
-// the sheet close is always the drawn glass.
+// The same glass as the round buttons on the screens.
 export function CloseButton({ onPress }: { onPress: () => void }) {
   return (
-    <GlassCircle onPress={onPress} label="Close" system={false}>
-      <X size={18} color={C.t2} />
+    <GlassCircle onPress={onPress} label="Close">
+      <X size={18} color={C.t1} />
     </GlassCircle>
   );
 }
