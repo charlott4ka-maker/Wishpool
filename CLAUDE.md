@@ -27,7 +27,7 @@
 - Avatar stacks: a see-through gap masked out of each avatar (`Avatar cut`), never a painted ring.
 - Toggles are the stock iOS `Switch` (no custom track colours). The back button is the SF Symbol `chevron.left` in a round button; pushed-screen titles are centred.
 - Toasts: dark pill from the top with a filled round icon (check blue, cross red, both with a soft glow; info grey "i" without a glow).
-- Empty states: centred in the free space (between header and keyboard when searching), the same gap from the sticker to the text as from the text to the button, the sub close under the title; no sticker on the search-miss state.
+- Empty states: centred in the free space (between header and keyboard when searching), the same gap from the sticker to the text as from the text to the button, the sub close under the title; the search-miss state uses the eyes sticker.
 - Icons in small round buttons: even sizes so they sit dead centre, 1.5px stroke (`absoluteStrokeWidth`).
 - Motion: no bounce on things appearing (photos, stickers, cards); springs are fine for presses and for the segmented control, which stretches like the iOS tab bar selection.
 - Forms: no greyed-out (disabled) action buttons in sheets; a tap with a required field missing outlines that field in red (`Field error`, `DateRow error`) with an error haptic.

@@ -137,12 +137,14 @@ export default function PoolScreen() {
           </Block>
         </ScrollView>
 
-        {/* nothing matches the search: text and a button, centred between the
+        {/* nothing matches the search: eyes, text and a button, centred between the
             header and the keyboard (or the tab bar once it's hidden) */}
         {searchMiss ? (
           <View pointerEvents="box-none" className="absolute left-0 right-0 top-0 items-center justify-center px-8" style={{ bottom: Math.max(kb, insets.bottom + 49) }}>
-            <Txt className="text-center font-m700 text-lg">{t("searchEmptyTitle")}</Txt>
-            <Txt className="mt-2 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{t("searchEmptySub")}</Txt>
+            {/* looking around and finding nothing */}
+            <Sticker emoji="stk:eyes" size={72} />
+            <Txt className="mt-6 text-center font-m700 text-lg">{t("searchEmptyTitle")}</Txt>
+            <Txt className="mt-1 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{t("searchEmptySub")}</Txt>
             <View className="mt-6 self-stretch">
               <Pill full icon={<Plus size={19} color="#fff" />} onPress={add}>
                 {t("addWish")}
