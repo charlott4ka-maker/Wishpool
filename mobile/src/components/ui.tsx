@@ -5,10 +5,12 @@
 
 import { Image } from "expo-image";
 import { Lock, Plus, X } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
-import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import MaskedView from "@react-native-masked-view/masked-view";
+import React, { useEffect, useId, useRef, useState } from "react";
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TextProps, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Defs, Mask, Rect } from "react-native-svg";
 
 import { haptic } from "../lib/haptics";
 import { C, H } from "../theme/tokens";
@@ -76,20 +78,36 @@ export function Chip({ children, active, onPress, color }: { children: React.Rea
   );
 }
 
-// The selected segment is a pill that slides (spring) to the tapped option.
+// The selected segment is a pill that slides (spring) to the tapped option and,
+// like the iOS tab bar's selection, stretches along the way and squeezes a
+// little before it settles.
+/** The neutral selected segment: a cool slate that fits the blue-grey surfaces. */
+export const SEG_ON = "#353C49";
+
 export function Segmented<K extends string>({ options, value, onChange, neutral, className = "", fill = C.card }: { options: [K, string][]; value: K; onChange: (k: K) => void; neutral?: boolean; className?: string; /** track colour (set it when the screen itself is the block fill) */ fill?: string }) {
   const [w, setW] = useState(0);
   const idx = Math.max(0, options.findIndex(([k]) => k === value));
   const x = useSharedValue(0);
+  const sx = useSharedValue(1);
+  const sy = useSharedValue(1);
+  const first = useRef(true);
   const segW = w ? (w - 12 - 4 * (options.length - 1)) / options.length : 0;
   useEffect(() => {
-    x.value = withSpring(idx * (segW + 4), { damping: 18, stiffness: 220, mass: 0.7 });
+    const to = idx * (segW + 4);
+    if (first.current || !segW) {
+      x.value = to;
+      first.current = !segW;
+      return;
+    }
+    x.value = withSpring(to, { damping: 16, stiffness: 200, mass: 0.8 });
+    sx.value = withSequence(withTiming(1.18, { duration: 140 }), withSpring(1, { damping: 9, stiffness: 260 }));
+    sy.value = withSequence(withTiming(0.86, { duration: 140 }), withSpring(1, { damping: 9, stiffness: 260 }));
   }, [idx, segW]); // eslint-disable-line react-hooks/exhaustive-deps
-  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
   return (
     <View className={`h-lg flex-row gap-1 rounded-full p-1.5 ${className}`} style={{ backgroundColor: fill }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       {segW ? (
-        <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 6, top: 6, bottom: 6, width: segW, borderRadius: 999, backgroundColor: neutral ? "#3A3A3E" : C.blue }, pill]} />
+        <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 6, top: 6, bottom: 6, width: segW, borderRadius: 999, backgroundColor: neutral ? SEG_ON : C.blue }, pill]} />
       ) : null}
       {options.map(([k, l]) => {
         const on = value === k;
@@ -111,7 +129,8 @@ export function Segmented<K extends string>({ options, value, onChange, neutral,
 }
 
 export function Card({ children, className = "", style, onPress }: { children: React.ReactNode; className?: string; style?: ViewStyle; onPress?: () => void }) {
-  const cls = `rounded-card bg-card ${className}`;
+  // a bg-* in className replaces the default fill (two bg classes would fight)
+  const cls = `rounded-card ${/(^|\s)bg-/.test(className) ? "" : "bg-card "}${className}`;
   return onPress ? <Press onPress={onPress} scaleTo={0.98} className={cls} style={style}>{children}</Press> : <View className={cls} style={style}>{children}</View>;
 }
 
@@ -175,9 +194,10 @@ export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: {
     <Animated.View entering={FadeIn.duration(350)} style={fill ? { flex: 1 } : undefined}>
     <View className={`items-center ${fill ? "flex-1 justify-center py-8" : compact ? "p-2" : "px-6 py-12"}`}>
       <Sticker emoji={emoji} size={compact ? 56 : 88} rotate={tilt} />
-      <Txt className={`mt-4 text-center font-m700 ${compact ? "text-base" : "text-lg"}`}>{title}</Txt>
-      {sub ? <Txt className="mt-2 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{sub}</Txt> : null}
-      {action ? <View className={fill ? "mt-8 self-stretch" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
+      {/* the same space above the text (from the sticker) and below it (to the button); the sub sits close to the title */}
+      <Txt className={`${compact && !fill ? "mt-4" : "mt-6"} text-center font-m700 ${compact ? "text-base" : "text-lg"}`}>{title}</Txt>
+      {sub ? <Txt className="mt-1 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{sub}</Txt> : null}
+      {action ? <View className={fill ? "mt-6 self-stretch" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
     </View>
     </Animated.View>
   );
@@ -214,9 +234,15 @@ export function Field({
 }
 
 export type AvatarMember = { name: string; color: string; photo?: string | null };
-export function Avatar({ m, size = 34 }: { m: AvatarMember; size?: number }) {
+/**
+ * `cut` = how much the next avatar in a stack overlaps this one: a crescent is
+ * masked out of this avatar's right side (a see-through gap, not a painted
+ * ring), like the Mini App, so the stack reads cleanly on any background.
+ */
+export function Avatar({ m, size = 34, cut = 0 }: { m: AvatarMember; size?: number; cut?: number }) {
   const [failed, setFailed] = useState(false);
-  return (
+  const maskId = useId().replace(/:/g, "");
+  const face = (
     <View style={{ width: size, height: size, borderRadius: size, backgroundColor: m.color, overflow: "hidden" }} className="items-center justify-center">
       {m.photo && !failed ? (
         <Image source={{ uri: m.photo }} style={{ width: size, height: size }} onError={() => setFailed(true)} />
@@ -224,6 +250,31 @@ export function Avatar({ m, size = 34 }: { m: AvatarMember; size?: number }) {
         <Txt className="font-m700 text-white" style={{ fontSize: size * 0.4 }}>{(m.name || "?").slice(0, 1)}</Txt>
       )}
     </View>
+  );
+  if (!cut) return face;
+  const gap = Math.max(2, size * 0.07);
+  const cx = size * 1.5 - cut; // centre of the next avatar, in this one's box
+  if (Platform.OS === "web") {
+    const css = `radial-gradient(circle at ${cx}px 50%, transparent ${size / 2 + gap}px, #000 ${size / 2 + gap + 0.5}px)`;
+    return <View style={{ width: size, height: size, ...({ maskImage: css, WebkitMaskImage: css } as object) }}>{face}</View>;
+  }
+  return (
+    <MaskedView
+      style={{ width: size, height: size }}
+      maskElement={
+        <Svg width={size} height={size}>
+          <Defs>
+            <Mask id={maskId}>
+              <Rect width={size} height={size} fill="#fff" />
+              <Circle cx={cx} cy={size / 2} r={size / 2 + gap} fill="#000" />
+            </Mask>
+          </Defs>
+          <Rect width={size} height={size} fill="#000" mask={`url(#${maskId})`} />
+        </Svg>
+      }
+    >
+      {face}
+    </MaskedView>
   );
 }
 

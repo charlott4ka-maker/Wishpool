@@ -18,7 +18,7 @@ import { DragTile } from "../../components/DragTile";
 import { Press } from "../../components/Press";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
-import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
+import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
 import { SheetHeader } from "../../components/SheetHeader";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
@@ -297,7 +297,7 @@ export default function AddWishScreen() {
                 setPriceMode(k);
               }}
               className="justify-center rounded-full px-3"
-              style={{ backgroundColor: priceMode === k ? "#3A3A3E" : "transparent" }}
+              style={{ backgroundColor: priceMode === k ? SEG_ON : "transparent" }}
             >
               <Txt className={`font-m600 text-[12.5px] ${priceMode === k ? "text-white" : "text-t2"}`}>{l}</Txt>
             </Pressable>

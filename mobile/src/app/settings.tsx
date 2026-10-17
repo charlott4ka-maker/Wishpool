@@ -3,16 +3,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { LinearGradient } from "expo-linear-gradient";
+import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, FileText, Gift, Globe, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate } from "lucide-react-native";
-import { ActionSheetIOS, Alert, Linking, Platform, ScrollView, View } from "react-native";
+import { Bell, Cake, ChevronLeft, FileText, Gift, Globe, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate } from "lucide-react-native";
+import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
 import { SettingsCell, SettingsGroup } from "../components/SettingsList";
-import { TabHeader } from "../components/TabHeader";
 import { Txt } from "../components/ui";
 import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
 import { api } from "../services/api";
@@ -80,11 +80,20 @@ export default function SettingsScreen() {
   const sub = !prefs.notifications;
 
   return (
-    <View className="flex-1 bg-bg">
-      {/* the header block stays put; the group blocks scroll under a fade below it */}
-      <TabHeader title={t("settings")} onBack={() => router.back()} backLabel={t("back")} />
+    <View className="flex-1 bg-card">
+      {/* the header stays put; the list scrolls under a fade below it */}
+      <View className="flex-row items-center px-4 pb-2" style={{ paddingTop: insets.top + 8 }}>
+        <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel={t("back")}>
+          {/* the system SF Symbol back chevron; lucide on web previews */}
+          <SymbolView name="chevron.left" size={19} weight="semibold" tintColor={C.t1} fallback={<ChevronLeft size={22} color={C.t1} />} />
+        </Pressable>
+        {/* title centred on the screen, the back button stays on the left */}
+        <View pointerEvents="none" className="absolute bottom-2 left-0 right-0 h-sm items-center justify-center">
+          <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("settings")}</Txt>
+        </View>
+      </View>
       <View className="flex-1">
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: insets.bottom + 32 }}>
 
         <SettingsGroup title={t("setNotifications")} footer={t("setNotifFooter")}>
           <SettingsCell icon={Bell} tint="#FF3B30" label={t("setAllowNotif")} toggle={{ value: prefs.notifications, onChange: toggleNotifications }} />
@@ -120,9 +129,9 @@ export default function SettingsScreen() {
           )}
         </SettingsGroup>
 
-        <Txt className="mt-6 text-center text-[12.5px] text-t3">Wishpool · {t("setVersion", { v: version })}</Txt>
+        <Txt className="text-center text-[12.5px] text-t3">Wishpool · {t("setVersion", { v: version })}</Txt>
       </ScrollView>
-      <LinearGradient pointerEvents="none" colors={[C.bg, hex(C.bg, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 16 }} />
+      <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 32 }} />
       </View>
     </View>
   );

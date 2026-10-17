@@ -8,7 +8,6 @@ import { Pressable, Switch, View } from "react-native";
 
 import { haptic } from "../lib/haptics";
 import { C } from "../theme/tokens";
-import { BLOCK_GAP, BLOCK_R } from "./TabHeader";
 import { Txt } from "./ui";
 
 const PAD = 16;
@@ -19,10 +18,9 @@ const ROW = 60;
 export function SettingsGroup({ title, footer, children }: { title?: string; footer?: string; children: React.ReactNode }) {
   const rows = React.Children.toArray(children).filter(Boolean);
   return (
-    // one block per group (block layout: 4pt gaps), title and footer inside it
-    <View style={{ marginTop: BLOCK_GAP, backgroundColor: C.card, borderRadius: BLOCK_R, overflow: "hidden", paddingTop: title ? 16 : 4, paddingBottom: footer ? 16 : 4 }}>
-      {title ? <Txt className="mb-1 px-4 font-m600 text-[13px] uppercase text-t2" style={{ letterSpacing: 0.4 }}>{title}</Txt> : null}
-      <View>
+    <View className="mb-8">
+      {title ? <Txt className="mb-3 px-4 font-m600 text-[13px] uppercase text-t2" style={{ letterSpacing: 0.4 }}>{title}</Txt> : null}
+      <View className="overflow-hidden rounded-card bg-raised">
         {rows.map((row, i) => (
           <View key={i}>
             {row}
@@ -30,7 +28,7 @@ export function SettingsGroup({ title, footer, children }: { title?: string; foo
           </View>
         ))}
       </View>
-      {footer ? <Txt className="mt-1 px-4 text-[12.5px] leading-[18px] text-t3">{footer}</Txt> : null}
+      {footer ? <Txt className="mt-3 px-4 text-[12.5px] leading-[18px] text-t3">{footer}</Txt> : null}
     </View>
   );
 }

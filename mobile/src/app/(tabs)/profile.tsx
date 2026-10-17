@@ -10,8 +10,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../auth/AuthContext";
 import { BirthdayCard } from "../../components/BirthdayCard";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
+import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
-import { Block, BLOCK_GAP, TabHeader } from "../../components/TabHeader";
 import { Avatar, Card, Pill, PremiumBadge, Txt } from "../../components/ui";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
@@ -40,39 +40,34 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-bg">
-      <TabHeader title={t("tabProfile")} />
-      {/* blocks with 4pt gaps: who you are, stats, birthday, settings, sign in */}
-      <ScrollView className="flex-1 bg-bg" contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
-        <Block style={{ marginTop: BLOCK_GAP, flexDirection: "row", alignItems: "center", gap: 16 }}>
-          <Avatar m={me} size={60} />
-          <View className="flex-1">
-            <Txt numberOfLines={1} className="font-m800 text-xl">{me.name}</Txt>
-            <Txt className="mt-1 text-[14px] text-t2">{t("statsLine", { w: wishes.length, r: rooms.length })}</Txt>
-          </View>
-        </Block>
+    <View className="flex-1 bg-card">
+      <ScrollView className="flex-1 bg-card" contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
+        <View className="items-center">
+          <Avatar m={me} size={92} />
+          <Txt className="mt-4 font-m800 text-2xl">{me.name}</Txt>
+          <Txt className="mt-1 text-[14.5px] text-t2">{t("statsLine", { w: wishes.length, r: rooms.length })}</Txt>
+        </View>
 
-        <Block style={{ marginTop: BLOCK_GAP, flexDirection: "row", paddingVertical: 20 }}>
-          <View className="flex-1 items-center">
+        <View className="mt-6 flex-row gap-3">
+          <Card className="flex-1 items-center bg-raised p-5">
             <Gift size={22} color={C.blue} />
             <Txt className="mt-2 font-m800 text-[22px]">{shared}</Txt>
             <Txt className="text-[12.5px] text-t2">{t("sharedStat")}</Txt>
-          </View>
-          <View style={{ width: 1, backgroundColor: C.line }} />
-          <View className="flex-1 items-center">
+          </Card>
+          <Card className="flex-1 items-center bg-raised p-5">
             <Heart size={22} color="#FF4D8D" />
             {/* gifts you took in rooms; needs reservations from the backend, 0 for now */}
             <Txt className="mt-2 font-m800 text-[22px]">{0}</Txt>
             <Txt className="text-[12.5px] text-t2">{t("giftingStat")}</Txt>
-          </View>
-        </Block>
+          </Card>
+        </View>
 
-        <View style={{ marginTop: BLOCK_GAP }}>
+        <View className="mt-3">
           <BirthdayCard />
         </View>
 
         {PREMIUM_ENABLED ? (
-        <Card className="mt-3 flex-row items-center gap-4 p-4" onPress={() => router.push("/paywall")}>
+        <Card className="mt-3 flex-row items-center gap-4 bg-raised p-4" onPress={() => router.push("/paywall")}>
           <View className="h-sm w-sm items-center justify-center rounded-full bg-gold/20">
             <Crown size={20} color={C.gold} />
           </View>
@@ -107,17 +102,20 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
-        <SettingsGroup>
-          <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
-        </SettingsGroup>
-        {/* guest: the sign-in button in its own block */}
+        <View className="mt-8">
+          <SettingsGroup>
+            <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
+          </SettingsGroup>
+        </View>
+        {/* guest: just the button, the data-on-this-phone note lives on Wishes */}
         {status === "guest" ? (
-          <Block style={{ marginTop: BLOCK_GAP }}>
+          <View>
             <Pill full onPress={() => router.push("/sign-in-options")}>{t("signInLogin")}</Pill>
-          </Block>
+          </View>
         ) : null}
       </ScrollView>
       <TabBarFade />
+      <StatusBarBackdrop color={C.card} />
     </View>
   );
 }

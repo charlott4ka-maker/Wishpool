@@ -159,8 +159,9 @@ export default function RoomScreen() {
           ) : null}
           <View className="mt-3 flex-row items-center">
             {members.map((m, i) => (
-              <View key={m.id} style={{ marginLeft: i ? -10 : 0, borderRadius: 40, borderWidth: 2, borderColor: "rgba(0,0,0,0.25)" }}>
-                <Avatar m={m} size={38} />
+              // overlapping stack; a masked gap (no ring) around the next one
+              <View key={m.id} style={{ marginLeft: i ? -10 : 0 }}>
+                <Avatar m={m} size={38} cut={i < members.length - 1 ? 10 : 0} />
               </View>
             ))}
             {!coupleFull ? (
@@ -187,7 +188,8 @@ export default function RoomScreen() {
           loading ? (
             <RoomListSkeleton />
           ) : others.length === 0 || lists.length === 0 ? (
-            <Empty compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} action={<Pill icon={<Share2 size={17} color="#fff" />} onPress={invite}>{t("inviteFriends")}</Pill>} />
+            // centred in the space left under the tabs
+            <Empty fill compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} action={<Pill icon={<Share2 size={17} color="#fff" />} onPress={invite}>{t("inviteFriends")}</Pill>} />
           ) : (
             <View className="gap-6">
               {lists.map(({ member, wishes: ws }, i) => (

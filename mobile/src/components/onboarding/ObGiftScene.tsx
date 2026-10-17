@@ -104,7 +104,7 @@ export function ObGiftScene() {
           <View className="mt-3 flex-row">
             {room.members.map((m, i) => (
               <View key={m.id} style={{ marginLeft: i ? -8 : 0 }}>
-                <Avatar m={m} size={32} />
+                <Avatar m={m} size={32} cut={i < room.members.length - 1 ? 8 : 0} />
               </View>
             ))}
           </View>

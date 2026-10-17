@@ -3,34 +3,20 @@
 // top edge, rounded only at the bottom, on the block fill. It stays put; the
 // blocks below scroll under it with a 4pt gap.
 
-import { SymbolView } from "expo-symbols";
-import { ChevronLeft } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { C } from "../theme/tokens";
-import { ScreenTitle, Txt } from "./ui";
+import { ScreenTitle } from "./ui";
 
 export const BLOCK_R = 24;
 export const BLOCK_GAP = 4;
 
-export function TabHeader({ title, right, children, onBack, backLabel }: { title: string; right?: React.ReactNode; children?: React.ReactNode; onBack?: () => void; backLabel?: string }) {
+export function TabHeader({ title, right, children }: { title: string; right?: React.ReactNode; children?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: onBack ? 12 : 4, backgroundColor: C.card, borderBottomLeftRadius: BLOCK_R, borderBottomRightRadius: BLOCK_R, zIndex: 2 }}>
-      {onBack ? (
-        // pushed screens: system back chevron on the left, the title centred
-        <View className="h-sm flex-row items-center">
-          <Pressable onPress={onBack} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel={backLabel}>
-            <SymbolView name="chevron.left" size={19} weight="semibold" tintColor={C.t1} fallback={<ChevronLeft size={22} color={C.t1} />} />
-          </Pressable>
-          <View pointerEvents="none" className="absolute inset-0 items-center justify-center">
-            <Txt className="font-m800 text-[20px]" style={{ letterSpacing: -0.3 }}>{title}</Txt>
-          </View>
-        </View>
-      ) : (
-        <ScreenTitle title={title} right={right} compact />
-      )}
+    <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4, backgroundColor: C.card, borderBottomLeftRadius: BLOCK_R, borderBottomRightRadius: BLOCK_R, zIndex: 2 }}>
+      <ScreenTitle title={title} right={right} compact />
       {children}
     </View>
   );

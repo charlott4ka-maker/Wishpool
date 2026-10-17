@@ -90,12 +90,12 @@ export function RoomFolder({ room, wishes, onPress }: { room: Room; wishes: Wish
         </View>
         <View className="absolute flex-row" style={{ right: "11%", bottom: "12%", zIndex: 4 }}>
           {shown.map((m, i) => (
-            <View key={m.id} style={{ marginLeft: i ? -OV : 0, borderRadius: AV, borderWidth: 2, borderColor: frontBottom }}>
-              <Avatar m={m} size={AV} />
+            <View key={m.id} style={{ marginLeft: i ? -OV : 0 }}>
+              <Avatar m={m} size={AV} cut={i < shown.length - 1 || extra > 0 ? OV : 0} />
             </View>
           ))}
           {extra > 0 ? (
-            <View className="items-center justify-center bg-white/20" style={{ marginLeft: -OV, width: AV + 4, height: AV + 4, borderRadius: AV }}>
+            <View className="items-center justify-center bg-white/20" style={{ marginLeft: -OV, width: AV, height: AV, borderRadius: AV }}>
               <Txt className="font-m700 text-[10.5px] text-white">+{extra}</Txt>
             </View>
           ) : null}

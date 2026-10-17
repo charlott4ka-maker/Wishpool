@@ -142,7 +142,7 @@ function Paywall() {
                       setSelId(p.id);
                     }}
                     className="flex-row items-center justify-between rounded-[24px] px-6 py-6"
-                    style={{ backgroundColor: on ? "rgba(46,125,246,0.12)" : "rgba(255,255,255,0.07)", borderWidth: 2, borderColor: on ? C.blue : "transparent" }}
+                    style={{ backgroundColor: on ? "rgba(53,120,255,0.12)" : "rgba(255,255,255,0.07)", borderWidth: 2, borderColor: on ? C.blue : "transparent" }}
                   >
                     <Txt className="font-m700 text-[17px]">
                       {planName(p)}
