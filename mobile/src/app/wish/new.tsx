@@ -175,7 +175,7 @@ export default function AddWishScreen() {
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
       <SheetHeader title={t(initial ? "editWish" : "newWish")} />
 
-      <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral fill={C.card2} className="mb-4" />
+      <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral fill={C.bg} className="mb-4" />
 
       {cover === "photo" ? (
         <View className="mb-4">
@@ -290,7 +290,7 @@ export default function AddWishScreen() {
       <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} error={tried && !title.trim() && t("requiredField")} />
       <View className="mb-2 flex-row items-center justify-between">
         <Txt className="font-m600 text-[13px] text-t2">{t("priceOpt")}</Txt>
-        <View className="h-sm flex-row gap-1 rounded-full bg-card2 p-1">
+        <View className="h-sm flex-row gap-1 rounded-full bg-bg p-1">
           {([["one", t("priceOne")], ["range", t("priceRangeTab")]] as const).map(([k, l]) => (
             <Pressable
               key={k}

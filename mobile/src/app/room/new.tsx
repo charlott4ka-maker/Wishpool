@@ -147,7 +147,7 @@ export default function CreateRoomScreen() {
           {!editing ? (
             <>
               <Label>{t("bdayWhose")}</Label>
-              <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral fill={C.card2} className="mb-2" />
+              <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral fill={C.bg} className="mb-2" />
               <Txt className="mb-4 text-[12.5px] leading-[18px] text-t3">{t(mode === "self" ? "bdayMineNote" : "bdayOtherNote")}</Txt>
             </>
           ) : null}
