@@ -10,7 +10,7 @@ import { ScreenTitle } from "./ui";
 export function TabHeader({ title, right, children }: { title: string; right?: React.ReactNode; children?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, backgroundColor: "#121214", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(255,255,255,0.16)" }}>
+    <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, backgroundColor: "#121214", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "rgba(255,255,255,0.07)" }}>
       <ScreenTitle title={title} right={right} compact />
       {children}
     </View>
