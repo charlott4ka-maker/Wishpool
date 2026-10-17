@@ -30,7 +30,8 @@ export function Txt({ className = "", ...p }: TextProps & { className?: string }
 type PillKind = "primary" | "ghost" | "glass" | "soft" | "green" | "gold";
 const PILL: Record<PillKind, { box: string; text: string }> = {
   primary: { box: "bg-blue", text: "text-white" },
-  ghost: { box: "bg-white/10", text: "text-t1" },
+  // secondary button: the cool slate of the selected segment, not a neutral grey
+  ghost: { box: "bg-[#2D3440]", text: "text-t1" },
   // on the coloured room hero
   glass: { box: "overflow-hidden", text: "text-white" },
   soft: { box: "bg-blueSoft", text: "text-blueText" },

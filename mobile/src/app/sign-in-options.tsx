@@ -52,7 +52,7 @@ export default function SignInOptions() {
             onPress={run(signInWithApple)}
           />
         ) : null}
-        <Pill full kind="ghost" icon={<Mail size={18} color={C.t1} />} disabled={busy} onPress={run(async () => setEmail(true))}>
+        <Pill full icon={<Mail size={18} color="#fff" />} disabled={busy} onPress={run(async () => setEmail(true))}>
           {t("signInEmail")}
         </Pill>
       </View>
