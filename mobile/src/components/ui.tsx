@@ -163,9 +163,9 @@ export function GlassCircle({ size = H.sm, onPress, label, children, system = tr
       ) : (
         <>
           <BlurView intensity={30} tint="dark" style={[round, { zIndex: -1 }]} />
-          <View style={[round, { backgroundColor: "rgba(255,255,255,0.10)", zIndex: -1 }]} />
-          {/* drawn glass: light falling from the top, so it reads as glass over a flat sheet */}
-          <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.18)", "rgba(255,255,255,0.02)"]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={[round, { zIndex: -1 }]} />
+          <View style={[round, { backgroundColor: "rgba(255,255,255,0.06)", zIndex: -1 }]} />
+          {/* drawn glass: a faint light from the top, kept subtle */}
+          <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.07)", "rgba(255,255,255,0)"]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={[round, { zIndex: -1 }]} />
         </>
       )}
       {children}
@@ -178,7 +178,7 @@ export function GlassCircle({ size = H.sm, onPress, label, children, system = tr
 export function CloseButton({ onPress }: { onPress: () => void }) {
   return (
     <GlassCircle onPress={onPress} label="Close" system={false}>
-      <X size={18} color={C.t1} />
+      <X size={18} color={C.t2} />
     </GlassCircle>
   );
 }
