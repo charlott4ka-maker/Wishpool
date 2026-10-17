@@ -67,7 +67,7 @@ export default function PoolScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           scrollEnabled={wishes.length > 0 && !searchMiss}
-          contentContainerStyle={{ flexGrow: 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}
+          contentContainerStyle={{ flexGrow: wishes.length ? 0 : 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}
           refreshControl={
             <RefreshControl
               tintColor={C.t2}
@@ -83,7 +83,7 @@ export default function PoolScreen() {
           {!searchMiss ? <GuestBanner /> : null}
 
           {tabs.length > 1 && !searchMiss ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 mb-4" contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 mb-4" style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
               {tabs.map((x) => (
                 <Chip key={x.key} active={cur === x.key} onPress={() => setFilter(x.key)}>
                   {x.emoji ? <Sticker emoji={x.emoji} size={15} /> : x.key === "private" ? <Lock size={14} color={cur === x.key ? C.blueText : C.t2} /> : null}
@@ -124,13 +124,6 @@ export default function PoolScreen() {
             </View>
           )}
 
-          {wishes.length > 0 && !searchMiss ? (
-            <View className="mt-6">
-              <Pill full icon={<Plus size={19} color="#fff" />} onPress={add}>
-                {t("addWish")}
-              </Pill>
-            </View>
-          ) : null}
         </ScrollView>
 
         {/* nothing matches the search: text and a button, centred between the

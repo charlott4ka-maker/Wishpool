@@ -67,7 +67,9 @@ export default function AddWishScreen() {
   const [gridW, setGridW] = useState(0);
   const tile = gridW ? (gridW - 16) / 3 : "31%";
 
-  // A newer link replaces what the previous one filled in, never what the user typed.
+  // The product name from a link replaces the title even if something was
+  // typed (only a guessed one leaves typed text alone); price and photo only
+  // replace what an earlier link filled in, never what the user typed.
   const lastLink = useRef(initialLink.trim());
   const resolved = useRef<string | null>(null);
   const auto = useRef({ title: "", price: "", image: null as string | null });
@@ -86,7 +88,7 @@ export default function AddWishScreen() {
         resolved.current = p.url;
         const a = auto.current, cur = fill.current;
         const mine = (v: string, prev: string) => !v.trim() || v === prev;
-        if (p.title && mine(cur.title, a.title)) {
+        if (p.title && (!p.guess || mine(cur.title, a.title))) {
           setTitle(p.title);
           a.title = p.title;
         }

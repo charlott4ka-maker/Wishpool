@@ -30,7 +30,7 @@ export default function RoomsScreen() {
         className="flex-1 bg-bg"
         contentInsetAdjustmentBehavior="never"
         scrollEnabled={rooms.length > 0}
-        contentContainerStyle={{ flexGrow: 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
+        contentContainerStyle={{ flexGrow: rooms.length ? 0 : 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
       >
         {rooms.length === 0 ? (
           <Empty
@@ -60,13 +60,6 @@ export default function RoomsScreen() {
             ))}
           </View>
         )}
-        {rooms.length ? (
-          <View className="mt-6">
-            <Pill full icon={<Plus size={19} color="#fff" />} onPress={create}>
-              {t("createRoom")}
-            </Pill>
-          </View>
-        ) : null}
       </ScrollView>
       <TabBarFade />
     </View>
