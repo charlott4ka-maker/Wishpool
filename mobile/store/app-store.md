@@ -82,7 +82,7 @@ Wishpool помогает дарить то, что правда хочется.
 
 **Name** (30): Wishpool: Wishlist & Gifts
 
-**Subtitle** (30): Wishlists for friends & couples
+**Subtitle** (30): Wishlists for friends & love
 
 **Promotional text** (170):
 Save wishes from any link, share them in rooms with friends and pick gifts in secret. No duplicate presents, no spoiled surprises.
