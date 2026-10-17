@@ -1,10 +1,11 @@
-// Same tokens as `C`, `H`, `R` in web/src/App.jsx and tailwind.config.js.
+// Tokens for the iOS app (tailwind.config.js has the same colours). Surfaces
+// follow the block layout: blocks (card) on a lighter page (bg) with 4pt gaps.
 // Use Tailwind classes for layout; these are for props that take raw values
 // (icon colors, SVG fills, shadows, gradients).
 export const C = {
-  bg: "#000000",
-  card: "#161618",
-  card2: "#232326",
+  bg: "#222831",
+  card: "#15181D",
+  card2: "#23262B",
   line: "rgba(255,255,255,0.08)",
   t1: "#FFFFFF",
   t2: "#8A8A8E",
@@ -17,6 +18,9 @@ export const C = {
   greenText: "#7EE29A",
   danger: "#FF5A5A",
   gold: "#FFC94D",
+  // the blue strip that peeks out from behind a block (sign-in prompt)
+  brand: "#1F3E7B",
+  brand2: "#25488E",
 } as const;
 
 // Exactly two control heights.

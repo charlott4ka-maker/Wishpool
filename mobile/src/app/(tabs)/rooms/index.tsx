@@ -10,7 +10,7 @@ import { RoomFolder } from "../../../components/RoomFolder";
 import { RoomGridSkeleton } from "../../../components/Skeleton";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
-import { TabHeader } from "../../../components/TabHeader";
+import { Block, BLOCK_GAP, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
 import { useWishpool } from "../../../store/WishpoolContext";
 
@@ -31,8 +31,10 @@ export default function RoomsScreen() {
         className="flex-1 bg-bg"
         contentInsetAdjustmentBehavior="never"
         scrollEnabled={rooms.length > 0}
-        contentContainerStyle={{ flexGrow: rooms.length ? 0 : 1, paddingTop: 24, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: BLOCK_GAP }}
       >
+        {/* one content block down to the bottom; extra top room for the photos peeking out of the folders */}
+        <Block grow style={{ paddingTop: 24, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}>
         {!ready ? (
           <RoomGridSkeleton />
         ) : rooms.length === 0 ? (
@@ -63,6 +65,7 @@ export default function RoomsScreen() {
             ))}
           </View>
         )}
+        </Block>
       </ScrollView>
       <TabBarFade />
     </View>

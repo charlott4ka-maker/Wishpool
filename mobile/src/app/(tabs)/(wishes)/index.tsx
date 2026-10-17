@@ -7,14 +7,14 @@ import { useMemo, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { GuestBanner } from "../../../components/GuestBanner";
+import { GUEST_OVERLAP, GuestBanner, useGuestBanner } from "../../../components/GuestBanner";
 import { Sticker } from "../../../components/Sticker";
 import { SearchField } from "../../../components/SearchField";
 import { Chip, Empty, HeaderAdd, Pill, Txt } from "../../../components/ui";
 import { WishGridSkeleton } from "../../../components/Skeleton";
 import { WishCard } from "../../../components/WishCard";
 import { TabBarFade } from "../../../components/TabBarFade";
-import { TabHeader } from "../../../components/TabHeader";
+import { Block, BLOCK_GAP, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
 import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
@@ -29,6 +29,7 @@ export default function PoolScreen() {
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const kb = useKeyboardHeight();
+  const [guest, closeGuest] = useGuestBanner();
 
   const { tabs, shown } = useMemo(() => {
     const active = wishes.filter((w) => !w.giftedAt);
@@ -67,7 +68,7 @@ export default function PoolScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           scrollEnabled={wishes.length > 0 && !searchMiss}
-          contentContainerStyle={{ flexGrow: wishes.length ? 0 : 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}
+          contentContainerStyle={{ flexGrow: 1 }}
           refreshControl={
             <RefreshControl
               tintColor={C.t2}
@@ -80,8 +81,9 @@ export default function PoolScreen() {
             />
           }
         >
-          {!searchMiss ? <GuestBanner /> : null}
-
+          {guest ? <GuestBanner onClose={closeGuest} /> : null}
+          {/* the content block; with the guest strip it covers the strip's lower part */}
+          <Block grow style={{ marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}>
           {tabs.length > 1 && !searchMiss ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 mb-4" style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
               {tabs.map((x) => (
@@ -125,7 +127,7 @@ export default function PoolScreen() {
               ))}
             </View>
           )}
-
+          </Block>
         </ScrollView>
 
         {/* nothing matches the search: text and a button, centred between the

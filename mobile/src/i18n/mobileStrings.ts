@@ -69,7 +69,7 @@ export const MOBILE_STRINGS = {
   emailCodeSent: { uk: "Надіслали код на {email}", ru: "Отправили код на {email}", en: "We sent a code to {email}" },
   emailVerify: { uk: "Увійти", ru: "Войти", en: "Sign in" },
   signOut: { uk: "Вийти з акаунта", ru: "Выйти из аккаунта", en: "Sign out" },
-  guestBanner: { uk: "Бажання лише на цьому телефоні", ru: "Желания только на этом телефоне", en: "Wishes live only on this phone" },
+  guestBanner: { uk: "Увійди, щоб не загубити бажання", ru: "Войди, чтобы не потерять желания", en: "Sign in to keep your wishes safe" },
   guestSignIn: { uk: "Увійти", ru: "Войти", en: "Sign in" },
 
   premium: { uk: "Wishpool Premium", ru: "Wishpool Premium", en: "Wishpool Premium" },
