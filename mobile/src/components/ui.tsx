@@ -77,7 +77,7 @@ export function Chip({ children, active, onPress, color }: { children: React.Rea
 }
 
 // The selected segment is a pill that slides (spring) to the tapped option.
-export function Segmented<K extends string>({ options, value, onChange, neutral, className = "" }: { options: [K, string][]; value: K; onChange: (k: K) => void; neutral?: boolean; className?: string }) {
+export function Segmented<K extends string>({ options, value, onChange, neutral, className = "", fill = C.card }: { options: [K, string][]; value: K; onChange: (k: K) => void; neutral?: boolean; className?: string; /** track colour (set it when the screen itself is the block fill) */ fill?: string }) {
   const [w, setW] = useState(0);
   const idx = Math.max(0, options.findIndex(([k]) => k === value));
   const x = useSharedValue(0);
@@ -87,7 +87,7 @@ export function Segmented<K extends string>({ options, value, onChange, neutral,
   }, [idx, segW]); // eslint-disable-line react-hooks/exhaustive-deps
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
-    <View className={`h-lg flex-row gap-1 rounded-full bg-card p-1.5 ${className}`} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+    <View className={`h-lg flex-row gap-1 rounded-full p-1.5 ${className}`} style={{ backgroundColor: fill }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       {segW ? (
         <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 6, top: 6, bottom: 6, width: segW, borderRadius: 999, backgroundColor: neutral ? "#3A3A3E" : C.blue }, pill]} />
       ) : null}

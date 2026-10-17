@@ -136,7 +136,7 @@ export default function RoomScreen() {
     ]);
 
   return (
-    <ScrollView className="flex-1" style={{ backgroundColor: C.bg }} contentContainerStyle={{ flexGrow: 1 }}>
+    <ScrollView className="flex-1" style={{ backgroundColor: C.card }} contentContainerStyle={{ flexGrow: 1 }}>
       {/* overscroll at the top shows the hero colour, not black */}
       <View pointerEvents="none" style={{ position: "absolute", top: -1000, left: 0, right: 0, height: 1000, backgroundColor: heroTop(room.tint) }} />
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>
@@ -180,8 +180,8 @@ export default function RoomScreen() {
       </View>
 
       {/* content sheet slides over the hero with rounded corners */}
-      <View className="flex-1 bg-bg px-4 pt-4" style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: insets.bottom + 16 }}>
-        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral className="mb-4" />
+      <View className="flex-1 bg-card px-4 pt-4" style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: insets.bottom + 16 }}>
+        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral fill={C.bg} className="mb-4" />
 
         {seg === "lists" ? (
           loading ? (
@@ -216,7 +216,7 @@ export default function RoomScreen() {
                       )}
                     </WishList>
                   ) : (
-                    <View className="rounded-card bg-card px-5 py-4">
+                    <View className="rounded-card bg-bg px-5 py-4">
                       <Txt className="text-[13.5px] text-t3">{t("noWishesYet")}</Txt>
                     </View>
                   )}

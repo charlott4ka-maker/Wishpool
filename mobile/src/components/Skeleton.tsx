@@ -62,7 +62,7 @@ export function RoomListSkeleton() {
             <Bone w={28} h={28} r={14} />
             <Bone w={110} h={15} r={8} />
           </View>
-          <View className="rounded-card bg-card px-4">
+          <View className="rounded-card bg-bg px-4">
             {Array.from({ length: n }, (_, k) => (
               <View key={k} className="flex-row items-center gap-4 py-4">
                 <Bone w={30} h={30} r={8} />

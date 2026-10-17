@@ -66,7 +66,7 @@ export function SwipeRow({ label, color, icon, onAction, children }: { label: st
           <Txt className="font-m700 text-[13px] text-white">{label}</Txt>
         </Pressable>
       </View>
-      <Animated.View {...pan.panHandlers} style={{ paddingHorizontal: LIST.pad, backgroundColor: C.card, transform: [{ translateX: x }] }}>
+      <Animated.View {...pan.panHandlers} style={{ paddingHorizontal: LIST.pad, backgroundColor: C.bg, transform: [{ translateX: x }] }}>
         {children}
       </Animated.View>
     </View>

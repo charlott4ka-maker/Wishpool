@@ -19,7 +19,7 @@ import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
-import { ROOM_COLORS } from "../../theme/tokens";
+import { C, ROOM_COLORS } from "../../theme/tokens";
 import type { RoomType } from "../../types";
 
 const PRESETS: { type: RoomType; key: string; hint: string }[] = [
@@ -122,7 +122,7 @@ export default function CreateRoomScreen() {
       {bday ? (
         <View>
           <Label>{t("bdayWhose")}</Label>
-          <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral className="mb-2 bg-card2" />
+          <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral fill={C.card2} className="mb-2" />
           <Txt className="mb-4 text-[12.5px] leading-[18px] text-t3">{t(mode === "self" ? "bdayMineNote" : "bdayOtherNote")}</Txt>
           {mode === "other" ? <Field label={t("bdayNameLabel")} value={celName} onChangeText={setCelName} placeholder={t("bdayNamePh")} /> : null}
           <DateRow label={t("bdayDateLabel")} value={date} onChange={setDate} hint={t("evHint")} minimumDate={new Date()} />

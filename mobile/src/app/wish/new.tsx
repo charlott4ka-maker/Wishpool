@@ -167,7 +167,7 @@ export default function AddWishScreen() {
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
       <SheetHeader title={t(initial ? "editWish" : "newWish")} />
 
-      <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral className="mb-4 bg-card2" />
+      <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral fill={C.card2} className="mb-4" />
 
       {cover === "photo" ? (
         <View className="mb-4">
