@@ -7,12 +7,14 @@ import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, ChevronLeft, FileText, Gift, Globe, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate } from "lucide-react-native";
+import { Bell, Cake, ChevronLeft, FileText, Gift, Globe, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate, Wand2 } from "lucide-react-native";
 import { useState } from "react";
 import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
+import { toast } from "../components/Toast";
+import { clearDemo, fillDemo } from "../lib/demo";
 import { SettingsCell, SettingsGroup } from "../components/SettingsList";
 import { GlassCircle, Txt } from "../components/ui";
 import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
@@ -116,6 +118,20 @@ export default function SettingsScreen() {
 
         <SettingsGroup title={t("setAbout")}>
           <SettingsCell icon={Sparkles} tint="#0A82F9" label={t("howItWorks")} onPress={() => router.push("/onboarding")} />
+          {/* dev builds only: sample content for App Store screenshots */}
+          {__DEV__ ? (
+            <SettingsCell
+              icon={Wand2}
+              tint="#AF52DE"
+              label={prefs.demo ? "Demo: clear" : "Demo: fill"}
+              onPress={async () => {
+                if (prefs.demo) await clearDemo();
+                else await fillDemo(lang);
+                await refresh().catch(() => {});
+                toast.success(prefs.demo ? "Demo cleared" : "Demo loaded");
+              }}
+            />
+          ) : null}
           <SettingsCell icon={Send} tint="#2AABEE" label={t("channel")} onPress={() => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")} />
           <SettingsCell icon={FileText} tint="#8E8E93" label={t("legalTerms")} onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)} />
           {PRIVACY_URL ? <SettingsCell icon={Shield} tint="#8E8E93" label={t("legalPrivacy")} onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)} /> : null}

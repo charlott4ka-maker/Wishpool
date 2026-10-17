@@ -64,6 +64,9 @@ export const MOBILE_STRINGS = {
   yourNamePh: { uk: "Як тебе звати", ru: "Как тебя зовут", en: "Your name" },
   changePhoto: { uk: "Змінити фото", ru: "Изменить фото", en: "Change photo" },
   removePhoto: { uk: "Прибрати фото", ru: "Убрать фото", en: "Remove photo" },
+  // label-first so a count of 1 reads right in every language
+  statsLine: { uk: "бажань: {w} · кімнат: {r}", ru: "желаний: {w} · комнат: {r}", en: "wishes: {w} · rooms: {r}" },
+  membersColon: { uk: "Учасники: {n}", ru: "Участники: {n}", en: "Members: {n}" },
   pasteLink: { uk: "Вставити посилання з буфера", ru: "Вставить ссылку из буфера", en: "Paste link from clipboard" },
   photosDragHint: { uk: "Перше фото головне. Утримуй і тягни, щоб змінити порядок", ru: "Первое фото главное. Удерживай и тяни, чтобы поменять порядок", en: "The first photo is the cover. Hold and drag to reorder" },
   swipeTake: { uk: "Беру", ru: "Беру", en: "I'll get it" },

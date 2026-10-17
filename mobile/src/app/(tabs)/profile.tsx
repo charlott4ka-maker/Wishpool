@@ -36,6 +36,7 @@ export default function ProfileScreen() {
   // your own name / photo from the profile editor win over the account's
   const me = { name: prefs.displayName || user?.name || t("guest"), color: "#7B61FF", photo: prefs.avatar || user?.photo };
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
+  const gifting = rooms.reduce((n, r) => n + (r.demoLists || []).reduce((k, l) => k + l.wishes.filter((x) => x.reservedByMe).length, 0), 0);
 
   const pickIcon = async (name: (typeof APP_ICONS)[number]["name"]) => {
     if (name && !isPremium) return router.push("/paywall");
@@ -66,8 +67,8 @@ export default function ProfileScreen() {
           </Card>
           <Card className="flex-1 items-center bg-raised p-5">
             <Heart size={22} color="#FF4D8D" />
-            {/* gifts you took in rooms; needs reservations from the backend, 0 for now */}
-            <Txt className="mt-2 font-m800 text-[22px]">{0}</Txt>
+            {/* gifts you took in rooms (only known from demo content until the backend sends it) */}
+            <Txt className="mt-2 font-m800 text-[22px]">{gifting}</Txt>
             <Txt className="text-[12.5px] text-t2">{t("giftingStat")}</Txt>
           </Card>
         </View>
@@ -118,7 +119,7 @@ export default function ProfileScreen() {
           </SettingsGroup>
         </View>
         {/* guest: just the button, the data-on-this-phone note lives on Wishes */}
-        {status === "guest" ? (
+        {status === "guest" && !prefs.demo ? (
           <View>
             <Pill full onPress={() => router.push("/sign-in-options")}>{t("signInLogin")}</Pill>
           </View>

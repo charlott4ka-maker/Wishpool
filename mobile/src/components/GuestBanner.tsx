@@ -10,6 +10,7 @@ import { Pressable, View } from "react-native";
 import { useAuth } from "../auth/AuthContext";
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
+import { usePrefs } from "../settings/prefs";
 import { C } from "../theme/tokens";
 import { BLOCK_GAP, BLOCK_R } from "./TabHeader";
 import { Txt } from "./ui";
@@ -19,7 +20,8 @@ export const GUEST_OVERLAP = BLOCK_R;
 
 /** True while the strip shows (the next block then pulls up by GUEST_OVERLAP). */
 export function useGuestBanner(): boolean {
-  return useAuth().status === "guest";
+  const demo = usePrefs().demo; // demo content for screenshots: no sign-in prompt
+  return useAuth().status === "guest" && !demo;
 }
 
 export function GuestBanner() {

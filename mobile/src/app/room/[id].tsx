@@ -61,7 +61,7 @@ export default function RoomScreen() {
 
   const members: (Member & { you?: boolean })[] = detail?.members || room.members || [];
   const mine = detail ? detail.mine : wishes.filter((w) => w.rooms.includes(room.id));
-  const lists = detail?.lists || [];
+  const lists = detail?.lists || room.demoLists || [];
   const others = members.filter((m) => !m.you && m.id !== "me");
   const coupleFull = room.type === "couple" && members.length >= 2;
   const isOwner = online ? !!detail?.owner : true; // a guest's rooms are all their own

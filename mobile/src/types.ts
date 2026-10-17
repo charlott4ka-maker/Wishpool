@@ -38,6 +38,8 @@ export type Room = {
   bdayMode?: "self" | "other";
   celebrantName?: string;
   sharedCount?: number;
+  /** Demo content only (lib/demo.ts): friends' lists shown offline. */
+  demoLists?: { member: Member; wishes: (Wish & { reservedByMe?: boolean; taken?: boolean })[] }[];
 };
 
 export type AppState = {

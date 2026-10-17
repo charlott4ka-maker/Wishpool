@@ -18,6 +18,8 @@ export type Prefs = {
   /** Your own name and photo (a small JPEG data URL), set on the profile; they win over the account's. */
   displayName: string | null;
   avatar: string | null;
+  /** Demo content for screenshots is loaded: no guest prompts. */
+  demo: boolean;
 };
 
 const KEY = "wp_prefs";
@@ -31,6 +33,7 @@ const DEFAULTS: Prefs = {
   birthday: null,
   displayName: null,
   avatar: null,
+  demo: false,
 };
 
 let current: Prefs = DEFAULTS;
