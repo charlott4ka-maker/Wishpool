@@ -71,7 +71,7 @@ export function WishRow({ w, right }: { w: Wish; right?: React.ReactNode }) {
 export function WishList({ children }: { children: React.ReactNode[] }) {
   const rows = children.filter(Boolean);
   return (
-    <View className="rounded-card bg-card" style={{ paddingHorizontal: LIST.pad }}>
+    <View className="overflow-hidden rounded-card bg-card" style={{ paddingHorizontal: LIST.pad }}>
       {rows.map((row, i) => (
         <View key={i}>
           {row}

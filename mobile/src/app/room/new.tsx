@@ -14,6 +14,7 @@ import { SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
+import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
@@ -83,13 +84,16 @@ export default function CreateRoomScreen() {
       const id = await createRoom({ name: title, type: preset.type, emoji, tint, ...extra } as Parameters<typeof createRoom>[0]);
       haptic("success");
       router.replace({ pathname: "/room/[id]", params: { id } });
+      toast.success(t("toastRoomCreated"), { root: true });
     } catch {
       setBusy(false);
       haptic("error");
+      toast.error(t("toastError"));
     }
   };
 
   return (
+    <View className="flex-1 bg-card">
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
       <SheetHeader title={t("newRoom")} />
       {/* live preview: the room as a folder, like on the Rooms tab */}
@@ -131,5 +135,7 @@ export default function CreateRoomScreen() {
         {busy ? t("creating") : t("createRoom")}
       </Pill>
     </ScrollView>
+    <ToastHost inSheet />
+    </View>
   );
 }

@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fromISODate, toISODate } from "../components/DateRow";
 import { SheetHeader } from "../components/SheetHeader";
 import { Pill, Txt } from "../components/ui";
+import { toast } from "../components/Toast";
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { setPref, usePrefs } from "../settings/prefs";
@@ -27,6 +28,7 @@ export default function BirthdaySheet() {
     setPref("birthday", v);
     haptic("success");
     router.back();
+    if (v) toast.success(t("myBdaySaved"), { root: true });
   };
   return (
     <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>

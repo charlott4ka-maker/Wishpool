@@ -7,14 +7,17 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { CalendarDays, Check, ChevronLeft, Gift, Lock, Pencil, Plus, Share2, Trash2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Share, View } from "react-native";
+import { Alert, Pressable, ScrollView, Share, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { RoomListSkeleton } from "../../components/Skeleton";
+import { SwipeRow } from "../../components/SwipeRow";
 import { heroTop, RoomHeroBg } from "../../components/RoomHeroBg";
 import { Sticker } from "../../components/Sticker";
 import { Avatar, Empty, Pill, Segmented, Txt } from "../../components/ui";
 import { WishList, WishRow } from "../../components/WishRow";
+import { toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { countdownLabel } from "../../lib/dates";
 import { haptic } from "../../lib/haptics";
@@ -91,12 +94,17 @@ export default function RoomScreen() {
           haptic("light");
           try {
             await api.unreserve(w.id);
+            toast.info(t("toastUntaken"));
+          } catch {
+            toast.error(t("toastError"));
           } finally {
             load().catch(() => {});
           }
         },
       },
     ]);
+
+  const openTake = (w: RoomWish) => router.push({ pathname: "/room/take", params: { id: w.id, title: w.title, link: w.link || "" } });
 
   const reserveRight = (w: RoomWish) =>
     w.reservedByMe ? (
@@ -106,7 +114,7 @@ export default function RoomScreen() {
         <Txt className="font-m600 text-[13px] text-t3">{t("taken")}</Txt>
       </View>
     ) : (
-      <Pill size="sm" kind="soft" onPress={() => router.push({ pathname: "/room/take", params: { id: w.id, title: w.title, link: w.link || "" } })}>
+      <Pill size="sm" kind="soft" onPress={() => openTake(w)}>
         <Txt className="font-m600 text-sm text-blueText">{t("take")}</Txt>
         <Sticker emoji="stk:basket" size={18} style={{ margin: -6 }} />
       </Pill>
@@ -120,7 +128,9 @@ export default function RoomScreen() {
         style: "destructive",
         onPress: () => {
           router.back();
-          removeRoom(room.id, isOwner).catch(() => {});
+          removeRoom(room.id, isOwner)
+            .then(() => toast.info(t(isOwner ? "toastRoomDeleted" : "toastLeftRoom")))
+            .catch(() => toast.error(t("toastError")));
         },
       },
     ]);
@@ -175,7 +185,7 @@ export default function RoomScreen() {
 
         {seg === "lists" ? (
           loading ? (
-            <ActivityIndicator color={C.t2} className="mt-8" />
+            <RoomListSkeleton />
           ) : others.length === 0 || lists.length === 0 ? (
             <Empty compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} action={<Pill icon={<Share2 size={17} color="#fff" />} onPress={invite}>{t("inviteFriends")}</Pill>} />
           ) : (
@@ -187,7 +197,24 @@ export default function RoomScreen() {
                     <Txt className="font-m700 text-[15.5px]">{member.name}</Txt>
                   </View>
                   {ws.length ? (
-                    <WishList>{ws.map((w) => <WishRow key={w.id} w={w} right={reserveRight(w)} />)}</WishList>
+                    <WishList>
+                      {ws.map((w) =>
+                        // swipe left: "I'll get it", or "Not giving" on your own pick
+                        w.taken && !w.reservedByMe ? (
+                          <WishRow key={w.id} w={w} right={reserveRight(w)} />
+                        ) : (
+                          <SwipeRow
+                            key={w.id}
+                            label={t(w.reservedByMe ? "swipeUntake" : "swipeTake")}
+                            color={w.reservedByMe ? C.danger : C.blue}
+                            icon={w.reservedByMe ? <X size={20} color="#fff" /> : <Gift size={20} color="#fff" />}
+                            onAction={() => (w.reservedByMe ? untake(w) : openTake(w))}
+                          >
+                            <WishRow w={w} right={reserveRight(w)} />
+                          </SwipeRow>
+                        ),
+                      )}
+                    </WishList>
                   ) : (
                     <View className="rounded-card bg-card px-5 py-4">
                       <Txt className="text-[13.5px] text-t3">{t("noWishesYet")}</Txt>

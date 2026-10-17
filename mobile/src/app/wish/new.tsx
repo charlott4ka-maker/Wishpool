@@ -3,21 +3,24 @@
 // affiliate link when the shop is a known one (services/affiliateConverter).
 // Photo count follows the plan: 1 on Free, more with Premium.
 
+import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Check, Crown, ImageIcon, Lock, Plus, RefreshCw, X } from "lucide-react-native";
+import { Check, ClipboardPaste, Crown, ImageIcon, Lock, Plus, RefreshCw, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { DragTile } from "../../components/DragTile";
 import { Press } from "../../components/Press";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
 import { SheetHeader } from "../../components/SheetHeader";
+import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { priceRangeText, RANGE_RE, withCurrency } from "../../lib/price";
@@ -65,6 +68,10 @@ export default function AddWishScreen() {
   const [busy, setBusy] = useState(false);
   const [linkState, setLinkState] = useState<LinkState>(null);
   const [gridW, setGridW] = useState(0);
+  // photo being dragged (scroll is off meanwhile) and the one just dropped
+  const [lifted, setLifted] = useState<string | null>(null);
+  const [dropped, setDropped] = useState<string | null>(null);
+  const [clip, setClip] = useState(false);
   const tile = gridW ? (gridW - 16) / 3 : "31%";
 
   // The product name from a link replaces the title even if something was
@@ -112,6 +119,15 @@ export default function AddWishScreen() {
     return () => clearTimeout(timer);
   }, [link, photoLimit]);
 
+  // A link on the clipboard: offer to paste it (hasUrl doesn't read the text,
+  // so iOS shows no paste prompt until the button is tapped)
+  useEffect(() => {
+    if (initial || link) return;
+    Clipboard.hasUrlAsync()
+      .then(setClip)
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const pickPhotos = async () => {
     const left = photoLimit - images.length;
     if (left <= 0) return;
@@ -134,9 +150,11 @@ export default function AddWishScreen() {
       else await addWish(data);
       haptic("success");
       router.back();
+      toast.success(t(initial ? "toastSaved" : "toastWishAdded"), { root: true });
     } catch {
       setBusy(false);
       haptic("error");
+      toast.error(t("toastError"));
     }
   };
 
@@ -145,7 +163,8 @@ export default function AddWishScreen() {
   const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
 
   return (
-    <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
+    <View className="flex-1 bg-card">
+    <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
       <SheetHeader title={t(initial ? "editWish" : "newWish")} />
 
       <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral className="mb-4 bg-card2" />
@@ -155,26 +174,46 @@ export default function AddWishScreen() {
           {images.length ? (
             // 3-column grid; photos fade in and out, the rest slide over (no bounce)
             <View className="flex-row gap-2" onLayout={(e) => setGridW(e.nativeEvent.layout.width)}>
-              {images.map((src) => (
+              {images.map((src, i) => (
                 <Animated.View
                   key={src}
                   entering={FadeIn.duration(200)}
                   exiting={FadeOut.duration(160)}
-                  layout={LinearTransition.duration(200)}
-                  style={{ width: tile, aspectRatio: 1, overflow: "hidden", borderRadius: 18, backgroundColor: C.card2 }}
+                  // the dropped photo lands where the finger left it; the others slide
+                  layout={dropped === src ? undefined : LinearTransition.duration(200)}
+                  style={{ width: tile, aspectRatio: 1, zIndex: lifted === src ? 10 : 0 }}
                 >
-                  <Image source={{ uri: src }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
-                  <Press
-                    scaleTo={0.85}
-                    onPress={() => {
-                      haptic("light");
-                      setImages((xs) => xs.filter((x) => x !== src));
+                  <DragTile
+                    index={i}
+                    count={images.length}
+                    step={typeof tile === "number" ? tile + 8 : 0}
+                    onLift={(on) => setLifted(on ? src : null)}
+                    onDrop={(from, to) => {
+                      setDropped(src);
+                      setTimeout(() => setDropped(null), 300);
+                      setImages((xs) => {
+                        const next = [...xs];
+                        const [m] = next.splice(from, 1);
+                        next.splice(to, 0, m);
+                        return next;
+                      });
                     }}
-                    className="absolute right-1.5 top-1.5 h-7 w-7 items-center justify-center rounded-full bg-black/60"
-                    accessibilityLabel={t("remove")}
                   >
-                    <X size={15} color="#fff" />
-                  </Press>
+                    <View style={{ flex: 1, overflow: "hidden", borderRadius: 18, backgroundColor: C.card2 }}>
+                      <Image source={{ uri: src }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
+                      <Press
+                        scaleTo={0.85}
+                        onPress={() => {
+                          haptic("light");
+                          setImages((xs) => xs.filter((x) => x !== src));
+                        }}
+                        className="absolute right-1.5 top-1.5 h-7 w-7 items-center justify-center rounded-full bg-black/60"
+                        accessibilityLabel={t("remove")}
+                      >
+                        <X size={15} color="#fff" />
+                      </Press>
+                    </View>
+                  </DragTile>
                 </Animated.View>
               ))}
               {images.length < photoLimit ? (
@@ -207,7 +246,7 @@ export default function AddWishScreen() {
             </Txt>
           </View>
           ) : images.length ? (
-            <Txt className="mt-2 text-[12.5px] text-t3">{`${t("photosHint")} · ${images.length}/${photoLimit}`}</Txt>
+            <Txt className="mt-2 text-[12.5px] text-t3">{images.length > 1 ? `${t("photosDragHint")} · ${images.length}/${photoLimit}` : `${t("photosHint")} · ${images.length}/${photoLimit}`}</Txt>
           ) : null}
         </View>
       ) : (
@@ -216,6 +255,25 @@ export default function AddWishScreen() {
         </View>
       )}
 
+      {clip && !link ? (
+        <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+          <Press
+            scaleTo={0.98}
+            onPress={async () => {
+              const url = (await Clipboard.getUrlAsync().catch(() => null)) || (await Clipboard.getStringAsync().catch(() => ""));
+              setClip(false);
+              if (url && /^https?:\/\//i.test(url.trim())) {
+                haptic("select");
+                setLink(url.trim());
+              }
+            }}
+            className="mb-3 h-sm flex-row items-center gap-2 self-start rounded-full bg-blueSoft px-4"
+          >
+            <ClipboardPaste size={16} color={C.blueText} />
+            <Txt className="font-m600 text-[14px] text-blueText">{t("pasteLink")}</Txt>
+          </Press>
+        </Animated.View>
+      ) : null}
       <Field label={t("linkLabel")} value={link} onChangeText={setLink} placeholder="https://…" keyboardType="url" autoCapitalize="none" />
       <View className="-mt-2 mb-4 flex-row items-center gap-2">
         {linkState === "loading" ? <RefreshCw size={13} color={hintColor} /> : linkState === "done" ? <Check size={13} color={hintColor} /> : !linkState ? <Sticker emoji="stk:tag" size={14} style={{ margin: -5 }} /> : null}
@@ -284,5 +342,7 @@ export default function AddWishScreen() {
         {busy ? t("savingWish") : t(initial ? "saveChanges" : "saveWish")}
       </Pill>
     </ScrollView>
+    <ToastHost inSheet />
+    </View>
   );
 }

@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { Pill, Txt } from "../../components/ui";
+import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { api } from "../../services/api";
@@ -29,8 +30,10 @@ export default function TakeGift() {
       await api.reserve(id);
       haptic("success");
       router.back();
+      toast.success(t("toastTaken"), { root: true });
     } catch {
       haptic("error");
+      toast.error(t("toastError"));
       setBusy(false);
     }
   };
@@ -49,6 +52,7 @@ export default function TakeGift() {
         </View>
       ) : null}
       <Pill full disabled={busy} onPress={take}>{t("giftTakenOk")}</Pill>
+      <ToastHost inSheet />
     </View>
   );
 }

@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 
 import { RoomFolder } from "../../../components/RoomFolder";
+import { RoomGridSkeleton } from "../../../components/Skeleton";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { TabHeader } from "../../../components/TabHeader";
@@ -17,7 +18,7 @@ export default function RoomsScreen() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { rooms, wishes } = useWishpool();
+  const { rooms, wishes, ready } = useWishpool();
   const create = () => router.push("/room/new");
   const rows: (typeof rooms)[] = [];
   for (let i = 0; i < rooms.length; i += 2) rows.push(rooms.slice(i, i + 2));
@@ -32,7 +33,9 @@ export default function RoomsScreen() {
         scrollEnabled={rooms.length > 0}
         contentContainerStyle={{ flexGrow: rooms.length ? 0 : 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
       >
-        {rooms.length === 0 ? (
+        {!ready ? (
+          <RoomGridSkeleton />
+        ) : rooms.length === 0 ? (
           <Empty
             fill
             emoji="stk:kitty"

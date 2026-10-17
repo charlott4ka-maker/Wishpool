@@ -11,11 +11,11 @@ import { GuestBanner } from "../../../components/GuestBanner";
 import { Sticker } from "../../../components/Sticker";
 import { SearchField } from "../../../components/SearchField";
 import { Chip, Empty, HeaderAdd, Pill, Txt } from "../../../components/ui";
+import { WishGridSkeleton } from "../../../components/Skeleton";
 import { WishCard } from "../../../components/WishCard";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
-import { haptic } from "../../../lib/haptics";
 import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
 import { C } from "../../../theme/tokens";
@@ -24,7 +24,7 @@ export default function PoolScreen() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { wishes, rooms, refresh, toggleWishRoom, setGifted, deleteWish } = useWishpool();
+  const { wishes, rooms, ready, refresh } = useWishpool();
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -94,7 +94,9 @@ export default function PoolScreen() {
             </ScrollView>
           ) : null}
 
-          {wishes.length === 0 ? (
+          {!ready ? (
+            <WishGridSkeleton />
+          ) : wishes.length === 0 ? (
             <Empty
               fill
               emoji="stk:bear"
