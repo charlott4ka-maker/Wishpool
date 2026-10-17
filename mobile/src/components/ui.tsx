@@ -154,29 +154,30 @@ export function Card({ children, className = "", style, onPress }: { children: R
  * edge light, reacts to touch), else white 10% over a blur. Used for the "+"
  * next to titles, back and close.
  */
-export function GlassCircle({ size = H.sm, onPress, label, children }: { size?: number; onPress: () => void; label: string; children: React.ReactNode }) {
+export function GlassCircle({ size = H.sm, onPress, label, children, system = true }: { size?: number; onPress: () => void; label: string; children: React.ReactNode; /** false: always the drawn glass (used inside native sheets) */ system?: boolean }) {
   const round = { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0, borderRadius: size / 2 };
   return (
     <Press onPress={onPress} scaleTo={0.9} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
-      {LiquidGlass ? (
-        // a light tint: on a flat dark sheet the bare system glass is almost invisible
-        <LiquidGlass glassEffectStyle="regular" colorScheme="dark" tintColor="rgba(255,255,255,0.10)" isInteractive style={[round, { zIndex: -1 }]} />
+      {LiquidGlass && system ? (
+        <LiquidGlass glassEffectStyle="regular" colorScheme="dark" isInteractive style={[round, { zIndex: -1 }]} />
       ) : (
         <>
           <BlurView intensity={30} tint="dark" style={[round, { zIndex: -1 }]} />
-          <View style={[round, { backgroundColor: "rgba(255,255,255,0.08)", zIndex: -1 }]} />
+          <View style={[round, { backgroundColor: "rgba(255,255,255,0.10)", zIndex: -1 }]} />
+          {/* drawn glass: light falling from the top, so it reads as glass over a flat sheet */}
+          <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.18)", "rgba(255,255,255,0.02)"]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={[round, { zIndex: -1 }]} />
         </>
       )}
-      {/* light falling from the top, so it reads as glass even over a flat fill */}
-      <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.20)", "rgba(255,255,255,0.02)"]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={[round, { zIndex: -1 }]} />
       {children}
     </Press>
   );
 }
 
+// In native sheets the system glass doesn't show (the button came out flat), so
+// the sheet close is always the drawn glass.
 export function CloseButton({ onPress }: { onPress: () => void }) {
   return (
-    <GlassCircle onPress={onPress} label="Close">
+    <GlassCircle onPress={onPress} label="Close" system={false}>
       <X size={18} color={C.t1} />
     </GlassCircle>
   );
