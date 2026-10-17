@@ -93,7 +93,9 @@ export default function CreateRoomScreen() {
   };
 
   return (
-    <View className="flex-1 bg-card">
+    // a fragment, not a wrapping View: a formSheet lays out its root child
+    // itself, and a flex-1 View around the ScrollView came out empty
+    <>
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
       <SheetHeader title={t("newRoom")} />
       {/* live preview: the room as a folder, like on the Rooms tab */}
@@ -136,6 +138,6 @@ export default function CreateRoomScreen() {
       </Pill>
     </ScrollView>
     <ToastHost inSheet />
-    </View>
+    </>
   );
 }

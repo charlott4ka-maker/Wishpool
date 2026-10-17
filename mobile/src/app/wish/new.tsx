@@ -163,7 +163,9 @@ export default function AddWishScreen() {
   const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
 
   return (
-    <View className="flex-1 bg-card">
+    // a fragment, not a wrapping View: a formSheet lays out its root child
+    // itself, and a flex-1 View around the ScrollView came out empty
+    <>
     <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
       <SheetHeader title={t(initial ? "editWish" : "newWish")} />
 
@@ -343,6 +345,6 @@ export default function AddWishScreen() {
       </Pill>
     </ScrollView>
     <ToastHost inSheet />
-    </View>
+    </>
   );
 }
