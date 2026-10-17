@@ -32,11 +32,12 @@ export function GuestBanner() {
     AsyncStorage.setItem(KEY, String(Date.now() + SNOOZE)).catch(() => {});
   };
   return (
-    <Press scaleTo={0.98} onPress={() => router.push("/sign-in-options")} className="mb-4 flex-row items-center gap-3 rounded-tile bg-card py-3 pl-4 pr-2">
-      <Txt className="flex-1 text-[12.5px] leading-[17px] text-t2">{t("guestBanner")}</Txt>
+    <Press scaleTo={0.98} onPress={() => router.push("/sign-in-options")} className="mb-4 flex-row items-center gap-3 rounded-tile bg-card py-3 pl-4 pr-3">
+      <Txt numberOfLines={2} className="mr-2 flex-1 text-[13px] leading-[18px] text-t2">{t("guestBanner")}</Txt>
       <Txt className="font-m600 text-[13px] text-blueText">{t("guestSignIn")}</Txt>
-      <Pressable onPress={close} hitSlop={8} accessibilityLabel={t("closeBtn")} className="h-8 w-8 items-center justify-center rounded-full">
-        <X size={16} color={C.t3} />
+      {/* same round close as on the sheets */}
+      <Pressable onPress={close} hitSlop={6} accessibilityLabel={t("closeBtn")} className="h-8 w-8 items-center justify-center rounded-full bg-card2">
+        <X size={16} color={C.t2} />
       </Pressable>
     </Press>
   );
