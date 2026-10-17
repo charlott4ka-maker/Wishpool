@@ -171,8 +171,8 @@ export default function RoomScreen() {
             ) : null}
           </View>
           {!coupleFull ? (
-            <View className="mt-6 w-full">
-              <Pill full kind="glass" icon={<Share2 size={17} color="#fff" />} onPress={invite}>
+            <View className="mt-6">
+              <Pill kind="glass" px={12} icon={<Share2 size={17} color="#fff" />} onPress={invite}>
                 {t("invite")}
               </Pill>
             </View>

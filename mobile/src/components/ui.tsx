@@ -45,8 +45,8 @@ const PILL_BORDER: Partial<Record<PillKind, ViewStyle>> = {
 };
 
 export function Pill({
-  children, onPress, kind = "primary", icon, disabled, full, size = "lg",
-}: { children?: React.ReactNode; onPress?: () => void; kind?: PillKind; icon?: React.ReactNode; disabled?: boolean; full?: boolean; size?: "lg" | "sm" }) {
+  children, onPress, kind = "primary", icon, disabled, full, size = "lg", px,
+}: { children?: React.ReactNode; onPress?: () => void; kind?: PillKind; icon?: React.ReactNode; disabled?: boolean; full?: boolean; size?: "lg" | "sm"; /** side padding instead of the default */ px?: number }) {
   const k = PILL[kind];
   return (
     <Press
@@ -55,8 +55,8 @@ export function Pill({
         haptic("light");
         onPress?.();
       }}
-      className={`${k.box} ${size === "lg" ? "h-lg" : "h-sm"} ${full ? "w-full" : size === "lg" ? "px-6" : "px-4"} flex-row items-center justify-center gap-2 rounded-full`}
-      style={{ opacity: disabled ? 0.45 : 1, ...PILL_BORDER[kind] }}
+      className={`${k.box} ${size === "lg" ? "h-lg" : "h-sm"} ${full ? "w-full" : px != null ? "" : size === "lg" ? "px-6" : "px-4"} flex-row items-center justify-center gap-2 rounded-full`}
+      style={{ opacity: disabled ? 0.45 : 1, ...(px != null && !full ? { paddingHorizontal: px } : null), ...PILL_BORDER[kind] }}
     >
       {/* glass: the system Liquid Glass (its own light rim) on iOS 26, else a
           white 10% frost over a blur with a soft top sheen */}

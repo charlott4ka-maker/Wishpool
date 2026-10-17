@@ -4,7 +4,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { Check } from "lucide-react-native";
 import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
-import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SheetHeader } from "../../components/SheetHeader";
@@ -45,11 +44,7 @@ export default function PickWishes() {
                     w={w}
                     right={
                       <View className="h-7 w-7 items-center justify-center rounded-full" style={{ backgroundColor: on ? C.blue : "transparent", borderWidth: on ? 0 : 1.5, borderColor: C.t3 }}>
-                        {on ? (
-                          <Animated.View entering={ZoomIn.springify().damping(12)} exiting={ZoomOut.duration(120)}>
-                            <Check size={16} color="#fff" />
-                          </Animated.View>
-                        ) : null}
+                        {on ? <Check size={16} color="#fff" /> : null}
                       </View>
                     }
                   />
