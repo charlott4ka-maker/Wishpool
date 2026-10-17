@@ -156,10 +156,13 @@ export function Card({ children, className = "", style, onPress }: { children: R
  */
 export function GlassCircle({ size = H.sm, onPress, label, children, system = true }: { size?: number; onPress: () => void; label: string; children: React.ReactNode; /** false: always the drawn glass (used inside native sheets) */ system?: boolean }) {
   const round = { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0, borderRadius: size / 2 };
+  // In fit-to-content sheets the glass mounted before the sheet had a size and
+  // came out flat; it's mounted after the first layout instead.
+  const [laidOut, setLaidOut] = useState(false);
   return (
-    <Press onPress={onPress} scaleTo={0.9} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
+    <Press onPress={onPress} scaleTo={0.9} accessibilityLabel={label} onLayout={() => setLaidOut(true)} style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
       {LiquidGlass && system ? (
-        <LiquidGlass glassEffectStyle="regular" colorScheme="dark" isInteractive style={[round, { zIndex: -1 }]} />
+        laidOut ? <LiquidGlass glassEffectStyle="regular" colorScheme="dark" isInteractive style={[round, { zIndex: -1 }]} /> : null
       ) : (
         <>
           <BlurView intensity={30} tint="dark" style={[round, { zIndex: -1 }]} />
