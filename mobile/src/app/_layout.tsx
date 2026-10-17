@@ -60,6 +60,7 @@ function Gate() {
           </Stack.Protected>
           {/* open both from the welcome screen and for guests ("Sign in" in the app) */}
           <Stack.Screen name="sign-in-options" options={FIT_SHEET} />
+          <Stack.Screen name="onboarding" options={{ presentation: "fullScreenModal" }} />
         </Stack>
       </WishpoolProvider>
     </SubscriptionProvider>

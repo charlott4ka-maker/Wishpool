@@ -103,6 +103,7 @@ export default function SettingsScreen() {
         </SettingsGroup>
 
         <SettingsGroup title={t("setAbout")}>
+          <SettingsCell icon={Sparkles} tint="#2E7DF6" label={t("howItWorks")} onPress={() => router.push("/onboarding")} />
           <SettingsCell icon={Send} tint="#2AABEE" label={t("channel")} onPress={() => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")} />
           <SettingsCell icon={FileText} tint="#8E8E93" label={t("legalTerms")} onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)} />
           {PRIVACY_URL ? <SettingsCell icon={Shield} tint="#8E8E93" label={t("legalPrivacy")} onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)} /> : null}
