@@ -21,13 +21,13 @@ export function SearchField({ value, onChangeText, placeholder, active, onFocusC
   return (
     <View className="mb-3 flex-row items-center gap-2">
       <View className="h-sm flex-1 flex-row items-center gap-2 rounded-full bg-card2 px-4">
-        <Search size={17} color={C.t3} />
+        <Search size={17} color={C.hint} />
         <TextInput
           ref={input}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={C.t3}
+          placeholderTextColor={C.hint}
           returnKeyType="search"
           clearButtonMode="never"
           className="flex-1 font-m500 text-[16px] text-t1"

@@ -255,7 +255,7 @@ export function Field({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={C.t3}
+        placeholderTextColor={C.hint}
         multiline={multiline}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}

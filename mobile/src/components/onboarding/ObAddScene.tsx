@@ -23,7 +23,7 @@ const SHEET_H = 470;
 function Field({ value, placeholder }: { value: string; placeholder: string }) {
   return (
     <View className="mb-3 h-lg justify-center overflow-hidden rounded-full bg-card2 px-4">
-      <Txt numberOfLines={1} className={`text-base ${value ? "text-t1" : "text-t3"}`}>{value || placeholder}</Txt>
+      <Txt numberOfLines={1} className="text-base" style={{ color: value ? C.t1 : C.hint }}>{value || placeholder}</Txt>
     </View>
   );
 }
@@ -65,8 +65,8 @@ export function ObAddScene() {
             </View>
           </View>
           <View className="h-sm flex-row items-center gap-2 rounded-full bg-card2 px-4">
-            <Search size={17} color={C.t3} />
-            <Txt className="text-[16px] text-t3">{t("searchWishes")}</Txt>
+            <Search size={17} color={C.hint} />
+            <Txt className="text-[16px]" style={{ color: C.hint }}>{t("searchWishes")}</Txt>
           </View>
         </MiniHeader>
         <MiniBlock>

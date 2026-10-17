@@ -12,6 +12,8 @@ export const C = {
   t1: "#FFFFFF",
   t2: "#8A8A8E",
   t3: "#5A5A5E",
+  /** placeholder (and the search glass) in inputs: a cool grey that sits on the blue-grey fill */
+  hint: "#6B7487",
   blue: "#0A82F9",
   blueSoft: "rgba(10,130,249,0.16)",
   blueLine: "rgba(10,130,249,0.45)",
