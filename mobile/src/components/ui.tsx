@@ -3,7 +3,9 @@
 // SF Pro (system font), never Regular; controls are 52 or 40 high; 4/8/12/16/24/32 spacing;
 // no outlines on blocks; modals are bottom sheets.
 
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Lock, Plus, X } from "lucide-react-native";
 import MaskedView from "@react-native-masked-view/masked-view";
 import React, { useEffect, useId, useRef, useState } from "react";
@@ -29,17 +31,18 @@ const PILL: Record<PillKind, { box: string; text: string }> = {
   primary: { box: "bg-blue", text: "text-white" },
   ghost: { box: "bg-white/10", text: "text-t1" },
   // on the coloured room hero
-  glass: { box: "bg-white/20", text: "text-white" },
+  glass: { box: "overflow-hidden bg-white/10", text: "text-white" },
   soft: { box: "bg-blueSoft", text: "text-blueText" },
   green: { box: "bg-greenSoft", text: "text-greenText" },
   gold: { box: "bg-gold", text: "text-black" },
 };
 
 // soft / green carry a thin border, as in the Mini App's Pill
-const PILL_BORDER: Partial<Record<PillKind, { borderWidth: number; borderColor: string }>> = {
+const PILL_BORDER: Partial<Record<PillKind, ViewStyle>> = {
   soft: { borderWidth: 1, borderColor: C.blueLine },
   green: { borderWidth: 1, borderColor: "rgba(52,199,89,0.4)" },
-  glass: { borderWidth: 1, borderColor: "rgba(255,255,255,0.28)" },
+  // liquid-glass rim: catches the light along the top and left, dimmer below
+  glass: { borderWidth: 1, borderTopColor: "rgba(255,255,255,0.5)", borderLeftColor: "rgba(255,255,255,0.32)", borderRightColor: "rgba(255,255,255,0.18)", borderBottomColor: "rgba(255,255,255,0.26)" },
 };
 
 export function Pill({
@@ -56,6 +59,13 @@ export function Pill({
       className={`${k.box} ${size === "lg" ? "h-lg" : "h-sm"} ${full ? "w-full" : size === "lg" ? "px-6" : "px-4"} flex-row items-center justify-center gap-2 rounded-full`}
       style={{ opacity: disabled ? 0.45 : 1, ...PILL_BORDER[kind] }}
     >
+      {/* glass: a dark frost over whatever is behind it (e.g. the room hero), a soft top sheen */}
+      {kind === "glass" ? (
+        <>
+          <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 }} />
+          <LinearGradient colors={["rgba(255,255,255,0.10)", "rgba(255,255,255,0)"]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 }} />
+        </>
+      ) : null}
       {icon}
       {typeof children === "string" ? <Txt className={`font-m600 ${k.text} ${size === "lg" ? "text-base" : "text-sm"}`}>{children}</Txt> : children}
     </Press>

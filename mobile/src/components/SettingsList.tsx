@@ -67,8 +67,6 @@ export function SettingsCell({ icon: Icon, tint, label, value, onPress, toggle, 
             haptic("select");
             toggle.onChange(v);
           }}
-          trackColor={{ true: C.green, false: "#39393D" }}
-          ios_backgroundColor="#39393D"
           style={{ alignSelf: "center" }}
         />
         </View>

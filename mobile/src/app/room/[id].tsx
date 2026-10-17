@@ -172,7 +172,7 @@ export default function RoomScreen() {
           </View>
           {!coupleFull ? (
             <View className="mt-6 w-full">
-              <Pill full kind={room.type === "friends" ? "glass" : "primary"} icon={<Share2 size={17} color="#fff" />} onPress={invite}>
+              <Pill full kind="glass" icon={<Share2 size={17} color="#fff" />} onPress={invite}>
                 {t("invite")}
               </Pill>
             </View>
