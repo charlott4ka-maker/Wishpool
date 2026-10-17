@@ -1,7 +1,7 @@
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { Lock, PartyPopper, Users } from "lucide-react-native";
-import { PressableProps, View } from "react-native";
+import { PressableProps, StyleSheet, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
@@ -31,8 +31,8 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
       className="flex-1 overflow-hidden rounded-[24px] p-2"
       style={{ backgroundColor: C.raised, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
     >
-      <View className="aspect-square items-center justify-center overflow-hidden rounded-2xl bg-card2">
-        {img ? <Image source={{ uri: img }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={150} /> : <Sticker emoji={w.emoji} size={56} rotate={-6} />}
+      <View className="w-full items-center justify-center overflow-hidden rounded-2xl bg-card2" style={{ aspectRatio: 1 }}>
+        {img ? <Image source={{ uri: img }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} /> : <Sticker emoji={w.emoji} size={56} rotate={-6} />}
         <BlurView intensity={30} tint="dark" className="absolute bottom-2 left-2 h-6 flex-row items-center gap-1 overflow-hidden rounded-full bg-black/40 px-2">
           {w.giftedAt ? (
             <>
