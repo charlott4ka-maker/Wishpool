@@ -8,11 +8,13 @@ import { useEffect, useRef, useState } from "react";
 import { FlatList, Modal, Pressable, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { C, hex } from "../theme/tokens";
 import { Txt } from "./ui";
 
+// Nearly solid, so the buttons stay readable over any photo.
 function RoundButton({ onPress, children, label, style }: { onPress: () => void; children: React.ReactNode; label: string; style?: object }) {
   return (
-    <Pressable onPress={onPress} accessibilityLabel={label} hitSlop={6} className="h-sm w-sm items-center justify-center rounded-full" style={[{ backgroundColor: "rgba(255,255,255,0.12)" }, style]}>
+    <Pressable onPress={onPress} accessibilityLabel={label} hitSlop={6} className="h-sm w-sm items-center justify-center rounded-full" style={[{ backgroundColor: hex(C.card2, 0.92) }, style]}>
       {children}
     </Pressable>
   );
