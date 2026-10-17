@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { Image } from "expo-image";
+import { Image, ImageSource } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Lock, PartyPopper, Users } from "lucide-react-native";
 import { PressableProps, StyleSheet, View } from "react-native";
@@ -11,12 +11,43 @@ import type { Wish } from "../types";
 import { C, hex } from "../theme/tokens";
 import { Press } from "./Press";
 import { Sticker } from "./Sticker";
+import { STICKER_ASSETS } from "./stickerAssets";
 import { Txt } from "./ui";
 
 // Wishlist card: square picture (photo, or the sticker on a soft tile), two
 // lines of title, price in the accent colour, a small "where" badge. These cards
 // keep the thin light outline (the one exception to "no outlines on blocks"),
-// on a glass fill; they sit straight on the page as their own blocks.
+// on a glass fill (GlassFill), inside the content block with the chips.
+/**
+ * The card's glass, in layers: the #222831 underlay with the wish's own
+ * picture, big and faint, as something for the glass to frost; then the glass
+ * itself (a blur with the block fill #15181D at 50%); then the rim light,
+ * brighter along the top-left edges like light catching glass.
+ */
+function GlassFill({ source }: { source: ImageSource | number | null }) {
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {source ? (
+        <Image source={source} contentFit="cover" style={{ position: "absolute", left: "-20%", top: "-10%", width: "140%", height: "90%", opacity: 0.35 }} />
+      ) : null}
+      <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: hex(C.card, 0.5) }]} />
+      <LinearGradient colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0)"]} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 0.6 }} style={StyleSheet.absoluteFill} />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { borderRadius: 24, borderWidth: 1, borderTopColor: "rgba(255,255,255,0.18)", borderLeftColor: "rgba(255,255,255,0.12)", borderRightColor: "rgba(255,255,255,0.06)", borderBottomColor: "rgba(255,255,255,0.04)" },
+        ]}
+      />
+    </View>
+  );
+}
+
+const stickerSource = (emoji?: string) => {
+  const name = emoji?.startsWith("stk:") ? (emoji.slice(4) as keyof typeof STICKER_ASSETS) : null;
+  return name && STICKER_ASSETS[name] ? STICKER_ASSETS[name] : null;
+};
+
 // `onPress` and any other props (e.g. from <Link asChild>) go to the Pressable.
 export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unknown) => void } & Omit<PressableProps, "onPress" | "children">) {
   const { t } = useT();
@@ -31,12 +62,9 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
         onPress?.(e);
       }}
       className="flex-1 overflow-hidden rounded-[24px] p-2"
-      // glass, as in the reference: a #222831 base with the block fill
-      // (#15181D) at 50% over it, plus a faint light sweep to the right
-      style={{ backgroundColor: C.bg, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
+      style={{ backgroundColor: C.bg }}
     >
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: hex(C.card, 0.5) }]} />
-      <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.025)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.4 }} style={StyleSheet.absoluteFill} />
+      <GlassFill source={img ? { uri: img } : stickerSource(w.emoji)} />
       <View className="aspect-square items-center justify-center overflow-hidden rounded-2xl bg-card2">
         {img ? <Image source={{ uri: img }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={150} /> : <Sticker emoji={w.emoji} size={56} rotate={-6} />}
         <BlurView intensity={30} tint="dark" className="absolute bottom-2 left-2 h-6 flex-row items-center gap-1 overflow-hidden rounded-full bg-black/40 px-2">
