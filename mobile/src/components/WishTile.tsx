@@ -31,7 +31,8 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
       className="flex-1 overflow-hidden rounded-[24px] p-2"
       style={{ backgroundColor: C.raised, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
     >
-      <View className="w-full items-center justify-center overflow-hidden rounded-2xl bg-card2" style={{ aspectRatio: 1 }}>
+      {/* picture tile: a touch lighter than the card itself, in the same tone */}
+      <View className="w-full items-center justify-center overflow-hidden rounded-2xl" style={{ aspectRatio: 1, backgroundColor: "rgba(255,255,255,0.04)" }}>
         {img ? <Image source={{ uri: img }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} /> : <Sticker emoji={w.emoji} size={56} rotate={-6} />}
         <BlurView intensity={30} tint="dark" className="absolute bottom-2 left-2 h-6 flex-row items-center gap-1 overflow-hidden rounded-full bg-black/40 px-2">
           {w.giftedAt ? (
