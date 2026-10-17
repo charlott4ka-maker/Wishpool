@@ -31,7 +31,7 @@ export default function RoomsScreen() {
         className="flex-1 bg-bg"
         contentInsetAdjustmentBehavior="never"
         scrollEnabled={rooms.length > 0}
-        contentContainerStyle={{ flexGrow: rooms.length ? 0 : 1, paddingTop: 16, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
+        contentContainerStyle={{ flexGrow: rooms.length ? 0 : 1, paddingTop: 24, paddingHorizontal: 16, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}
       >
         {!ready ? (
           <RoomGridSkeleton />
