@@ -51,7 +51,7 @@ export default function TakeGift() {
           </Pill>
         </View>
       ) : null}
-      <Pill full disabled={busy} onPress={take}>{t("giftTakenOk")}</Pill>
+      <Pill full onPress={take}>{t("giftTakenOk")}</Pill>
       <ToastHost inSheet />
     </View>
   );

@@ -74,10 +74,16 @@ export default function CreateRoomScreen() {
   const bday = preset.type === "birthday";
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
   const title = name.trim() || autoName;
+  const [tried, setTried] = useState(false);
   const ready = !bday || (!!date && (mode === "self" || !!celName.trim()));
 
   const submit = async () => {
-    if (busy || !ready || isStickerLocked(emoji)) return;
+    if (busy || isStickerLocked(emoji)) return;
+    // no greyed-out Create: a tap with a missing field outlines it in red
+    if (!ready) {
+      setTried(true);
+      return haptic("error");
+    }
     setBusy(true);
     const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : {};
     try {
@@ -126,14 +132,14 @@ export default function CreateRoomScreen() {
           <Label>{t("bdayWhose")}</Label>
           <Segmented options={[["self", t("bdayMine")], ["other", t("bdayOther")]]} value={mode} onChange={setMode} neutral fill={C.card2} className="mb-2" />
           <Txt className="mb-4 text-[12.5px] leading-[18px] text-t3">{t(mode === "self" ? "bdayMineNote" : "bdayOtherNote")}</Txt>
-          {mode === "other" ? <Field label={t("bdayNameLabel")} value={celName} onChangeText={setCelName} placeholder={t("bdayNamePh")} /> : null}
-          <DateRow label={t("bdayDateLabel")} value={date} onChange={setDate} hint={t("evHint")} minimumDate={new Date()} />
+          {mode === "other" ? <Field label={t("bdayNameLabel")} value={celName} onChangeText={setCelName} placeholder={t("bdayNamePh")} error={tried && !celName.trim()} /> : null}
+          <DateRow label={t("bdayDateLabel")} value={date} onChange={setDate} hint={t("evHint")} minimumDate={new Date()} error={tried && !date} />
         </View>
       ) : null}
 
       <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
 
-      <Pill full icon={<Plus size={18} color="#fff" />} disabled={busy || !ready} onPress={submit}>
+      <Pill full icon={<Plus size={18} color="#fff" />} onPress={submit}>
         {busy ? t("creating") : t("createRoom")}
       </Pill>
     </ScrollView>

@@ -36,10 +36,10 @@ export function DatePill({ value, onChange, minimumDate, maximumDate }: { value:
 }
 
 /** A labelled row: label on the left, the date pill on the right. */
-export function DateRow({ label, value, onChange, hint, minimumDate }: { label: string; value: string | null; onChange: (iso: string) => void; hint?: string; minimumDate?: Date }) {
+export function DateRow({ label, value, onChange, hint, minimumDate, error }: { label: string; value: string | null; onChange: (iso: string) => void; hint?: string; minimumDate?: Date; /** required and still empty: red outline */ error?: boolean }) {
   return (
     <View className="mb-4">
-      <View className="h-lg flex-row items-center justify-between rounded-tile bg-card2 pl-4 pr-2">
+      <View className="h-lg flex-row items-center justify-between rounded-tile bg-card2 pl-4 pr-2" style={{ borderWidth: 1, borderColor: error ? C.danger : "transparent" }}>
         <Txt className="text-base">{label}</Txt>
         <DatePill value={value} onChange={onChange} minimumDate={minimumDate} />
       </View>

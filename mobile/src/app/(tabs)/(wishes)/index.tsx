@@ -27,9 +27,11 @@ export default function PoolScreen() {
   const { wishes, rooms, ready, refresh } = useWishpool();
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const kb = useKeyboardHeight();
-  const guest = useGuestBanner();
+  // the sign-in strip steps aside while searching
+  const guest = useGuestBanner() && !searching;
 
   const { tabs, shown } = useMemo(() => {
     const active = wishes.filter((w) => !w.giftedAt);
@@ -56,9 +58,11 @@ export default function PoolScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      <TabHeader title={t("poolTitle")} right={<HeaderAdd onPress={add} label={t("addWish")} />}>
-        {/* search only once there is something to search */}
-        {wishes.length ? <SearchField value={query} onChangeText={setQuery} placeholder={t("searchWishes")} /> : null}
+      <TabHeader title={t("poolTitle")} right={<HeaderAdd onPress={add} label={t("addWish")} />} searching={searching && wishes.length > 0}>
+        {/* search only once there is something to search; while it's active the title folds away */}
+        {wishes.length ? (
+          <SearchField value={query} onChangeText={setQuery} placeholder={t("searchWishes")} active={searching} onFocusChange={setSearching} cancelLabel={t("setCancel")} />
+        ) : null}
       </TabHeader>
       {/* the guest strip stays put; the content block below overlaps its lower part */}
       {guest ? <GuestBanner /> : null}

@@ -72,6 +72,7 @@ export default function AddWishScreen() {
   const [lifted, setLifted] = useState<string | null>(null);
   const [dropped, setDropped] = useState<string | null>(null);
   const [clip, setClip] = useState(false);
+  const [tried, setTried] = useState(false);
   const tile = gridW ? (gridW - 16) / 3 : "31%";
 
   // The product name from a link replaces the title even if something was
@@ -138,7 +139,12 @@ export default function AddWishScreen() {
   };
 
   const submit = async () => {
-    if (busy || !title.trim()) return;
+    if (busy) return;
+    // no greyed-out Save: a tap with no title outlines the field in red
+    if (!title.trim()) {
+      setTried(true);
+      return haptic("error");
+    }
     setBusy(true);
     try {
       const pics = cover === "photo" ? await Promise.all(images.slice(0, photoLimit).map((u) => (/^(https?|data):/.test(u) ? u : toDataUrl(u)))) : [];
@@ -281,7 +287,7 @@ export default function AddWishScreen() {
         {linkState === "loading" ? <RefreshCw size={13} color={hintColor} /> : linkState === "done" ? <Check size={13} color={hintColor} /> : !linkState ? <Sticker emoji="stk:tag" size={14} style={{ margin: -5 }} /> : null}
         <Txt className="flex-1 text-[12.5px]" style={{ color: hintColor }}>{hint}</Txt>
       </View>
-      <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} />
+      <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} error={tried && !title.trim()} />
       <View className="mb-2 flex-row items-center justify-between">
         <Txt className="font-m600 text-[13px] text-t2">{t("priceOpt")}</Txt>
         <View className="h-sm flex-row gap-1 rounded-full bg-card2 p-1">
@@ -340,7 +346,7 @@ export default function AddWishScreen() {
         <View className="h-2" />
       )}
 
-      <Pill full disabled={!title.trim() || busy} onPress={submit}>
+      <Pill full onPress={submit}>
         {busy ? t("savingWish") : t(initial ? "saveChanges" : "saveWish")}
       </Pill>
     </ScrollView>

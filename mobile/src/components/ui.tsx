@@ -217,10 +217,12 @@ export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: {
 }
 
 export function Field({
-  label, value, onChangeText, placeholder, multiline, keyboardType, autoCapitalize, autoFocus,
+  label, value, onChangeText, placeholder, multiline, keyboardType, autoCapitalize, autoFocus, error,
 }: {
   label?: string; value: string; onChangeText: (v: string) => void; placeholder?: string; multiline?: boolean;
   keyboardType?: "default" | "email-address" | "url" | "number-pad"; autoCapitalize?: "none" | "sentences"; autoFocus?: boolean;
+  /** Required and still empty after a tap on the action: a red outline. */
+  error?: boolean;
 }) {
   const [focus, setFocus] = useState(false);
   return (
@@ -240,7 +242,7 @@ export function Field({
         onBlur={() => setFocus(false)}
         className={`bg-card2 px-4 font-m500 text-[16px] text-t1 ${multiline ? "min-h-[76px] rounded-[20px]" : "h-lg rounded-full"}`}
         // fontSize only: a line height (text-base sets 24) pushes iOS input text down
-        style={{ borderWidth: 1, borderColor: focus ? C.blueLine : "transparent", textAlignVertical: multiline ? "top" : "center", paddingTop: multiline ? 14 : 0, paddingBottom: multiline ? 14 : 0 }}
+        style={{ borderWidth: 1, borderColor: error ? C.danger : focus ? C.blueLine : "transparent", textAlignVertical: multiline ? "top" : "center", paddingTop: multiline ? 14 : 0, paddingBottom: multiline ? 14 : 0 }}
       />
     </View>
   );
