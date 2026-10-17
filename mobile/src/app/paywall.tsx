@@ -102,7 +102,7 @@ function Paywall() {
           <View className="mb-6 flex-row items-end">
             <Sticker emoji="stk:ring" size={52} rotate={-12} />
             <Sticker emoji="stk:gift" size={76} style={{ marginHorizontal: -4 }} />
-            <Sticker emoji="stk:kitty" size={52} rotate={12} />
+            <Sticker emoji="stk:gift" size={52} rotate={12} />
           </View>
           <View className="flex-row items-start">
             <Txt className="font-m800 text-[44px] leading-[48px]" style={{ letterSpacing: -1.5 }}>Wishpool</Txt>

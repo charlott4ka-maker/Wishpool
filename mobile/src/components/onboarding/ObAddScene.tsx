@@ -17,7 +17,7 @@ import { measureSpot, MiniBlock, MiniGlass, MiniHeader, MiniPhone, OB_H, Pop, RE
 const wish = (id: string, title: string, price: string, emoji: string, rooms: string[]): Wish => ({
   id, title, price, emoji, rooms, image: null, images: [], link: null, note: "", giftedAt: null,
 });
-const GRID = [wish("g1", "Свічка", "650 ₴", "stk:candle", ["x"]), wish("g2", "Matcha set", "", "stk:matcha", []), wish("g3", "Кеди", "3 100 ₴", "stk:sneakers", ["x"])];
+const GRID = [wish("g1", "Свічка", "650 ₴", "stk:candle", ["x"]), wish("g2", "Matcha set", "", "stk:matcha", []), wish("g3", "Книга", "450 ₴", "stk:book", ["x"])];
 const SHEET_H = 470;
 
 function Field({ value, placeholder }: { value: string; placeholder: string }) {

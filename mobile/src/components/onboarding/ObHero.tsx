@@ -13,9 +13,9 @@ import { Sticker } from "../Sticker";
 import { Txt } from "../ui";
 import { useTypewriter } from "./shared";
 
-const DROP = ["stk:headphones", "stk:kitty"];
+const DROP = ["stk:headphones", "stk:gift"];
 const RING1 = ["stk:ring", "stk:plane", "stk:gamepad"];
-const RING2 = ["stk:matcha", "stk:sneakers", "stk:picture", "stk:lipstick"];
+const RING2 = ["stk:matcha", "stk:book", "stk:picture", "stk:lipstick"];
 const W = 236;
 const FH = Math.round(236 / 1.12);
 const FRONT = folderPath(W, FH);

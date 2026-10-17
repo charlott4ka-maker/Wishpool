@@ -30,16 +30,17 @@ export type StickerPack = {
   isPremiumOnly: boolean;
 };
 
-// Same order as STICKERS in web/src/App.jsx, so rooms and wishes created on
-// either app pick from the same grid.
+// Same order as STICKERS in web/src/App.jsx, minus the branded ones.
 export const STICKER_PACKS: StickerPack[] = [
   {
     id: "classic",
     titleKey: "packClassic",
     isPremiumOnly: false,
     stickers: [
-      "candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear", "plumbob", "bag", "qblock",
-      "cake", "gift", "piggy", "headphones", "book", "sneakers", "lipstick", "plane", "kitty", "ring", "picture", "gamepad",
+      // no branded ones (McDonald's bag, Nike sneakers, Hello Kitty, Sims plumbob,
+      // Mario block): their files stay so older wishes and rooms still show them
+      "candle", "ghost", "coconut", "shell", "uno", "orange", "matcha", "flower", "bear",
+      "cake", "gift", "piggy", "headphones", "book", "lipstick", "plane", "ring", "picture", "gamepad",
     ],
   },
   {

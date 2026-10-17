@@ -43,7 +43,7 @@ export default function RoomsScreen() {
         ) : rooms.length === 0 ? (
           <Empty
             fill
-            emoji="stk:kitty"
+            emoji="stk:piggy"
             tilt={0}
             title={t("roomsEmptyTitle")}
             sub={t("roomsEmptySub")}
