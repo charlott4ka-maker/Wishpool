@@ -30,6 +30,8 @@ export function WishDetails({
   const imgs = wishImages(w);
   const [cur, setCur] = useState(0);
   const [viewer, setViewer] = useState<number | null>(null); // full-screen photo
+  const [stripW, setStripW] = useState(0);
+  const photoW = stripW || width - 32;
   const confirm = (text: string, yes: () => void) => Alert.alert("", text, [{ text: t("back"), style: "cancel" }, { text: "OK", onPress: yes }]);
   const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
   return (
@@ -37,18 +39,19 @@ export function WishDetails({
       {imgs.length ? (
         // fixed height: in a fit-to-content sheet a horizontal ScrollView
         // otherwise mis-measures and pushes everything around
-        <View style={{ height: PHOTO_H, marginTop: -8, borderRadius: 26, overflow: "hidden", backgroundColor: C.card2 }}>
+        // photos are as wide as the strip itself (measured), so they fill it edge to edge
+        <View onLayout={(e) => setStripW(e.nativeEvent.layout.width)} style={{ height: PHOTO_H, marginTop: -8, borderRadius: 26, overflow: "hidden", backgroundColor: C.card2 }}>
           <ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             style={{ height: PHOTO_H, flexGrow: 0 }}
-            onScroll={(e) => setCur(Math.round(e.nativeEvent.contentOffset.x / (width - 32)))}
+            onScroll={(e) => setCur(Math.round(e.nativeEvent.contentOffset.x / photoW))}
             scrollEventThrottle={32}
           >
             {imgs.map((src, i) => (
               <Pressable key={i} onPress={() => setViewer(i)}>
-                <Image source={{ uri: src }} style={{ width: width - 32, height: PHOTO_H }} contentFit="cover" />
+                <Image source={{ uri: src }} style={{ width: photoW, height: PHOTO_H }} contentFit="cover" />
               </Pressable>
             ))}
           </ScrollView>
