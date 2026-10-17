@@ -243,9 +243,14 @@ export default function RoomScreen() {
             </View>
           )
         ) : (
-          <Animated.View entering={FadeIn.duration(220)}>
+          <Animated.View entering={FadeIn.duration(220)} style={{ flex: 1 }}>
             {mine.length === 0 ? (
-              <Empty compact emoji="stk:gift" tilt={0} title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
+              // centred at the same height as the empty "Friends' lists": the
+              // buttons below take 128pt, so it borrows 56 of them back
+              // (lists: centred above 72pt of padding)
+              <View style={{ flex: 1, marginBottom: -56 }}>
+                <Empty fill compact emoji="stk:gift" tilt={0} title={t("nothingSharedTitle")} sub={t("nothingSharedSub")} />
+              </View>
             ) : (
               <WishList>
                 {mine.map((w) => (

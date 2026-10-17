@@ -29,7 +29,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   const [page, setPage] = useState(0);
   const last = page === PAGES - 1;
   return (
-    <View className="flex-1 bg-bg px-4" style={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}>
+    <View className="flex-1 bg-card px-4" style={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}>
       <View className="h-sm flex-row justify-end">
         {!last ? (
           <Pressable onPress={onDone} className="h-sm justify-center px-2">
@@ -52,7 +52,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       </PageIn>
       <View className="mb-4 mt-6 flex-row justify-center gap-2">
         {Array.from({ length: PAGES }, (_, j) => (
-          <View key={j} style={{ width: j === page ? 24 : 8, height: 8, borderRadius: 8, backgroundColor: j === page ? C.blue : C.card2 }} />
+          <View key={j} style={{ width: j === page ? 24 : 8, height: 8, borderRadius: 8, backgroundColor: j === page ? C.blue : C.bg }} />
         ))}
       </View>
       <Pill

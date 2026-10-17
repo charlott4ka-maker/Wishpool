@@ -2,7 +2,7 @@
 // slides up, a shop link types itself in, the name/price/photo fill in, the
 // finger taps Save and the new card pops into the grid.
 
-import { Check, ImageIcon, RefreshCw } from "lucide-react-native";
+import { Check, ImageIcon, Plus, RefreshCw, Search, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, View } from "react-native";
 
@@ -10,9 +10,9 @@ import { useT } from "../../i18n";
 import { C, H } from "../../theme/tokens";
 import type { Wish } from "../../types";
 import { Sticker } from "../Sticker";
-import { HeaderAdd, Pill, Txt } from "../ui";
+import { Pill, Txt } from "../ui";
 import { WishTile } from "../WishTile";
-import { measureSpot, MiniPhone, OB_H, Pop, REST, Spot, useScript, useTypewriter } from "./shared";
+import { measureSpot, MiniBlock, MiniGlass, MiniHeader, MiniPhone, OB_H, Pop, REST, Spot, useScript, useTypewriter } from "./shared";
 
 const wish = (id: string, title: string, price: string, emoji: string, rooms: string[]): Wish => ({
   id, title, price, emoji, rooms, image: null, images: [], link: null, note: "", giftedAt: null,
@@ -53,13 +53,23 @@ export function ObAddScene() {
 
   return (
     <MiniPhone rootRef={root} finger={pos} tap={tap}>
-      <View style={{ paddingTop: 48, paddingHorizontal: 16 }}>
-        <View className="flex-row items-end justify-between px-1 pb-5 pt-1.5">
-          <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("poolTitle")}</Txt>
-          <View ref={plus} collapsable={false}>
-            <HeaderAdd onPress={() => {}} label="" />
+      {/* the Wishes tab as it is now: header block with the search, then the content block */}
+      <View style={{ flex: 1 }}>
+        <MiniHeader>
+          <View className="flex-row items-center justify-between px-1 pb-3 pt-1.5">
+            <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("poolTitle")}</Txt>
+            <View ref={plus} collapsable={false}>
+              <MiniGlass size={H.lg}>
+                <Plus size={24} color={C.t1} />
+              </MiniGlass>
+            </View>
           </View>
-        </View>
+          <View className="h-sm flex-row items-center gap-2 rounded-full bg-card2 px-4">
+            <Search size={17} color={C.t3} />
+            <Txt className="text-[16px] text-t3">{t("searchWishes")}</Txt>
+          </View>
+        </MiniHeader>
+        <MiniBlock>
         <View className="gap-3">
           {rows.map((row, i) => (
             <View key={i} className="flex-row gap-3">
@@ -68,6 +78,7 @@ export function ObAddScene() {
             </View>
           ))}
         </View>
+        </MiniBlock>
       </View>
 
       <Animated.View
@@ -78,7 +89,12 @@ export function ObAddScene() {
         }}
       >
         <View className="mx-auto mb-4 mt-1.5 h-1 w-10 rounded bg-card2" />
-        <Txt className="mb-4 font-m800 text-xl">{t("newWish")}</Txt>
+        <View className="mb-4 flex-row items-center justify-between">
+          <Txt className="font-m800 text-xl">{t("newWish")}</Txt>
+          <MiniGlass>
+            <X size={18} color={C.t1} />
+          </MiniGlass>
+        </View>
         <View className="mb-4 h-[72px] w-[72px] items-center justify-center rounded-tile bg-card2">
           {filled ? <Pop><View className="flex-1 items-center justify-center"><Sticker emoji="stk:headphones" size={44} /></View></Pop> : <ImageIcon size={26} color={C.t3} />}
         </View>

@@ -24,7 +24,7 @@ export default function SignIn() {
       .then((v) => setOnboarded(v === "1"))
       .catch(() => setOnboarded(false));
   }, []);
-  if (onboarded === null) return <View className="flex-1 bg-bg" />;
+  if (onboarded === null) return <View className="flex-1 bg-card" />;
   if (!onboarded) {
     return (
       <Onboarding
@@ -61,7 +61,7 @@ function Welcome() {
   };
 
   return (
-    <View className="flex-1 bg-bg px-4" style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 16 }}>
+    <View className="flex-1 bg-card px-4" style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 16 }}>
       <View className="flex-1 items-center justify-center">
         <Logo />
         <Txt className="mt-4 font-m800 text-[34px] leading-[40px]" style={{ letterSpacing: -1 }}>Wishpool</Txt>

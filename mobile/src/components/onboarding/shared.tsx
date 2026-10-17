@@ -115,6 +115,21 @@ export function MiniPhone({ children, finger, tap, rootRef }: { children: React.
   );
 }
 
+/** Header block of a tab screen as the app draws it (rounded only at the bottom). */
+export function MiniHeader({ children }: { children: React.ReactNode }) {
+  return <View style={{ paddingTop: 48, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: C.card, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>{children}</View>;
+}
+
+/** The content block under it, 4pt below, down to the bottom. */
+export function MiniBlock({ children, style }: { children: React.ReactNode; style?: object }) {
+  return <View style={[{ flex: 1, marginTop: 4, padding: 16, backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24 }, style]}>{children}</View>;
+}
+
+/** A round glass button as a still picture (the real one is native glass). */
+export function MiniGlass({ size = 40, children }: { size?: number; children: React.ReactNode }) {
+  return <View style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.10)", borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" }}>{children}</View>;
+}
+
 /** Fades and slides its content in whenever `show` turns true. */
 export function Appear({ show, children, from = 10 }: { show: boolean; children: React.ReactNode; from?: number }) {
   const v = useRef(new Animated.Value(show ? 1 : 0)).current;

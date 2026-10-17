@@ -1,18 +1,18 @@
 // Onboarding page 3 ("Даруй таємно"): the finger opens a room folder, taps
 // "I'll get it" on a friend's wish, confetti, and a "it stays a secret" badge.
 
-import { Check, Lock } from "lucide-react-native";
+import { Check, ChevronLeft, Ellipsis, Lock, Plus } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, View } from "react-native";
 
 import { useT } from "../../i18n";
-import { C } from "../../theme/tokens";
+import { C, H } from "../../theme/tokens";
 import type { Room } from "../../types";
 import { RoomFolder } from "../RoomFolder";
 import { RoomHeroBg } from "../RoomHeroBg";
 import { Sticker } from "../Sticker";
 import { Avatar, Card, Pill, Txt } from "../ui";
-import { Appear, measureSpot, MiniPhone, REST, Spot, useScript } from "./shared";
+import { Appear, measureSpot, MiniBlock, MiniGlass, MiniHeader, MiniPhone, REST, Spot, useScript } from "./shared";
 
 const CONFETTI = ["#0A82F9", "#FFD36E", "#FF7AB6", "#7CE0C3", "#FFFFFF"];
 
@@ -73,21 +73,31 @@ export function ObGiftScene() {
 
   return (
     <MiniPhone rootRef={root} finger={pos} tap={tap}>
-      <View style={{ paddingTop: 48, paddingHorizontal: 16 }}>
-        <Txt className="px-1 pb-6 pt-1.5 font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("roomsTitle")}</Txt>
-        <View className="flex-row gap-4">
-          <View ref={folder} collapsable={false} className="flex-1">
-            <RoomFolder room={room} wishes={[]} onPress={() => {}} />
+      {/* the Rooms tab as it is now: header block, then the folders in the content block */}
+      <View style={{ flex: 1 }}>
+        <MiniHeader>
+          <View className="flex-row items-center justify-between px-1 pt-1.5">
+            <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("roomsTitle")}</Txt>
+            <MiniGlass size={H.lg}>
+              <Plus size={24} color={C.t1} />
+            </MiniGlass>
           </View>
-          <RoomFolder room={room2} wishes={[]} onPress={() => {}} />
-        </View>
+        </MiniHeader>
+        <MiniBlock style={{ paddingTop: 28 }}>
+          <View className="flex-row gap-4">
+            <View ref={folder} collapsable={false} className="flex-1">
+              <RoomFolder room={room} wishes={[]} onPress={() => {}} />
+            </View>
+            <RoomFolder room={room2} wishes={[]} onPress={() => {}} />
+          </View>
+        </MiniBlock>
       </View>
 
       {/* the room, growing out of the first folder */}
       <Animated.View
         pointerEvents="none"
         style={{
-          position: "absolute", left: 0, top: 0, right: 0, bottom: 0, zIndex: 10, backgroundColor: C.bg,
+          position: "absolute", left: 0, top: 0, right: 0, bottom: 0, zIndex: 10, backgroundColor: C.card,
           opacity: open ? opening : 0,
           transform: [
             { translateX: opening.interpolate({ inputRange: [0, 1], outputRange: [-95, 0] }) },
@@ -97,8 +107,16 @@ export function ObGiftScene() {
         }}
       >
         {/* the same mesh hero and rounded content sheet as the real room screen */}
-        <View style={{ paddingTop: 56, paddingBottom: 48, alignItems: "center", overflow: "hidden" }}>
+        <View style={{ paddingTop: 44, paddingBottom: 48, alignItems: "center", overflow: "hidden" }}>
           <RoomHeroBg tint={room.tint} />
+          <View className="mb-1 w-full flex-row justify-between px-4">
+            <MiniGlass>
+              <ChevronLeft size={20} color="#fff" />
+            </MiniGlass>
+            <MiniGlass>
+              <Ellipsis size={20} color="#fff" />
+            </MiniGlass>
+          </View>
           <Sticker emoji={room.emoji} size={46} />
           <Txt className="mt-3 font-m800 text-[26px] text-white">{room.name}</Txt>
           <View className="mt-3 flex-row">
@@ -109,12 +127,12 @@ export function ObGiftScene() {
             ))}
           </View>
         </View>
-        <View style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: C.bg, paddingHorizontal: 16, paddingTop: 20 }}>
+        <View style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: C.card, paddingHorizontal: 16, paddingTop: 20 }}>
           <View className="mb-2 flex-row items-center gap-2">
             <Avatar m={anya} size={24} />
             <Txt className="font-m700 text-[15px]">{anya.name}</Txt>
           </View>
-          <Card className="flex-row items-center gap-3 px-4 py-3">
+          <Card className="flex-row items-center gap-3 bg-bg px-4 py-3">
             <View className="h-lg w-lg items-center justify-center rounded-xl bg-card2">
               <Sticker emoji="stk:candle" size={26} />
             </View>
@@ -133,7 +151,7 @@ export function ObGiftScene() {
           </Card>
           <View className="mt-4 self-start">
             <Appear show={step >= 6}>
-              <View className="h-9 flex-row items-center gap-2 rounded-full bg-card2 px-3.5">
+              <View className="h-9 flex-row items-center gap-2 rounded-full bg-bg px-3.5">
                 <Lock size={14} color={C.t1} />
                 <Txt className="font-m600 text-[13.5px]">{t("obSecret")}</Txt>
               </View>
