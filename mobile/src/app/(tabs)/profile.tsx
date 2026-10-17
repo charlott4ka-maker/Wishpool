@@ -2,19 +2,21 @@
 
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ChevronRight, Crown, Gift, Heart, Settings, Smartphone } from "lucide-react-native";
+import { ChevronRight, Crown, Gift, Heart, Pencil, Settings, Smartphone } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../../auth/AuthContext";
 import { BirthdayCard } from "../../components/BirthdayCard";
+import { Press } from "../../components/Press";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
 import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
 import { Avatar, Card, Pill, PremiumBadge, Txt } from "../../components/ui";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
+import { usePrefs } from "../../settings/prefs";
 import { useWishpool } from "../../store/WishpoolContext";
 import { APP_ICONS, appIconsSupported, changeAppIcon, currentAppIcon } from "../../subscription/appIcon";
 import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
@@ -30,7 +32,9 @@ export default function ProfileScreen() {
   const { wishes, rooms } = useWishpool();
   const { isPremium } = useSubscription();
   const [icon, setIcon] = useState(currentAppIcon);
-  const me = { name: user?.name || t("guest"), color: "#7B61FF", photo: user?.photo };
+  const prefs = usePrefs();
+  // your own name / photo from the profile editor win over the account's
+  const me = { name: prefs.displayName || user?.name || t("guest"), color: "#7B61FF", photo: prefs.avatar || user?.photo };
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
 
   const pickIcon = async (name: (typeof APP_ICONS)[number]["name"]) => {
@@ -43,7 +47,13 @@ export default function ProfileScreen() {
     <View className="flex-1 bg-card">
       <ScrollView className="flex-1 bg-card" contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
         <View className="items-center">
-          <Avatar m={me} size={92} />
+          {/* tap: edit name and photo */}
+          <Press scaleTo={0.95} onPress={() => router.push("/profile-edit")} accessibilityLabel={t("editProfile")}>
+            <Avatar m={me} size={92} />
+            <View className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full bg-raised" style={{ borderWidth: 3, borderColor: C.card }}>
+              <Pencil size={14} color={C.t1} />
+            </View>
+          </Press>
           <Txt className="mt-4 font-m800 text-2xl">{me.name}</Txt>
           <Txt className="mt-1 text-[14.5px] text-t2">{t("statsLine", { w: wishes.length, r: rooms.length })}</Txt>
         </View>

@@ -5,7 +5,7 @@
 export const C = {
   bg: "#222831",
   card: "#15181D",
-  card2: "#23262B",
+  card2: "#222831",
   /** cards on screens whose own fill is the block colour (profile, settings) */
   raised: "#1E2228",
   line: "rgba(255,255,255,0.08)",

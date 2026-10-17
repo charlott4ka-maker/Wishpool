@@ -15,6 +15,9 @@ export type Prefs = {
   haptics: boolean;
   /** "YYYY-MM-DD"; friends get reminded (once the account is connected). */
   birthday: string | null;
+  /** Your own name and photo (a small JPEG data URL), set on the profile; they win over the account's. */
+  displayName: string | null;
+  avatar: string | null;
 };
 
 const KEY = "wp_prefs";
@@ -26,6 +29,8 @@ const DEFAULTS: Prefs = {
   notifyGiftReminders: true,
   haptics: true,
   birthday: null,
+  displayName: null,
+  avatar: null,
 };
 
 let current: Prefs = DEFAULTS;

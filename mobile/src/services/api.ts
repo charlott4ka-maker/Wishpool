@@ -75,6 +75,8 @@ export const api = {
     req<{ title: string; price: string; image: string | null; url: string; guess: boolean }>("GET", "/preview?url=" + encodeURIComponent(url), undefined, { timeout: 25000 }),
   // Account deletion (App Store guideline 5.1.1(v)); the backend endpoint is still to do.
   deleteAccount: () => req("DELETE", "/me"),
+  /** Name / photo from the profile editor. Needs PATCH /api/me on the backend. */
+  updateMe: (b: { name?: string; photo?: string | null }) => req("PATCH", "/me", b),
   premiumStatus: () => req<{ isPremium: boolean }>("GET", "/me/premium"),
 
   auth: {

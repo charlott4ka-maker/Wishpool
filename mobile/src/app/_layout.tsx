@@ -55,6 +55,7 @@ function Gate() {
             <Stack.Screen name="room/take" options={FIT_SHEET} />
             <Stack.Screen name="room/pick" options={FIT_SHEET} />
             <Stack.Screen name="birthday" options={FIT_SHEET} />
+            <Stack.Screen name="profile-edit" options={FIT_SHEET} />
             <Stack.Screen name="paywall" options={{ presentation: "fullScreenModal" }} />
           </Stack.Protected>
           <Stack.Protected guard={!inside}>
