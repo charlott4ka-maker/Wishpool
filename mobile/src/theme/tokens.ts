@@ -10,8 +10,8 @@ export const C = {
   raised: "#1E2228",
   line: "rgba(255,255,255,0.08)",
   t1: "#FFFFFF",
-  t2: "#8A8A8E",
-  t3: "#5A5A5E",
+  t2: "#8B93A3",
+  t3: "#626B7D",
   /** placeholder (and the search glass) in inputs: a cool grey that sits on the blue-grey fill */
   hint: "#6B7487",
   blue: "#0A82F9",
