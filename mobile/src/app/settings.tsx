@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
 import { Bell, Cake, ChevronLeft, FileText, Gift, Globe, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate } from "lucide-react-native";
+import { useState } from "react";
 import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -32,6 +33,7 @@ export default function SettingsScreen() {
   const { status, signOut } = useAuth();
   const { refresh } = useWishpool();
   const version = Constants.expoConfig?.version || "1.0.0";
+  const [scrolled, setScrolled] = useState(false);
 
   const toggleNotifications = async (on: boolean) => {
     if (!on) return setPref("notifications", false);
@@ -93,7 +95,11 @@ export default function SettingsScreen() {
         </View>
       </View>
       <View className="flex-1">
-      <ScrollView contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: insets.bottom + 32 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: insets.bottom + 32 }}
+        scrollEventThrottle={16}
+        onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 4)}
+      >
 
         <SettingsGroup title={t("setNotifications")} footer={t("setNotifFooter")}>
           <SettingsCell icon={Bell} tint="#FF3B30" label={t("setAllowNotif")} toggle={{ value: prefs.notifications, onChange: toggleNotifications }} />
@@ -131,7 +137,8 @@ export default function SettingsScreen() {
 
         <Txt className="text-center text-[12.5px] text-t3">Wishpool · {t("setVersion", { v: version })}</Txt>
       </ScrollView>
-      <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 32 }} />
+      {/* the fade under the header only once something has scrolled under it */}
+      {scrolled ? <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 32 }} /> : null}
       </View>
     </View>
   );
