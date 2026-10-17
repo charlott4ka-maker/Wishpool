@@ -8,11 +8,10 @@ import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { wishImages } from "../store/WishpoolContext";
 import type { Wish } from "../types";
+import { C, hex } from "../theme/tokens";
 import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { Txt } from "./ui";
-
-const GLASS = ["#181D23", "#1C2128", "#1F242B"] as const;
 
 // Wishlist card: square picture (photo, or the sticker on a soft tile), two
 // lines of title, price in the accent colour, a small "where" badge. These cards
@@ -32,11 +31,12 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
         onPress?.(e);
       }}
       className="flex-1 overflow-hidden rounded-[24px] p-2"
-      style={{ borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
+      // glass, as in the reference: a #222831 base with the block fill
+      // (#15181D) at 50% over it, plus a faint light sweep to the right
+      style={{ backgroundColor: C.bg, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
     >
-      {/* glass: the block fill at 50% over the page, a little darker on the
-          left and lighter to the right, like the reference cards */}
-      <LinearGradient pointerEvents="none" colors={GLASS} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.4 }} style={StyleSheet.absoluteFill} />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: hex(C.card, 0.5) }]} />
+      <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.025)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.4 }} style={StyleSheet.absoluteFill} />
       <View className="aspect-square items-center justify-center overflow-hidden rounded-2xl bg-card2">
         {img ? <Image source={{ uri: img }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={150} /> : <Sticker emoji={w.emoji} size={56} rotate={-6} />}
         <BlurView intensity={30} tint="dark" className="absolute bottom-2 left-2 h-6 flex-row items-center gap-1 overflow-hidden rounded-full bg-black/40 px-2">

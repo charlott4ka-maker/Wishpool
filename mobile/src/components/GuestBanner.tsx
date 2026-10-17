@@ -1,11 +1,10 @@
 // Guest mode: a blue strip that peeks out from behind the content block below
-// it (the block overlaps its lower part). Tap = sign in; × hides it for 3 days.
+// it (the block overlaps its lower part). Text on the left, a chevron on the
+// right; a tap opens the sign-in sheet.
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { X } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { ChevronRight } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 import { useAuth } from "../auth/AuthContext";
@@ -15,52 +14,35 @@ import { C } from "../theme/tokens";
 import { BLOCK_GAP, BLOCK_R } from "./TabHeader";
 import { Txt } from "./ui";
 
-const KEY = "wp_guest_banner_hidden_until";
-const SNOOZE = 3 * 24 * 60 * 60 * 1000;
 /** How much of the strip the next block covers (its corner radius). */
 export const GUEST_OVERLAP = BLOCK_R;
 
 /** True while the strip shows (the next block then pulls up by GUEST_OVERLAP). */
-export function useGuestBanner(): [boolean, () => void] {
-  const { status } = useAuth();
-  const [hidden, setHidden] = useState(true); // until we know, so it doesn't flash
-  useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then((v) => setHidden(!!v && Number(v) > Date.now()))
-      .catch(() => setHidden(false));
-  }, []);
-  const close = () => {
-    haptic("light");
-    setHidden(true);
-    AsyncStorage.setItem(KEY, String(Date.now() + SNOOZE)).catch(() => {});
-  };
-  return [status === "guest" && !hidden, close];
+export function useGuestBanner(): boolean {
+  return useAuth().status === "guest";
 }
 
-/** overlap: a block below covers its lower part; otherwise it is a block of its own. */
-export function GuestBanner({ onClose, overlap = true }: { onClose: () => void; overlap?: boolean }) {
+export function GuestBanner() {
   const router = useRouter();
   const { t } = useT();
   return (
-    <Pressable onPress={() => router.push("/sign-in-options")} style={{ marginTop: BLOCK_GAP }}>
+    <Pressable
+      onPress={() => {
+        haptic("light");
+        router.push("/sign-in-options");
+      }}
+      style={{ marginTop: BLOCK_GAP }}
+    >
       <LinearGradient
         colors={[C.brand, C.brand2]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={{ borderRadius: overlap ? 0 : BLOCK_R, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, paddingTop: 14, paddingBottom: 14 + (overlap ? GUEST_OVERLAP : 0), paddingHorizontal: 16 }}
+        style={{ borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, paddingTop: 14, paddingBottom: 14 + GUEST_OVERLAP, paddingLeft: 16, paddingRight: 12 }}
       >
-        {/* centred, clear of the close button on the right */}
-        <View className="flex-row items-center justify-center gap-2 px-10">
-          <Txt numberOfLines={1} className="shrink font-m700 text-[15px] text-white">{t("guestBanner")}</Txt>
+        <View className="flex-row items-center gap-3">
+          <Txt numberOfLines={1} className="flex-1 font-m700 text-[15px] text-white">{t("guestBanner")}</Txt>
+          <ChevronRight size={20} color="#fff" strokeWidth={1.5} />
         </View>
-        <Pressable
-          onPress={onClose}
-          hitSlop={8}
-          accessibilityLabel={t("closeBtn")}
-          style={{ position: "absolute", right: 12, top: 10, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.15)" }}
-        >
-          <X size={16} color="#fff" strokeWidth={1.5} />
-        </Pressable>
       </LinearGradient>
     </Pressable>
   );
