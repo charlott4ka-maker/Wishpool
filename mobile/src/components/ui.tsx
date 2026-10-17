@@ -194,7 +194,7 @@ export function Sheet({ visible, title, onClose, children }: { visible: boolean;
             <Txt className="flex-1 font-m800 text-xl">{title || ""}</Txt>
             <CloseButton onPress={onClose} />
           </View>
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}>
             {children}
           </ScrollView>
         </View>
