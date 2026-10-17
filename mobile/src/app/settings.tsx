@@ -2,6 +2,8 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import { LinearGradient } from "expo-linear-gradient";
+import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
@@ -16,7 +18,7 @@ import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
 import { api } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
-import { C } from "../theme/tokens";
+import { C, hex } from "../theme/tokens";
 
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
 const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || "";
@@ -79,13 +81,19 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: insets.bottom + 32 }}>
-        <View className="mb-6 flex-row items-center gap-3">
-          <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel={t("back")}>
-            <ChevronLeft size={22} color={C.t1} />
-          </Pressable>
+      {/* the header stays put; the list scrolls under a fade below it */}
+      <View className="flex-row items-center px-4 pb-2" style={{ paddingTop: insets.top + 8 }}>
+        <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel={t("back")}>
+          {/* the system SF Symbol back chevron; lucide on web previews */}
+          <SymbolView name="chevron.left" size={19} weight="semibold" tintColor={C.t1} fallback={<ChevronLeft size={22} color={C.t1} />} />
+        </Pressable>
+        {/* title centred on the screen, the back button stays on the left */}
+        <View pointerEvents="none" className="absolute bottom-2 left-0 right-0 h-sm items-center justify-center">
           <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("settings")}</Txt>
         </View>
+      </View>
+      <View className="flex-1">
+      <ScrollView contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 16, paddingBottom: insets.bottom + 32 }}>
 
         <SettingsGroup title={t("setNotifications")} footer={t("setNotifFooter")}>
           <SettingsCell icon={Bell} tint="#FF3B30" label={t("setAllowNotif")} toggle={{ value: prefs.notifications, onChange: toggleNotifications }} />
@@ -123,6 +131,8 @@ export default function SettingsScreen() {
 
         <Txt className="text-center text-[12.5px] text-t3">Wishpool · {t("setVersion", { v: version })}</Txt>
       </ScrollView>
+      <LinearGradient pointerEvents="none" colors={[C.bg, hex(C.bg, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 32 }} />
+      </View>
     </View>
   );
 }
