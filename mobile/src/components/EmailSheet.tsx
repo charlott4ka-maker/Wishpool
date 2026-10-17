@@ -53,11 +53,11 @@ export function EmailSheet({ visible, onClose }: { visible: boolean; onClose: ()
 
   return (
     <Sheet visible={visible} onClose={onClose} title={t("emailTitle")}>
-      <Field label={t("emailLabel")} value={email} onChangeText={setEmail} placeholder="name@example.com" keyboardType="email-address" autoCapitalize="none" autoFocus error={tried && !sent && !valid} />
+      <Field label={t("emailLabel")} value={email} onChangeText={setEmail} placeholder="name@example.com" keyboardType="email-address" autoCapitalize="none" autoFocus error={tried && !sent && !valid && t("invalidEmail")} />
       {sent ? (
         <>
           <Txt className="-mt-2 mb-4 text-[12.5px] text-t3">{t("emailCodeSent", { email: email.trim() })}</Txt>
-          <Field label={t("emailCodeLabel")} value={code} onChangeText={setCode} placeholder="123456" keyboardType="number-pad" error={tried && sent && code.trim().length < 4} />
+          <Field label={t("emailCodeLabel")} value={code} onChangeText={setCode} placeholder="123456" keyboardType="number-pad" error={tried && sent && code.trim().length < 4 && t("requiredField")} />
           <Pill full onPress={verify}>{t("emailVerify")}</Pill>
         </>
       ) : (

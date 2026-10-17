@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
 import { SettingsCell, SettingsGroup } from "../components/SettingsList";
-import { Txt } from "../components/ui";
+import { GlassCircle, Txt } from "../components/ui";
 import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
 import { api } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
@@ -83,10 +83,10 @@ export default function SettingsScreen() {
     <View className="flex-1 bg-card">
       {/* the header stays put; the list scrolls under a fade below it */}
       <View className="flex-row items-center px-4 pb-2" style={{ paddingTop: insets.top + 8 }}>
-        <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel={t("back")}>
+        <GlassCircle onPress={() => router.back()} label={t("back")}>
           {/* the system SF Symbol back chevron; lucide on web previews */}
           <SymbolView name="chevron.left" size={19} weight="semibold" tintColor={C.t1} fallback={<ChevronLeft size={22} color={C.t1} />} />
-        </Pressable>
+        </GlassCircle>
         {/* title centred on the screen, the back button stays on the left */}
         <View pointerEvents="none" className="absolute bottom-2 left-0 right-0 h-sm items-center justify-center">
           <Txt className="font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("settings")}</Txt>

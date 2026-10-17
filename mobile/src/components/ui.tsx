@@ -112,9 +112,10 @@ export function Segmented<K extends string>({ options, value, onChange, neutral,
       first.current = !segW;
       return;
     }
-    x.value = withSpring(to, { damping: 16, stiffness: 200, mass: 0.8 });
-    sx.value = withSequence(withTiming(1.18, { duration: 140 }), withSpring(1, { damping: 9, stiffness: 260 }));
-    sy.value = withSequence(withTiming(0.86, { duration: 140 }), withSpring(1, { damping: 9, stiffness: 260 }));
+    // quick: a snappy slide with a short stretch, settled in about a quarter second
+    x.value = withSpring(to, { damping: 22, stiffness: 520, mass: 0.6 });
+    sx.value = withSequence(withTiming(1.12, { duration: 80 }), withSpring(1, { damping: 14, stiffness: 600 }));
+    sy.value = withSequence(withTiming(0.9, { duration: 80 }), withSpring(1, { damping: 14, stiffness: 600 }));
   }, [idx, segW]); // eslint-disable-line react-hooks/exhaustive-deps
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
   return (
@@ -147,11 +148,33 @@ export function Card({ children, className = "", style, onPress }: { children: R
   return onPress ? <Press onPress={onPress} scaleTo={0.98} className={cls} style={style}>{children}</Press> : <View className={cls} style={style}>{children}</View>;
 }
 
+/**
+ * Round icon button in iOS glass: the system Liquid Glass on iOS 26 (its own
+ * edge light, reacts to touch), else white 10% over a blur. Used for the "+"
+ * next to titles, back and close.
+ */
+export function GlassCircle({ size = H.sm, onPress, label, children }: { size?: number; onPress: () => void; label: string; children: React.ReactNode }) {
+  const round = { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0, borderRadius: size / 2 };
+  return (
+    <Press onPress={onPress} scaleTo={0.9} accessibilityLabel={label} style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
+      {LiquidGlass ? (
+        <LiquidGlass glassEffectStyle="regular" colorScheme="dark" isInteractive style={[round, { zIndex: -1 }]} />
+      ) : (
+        <>
+          <BlurView intensity={30} tint="dark" style={[round, { zIndex: -1 }]} />
+          <View style={[round, { backgroundColor: "rgba(255,255,255,0.10)", zIndex: -1 }]} />
+        </>
+      )}
+      {children}
+    </Press>
+  );
+}
+
 export function CloseButton({ onPress }: { onPress: () => void }) {
   return (
-    <Press onPress={onPress} scaleTo={0.88} className="h-sm w-sm items-center justify-center rounded-full bg-card2" accessibilityLabel="Close">
-      <X size={18} color={C.t2} />
-    </Press>
+    <GlassCircle onPress={onPress} label="Close">
+      <X size={18} color={C.t1} />
+    </GlassCircle>
   );
 }
 
@@ -221,8 +244,8 @@ export function Field({
 }: {
   label?: string; value: string; onChangeText: (v: string) => void; placeholder?: string; multiline?: boolean;
   keyboardType?: "default" | "email-address" | "url" | "number-pad"; autoCapitalize?: "none" | "sentences"; autoFocus?: boolean;
-  /** Required and still empty after a tap on the action: a red outline. */
-  error?: boolean;
+  /** Required and still empty after a tap on the action: a red outline and this text under it. */
+  error?: string | false;
 }) {
   const [focus, setFocus] = useState(false);
   return (
@@ -244,6 +267,7 @@ export function Field({
         // fontSize only: a line height (text-base sets 24) pushes iOS input text down
         style={{ borderWidth: 1, borderColor: error ? C.danger : focus ? C.blueLine : "transparent", textAlignVertical: multiline ? "top" : "center", paddingTop: multiline ? 14 : 0, paddingBottom: multiline ? 14 : 0 }}
       />
+      {error ? <Txt className="mt-1.5 px-4 text-[12.5px] text-danger">{error}</Txt> : null}
     </View>
   );
 }
@@ -296,16 +320,16 @@ export function Avatar({ m, size = 34, cut = 0 }: { m: AvatarMember; size?: numb
 /** Round "+" next to a screen title. */
 export function HeaderAdd({ onPress, label }: { onPress: () => void; label: string }) {
   return (
-    <Press scaleTo={0.9}
+    <GlassCircle
+      size={H.lg}
       onPress={() => {
         haptic("light");
         onPress();
       }}
-      accessibilityLabel={label}
-      className="h-lg w-lg items-center justify-center rounded-full bg-card2"
+      label={label}
     >
       <Plus size={24} color={C.t1} />
-    </Press>
+    </GlassCircle>
   );
 }
 

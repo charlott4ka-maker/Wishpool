@@ -5,6 +5,7 @@
 // other gifters, while the wish owner never sees it (the backend hides it).
 
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import { CalendarDays, Check, ChevronLeft, Gift, Lock, Pencil, Plus, Share2, Trash2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Alert, Pressable, ScrollView, Share, View } from "react-native";
@@ -15,7 +16,7 @@ import { RoomListSkeleton } from "../../components/Skeleton";
 import { SwipeRow } from "../../components/SwipeRow";
 import { heroTop, RoomHeroBg } from "../../components/RoomHeroBg";
 import { Sticker } from "../../components/Sticker";
-import { Avatar, Empty, Pill, Segmented, Txt } from "../../components/ui";
+import { Avatar, Empty, GlassCircle, Pill, Segmented, Txt } from "../../components/ui";
 import { WishList, WishRow } from "../../components/WishRow";
 import { toast } from "../../components/Toast";
 import { useT } from "../../i18n";
@@ -28,15 +29,6 @@ import type { Member, Wish } from "../../types";
 
 type RoomWish = Wish & { reservedByMe?: boolean; taken?: boolean; chips?: { count: number; mine: boolean; total: number } | null };
 type Detail = { lists: { member: Member; wishes: RoomWish[] }[]; mine: Wish[]; members?: (Member & { you?: boolean })[]; owner?: boolean };
-
-// Round frosted button on the coloured hero (HeroButton in the Mini App).
-function HeroButton({ onPress, label, children }: { onPress: () => void; label: string; children: React.ReactNode }) {
-  return (
-    <Pressable onPress={onPress} accessibilityLabel={label} className="h-sm w-sm items-center justify-center rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.18)", borderWidth: 1, borderColor: "rgba(255,255,255,0.28)" }}>
-      {children}
-    </Pressable>
-  );
-}
 
 export default function RoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -142,9 +134,9 @@ export default function RoomScreen() {
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>
         <RoomHeroBg tint={room.tint} />
         <View className="flex-row items-center justify-between" style={{ height: H.sm }}>
-          <HeroButton onPress={() => router.back()} label={t("back")}>
-            <ChevronLeft size={20} color="#fff" />
-          </HeroButton>
+          <GlassCircle onPress={() => router.back()} label={t("back")}>
+            <SymbolView name="chevron.left" size={19} weight="semibold" tintColor="#fff" fallback={<ChevronLeft size={20} color="#fff" />} />
+          </GlassCircle>
         </View>
         <View className="items-center">
           <View style={{ marginTop: 4, width: 80, height: 80, alignItems: "center", justifyContent: "center" }}>
@@ -164,15 +156,10 @@ export default function RoomScreen() {
                 <Avatar m={m} size={38} cut={i < members.length - 1 ? 10 : 0} />
               </View>
             ))}
-            {!coupleFull ? (
-              <Pressable onPress={invite} accessibilityLabel={t("invite")} className="ml-2 h-sm w-sm items-center justify-center rounded-full" style={{ borderWidth: 1.5, borderStyle: "dashed", borderColor: "rgba(255,255,255,0.85)", backgroundColor: "rgba(255,255,255,0.12)" }}>
-                <Plus size={18} color="#fff" />
-              </Pressable>
-            ) : null}
           </View>
           {!coupleFull ? (
             <View className="mt-6">
-              <Pill kind="glass" px={12} icon={<Share2 size={17} color="#fff" />} onPress={invite}>
+              <Pill kind="glass" px={24} icon={<Share2 size={17} color="#fff" />} onPress={invite}>
                 {t("invite")}
               </Pill>
             </View>
@@ -189,7 +176,7 @@ export default function RoomScreen() {
             <RoomListSkeleton />
           ) : others.length === 0 || lists.length === 0 ? (
             // centred in the space left under the tabs
-            <Empty fill compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} action={<Pill icon={<Share2 size={17} color="#fff" />} onPress={invite}>{t("inviteFriends")}</Pill>} />
+            <Empty fill compact emoji="stk:bear" tilt={0} title={t("onlyYouTitle")} sub={t("onlyYouSub")} />
           ) : (
             <View className="gap-6">
               {lists.map(({ member, wishes: ws }, i) => (

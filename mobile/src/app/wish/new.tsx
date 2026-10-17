@@ -287,7 +287,7 @@ export default function AddWishScreen() {
         {linkState === "loading" ? <RefreshCw size={13} color={hintColor} /> : linkState === "done" ? <Check size={13} color={hintColor} /> : !linkState ? <Sticker emoji="stk:tag" size={14} style={{ margin: -5 }} /> : null}
         <Txt className="flex-1 text-[12.5px]" style={{ color: hintColor }}>{hint}</Txt>
       </View>
-      <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} error={tried && !title.trim()} />
+      <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} error={tried && !title.trim() && t("requiredField")} />
       <View className="mb-2 flex-row items-center justify-between">
         <Txt className="font-m600 text-[13px] text-t2">{t("priceOpt")}</Txt>
         <View className="h-sm flex-row gap-1 rounded-full bg-card2 p-1">

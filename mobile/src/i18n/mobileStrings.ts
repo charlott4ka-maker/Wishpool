@@ -53,6 +53,11 @@ export const MOBILE_STRINGS = {
   toastLeftRoom: { uk: "Ти більше не в цій кімнаті", ru: "Ты больше не в этой комнате", en: "You left the room" },
   toastRoomDeleted: { uk: "Кімнату видалено", ru: "Комната удалена", en: "Room deleted" },
   closeBtn: { uk: "Закрити", ru: "Закрыть", en: "Close" },
+  // no "(optional)" in labels on iOS: required fields say so when missed
+  priceOpt: { uk: "Ціна", ru: "Цена", en: "Price" },
+  requiredField: { uk: "Заповни це поле", ru: "Заполни это поле", en: "Please fill this in" },
+  requiredDate: { uk: "Обери дату", ru: "Выбери дату", en: "Pick a date" },
+  invalidEmail: { uk: "Перевір e-mail", ru: "Проверь e-mail", en: "Check the e-mail" },
   pasteLink: { uk: "Вставити посилання з буфера", ru: "Вставить ссылку из буфера", en: "Paste link from clipboard" },
   photosDragHint: { uk: "Перше фото головне. Утримуй і тягни, щоб змінити порядок", ru: "Первое фото главное. Удерживай и тяни, чтобы поменять порядок", en: "The first photo is the cover. Hold and drag to reorder" },
   swipeTake: { uk: "Беру", ru: "Беру", en: "I'll get it" },
