@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateRow } from "../../components/DateRow";
 import { RoomFolder } from "../../components/RoomFolder";
+import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
@@ -112,7 +113,7 @@ export default function CreateRoomScreen() {
     // a fragment, not a wrapping View: a formSheet lays out its root child
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
-    <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
+    <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
       <SheetHeader title={t(editing ? "editRoom" : "newRoom")} />
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto mb-6 w-1/2">
@@ -158,10 +159,13 @@ export default function CreateRoomScreen() {
 
       <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
 
+    </ScrollView>
+    {/* the action stays at the bottom of the screen */}
+    <SheetFooter>
       <Pill full icon={editing ? undefined : <Plus size={18} color="#fff" />} onPress={submit}>
         {editing ? t("saveChanges") : busy ? t("creating") : t("createRoom")}
       </Pill>
-    </ScrollView>
+    </SheetFooter>
     <ToastHost inSheet />
     </>
   );

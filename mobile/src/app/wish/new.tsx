@@ -19,6 +19,7 @@ import { Press } from "../../components/Press";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
+import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { SheetHeader } from "../../components/SheetHeader";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
@@ -172,7 +173,7 @@ export default function AddWishScreen() {
     // a fragment, not a wrapping View: a formSheet lays out its root child
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
-    <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 32 }}>
+    <ScrollView className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
       <SheetHeader title={t(initial ? "editWish" : "newWish")} />
 
       <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral fill={C.bg} className="mb-4" />
@@ -346,10 +347,13 @@ export default function AddWishScreen() {
         <View className="h-2" />
       )}
 
+    </ScrollView>
+    {/* the action stays at the bottom of the screen */}
+    <SheetFooter>
       <Pill full onPress={submit}>
         {busy ? t("savingWish") : t(initial ? "saveChanges" : "saveWish")}
       </Pill>
-    </ScrollView>
+    </SheetFooter>
     <ToastHost inSheet />
     </>
   );
