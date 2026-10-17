@@ -11,7 +11,6 @@ import { useAuth } from "../../auth/AuthContext";
 import { BirthdayCard } from "../../components/BirthdayCard";
 import { Press } from "../../components/Press";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
-import { SwipeTabs } from "../../components/SwipeTabs";
 import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
 import { Avatar, Card, Pill, PremiumBadge, Txt } from "../../components/ui";
@@ -46,7 +45,6 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SwipeTabs prev="/rooms">
     <View className="flex-1 bg-card">
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
         <View className="items-center">
@@ -130,6 +128,5 @@ export default function ProfileScreen() {
       <TabBarFade />
       <StatusBarBackdrop color={C.card} />
     </View>
-    </SwipeTabs>
   );
 }
