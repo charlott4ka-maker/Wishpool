@@ -52,8 +52,13 @@ export function GuestBanner({ onClose }: { onClose: () => void }) {
         <View className="flex-row items-center justify-center gap-2 px-10">
           <Txt numberOfLines={1} className="shrink font-m700 text-[15px] text-white">{t("guestBanner")}</Txt>
         </View>
-        <Pressable onPress={onClose} hitSlop={8} accessibilityLabel={t("closeBtn")} className="absolute right-3 top-2.5 h-8 w-8 items-center justify-center rounded-full bg-white/15">
-          <X size={15} color="#fff" />
+        <Pressable
+          onPress={onClose}
+          hitSlop={8}
+          accessibilityLabel={t("closeBtn")}
+          style={{ position: "absolute", right: 12, top: 10, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.15)" }}
+        >
+          <X size={16} color="#fff" strokeWidth={1.5} />
         </Pressable>
       </LinearGradient>
     </Pressable>
