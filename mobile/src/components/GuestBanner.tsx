@@ -43,7 +43,7 @@ export function GuestBanner() {
           <Txt numberOfLines={1} className="flex-1 font-m700 text-[15px] text-white">{t("guestBanner")}</Txt>
           {/* round translucent button, like the close one it replaced */}
           <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.15)" }}>
-            <ChevronRight size={16} color="#fff" strokeWidth={1.5} />
+            <ChevronRight size={16} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
           </View>
         </View>
       </LinearGradient>

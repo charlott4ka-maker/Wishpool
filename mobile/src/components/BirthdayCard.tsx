@@ -33,7 +33,7 @@ export function BirthdayCard() {
   const left = daysUntil(next || undefined);
   const dayMonth = next ? new Date(next + "T00:00:00").toLocaleDateString(LOCALE[lang], { day: "numeric", month: "long" }) : null;
   return (
-    <Card className="flex-row items-center gap-3 p-4" onPress={() => router.push("/birthday")}>
+    <Card className="flex-row items-center gap-3 rounded-[24px] p-4" onPress={() => router.push("/birthday")}>
       <View className="flex-1">
         <Txt className="font-m600 text-[13px] text-t2">{t("myBday")}</Txt>
         <Txt numberOfLines={1} className="mt-1 font-m700 text-base" style={{ color: next ? C.t1 : C.blueText }}>{dayMonth || t("myBdayEmpty")}</Txt>
