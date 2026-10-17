@@ -136,7 +136,7 @@ The first Wishpool for iPhone: wishlists, rooms, secret gifting and birthday rem
 ## Ссылки для App Store Connect
 
 - **Privacy Policy URL:** https://wishpool.clickbrickk.com/privacy
-- **Support URL:** https://wishpool.clickbrickk.com/support
+- **Support URL:** https://wishpool.clickbrickk.com/support (почта поддержки: support@clickbrickk.com, пересылается в Gmail)
 - **Marketing URL** (не обязательно): https://wishpool.clickbrickk.com/about
 
 ## App Privacy (анкета «Конфиденциальность приложения»)
