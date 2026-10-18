@@ -93,6 +93,8 @@ export const MOBILE_STRINGS = {
   movedToAccount: { uk: "Бажання з телефона перенесено в акаунт", ru: "Желания с телефона перенесены в аккаунт", en: "Wishes from this phone moved to your account" },
   photoNotSaved: { uk: "Ім'я збережено, а фото не вдалося", ru: "Имя сохранено, а фото не получилось", en: "Name saved, but the photo didn't upload" },
   stickerDragHint: { uk: "Перетягни стікер, щоб посунути його", ru: "Перетащи стикер, чтобы подвинуть его", en: "Drag the sticker to move it" },
+  faq: { uk: "Питання і відповіді", ru: "Вопросы и ответы", en: "FAQ" },
+  faqMore: { uk: "Не знайшлося відповіді? Напиши нам", ru: "Не нашлось ответа? Напиши нам", en: "No answer here? Write to us" },
   pickEmptyTitle: { uk: "Бажань поки немає", ru: "Желаний пока нет", en: "No wishes yet" },
   support: { uk: "Написати в підтримку", ru: "Написать в поддержку", en: "Contact support" },
   supportCopied: { uk: "Адресу скопійовано: {email}", ru: "Адрес скопирован: {email}", en: "Address copied: {email}" },

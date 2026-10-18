@@ -63,6 +63,7 @@ function Gate() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="room/[id]" />
             <Stack.Screen name="settings" />
+            <Stack.Screen name="faq" />
             <Stack.Screen name="wish/new" options={LARGE_SHEET} />
             <Stack.Screen name="room/new" options={LARGE_SHEET} />
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />
