@@ -65,7 +65,8 @@ function Gate() {
             <Stack.Screen name="settings" />
             <Stack.Screen name="faq" />
             <Stack.Screen name="wish/new" options={LARGE_SHEET} />
-            <Stack.Screen name="room/new" options={LARGE_SHEET} />
+            {/* full screen, not a sheet: dragging the folder sticker used to drag the sheet along */}
+            <Stack.Screen name="room/new" options={{ presentation: "fullScreenModal", contentStyle: { backgroundColor: C.card } }} />
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />
             <Stack.Screen name="room/take" options={FIT_SHEET} />
             <Stack.Screen name="room/pick" options={FIT_SHEET} />

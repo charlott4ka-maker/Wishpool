@@ -1,7 +1,7 @@
-// New room (or, with ?id=, editing one: name, sticker, colour and a birthday
-// room's date / name; the type stays), laid out like CreateRoomSheet in the Mini App (but with the room
-// folder as the live preview), sticker, colour, type chips with a hint, for a birthday
-// "Whose birthday?" + name + date, then the room name.
+// New room, or with ?id= editing one (name, sticker, colour, a birthday room's
+// date / name; the type stays). Laid out like CreateRoomSheet in the Mini App,
+// with the room folder as a live preview whose sticker can be dragged. Full
+// screen rather than a sheet: dragging the sticker used to drag the sheet along.
 
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, Plus } from "lucide-react-native";
@@ -13,6 +13,7 @@ import { DateRow } from "../../components/DateRow";
 import { RoomFolder } from "../../components/RoomFolder";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { SheetHeader } from "../../components/SheetHeader";
+import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
@@ -116,7 +117,7 @@ export default function CreateRoomScreen() {
     // a fragment, not a wrapping View: a formSheet lays out its root child
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
-    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
       <SheetHeader title={t(editing ? "editRoom" : "newRoom")} />
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto w-1/2">
@@ -176,7 +177,9 @@ export default function CreateRoomScreen() {
         {editing ? t("saveChanges") : busy ? t("creating") : t("createRoom")}
       </Pill>
     </SheetFooter>
-    <ToastHost inSheet />
+    {/* full screen: the form scrolls under a status bar strip of the same colour */}
+    <StatusBarBackdrop color={C.card} />
+    <ToastHost />
     </>
   );
 }
