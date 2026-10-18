@@ -1,7 +1,7 @@
 // Onboarding page 3 ("Даруй таємно"): the finger opens a room folder, taps
-// "I'll get it" on a friend's wish, confetti, and a "it stays a secret" badge.
+// "I'll get it" on a friend's wish, confetti, and an "it stays a secret" toast.
 
-import { Check, ChevronLeft, Ellipsis, Lock, Plus } from "lucide-react-native";
+import { Check, ChevronLeft, Ellipsis, Lock, Plus, Share2 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, View } from "react-native";
 
@@ -11,7 +11,7 @@ import type { Room } from "../../types";
 import { RoomFolder } from "../RoomFolder";
 import { RoomHeroBg } from "../RoomHeroBg";
 import { Sticker } from "../Sticker";
-import { Avatar, Card, Pill, Txt } from "../ui";
+import { Avatar, Card, Pill, SEG_ON, Txt } from "../ui";
 import { Appear, measureSpot, MiniBlock, MiniGlass, MiniHeader, MiniPhone, REST, Spot, useScript } from "./shared";
 
 const CONFETTI = ["#0A82F9", "#FFD36E", "#FF7AB6", "#7CE0C3", "#FFFFFF"];
@@ -107,9 +107,9 @@ export function ObGiftScene() {
         }}
       >
         {/* the same mesh hero and rounded content sheet as the real room screen */}
-        <View style={{ paddingTop: 44, paddingBottom: 48, alignItems: "center", overflow: "hidden" }}>
+        <View style={{ paddingTop: 40, paddingBottom: 40, alignItems: "center", overflow: "hidden" }}>
           <RoomHeroBg tint={room.tint} />
-          <View className="mb-1 w-full flex-row justify-between px-4">
+          <View className="-mb-2 w-full flex-row justify-between px-4">
             <MiniGlass>
               <ChevronLeft size={20} color="#fff" />
             </MiniGlass>
@@ -117,17 +117,31 @@ export function ObGiftScene() {
               <Ellipsis size={20} color="#fff" />
             </MiniGlass>
           </View>
-          <Sticker emoji={room.emoji} size={46} />
-          <Txt className="mt-3 font-m800 text-[26px] text-white">{room.name}</Txt>
-          <View className="mt-3 flex-row">
+          <Sticker emoji={room.emoji} size={40} />
+          <Txt className="mt-2 font-m800 text-[24px] text-white">{room.name}</Txt>
+          <View className="mt-2 flex-row">
             {room.members.map((m, i) => (
               <View key={m.id} style={{ marginLeft: i ? -8 : 0 }}>
                 <Avatar m={m} size={32} cut={i < room.members.length - 1 ? 8 : 0} />
               </View>
             ))}
           </View>
+          {/* the glass Invite pill under the avatars */}
+          <View className="mt-3 h-sm flex-row items-center gap-2 rounded-full px-6" style={{ backgroundColor: "rgba(255,255,255,0.16)" }}>
+            <Share2 size={16} color="#fff" />
+            <Txt className="font-m600 text-[14.5px] text-white">{t("invite")}</Txt>
+          </View>
         </View>
-        <View style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: C.card, paddingHorizontal: 16, paddingTop: 20 }}>
+        <View style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: C.card, paddingHorizontal: 16, paddingTop: 16 }}>
+          {/* Friends' lists / My items here, as on the room screen */}
+          <View className="mb-3 h-lg flex-row gap-1 rounded-full bg-bg p-1.5">
+            <View className="flex-1 items-center justify-center rounded-full" style={{ backgroundColor: SEG_ON }}>
+              <Txt className="font-m600 text-sm text-white">{t("segLists")}</Txt>
+            </View>
+            <View className="flex-1 items-center justify-center">
+              <Txt className="font-m600 text-sm text-t2">{t("segMine")}</Txt>
+            </View>
+          </View>
           <View className="mb-2 flex-row items-center gap-2">
             <Avatar m={anya} size={24} />
             <Txt className="font-m700 text-[15px]">{anya.name}</Txt>
@@ -149,14 +163,19 @@ export function ObGiftScene() {
               {gifting ? <Burst /> : null}
             </View>
           </Card>
-          <View className="mt-4 self-start">
-            <Appear show={step >= 6}>
-              <View className="h-9 flex-row items-center gap-2 rounded-full bg-bg px-3.5">
-                <Lock size={14} color={C.t1} />
-                <Txt className="font-m600 text-[13.5px]">{t("obSecret")}</Txt>
+
+        </View>
+        {/* "it stays a secret" drops in from the top like the app's toasts */}
+        <View pointerEvents="none" style={{ position: "absolute", top: 44, left: 0, right: 0, alignItems: "center", zIndex: 20 }}>
+          <Appear show={step >= 6} from={-12}>
+            <View className="h-10 flex-row items-center gap-2 rounded-full pl-2 pr-4" style={{ backgroundColor: "#1E2228", shadowColor: "#000", shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } }}>
+              {/* a filled round icon, like the app's toasts */}
+              <View className="h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: "#636366" }}>
+                <Lock size={13} color="#fff" />
               </View>
-            </Appear>
-          </View>
+              <Txt className="font-m600 text-[14px]">{t("obSecret")}</Txt>
+            </View>
+          </Appear>
         </View>
       </Animated.View>
     </MiniPhone>

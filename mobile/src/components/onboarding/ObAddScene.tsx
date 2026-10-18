@@ -1,6 +1,6 @@
-// Onboarding page 2: inside a mini phone, a finger taps "+", the add sheet
-// slides up, a shop link types itself in, the name/price/photo fill in, the
-// finger taps Save and the new card pops into the grid.
+// Onboarding page 2: inside a mini phone, a finger taps "+", the new wish form
+// slides up full screen (as in the app), a shop link types itself in, the
+// name/price/photo fill in, the finger taps Save and the new card fades into the grid.
 
 import { Check, ImageIcon, Plus, RefreshCw, Search, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
@@ -18,12 +18,14 @@ const wish = (id: string, title: string, price: string, emoji: string, rooms: st
   id, title, price, emoji, rooms, image: null, images: [], link: null, note: "", giftedAt: null,
 });
 const GRID = [wish("g1", "Свічка", "650 ₴", "stk:candle", ["x"]), wish("g2", "Matcha set", "", "stk:matcha", []), wish("g3", "Книга", "450 ₴", "stk:book", ["x"])];
-const SHEET_H = 470;
 
-function Field({ value, placeholder }: { value: string; placeholder: string }) {
+function Field({ label, value, placeholder }: { label: string; value: string; placeholder: string }) {
   return (
-    <View className="mb-3 h-lg justify-center overflow-hidden rounded-full bg-card2 px-4">
+    <View className="mb-3">
+    <Txt className="mb-2 font-m600 text-[13px] text-t2">{label}</Txt>
+    <View className="h-lg justify-center overflow-hidden rounded-full bg-card2 px-4">
       <Txt numberOfLines={1} className="text-base" style={{ color: value ? C.t1 : C.hint }}>{value || placeholder}</Txt>
+    </View>
     </View>
   );
 }
@@ -81,14 +83,14 @@ export function ObAddScene() {
         </MiniBlock>
       </View>
 
+      {/* the new wish form, full screen like in the app */}
       <Animated.View
         style={{
-          position: "absolute", left: 0, right: 0, top: OB_H - SHEET_H, height: SHEET_H, zIndex: 10,
-          backgroundColor: C.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 16, paddingTop: 8,
-          transform: [{ translateY: sheet.interpolate({ inputRange: [0, 1], outputRange: [SHEET_H * 1.05, 0] }) }],
+          position: "absolute", left: 0, right: 0, top: 0, height: OB_H, zIndex: 10,
+          backgroundColor: C.card, paddingHorizontal: 16, paddingTop: 48,
+          transform: [{ translateY: sheet.interpolate({ inputRange: [0, 1], outputRange: [OB_H, 0] }) }],
         }}
       >
-        <View className="mx-auto mb-4 mt-1.5 h-1 w-10 rounded bg-card2" />
         <View className="mb-4 flex-row items-center justify-between">
           <Txt className="font-m800 text-xl">{t("newWish")}</Txt>
           <MiniGlass>
@@ -98,14 +100,13 @@ export function ObAddScene() {
         <View className="mb-4 h-[72px] w-[72px] items-center justify-center rounded-tile bg-card2">
           {filled ? <Pop><View className="flex-1 items-center justify-center"><Sticker emoji="stk:headphones" size={44} /></View></Pop> : <ImageIcon size={26} color={C.t3} />}
         </View>
-        <Field value={link && "https://" + link} placeholder="https://…" />
+        <Field label={t("linkLabel")} value={link && "https://" + link} placeholder="https://…" />
         <View className="-mt-1 mb-3 flex-row items-center gap-2">
           {filled ? <Check size={13} color={C.greenText} /> : step >= 4 ? <RefreshCw size={13} color={C.t3} /> : null}
           <Txt className={`text-[12.5px] ${filled ? "text-greenText" : "text-t3"}`}>{filled ? t("linkDone") : step >= 4 ? t("linkLoading") : t("linkHint")}</Txt>
         </View>
-        <Field value={filled ? newCard.title : ""} placeholder={t("whatYouWantPh")} />
-        <Field value={filled ? newCard.price : ""} placeholder={lang === "en" ? "$50" : "4 200 ₴"} />
-        <View ref={save} collapsable={false} style={{ height: H.lg }}>
+        <Field label={t("whatYouWant")} value={filled ? newCard.title : ""} placeholder={t("whatYouWantPh")} />
+        <View ref={save} collapsable={false} style={{ height: H.lg, marginTop: 8 }}>
           <Pill full onPress={() => {}}>{t("saveWish")}</Pill>
         </View>
       </Animated.View>

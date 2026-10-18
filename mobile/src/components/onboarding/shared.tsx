@@ -139,11 +139,11 @@ export function Appear({ show, children, from = 10 }: { show: boolean; children:
   return <Animated.View style={{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }) }] }}>{children}</Animated.View>;
 }
 
-/** Springs in from small when it mounts (new card, filled sticker). */
+/** Fades and grows in when it mounts (new card, filled sticker); no bounce. */
 export function Pop({ children }: { children: React.ReactNode }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.spring(v, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }).start();
+    Animated.timing(v, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  return <Animated.View style={{ flex: 1, opacity: v, transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }] }}>{children}</Animated.View>;
+  return <Animated.View style={{ flex: 1, opacity: v, transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }] }}>{children}</Animated.View>;
 }
