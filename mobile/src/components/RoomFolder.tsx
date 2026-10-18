@@ -68,17 +68,29 @@ const clampPos = (p: { x: number; y: number }, w: number, h: number) => ({
   y: Math.min(Math.max(p.y, 0.3), Math.max(0.3, 0.98 - STICKER_BOX / h)),
 });
 const posText = (p: { x: number; y: number }) => `${p.x.toFixed(3)},${p.y.toFixed(3)}`;
+// The sticker never covers the members' avatars (bottom right, right 11% / bottom 12%):
+// when it would, it's pushed out the shortest way, to the left of them or above them.
+function avoidAvatars(p: { x: number; y: number }, w: number, h: number, avatars: number) {
+  const inset = (STICKER_BOX - STICKER * 1.24) / 2 - 4; // the visible sticker plus a little air
+  const n = Math.max(1, avatars); // a new room still gets its owner's avatar
+  const right = w * 0.89, bottom = h * 0.88;
+  const left = right - (AV + (n - 1) * (AV - OV)), top = bottom - AV;
+  const sx = p.x * w + inset, sy = p.y * h + inset, sw = STICKER_BOX - inset * 2;
+  if (sx >= right || sx + sw <= left || sy >= bottom || sy + sw <= top) return p;
+  const toLeft = sx + sw - left, toTop = sy + sw - top;
+  return toLeft < toTop ? { x: (left - sw - inset) / w, y: p.y } : { x: p.x, y: (top - sw - inset) / h };
+}
 
 /**
  * The sticker on the folder. With `onMove` (the new / edit room preview) it can
  * be dragged anywhere on the front; the spot is saved as fractions of the folder.
  */
-function FolderSticker({ emoji, pos, dim, onMove, onDrag }: { emoji: string; pos?: string; dim: { w: number; h: number } | null; onMove?: (pos: string) => void; onDrag?: (on: boolean) => void }) {
+function FolderSticker({ emoji, pos, dim, avatars, onMove, onDrag }: { emoji: string; pos?: string; dim: { w: number; h: number } | null; avatars: number; onMove?: (pos: string) => void; onDrag?: (on: boolean) => void }) {
   const at = parseStickerPos(pos);
   const xy = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const start = useRef(at);
-  const live = useRef({ dim, onMove, onDrag });
-  live.current = { dim, onMove, onDrag };
+  const live = useRef({ dim, avatars, onMove, onDrag });
+  live.current = { dim, avatars, onMove, onDrag };
   const [lifted, setLifted] = useState(false);
   // placed by pixels once the folder has a size (percentages before that)
   useEffect(() => {
@@ -102,7 +114,7 @@ function FolderSticker({ emoji, pos, dim, onMove, onDrag }: { emoji: string; pos
         onPanResponderMove: (_, g) => {
           const d = live.current.dim;
           if (!d) return;
-          const p = clampPos({ x: start.current.x + g.dx / d.w, y: start.current.y + g.dy / d.h }, d.w, d.h);
+          const p = clampPos(avoidAvatars({ x: start.current.x + g.dx / d.w, y: start.current.y + g.dy / d.h }, d.w, d.h, live.current.avatars), d.w, d.h);
           xy.setValue({ x: p.x * d.w, y: p.y * d.h });
         },
         onPanResponderRelease: () => drop(),
@@ -231,7 +243,7 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
             </MaskedView>
           )
         ) : null}
-        <FolderSticker emoji={room.emoji} pos={room.stickerPos} dim={dim} onMove={onStickerMove} onDrag={onStickerDrag} />
+        <FolderSticker emoji={room.emoji} pos={room.stickerPos} dim={dim} avatars={shown.length + (extra > 0 ? 1 : 0)} onMove={onStickerMove} onDrag={onStickerDrag} />
         <View className="absolute flex-row" style={{ right: "11%", bottom: "12%", zIndex: 4 }}>
           {shown.map((m, i) => (
             <View key={m.id} style={{ marginLeft: i ? -OV : 0 }}>
