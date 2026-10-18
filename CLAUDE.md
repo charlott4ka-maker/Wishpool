@@ -32,7 +32,7 @@
 - Icons in small round buttons: even sizes so they sit dead centre, 1.5px stroke (`absoluteStrokeWidth`).
 - Motion: no bounce on things appearing (photos, stickers, cards); springs are fine for presses and for the segmented control, which stretches like the iOS tab bar selection.
 - Forms: no greyed-out (disabled) action buttons in sheets; a tap with a required field missing outlines that field in red with a short line under it ("Fill this in"), via `Field error` / `DateRow error`, plus an error haptic. Labels never say "(optional)".
-- Tall sheets (new/edit wish) pin their main button to the bottom (`SheetFooter`) with a fade above it. New/edit room is a full-screen modal (same header, close button and pinned `SheetFooter`): its folder preview has a draggable sticker, and in a sheet the drag pulled the sheet along. The sticker never covers the avatars.
+- New/edit wish and new/edit room are full-screen modals, not sheets (dragging the folder sticker or a photo pulled a sheet along): the same header with the glass close button, the main button pinned to the bottom (`SheetFooter`) with a fade above it. The folder sticker on the room preview can be dragged; it never covers the avatars.
 - Round icon buttons (the "+" by titles, back, sheet close) are `GlassCircle`: iOS Liquid Glass, blur fallback.
 - Swipes: onboarding pages flip with a swipe. Tabs switch only from the tab bar (a mid-screen swipe between tabs was tried and dropped).
 - Search (Wishes): while it's active the title row folds away, the field moves up, and the sign-in strip hides. No "Cancel" text: the × inside the field clears it and closes the search.

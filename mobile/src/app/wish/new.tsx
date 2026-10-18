@@ -1,7 +1,8 @@
 // New / edit wish. Paste a product link and the title, price and photo are
 // filled in from the page (OG tags). On save the link is turned into our
 // affiliate link when the shop is a known one (services/affiliateConverter).
-// Photo count follows the plan: 1 on Free, more with Premium.
+// Photo count follows the plan: 1 on Free, more with Premium. Full screen, like
+// new / edit room.
 
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
@@ -21,6 +22,7 @@ import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { SheetHeader } from "../../components/SheetHeader";
+import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
@@ -173,7 +175,7 @@ export default function AddWishScreen() {
     // a fragment, not a wrapping View: a formSheet lays out its root child
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
-    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
       <SheetHeader title={t(initial ? "editWish" : "newWish")} />
 
       <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral fill={C.bg} className="mb-4" />
@@ -354,7 +356,9 @@ export default function AddWishScreen() {
         {busy ? t("savingWish") : t(initial ? "saveChanges" : "saveWish")}
       </Pill>
     </SheetFooter>
-    <ToastHost inSheet />
+    {/* full screen: the form scrolls under a status bar strip of the same colour */}
+    <StatusBarBackdrop color={C.card} />
+    <ToastHost />
     </>
   );
 }

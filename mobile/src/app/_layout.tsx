@@ -27,7 +27,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Native iOS sheets: system grabber, swipe down to close, and our close button inside.
 const SHEET = { presentation: "formSheet", sheetGrabberVisible: true, sheetCornerRadius: 32, contentStyle: { backgroundColor: C.card } } as const;
-const LARGE_SHEET = { ...SHEET, sheetAllowedDetents: [1] };
+const FULL_FORM = { presentation: "fullScreenModal", contentStyle: { backgroundColor: C.card } } as const;
 const FIT_SHEET = { ...SHEET, sheetAllowedDetents: "fitToContents" } as const;
 
 const theme = { ...DarkTheme, colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, primary: C.blue, text: C.t1, border: "transparent" } };
@@ -64,9 +64,10 @@ function Gate() {
             <Stack.Screen name="room/[id]" />
             <Stack.Screen name="settings" />
             <Stack.Screen name="faq" />
-            <Stack.Screen name="wish/new" options={LARGE_SHEET} />
-            {/* full screen, not a sheet: dragging the folder sticker used to drag the sheet along */}
-            <Stack.Screen name="room/new" options={{ presentation: "fullScreenModal", contentStyle: { backgroundColor: C.card } }} />
+            {/* the two long forms are full screen, not sheets: dragging the folder sticker
+                (and the photos) used to drag the sheet along */}
+            <Stack.Screen name="wish/new" options={FULL_FORM} />
+            <Stack.Screen name="room/new" options={FULL_FORM} />
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />
             <Stack.Screen name="room/take" options={FIT_SHEET} />
             <Stack.Screen name="room/pick" options={FIT_SHEET} />
