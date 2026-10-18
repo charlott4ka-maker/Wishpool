@@ -92,6 +92,7 @@ export const MOBILE_STRINGS = {
   joinedToast: { uk: "Ти в кімнаті", ru: "Ты в комнате", en: "You're in the room" },
   movedToAccount: { uk: "Бажання з телефона перенесено в акаунт", ru: "Желания с телефона перенесены в аккаунт", en: "Wishes from this phone moved to your account" },
   photoNotSaved: { uk: "Ім'я збережено, а фото не вдалося", ru: "Имя сохранено, а фото не получилось", en: "Name saved, but the photo didn't upload" },
+  pickEmptyTitle: { uk: "Бажань поки немає", ru: "Желаний пока нет", en: "No wishes yet" },
   support: { uk: "Написати в підтримку", ru: "Написать в поддержку", en: "Contact support" },
   supportCopied: { uk: "Адресу скопійовано: {email}", ru: "Адрес скопирован: {email}", en: "Address copied: {email}" },
   emailCodeLabel: { uk: "Код з листа", ru: "Код из письма", en: "Code from the e-mail" },

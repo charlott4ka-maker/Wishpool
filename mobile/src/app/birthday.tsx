@@ -48,7 +48,8 @@ export default function BirthdaySheet() {
           locale={LOCALE[lang]}
           maximumDate={new Date()}
           onChange={(_, d) => d && setDate(d)}
-          style={{ alignSelf: "stretch" }}
+          // the iOS wheels keep their own width; centred, not hugging the left edge
+          style={{ alignSelf: "center" }}
         />
       ) : null}
       <Txt className="mb-6 mt-2 text-center text-[12.5px] leading-[17px] text-t3">{t("myBdayHint")}</Txt>
