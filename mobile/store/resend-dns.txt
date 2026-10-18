@@ -1,0 +1,5 @@
+resend._domainkey.wishpool.clickbrickk.com. 1 IN TXT "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCtcTwOoB7CPl/zM509saToeLgl/5lrU55AXo0Rd46QYi9vECG7S7LGnvjs8AbESwxlKr5BJb779Zc0hSsmDTDZcBL++vZ6q+bNx4pORaFYXaMbxP4RwXjdHdLNcb5WFNIqTUZuK+lucqmLsUXKnG18pEjCYD8qID3PBU4zhB6VzwIDAQAB"
+send.wishpool.clickbrickk.com. 1 IN MX 10 feedback-smtp.eu-west-1.amazonses.com.
+send.wishpool.clickbrickk.com. 1 IN TXT "v=spf1 include:amazonses.com ~all"
+rsend.wishpool.clickbrickk.com. 1 IN CNAME send.forge.rmta.net.
+_dmarc.wishpool.clickbrickk.com. 1 IN TXT "v=DMARC1; p=none;"
