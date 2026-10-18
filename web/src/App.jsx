@@ -1490,6 +1490,12 @@ function folderPath(w, h) {
 // behind the translucent front, the room sticker and the members' avatars are
 // on the front, name + member count sit underneath.
 const FOLDER_MAX_AVATARS = 5;
+// The sticker's spot on a room folder: "x,y" (its top-left as fractions of the folder) or the default.
+const stickerSpot = (pos) => {
+  const m = typeof pos === "string" && pos.match(/^([\d.]+),([\d.]+)$/);
+  return m ? { left: `${Number(m[1]) * 100}%`, top: `${Number(m[2]) * 100}%` } : { left: "14%", top: "46%" };
+};
+
 function RoomFolder({ room, wishes, onOpen }) {
   const { lang, t } = useT();
   const cd = countdownLabel(lang, t, room.eventDate);
@@ -1555,7 +1561,8 @@ function RoomFolder({ room, wishes, onOpen }) {
             }} />
           </>
         )}
-        <div style={{ position: "absolute", left: "14%", top: "46%", zIndex: 4, transform: "rotate(-8deg)" }}>
+        {/* where the owner put the sticker in the iOS app ("x,y" fractions), else the usual spot */}
+        <div style={{ position: "absolute", ...stickerSpot(room.stickerPos), zIndex: 4, transform: "rotate(-8deg)" }}>
           <Sticker emoji={room.emoji} size={34} />
         </div>
         <div style={{ position: "absolute", right: "11%", bottom: "12%", zIndex: 4, display: "flex" }}>

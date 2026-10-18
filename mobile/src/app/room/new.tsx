@@ -75,6 +75,9 @@ export default function CreateRoomScreen() {
   const [celName, setCelName] = useState(editing?.celebrantName || "");
   const [date, setDate] = useState<string | null>(editing?.eventDate || null);
   const [busy, setBusy] = useState(false);
+  // the sticker's spot on the folder, dragged on the preview
+  const [stickerPos, setStickerPos] = useState(editing?.stickerPos || "");
+  const [dragging, setDragging] = useState(false);
   const bday = preset.type === "birthday";
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
   const title = name.trim() || autoName;
@@ -92,13 +95,13 @@ export default function CreateRoomScreen() {
     const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : {};
     try {
       if (editing) {
-        await updateRoom(editing.id, { name: title, emoji, tint, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : {}) });
+        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : {}) });
         haptic("success");
         router.back();
         toast.success(t("toastSaved"), { root: true });
         return;
       }
-      const id = await createRoom({ name: title, type: preset.type, emoji, tint, ...extra } as Parameters<typeof createRoom>[0]);
+      const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, ...extra } as Parameters<typeof createRoom>[0]);
       haptic("success");
       router.replace({ pathname: "/room/[id]", params: { id } });
       toast.success(t("toastRoomCreated"), { root: true });
@@ -113,12 +116,19 @@ export default function CreateRoomScreen() {
     // a fragment, not a wrapping View: a formSheet lays out its root child
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
-    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingTop: 24, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
       <SheetHeader title={t(editing ? "editRoom" : "newRoom")} />
       {/* live preview: the room as a folder, like on the Rooms tab */}
-      <View className="mx-auto mb-6 w-1/2">
-        <RoomFolder room={{ id: "preview", name: title, type: preset.type, emoji, tint, members: editing?.members || [], eventDate: bday && date ? date : undefined }} wishes={[]} onPress={() => {}} />
+      <View className="mx-auto w-1/2">
+        <RoomFolder
+          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, members: editing?.members || [], eventDate: bday && date ? date : undefined }}
+          wishes={[]}
+          onPress={() => {}}
+          onStickerMove={setStickerPos}
+          onStickerDrag={setDragging}
+        />
       </View>
+      <Txt className="mb-6 mt-2 text-center text-[12.5px] text-t3">{t("stickerDragHint")}</Txt>
 
       <Label>{t("roomSticker")}</Label>
       <View className="mb-4">

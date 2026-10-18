@@ -113,10 +113,10 @@ export function Segmented<K extends string>({ options, value, onChange, neutral,
       first.current = !segW;
       return;
     }
-    // quick: a snappy slide with a short stretch, settled in about a quarter second
-    x.value = withSpring(to, { damping: 22, stiffness: 520, mass: 0.6 });
-    sx.value = withSequence(withTiming(1.12, { duration: 80 }), withSpring(1, { damping: 14, stiffness: 600 }));
-    sy.value = withSequence(withTiming(0.9, { duration: 80 }), withSpring(1, { damping: 14, stiffness: 600 }));
+    // a smooth glide (about 0.4 s) with a soft stretch on the way, no snap
+    x.value = withSpring(to, { damping: 26, stiffness: 240, mass: 1 });
+    sx.value = withSequence(withTiming(1.08, { duration: 160 }), withSpring(1, { damping: 18, stiffness: 260 }));
+    sy.value = withSequence(withTiming(0.94, { duration: 160 }), withSpring(1, { damping: 18, stiffness: 260 }));
   }, [idx, segW]); // eslint-disable-line react-hooks/exhaustive-deps
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
   return (

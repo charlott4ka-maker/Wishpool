@@ -49,7 +49,7 @@ async function moveLocalToAccount(): Promise<boolean> {
   const ids: Record<string, string> = {};
   while (left.rooms.length) {
     const r = left.rooms[0];
-    const res = await api.createRoom({ name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle, eventDate: r.eventDate, bdayMode: r.bdayMode, celebrantName: r.celebrantName });
+    const res = await api.createRoom({ name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle, eventDate: r.eventDate, bdayMode: r.bdayMode, celebrantName: r.celebrantName, stickerPos: r.stickerPos });
     ids[r.id] = res.room.id;
     left.rooms.shift();
     left.wishes = left.wishes.map((w) => ({ ...w, rooms: w.rooms.map((x) => (x === r.id ? res.room.id : x)) }));

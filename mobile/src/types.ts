@@ -38,6 +38,8 @@ export type Room = {
   bdayMode?: "self" | "other";
   celebrantName?: string;
   sharedCount?: number;
+  /** The sticker's spot on the folder, "x,y": its top-left as fractions of the folder; empty = the default. */
+  stickerPos?: string;
   /** Demo content only (lib/demo.ts): friends' lists shown offline. */
   demoLists?: { member: Member; wishes: (Wish & { reservedByMe?: boolean; taken?: boolean })[] }[];
 };

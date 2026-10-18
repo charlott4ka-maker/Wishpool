@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
-import { uid, cleanImages, pubUser, cleanEvent, cleanNote } from "./util.js";
+import { uid, cleanImages, pubUser, cleanEvent, cleanNote, cleanStickerPos } from "./util.js";
 import { botRoute, ensureWebhook, ensureBotMenu, remindRoute, telegramBirthdate, notifyWishShared, notifyGiftPicked } from "./bot.js";
 import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
@@ -43,7 +43,7 @@ export async function createApp() {
   }));
   const roomOut = (r, me) => ({
     id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle || "", eventDate: r.eventDate || "",
-    bdayMode: r.bdayMode || "", celebrantName: r.celebrantName || "",
+    bdayMode: r.bdayMode || "", celebrantName: r.celebrantName || "", stickerPos: r.stickerPos || "",
     // who the birthday person is, as far as this viewer needs to know
     iAmCelebrant: !!me && r.celebrantId === me, hasCelebrant: !!r.celebrantId, celebrantId: r.celebrantId || null,
   });
@@ -356,7 +356,7 @@ export async function createApp() {
   });
 
   api.post("/rooms", async (req, res) => {
-    const { name, type, emoji, tint, eventTitle, eventDate, bdayMode, celebrantName } = req.body || {};
+    const { name, type, emoji, tint, eventTitle, eventDate, bdayMode, celebrantName, stickerPos } = req.body || {};
     const t = ["friends", "couple", "birthday"].includes(type) ? type : "friends";
     const mode = t === "birthday" ? (bdayMode === "other" ? "other" : "self") : "";
     const r = {
@@ -365,6 +365,7 @@ export async function createApp() {
       ...(t === "birthday" ? cleanEvent(eventTitle, eventDate) : {}),
       bdayMode: mode, celebrantName: mode === "other" ? cleanName(celebrantName) : (mode === "self" ? cleanName(req.user.name) : ""),
       celebrantId: mode === "self" ? req.user.id : null,
+      stickerPos: cleanStickerPos(stickerPos),
     };
     await store.createRoom(r);
     await store.addMember(r.id, req.user.id);
@@ -382,7 +383,7 @@ export async function createApp() {
     const okTint = typeof tint === "string" && /^#[0-9a-fA-F]{6}$/.test(tint) ? tint : r.tint;
     // event fields are optional; sending them (even empty) sets/clears the event
     const ev = r.type === "birthday" && ("eventTitle" in body || "eventDate" in body) ? cleanEvent(body.eventTitle, body.eventDate) : {};
-    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint, ...ev });
+    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint, ...ev, ...("stickerPos" in body ? { stickerPos: cleanStickerPos(body.stickerPos) } : {}) });
     if (r.type === "birthday" && r.bdayMode === "other" && "celebrantName" in body) await store.setCelebrantName(r.id, cleanName(body.celebrantName));
     res.json({ ok: true });
   });

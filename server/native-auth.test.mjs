@@ -35,7 +35,14 @@ try {
   const rv = await call("POST", "/api/auth/email/verify", { email: "review@wishpool.test", code: "424242" });
   assert.equal(rv.status, 200);
   const w = await call("POST", "/api/wishes", { title: "Headphones" }, tok); assert.equal(w.status, 200);
-  const room = (await call("POST", "/api/rooms", { name: "Friends", type: "friends" }, tok)).body.room;
+  const room = (await call("POST", "/api/rooms", { name: "Friends", type: "friends", stickerPos: "0.5,0.4" }, tok)).body.room;
+  // the sticker's spot on the folder: kept, changed, and junk ignored
+  const roomPos = async () => (await call("GET", "/api/state", null, tok)).body.rooms.find(r => r.id === room.id).stickerPos;
+  assert.equal(await roomPos(), "0.5,0.4");
+  await call("PATCH", `/api/rooms/${room.id}`, { name: "Friends", stickerPos: "0.2,0.6" }, tok);
+  assert.equal(await roomPos(), "0.2,0.6");
+  await call("PATCH", `/api/rooms/${room.id}`, { name: "Friends", stickerPos: "9,9" }, tok);
+  assert.equal(await roomPos(), "");
   await call("POST", `/api/wishes/${w.body.wish.id}/room`, { roomId: room.id }, tok);
   assert.equal((await call("GET", `/api/rooms/${room.id}/peek`, null, rv.body.token)).body.room.memberCount, 1);
   assert.equal((await call("POST", `/api/rooms/${room.id}/join`, { inviterId: ok.body.user.id }, rv.body.token)).status, 200);

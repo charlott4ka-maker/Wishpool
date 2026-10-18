@@ -10,8 +10,8 @@ import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient as ExpoGradient } from "expo-linear-gradient";
 import { CalendarDays } from "lucide-react-native";
-import { useState } from "react";
-import { LayoutChangeEvent, Platform, StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, LayoutChangeEvent, PanResponder, Platform, StyleSheet, View } from "react-native";
 import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
 
 import { useT } from "../i18n";
@@ -55,7 +55,89 @@ const SPOTS = [
 const MAX_AVATARS = 5;
 const AV = 24, OV = 8;
 
-export function RoomFolder({ room, wishes, onPress }: { room: Room; wishes: Wish[]; onPress: () => void }) {
+// The sticker's default spot and how far it may go: on the front, inside the folder.
+const STICKER = 34;
+const STICKER_BOX = STICKER * 1.24 * 1.4; // the Sticker's own box (rim and rotation room)
+const DEFAULT_POS = { x: 0.14, y: 0.46 };
+export function parseStickerPos(v?: string) {
+  const m = v && v.match(/^([\d.]+),([\d.]+)$/);
+  return m ? { x: Number(m[1]), y: Number(m[2]) } : DEFAULT_POS;
+}
+const clampPos = (p: { x: number; y: number }, w: number, h: number) => ({
+  x: Math.min(Math.max(p.x, 0), Math.max(0, 1 - STICKER_BOX / w)),
+  y: Math.min(Math.max(p.y, 0.3), Math.max(0.3, 0.98 - STICKER_BOX / h)),
+});
+const posText = (p: { x: number; y: number }) => `${p.x.toFixed(3)},${p.y.toFixed(3)}`;
+
+/**
+ * The sticker on the folder. With `onMove` (the new / edit room preview) it can
+ * be dragged anywhere on the front; the spot is saved as fractions of the folder.
+ */
+function FolderSticker({ emoji, pos, dim, onMove, onDrag }: { emoji: string; pos?: string; dim: { w: number; h: number } | null; onMove?: (pos: string) => void; onDrag?: (on: boolean) => void }) {
+  const at = parseStickerPos(pos);
+  const xy = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const start = useRef(at);
+  const live = useRef({ dim, onMove, onDrag });
+  live.current = { dim, onMove, onDrag };
+  const [lifted, setLifted] = useState(false);
+  // placed by pixels once the folder has a size (percentages before that)
+  useEffect(() => {
+    if (dim) xy.setValue({ x: at.x * dim.w, y: at.y * dim.h });
+  }, [dim, at.x, at.y]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pan = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => !!live.current.onMove,
+        onStartShouldSetPanResponderCapture: () => !!live.current.onMove,
+        onMoveShouldSetPanResponderCapture: () => !!live.current.onMove,
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderGrant: () => {
+          const d = live.current.dim;
+          if (!d) return;
+          start.current = { x: (xy.x as any)._value / d.w, y: (xy.y as any)._value / d.h };
+          setLifted(true);
+          live.current.onDrag?.(true);
+          haptic("light");
+        },
+        onPanResponderMove: (_, g) => {
+          const d = live.current.dim;
+          if (!d) return;
+          const p = clampPos({ x: start.current.x + g.dx / d.w, y: start.current.y + g.dy / d.h }, d.w, d.h);
+          xy.setValue({ x: p.x * d.w, y: p.y * d.h });
+        },
+        onPanResponderRelease: () => drop(),
+        onPanResponderTerminate: () => drop(),
+      }),
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  function drop() {
+    const d = live.current.dim;
+    setLifted(false);
+    live.current.onDrag?.(false);
+    if (!d) return;
+    haptic("select");
+    live.current.onMove?.(posText({ x: (xy.x as any)._value / d.w, y: (xy.y as any)._value / d.h }));
+  }
+  return (
+    <Animated.View
+      {...(onMove ? pan.panHandlers : {})}
+      style={
+        dim
+          ? { position: "absolute", left: 0, top: 0, zIndex: 5, transform: [...xy.getTranslateTransform(), { scale: lifted ? 1.12 : 1 }] }
+          : { position: "absolute", left: `${at.x * 100}%`, top: `${at.y * 100}%`, zIndex: 5 }
+      }
+    >
+      <Sticker emoji={emoji} size={STICKER} rotate={-8} />
+    </Animated.View>
+  );
+}
+
+export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag }: {
+  room: Room; wishes: Wish[]; onPress: () => void;
+  /** Preview in the new / edit room sheet: the sticker can be dragged to a new spot. */
+  onStickerMove?: (pos: string) => void;
+  onStickerDrag?: (dragging: boolean) => void;
+}) {
   const { lang, t } = useT();
   const [dim, setDim] = useState<{ w: number; h: number } | null>(null);
   const cd = countdownLabel(lang, t, room.eventDate);
@@ -149,9 +231,7 @@ export function RoomFolder({ room, wishes, onPress }: { room: Room; wishes: Wish
             </MaskedView>
           )
         ) : null}
-        <View className="absolute" style={{ left: "14%", top: "46%", zIndex: 4 }}>
-          <Sticker emoji={room.emoji} size={34} rotate={-8} />
-        </View>
+        <FolderSticker emoji={room.emoji} pos={room.stickerPos} dim={dim} onMove={onStickerMove} onDrag={onStickerDrag} />
         <View className="absolute flex-row" style={{ right: "11%", bottom: "12%", zIndex: 4 }}>
           {shown.map((m, i) => (
             <View key={m.id} style={{ marginLeft: i ? -OV : 0 }}>

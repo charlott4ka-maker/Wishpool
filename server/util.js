@@ -19,7 +19,14 @@ export const cleanImages = (list) => (Array.isArray(list) ? list : [])
   .slice(0, MAX_IMAGES);
 export const mapRoom = (r) => r && ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, ownerId: r.owner_id, createdAt: Number(r.created_at), eventTitle: r.event_title || "", eventDate: r.event_date || "",
   // birthday rooms: whose birthday ("self" = the creator, "other" = a surprise for someone else)
-  bdayMode: r.bday_mode || "", celebrantName: r.celebrant_name || "", celebrantId: r.celebrant_id || null });
+  bdayMode: r.bday_mode || "", celebrantName: r.celebrant_name || "", celebrantId: r.celebrant_id || null,
+  stickerPos: r.sticker_pos || "" });
+// Where the sticker sits on the room folder: "x,y", the sticker's top-left as
+// fractions of the folder (set by dragging it in the app); "" = the default spot.
+export const cleanStickerPos = (v) => {
+  const m = typeof v === "string" && v.match(/^(0(?:\.\d{1,4})?|1(?:\.0{1,4})?),(0(?:\.\d{1,4})?|1(?:\.0{1,4})?)$/);
+  return m ? `${m[1]},${m[2]}` : "";
+};
 // Room event ("Anya's birthday", 2026-11-12): short title + a YYYY-MM-DD date.
 export const cleanEvent = (title, date) => ({
   eventTitle: typeof title === "string" ? title.trim().slice(0, 60) : "",

@@ -69,12 +69,13 @@ export function createMemStore() {
     async roomMembers(roomId) { return D.members.filter(m => m.roomId === roomId).map(m => D.users[m.userId]).filter(Boolean); },
     async userRoomIds(userId) { return D.members.filter(m => m.userId === userId).map(m => m.roomId); },
     async getRoom(id) { return D.rooms[id] || null; },
-    async createRoom(r) { D.rooms[r.id] = { bdayMode: "", celebrantName: "", celebrantId: null, ...r }; },
+    async createRoom(r) { D.rooms[r.id] = { bdayMode: "", celebrantName: "", celebrantId: null, stickerPos: "", ...r }; },
     async setCelebrant(roomId, userId) { if (D.rooms[roomId]) D.rooms[roomId].celebrantId = userId || null; },
     async setCelebrantName(roomId, name) { if (D.rooms[roomId]) D.rooms[roomId].celebrantName = name || ""; },
     async roomIdeas(roomId) { return Object.values(D.wishes).filter(w => w.roomOnly === roomId).sort((a, b) => b.createdAt - a.createdAt); },
-    async updateRoom(id, { name, emoji, tint, eventTitle, eventDate }) {
+    async updateRoom(id, { name, emoji, tint, eventTitle, eventDate, stickerPos }) {
       const r = D.rooms[id]; if (!r) return;
+      if (stickerPos !== undefined) r.stickerPos = stickerPos;
       if (name !== undefined) r.name = name;
       if (emoji !== undefined) r.emoji = emoji;
       if (tint !== undefined) r.tint = tint;

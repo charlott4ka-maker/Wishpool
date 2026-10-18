@@ -22,6 +22,7 @@ export function createPgStore(q) {
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS bday_mode text`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS celebrant_name text`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS celebrant_id text`);
+      await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS sticker_pos text`);
       await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS room_only text`);
       await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS note text`);
       await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS gifted_at bigint`);
@@ -139,11 +140,11 @@ export function createPgStore(q) {
     async roomMembers(roomId) { const { rows } = await q(`SELECT u.id,u.name,u.color,u.photo FROM members m JOIN users u ON u.id=m.user_id WHERE m.room_id=$1`, [roomId]); return rows; },
     async userRoomIds(userId) { const { rows } = await q(`SELECT room_id FROM members WHERE user_id=$1`, [userId]); return rows.map(r => r.room_id); },
     async getRoom(id) { const { rows } = await q(`SELECT * FROM rooms WHERE id=$1`, [id]); return mapRoom(rows[0]); },
-    async createRoom(r) { await q(`INSERT INTO rooms(id,name,type,emoji,tint,owner_id,created_at,event_title,event_date,bday_mode,celebrant_name,celebrant_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, [r.id, r.name, r.type, r.emoji, r.tint, r.ownerId, r.createdAt, r.eventTitle || "", r.eventDate || "", r.bdayMode || "", r.celebrantName || "", r.celebrantId || null]); },
+    async createRoom(r) { await q(`INSERT INTO rooms(id,name,type,emoji,tint,owner_id,created_at,event_title,event_date,bday_mode,celebrant_name,celebrant_id,sticker_pos) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, [r.id, r.name, r.type, r.emoji, r.tint, r.ownerId, r.createdAt, r.eventTitle || "", r.eventDate || "", r.bdayMode || "", r.celebrantName || "", r.celebrantId || null, r.stickerPos || ""]); },
     async setCelebrant(roomId, userId) { await q(`UPDATE rooms SET celebrant_id=$2 WHERE id=$1`, [roomId, userId || null]); },
     async setCelebrantName(roomId, name) { await q(`UPDATE rooms SET celebrant_name=$2 WHERE id=$1`, [roomId, name || ""]); },
     async roomIdeas(roomId) { const { rows } = await q(`SELECT * FROM wishes WHERE room_only=$1 ORDER BY created_at DESC`, [roomId]); return rows.map(mapWish); },
-    async updateRoom(id, { name, emoji, tint, eventTitle, eventDate }) { await q(`UPDATE rooms SET name=COALESCE($2,name), emoji=COALESCE($3,emoji), tint=COALESCE($4,tint), event_title=COALESCE($5,event_title), event_date=COALESCE($6,event_date) WHERE id=$1`, [id, name ?? null, emoji ?? null, tint ?? null, eventTitle ?? null, eventDate ?? null]); },
+    async updateRoom(id, { name, emoji, tint, eventTitle, eventDate, stickerPos }) { await q(`UPDATE rooms SET name=COALESCE($2,name), emoji=COALESCE($3,emoji), tint=COALESCE($4,tint), event_title=COALESCE($5,event_title), event_date=COALESCE($6,event_date), sticker_pos=COALESCE($7,sticker_pos) WHERE id=$1`, [id, name ?? null, emoji ?? null, tint ?? null, eventTitle ?? null, eventDate ?? null, stickerPos ?? null]); },
     async roomsWithEventOn(day) { const { rows } = await q(`SELECT * FROM rooms WHERE event_date=$1`, [day]); return rows.map(mapRoom); },
     async markReminder(roomId, day, kind) { const { rows } = await q(`INSERT INTO reminders(room_id,day,kind) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING room_id`, [roomId, day, kind]); return rows.length > 0; },
     async userLang(id) { const { rows } = await q(`SELECT lang FROM users WHERE id=$1`, [id]); return rows[0] ? rows[0].lang : null; },
