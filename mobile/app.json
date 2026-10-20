@@ -113,6 +113,13 @@
       ],
       "@react-native-community/datetimepicker",
       [
+        "./plugins/withShareExtensionDisplayName",
+        {
+          "target": "WishpoolShare",
+          "name": "Wishpool"
+        }
+      ],
+      [
         "expo-share-intent",
         {
           "iosActivationRules": {
@@ -120,7 +127,7 @@
             "NSExtensionActivationSupportsWebPageWithMaxCount": 1,
             "NSExtensionActivationSupportsText": true
           },
-          "iosShareExtensionName": "Wishpool",
+          "iosShareExtensionName": "WishpoolShare",
           "androidIntentFilters": [
             "text/*"
           ]
