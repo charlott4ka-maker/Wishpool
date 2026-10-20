@@ -10,7 +10,7 @@ import { Lock, Plus, X } from "lucide-react-native";
 import MaskedView from "@react-native-masked-view/masked-view";
 import React, { useEffect, useId, useRef, useState } from "react";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TextProps, View, ViewStyle } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TextProps, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, Mask, Rect } from "react-native-svg";
 
@@ -45,14 +45,19 @@ const PILL_BORDER: Partial<Record<PillKind, ViewStyle>> = {
   green: { borderWidth: 1, borderColor: "rgba(52,199,89,0.4)" },
 };
 
+// spinner colour per kind, matching the label
+const PILL_SPIN: Record<PillKind, string> = { primary: "#fff", ghost: C.t1, glass: "#fff", soft: C.blueText, green: C.greenText, gold: "#000" };
+
 export function Pill({
-  children, onPress, kind = "primary", icon, disabled, full, size = "lg", px,
-}: { children?: React.ReactNode; onPress?: () => void; kind?: PillKind; icon?: React.ReactNode; disabled?: boolean; full?: boolean; size?: "lg" | "sm"; /** side padding instead of the default */ px?: number }) {
+  children, onPress, kind = "primary", icon, disabled, full, size = "lg", px, loading,
+}: { children?: React.ReactNode; onPress?: () => void; kind?: PillKind; icon?: React.ReactNode; disabled?: boolean; full?: boolean; size?: "lg" | "sm"; /** side padding instead of the default */ px?: number;
+  /** waiting on the server: a spinner in place of the label (same size, not greyed out), taps ignored */ loading?: boolean }) {
   const k = PILL[kind];
   return (
     <Press
       disabled={disabled}
       onPress={() => {
+        if (loading) return;
         haptic("light");
         onPress?.();
       }}
@@ -70,8 +75,12 @@ export function Pill({
           <LinearGradient colors={["rgba(255,255,255,0.10)", "rgba(255,255,255,0)"]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: -1 }} />
         </>
       ) : null}
-      {icon}
-      {typeof children === "string" ? <Txt className={`font-m600 ${k.text} ${size === "lg" ? "text-base" : "text-sm"}`}>{children}</Txt> : children}
+      {/* the label keeps its place while loading, so the button doesn't change size */}
+      <View className="flex-row items-center justify-center gap-2" style={{ opacity: loading ? 0 : 1 }}>
+        {icon}
+        {typeof children === "string" ? <Txt className={`font-m600 ${k.text} ${size === "lg" ? "text-base" : "text-sm"}`}>{children}</Txt> : children}
+      </View>
+      {loading ? <ActivityIndicator color={PILL_SPIN[kind]} style={{ position: "absolute" }} /> : null}
     </Press>
   );
 }

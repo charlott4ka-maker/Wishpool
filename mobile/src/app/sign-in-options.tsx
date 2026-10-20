@@ -21,12 +21,17 @@ export default function SignInOptions() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { status, appleAvailable, signInWithApple } = useAuth();
-  // signed in: this sheet has done its job
-  useEffect(() => {
-    if (status === "signedIn" && router.canGoBack()) router.back();
-  }, [status, router]);
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState(false);
+  // Signed in: this sheet has done its job. Over the app (a guest signing in)
+  // it just closes; from the welcome screen that screen is gone by now and the
+  // sheet would be left alone on top, so the app's home takes its place.
+  useEffect(() => {
+    if (status !== "signedIn") return;
+    setEmail(false);
+    if (router.canGoBack()) router.back();
+    else router.replace("/");
+  }, [status, router]);
   const ready = api.configured();
 
   const run = (fn: () => Promise<unknown>) => async () => {
@@ -57,7 +62,7 @@ export default function SignInOptions() {
             onPress={run(signInWithApple)}
           />
         ) : null}
-        <Pill full icon={<Mail size={18} color="#fff" />} disabled={busy} onPress={run(async () => setEmail(true))}>
+        <Pill full icon={<Mail size={18} color="#fff" />} onPress={run(async () => setEmail(true))}>
           {t("signInEmail")}
         </Pill>
       </View>

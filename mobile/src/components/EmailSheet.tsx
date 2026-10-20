@@ -55,6 +55,9 @@ export function EmailSheet({ visible, onClose }: { visible: boolean; onClose: ()
     setBusy(true);
     try {
       await verifyEmail(email, code);
+      // signed in: the sheet goes away (the sign-in sheet under it closes itself)
+      setBusy(false);
+      onClose();
     } catch (e) {
       fail(e);
       setBusy(false);
@@ -68,13 +71,13 @@ export function EmailSheet({ visible, onClose }: { visible: boolean; onClose: ()
         <>
           <Txt className="-mt-2 mb-4 text-[12.5px] text-t3">{t("emailCodeSent", { email: email.trim() })}</Txt>
           <Field label={t("emailCodeLabel")} value={code} onChangeText={(v) => (setCode(v), setCodeError(""))} placeholder="123456" keyboardType="number-pad" textContentType="oneTimeCode" autoFocus error={codeError || (tried && sent && code.trim().length < 4 && t("requiredField"))} />
-          <Pill full onPress={verify}>{t("emailVerify")}</Pill>
+          <Pill full loading={busy} onPress={verify}>{t("emailVerify")}</Pill>
           <Pressable onPress={send} hitSlop={8} className="mt-4 items-center">
             <Txt className="font-m600 text-sm text-blueText">{t("emailResend")}</Txt>
           </Pressable>
         </>
       ) : (
-        <Pill full onPress={send}>{t("emailSend")}</Pill>
+        <Pill full loading={busy} onPress={send}>{t("emailSend")}</Pill>
       )}
     </Sheet>
   );

@@ -13,3 +13,11 @@ describe("server photo paths", () => {
     expect(out.me.photo).toBe("https://pub.r2.dev/u/1.jpg");
   });
 });
+
+describe("photos sent back to the server", () => {
+  it("lose the site again, so the server recognises its own photos", () => {
+    const { relativePhotos } = require("../api");
+    const body = { images: [API_URL + "/api/img/w1/0", API_URL + "/p/w/1.jpg", "https://shop.example/x.jpg", "data:image/jpeg;base64,AAA"] };
+    expect(relativePhotos(body).images).toEqual(["/api/img/w1/0", "/p/w/1.jpg", "https://shop.example/x.jpg", "data:image/jpeg;base64,AAA"]);
+  });
+});

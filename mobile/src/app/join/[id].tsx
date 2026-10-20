@@ -115,7 +115,7 @@ export default function JoinRoom() {
             {surprise ? t("bdayGateSub") : t("membersColon", { n: room.memberCount })}
           </Txt>
           <View className="mt-6 w-full gap-3">
-            <Pill full onPress={() => join(false)}>{surprise ? t("bdayGateIn") : t("joinRoomCta")}</Pill>
+            <Pill full loading={busy} onPress={() => join(false)}>{surprise ? t("bdayGateIn") : t("joinRoomCta")}</Pill>
             {surprise ? (
               <Pill full kind="ghost" onPress={() => join(true)}>{t("bdayGateMe")}</Pill>
             ) : null}

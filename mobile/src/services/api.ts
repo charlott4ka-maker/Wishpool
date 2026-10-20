@@ -35,7 +35,7 @@ function mapStrings(v: unknown, fn: (s: string) => string): unknown {
   return v;
 }
 export const absolutePhotos = <T,>(v: T): T => mapStrings(v, (s) => (OWN_PHOTO.test(s) ? API_URL + s : s)) as T;
-const relativePhotos = (v: unknown) => mapStrings(v, (s) => (s.startsWith(API_URL + "/") && OWN_PHOTO.test(s.slice(API_URL.length)) ? s.slice(API_URL.length) : s));
+export const relativePhotos = (v: unknown) => mapStrings(v, (s) => (s.startsWith(API_URL + "/") && OWN_PHOTO.test(s.slice(API_URL.length)) ? s.slice(API_URL.length) : s));
 
 async function req<T>(method: string, path: string, body?: unknown, opts: { timeout?: number; auth?: boolean } = {}): Promise<T> {
   if (!API_URL) throw new ApiError("no_api_url", 0, true);

@@ -173,8 +173,8 @@ export default function CreateRoomScreen() {
     </ScrollView>
     {/* the action stays at the bottom of the screen */}
     <SheetFooter>
-      <Pill full icon={editing ? undefined : <Plus size={18} color="#fff" />} onPress={submit}>
-        {editing ? t("saveChanges") : busy ? t("creating") : t("createRoom")}
+      <Pill full loading={busy} icon={editing ? undefined : <Plus size={18} color="#fff" />} onPress={submit}>
+        {editing ? t("saveChanges") : t("createRoom")}
       </Pill>
     </SheetFooter>
     {/* full screen: the form scrolls under a status bar strip of the same colour */}

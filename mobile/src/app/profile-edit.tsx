@@ -88,7 +88,7 @@ export default function ProfileEdit() {
         </Pressable>
       </View>
       <Field label={t("yourName")} value={name} onChangeText={setName} placeholder={t("yourNamePh")} error={tried && !name.trim() && t("requiredField")} />
-      <Pill full onPress={save}>{t("saveChanges")}</Pill>
+      <Pill full loading={busy} onPress={save}>{t("saveChanges")}</Pill>
       <ToastHost inSheet />
     </View>
   );

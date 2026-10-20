@@ -352,8 +352,8 @@ export default function AddWishScreen() {
     </ScrollView>
     {/* the action stays at the bottom of the screen */}
     <SheetFooter>
-      <Pill full onPress={submit}>
-        {busy ? t("savingWish") : t(initial ? "saveChanges" : "saveWish")}
+      <Pill full loading={busy} onPress={submit}>
+        {t(initial ? "saveChanges" : "saveWish")}
       </Pill>
     </SheetFooter>
     {/* full screen: the form scrolls under a status bar strip of the same colour */}
