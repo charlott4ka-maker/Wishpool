@@ -23,6 +23,20 @@ export class ApiError extends Error {
   }
 }
 
+// The server hands out its own photos as site-relative paths ("/p/…" from the
+// bucket, "/api/img/…" still in the database): fine for the Mini App on the
+// same site, but here they need the site in front. They lose it again on the
+// way back, so the server still recognises its own photos when a wish is edited.
+const OWN_PHOTO = /^\/(p|api\/img)\/\S+$/;
+function mapStrings(v: unknown, fn: (s: string) => string): unknown {
+  if (typeof v === "string") return fn(v);
+  if (Array.isArray(v)) return v.map((x) => mapStrings(x, fn));
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, mapStrings(x, fn)]));
+  return v;
+}
+export const absolutePhotos = <T,>(v: T): T => mapStrings(v, (s) => (OWN_PHOTO.test(s) ? API_URL + s : s)) as T;
+const relativePhotos = (v: unknown) => mapStrings(v, (s) => (s.startsWith(API_URL + "/") && OWN_PHOTO.test(s.slice(API_URL.length)) ? s.slice(API_URL.length) : s));
+
 async function req<T>(method: string, path: string, body?: unknown, opts: { timeout?: number; auth?: boolean } = {}): Promise<T> {
   if (!API_URL) throw new ApiError("no_api_url", 0, true);
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -32,7 +46,7 @@ async function req<T>(method: string, path: string, body?: unknown, opts: { time
   const timer = setTimeout(() => ctl.abort(), opts.timeout || (method === "GET" ? 10000 : 30000));
   let res: Response;
   try {
-    res = await fetch(API_URL + "/api" + path, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: ctl.signal });
+    res = await fetch(API_URL + "/api" + path, { method, headers, body: body ? JSON.stringify(relativePhotos(body)) : undefined, signal: ctl.signal });
   } catch {
     throw new ApiError("network", 0, true);
   } finally {
@@ -45,7 +59,7 @@ async function req<T>(method: string, path: string, body?: unknown, opts: { time
     } catch {}
     throw new ApiError(e.error || "http_" + res.status, res.status);
   }
-  return res.json() as Promise<T>;
+  return absolutePhotos(await res.json()) as T;
 }
 
 export type AuthUser = { id: string; name: string; photo?: string | null; color?: string; email?: string | null };

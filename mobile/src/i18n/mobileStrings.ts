@@ -8,7 +8,7 @@ export const MOBILE_STRINGS = {
   signInStart: { uk: "Почати", ru: "Начать", en: "Get started" },
   signInLogin: { uk: "Увійти", ru: "Войти", en: "Sign in" },
   signInGuestBtn: { uk: "Продовжити без акаунта", ru: "Продолжить без аккаунта", en: "Continue without an account" },
-  signInHow: { uk: "Вхід у Wishpool", ru: "Вход в Wishpool", en: "Sign in to Wishpool" },
+  signInHow: { uk: "Вхід або реєстрація", ru: "Вход или регистрация", en: "Sign in or sign up" },
   signInHowSub: { uk: "Новий акаунт створиться сам, якщо його ще немає.", ru: "Новый аккаунт создастся сам, если его ещё нет.", en: "A new account is created if you don't have one yet." },
   signInSoon: { uk: "Вхід з'явиться зовсім скоро. Поки можна користуватися без акаунта", ru: "Вход появится совсем скоро. Пока можно пользоваться без аккаунта", en: "Sign-in is coming very soon. For now you can use the app without an account" },
 
@@ -73,7 +73,7 @@ export const MOBILE_STRINGS = {
   swipeUntake: { uk: "Не дарую", ru: "Не дарю", en: "Not giving" },
   searchRooms: { uk: "Пошук кімнат", ru: "Поиск комнат", en: "Search rooms" },
   signInTelegram: { uk: "Увійти через Telegram", ru: "Войти через Telegram", en: "Continue with Telegram" },
-  signInEmail: { uk: "Увійти через e-mail", ru: "Войти по e-mail", en: "Continue with e-mail" },
+  signInEmail: { uk: "Продовжити з e-mail", ru: "Продолжить с e-mail", en: "Continue with e-mail" },
   signInGuest: { uk: "Спробувати без акаунта", ru: "Попробовать без аккаунта", en: "Try without an account" },
   signInFailed: { uk: "Не вдалося увійти. Спробуй ще раз", ru: "Не получилось войти. Попробуй ещё раз", en: "Couldn't sign you in. Try again" },
   emailTitle: { uk: "Вхід через e-mail", ru: "Вход по e-mail", en: "Sign in with e-mail" },
