@@ -55,6 +55,19 @@ try {
   const after = await call("GET", `/api/rooms/${room.id}`, null, rv.body.token);
   assert.equal(after.status, 200); assert.equal(after.body.room.owner, true); assert.equal(after.body.members.length, 1); assert.equal(after.body.lists.length, 0);
   assert.equal((await call("GET", "/api/gifts", null, rv.body.token)).body.gifts.length, 0);
+  // avatar: uploaded to the bucket (stubbed here) and kept as our own /p/ path
+  Object.assign(process.env, { R2_ACCOUNT_ID: "a", R2_ACCESS_KEY_ID: "k", R2_SECRET_ACCESS_KEY: "s", R2_BUCKET: "b", R2_PUBLIC_URL: "https://pub.test" });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (url, opts) => String(url).includes("r2.cloudflarestorage.com") ? Promise.resolve(new Response("", { status: 200 })) : realFetch(url, opts);
+  const jpg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w==";
+  const av = await call("PATCH", "/api/me", { name: "Rev", photo: jpg }, rv.body.token);
+  assert.match(av.body.user.photo, /^\/p\/u\/u[0-9a-f]+\/[0-9a-f]+\.jpg$/);
+  // sent back unchanged (the app strips its site again): the photo stays
+  assert.equal((await call("PATCH", "/api/me", { name: "Rev", photo: av.body.user.photo }, rv.body.token)).body.user.photo, av.body.user.photo);
+  assert.equal((await call("PATCH", "/api/me", { name: "Rev", photo: null }, rv.body.token)).body.user.photo, null);
+  globalThis.fetch = realFetch;
+  for (const k of ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_PUBLIC_URL"]) delete process.env[k];
+
   // sign out drops the session
   await call("POST", "/api/sign-out", null, rv.body.token);
   assert.equal((await call("GET", "/api/state", null, rv.body.token)).status, 401);

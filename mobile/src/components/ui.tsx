@@ -299,6 +299,8 @@ export type AvatarMember = { name: string; color: string; photo?: string | null 
  */
 export function Avatar({ m, size = 34, cut = 0 }: { m: AvatarMember; size?: number; cut?: number }) {
   const [failed, setFailed] = useState(false);
+  // a new photo gets a fresh try (a failed old one used to leave just the letter)
+  useEffect(() => setFailed(false), [m.photo]);
   const maskId = useId().replace(/:/g, "");
   const face = (
     <View style={{ width: size, height: size, borderRadius: size, backgroundColor: m.color, overflow: "hidden" }} className="items-center justify-center">

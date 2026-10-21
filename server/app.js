@@ -247,11 +247,12 @@ export async function createApp() {
       else if (typeof b.photo === "string" && /^https:\/\//.test(b.photo)) photo = undefined; // unchanged
       else if (typeof b.photo === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(b.photo)) {
         if (!storageOn() || b.photo.length > 1.5e6) return res.status(400).json({ error: "photo_not_saved" });
-        photo = await storeImage(b.photo, `u/${req.user.id}`);
+        // kept as our own /p/ path (like wish photos), not the bucket's address
+        photo = toPublic(await storeImage(b.photo, `u/${req.user.id}`));
       }
       const old = await store.getUser(req.user.id);
       await store.updateProfile(req.user.id, { name, photo });
-      if (photo !== undefined && old && old.photo && old.photo !== photo) await dropImages([old.photo]);
+      if (photo !== undefined && old && old.photo && old.photo !== photo) await dropImages([fromPublic(old.photo)]);
       res.json({ user: await store.getUser(req.user.id) });
     } catch (e) { next(e); }
   });
@@ -260,7 +261,7 @@ export async function createApp() {
     try {
       if (req.user.id === "demo") return res.status(400).json({ error: "demo" });
       const photos = await store.deleteUser(req.user.id);
-      await dropImages(photos);
+      await dropImages(photos.map(fromPublic));
       res.json({ ok: true });
     } catch (e) { next(e); }
   });
