@@ -47,6 +47,23 @@ try {
   assert.equal((await call("GET", `/api/rooms/${room.id}/peek`, null, rv.body.token)).body.room.memberCount, 1);
   assert.equal((await call("POST", `/api/rooms/${room.id}/join`, { inviterId: ok.body.user.id }, rv.body.token)).status, 200);
   assert.equal((await call("POST", `/api/wishes/${w.body.wish.id}/reserve`, null, rv.body.token)).status, 200);
+  // report and block: the reviewer reports Anna's wish, blocks her, her wishes leave the room
+  const anna = ok.body.user.id, rvt = rv.body.token;
+  assert.equal((await call("POST", "/api/reports", { wishId: w.body.wish.id, roomId: room.id, reason: "spam" }, rvt)).status, 200);
+  assert.equal((await call("POST", "/api/reports", { userId: rv.body.user.id }, rvt)).status, 400, "not yourself");
+  assert.equal((await call("GET", "/api/admin/reports", null, rvt)).status, 403);
+  assert.equal((await call("GET", `/api/rooms/${room.id}`, null, rvt)).body.lists[0].wishes.length, 1);
+  assert.equal((await call("POST", "/api/blocks", { userId: anna }, rvt)).status, 200);
+  const blk = (await call("GET", `/api/rooms/${room.id}`, null, rvt)).body;
+  assert.equal(blk.lists[0].wishes.length, 0); assert.equal(blk.lists[0].member.blocked, true);
+  await call("DELETE", `/api/blocks/${anna}`, null, rvt);
+  assert.equal((await call("GET", `/api/rooms/${room.id}`, null, rvt)).body.lists[0].wishes.length, 1);
+  process.env.ADMIN_EMAILS = "review@wishpool.test";
+  const reps = (await call("GET", "/api/admin/reports", null, rvt)).body.reports;
+  assert.equal(reps.length, 1); assert.equal(reps[0].wish.title, "Headphones"); assert.equal(reps[0].user.id, anna);
+  await call("DELETE", `/api/admin/reports/${reps[0].id}`, null, rvt);
+  assert.equal((await call("GET", "/api/admin/reports", null, rvt)).body.reports.length, 0);
+  delete process.env.ADMIN_EMAILS;
   // same e-mail again -> same account
   await new Promise(r => setTimeout(r, 0));
   // delete: the room goes to the other member, the session dies

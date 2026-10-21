@@ -8,7 +8,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { CalendarDays, Check, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActionSheetIOS, Alert, Platform, ScrollView, Share, View } from "react-native";
+import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, Share, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -115,6 +115,69 @@ export default function RoomScreen() {
       </Pill>
     );
 
+  // Report / block someone else (App Review 1.2): ⋯ by a friend's name, or a
+  // long press on one of their wishes. Reports go to support and the admin page.
+  const sheet = (title: string, actions: [string, () => void][], destructive?: number) => {
+    const options = [...actions.map((a) => a[0]), t("setCancel")];
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { title, options, destructiveButtonIndex: destructive, cancelButtonIndex: actions.length, userInterfaceStyle: "dark" },
+        (i) => i < actions.length && actions[i][1](),
+      );
+    } else {
+      Alert.alert(title, "", [...actions.map(([text, onPress]) => ({ text, onPress })), { text: t("setCancel"), style: "cancel" as const }]);
+    }
+  };
+  const report = (target: { wishId?: string; userId?: string }) =>
+    sheet(
+      t("reportWhy"),
+      (["spam", "offensive", "inappropriate", "other"] as const).map((reason) => [
+        t(("reason" + reason[0].toUpperCase() + reason.slice(1)) as "reasonSpam"),
+        () =>
+          api
+            .report({ ...target, roomId: room!.id, reason })
+            .then(() => {
+              haptic("success");
+              toast.success(t("toastReported"));
+            })
+            .catch(() => toast.error(t("toastError"))),
+      ]),
+    );
+  const block = (m: Member) =>
+    Alert.alert(t("blockTitle", { name: m.name }), t("blockText"), [
+      { text: t("setCancel"), style: "cancel" },
+      {
+        text: t("blockUser"),
+        style: "destructive",
+        onPress: () =>
+          api
+            .block(m.id)
+            .then(() => {
+              haptic("success");
+              toast.info(t("toastBlocked"));
+            })
+            .catch(() => toast.error(t("toastError")))
+            .finally(() => load().catch(() => {})),
+      },
+    ]);
+  const unblock = (m: Member) => {
+    haptic("light");
+    api
+      .unblock(m.id)
+      .catch(() => toast.error(t("toastError")))
+      .finally(() => load().catch(() => {}));
+  };
+  const memberMenu = (m: Member) => {
+    haptic("select");
+    sheet(m.name, [[t("reportUser"), () => report({ userId: m.id })], [t("blockUser"), () => block(m)]], 1);
+  };
+  const wishMenu = online
+    ? (w: RoomWish) => () => {
+        haptic("select");
+        sheet(w.title, [[t("reportWish"), () => report({ wishId: w.id })]]);
+      }
+    : () => undefined;
+
   const openMenu = () => {
     haptic("select");
     const actions: [string, () => void][] = isOwner
@@ -211,14 +274,25 @@ export default function RoomScreen() {
                 <Animated.View key={member.id} entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(18)}>
                   <View className="mb-1 flex-row items-center gap-3">
                     <Avatar m={member} size={28} />
-                    <Txt className="font-m700 text-[15.5px]">{member.name}</Txt>
+                    <Txt numberOfLines={1} className="flex-1 font-m700 text-[15.5px]">{member.name}</Txt>
+                    {!online ? null : member.blocked ? (
+                      <Pill size="sm" kind="ghost" onPress={() => unblock(member)}>{t("unblockUser")}</Pill>
+                    ) : (
+                      <Pressable onPress={() => memberMenu(member)} hitSlop={8} accessibilityLabel={t("more")} style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}>
+                        <Ellipsis size={20} color={C.t3} strokeWidth={1.5} absoluteStrokeWidth />
+                      </Pressable>
+                    )}
                   </View>
-                  {ws.length ? (
+                  {member.blocked ? (
+                    <View className="rounded-card bg-bg px-5 py-4">
+                      <Txt className="text-[13.5px] text-t3">{t("blockedNote")}</Txt>
+                    </View>
+                  ) : ws.length ? (
                     <WishList>
                       {ws.map((w) =>
                         // swipe left: "I'll get it", or "Not giving" on your own pick
                         w.taken && !w.reservedByMe ? (
-                          <WishRow key={w.id} w={w} right={reserveRight(w)} />
+                          <WishRow key={w.id} w={w} right={reserveRight(w)} onLongPress={wishMenu(w)} />
                         ) : (
                           <SwipeRow
                             key={w.id}
@@ -227,7 +301,7 @@ export default function RoomScreen() {
                             icon={w.reservedByMe ? <X size={20} color="#fff" /> : <Gift size={20} color="#fff" />}
                             onAction={() => (w.reservedByMe ? untake(w) : openTake(w))}
                           >
-                            <WishRow w={w} right={reserveRight(w)} />
+                            <WishRow w={w} right={reserveRight(w)} onLongPress={wishMenu(w)} />
                           </SwipeRow>
                         ),
                       )}

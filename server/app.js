@@ -9,6 +9,7 @@ import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
 import { nativeAuthRoutes, hashToken } from "./native-auth.js";
 import { publicConfigRoute, adminConfigRoutes } from "./app-config.js";
+import { moderationRoutes } from "./moderation.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -226,6 +227,11 @@ export async function createApp() {
     return emails.length > 0 && (await store.userEmails(String(id))).some(e => emails.includes(e));
   };
   adminConfigRoutes(api, store, (req) => isAdmin(req.user.id));
+  moderationRoutes(api, store, {
+    isAdmin: (req) => isAdmin(req.user.id),
+    pubWish,
+    dropPhotos: (w) => dropImages(w.images && w.images.length ? w.images : [w.image]).catch(() => {}),
+  });
 
   // clicks and screens from the app, batched: { names: ["open", "tab_rooms", ...] }
   api.post("/ev", async (req, res) => {
@@ -494,31 +500,34 @@ export async function createApp() {
     const me = req.user.id;
     const r = await store.getRoom(req.params.id);
     if (!r || !(await store.isMember(r.id, me))) return res.status(404).json({ error: "not_found" });
-    const members = await store.roomMembers(r.id);
+    const [members, blockedIds] = await Promise.all([store.roomMembers(r.id), store.blockedIds(me)]);
+    // people this viewer blocked: still in the room, but none of their wishes or ideas
+    const blocked = new Set(blockedIds);
+    const memberOut = (u, viewer) => ({ ...pubUser(u, viewer), ...(blocked.has(u.id) ? { blocked: true } : {}) });
     if (r.type === "birthday") {
-      const head = { room: { ...roomOut(r, me), owner: r.ownerId === me }, members: members.map(u => pubUser(u, me)) };
+      const head = { room: { ...roomOut(r, me), owner: r.ownerId === me }, members: members.map(u => memberOut(u, me)) };
       // The birthday person: just their own shared wishes, nothing about gifts.
       if (r.celebrantId === me) return res.json({ ...head, lists: [], ideas: [], mine: (await store.wishesSharedTo(me, r.id)).map(pubWish) });
       // Guests: the birthday person's wishes (if they're in) + everyone's ideas.
       const gifters = Math.max(1, members.length - (r.celebrantId ? 1 : 0));
       const cel = r.celebrantId && members.find(u => u.id === r.celebrantId);
       const [celWishes, ideasRaw] = await Promise.all([
-        cel ? withReservations(await store.wishesSharedTo(cel.id, r.id), me, gifters) : [],
-        store.roomIdeas(r.id),
+        cel && !blocked.has(cel.id) ? withReservations(await store.wishesSharedTo(cel.id, r.id), me, gifters) : [],
+        store.roomIdeas(r.id).then(ws => ws.filter(w => !blocked.has(w.ownerId))),
       ]);
       const byId = Object.fromEntries(members.map(u => [u.id, u]));
       const ideas = (await withReservations(ideasRaw, me, gifters)).map((w, i) => ({ ...w, by: byId[ideasRaw[i].ownerId] ? pubUser(byId[ideasRaw[i].ownerId], me) : null, mineIdea: ideasRaw[i].ownerId === me }));
-      return res.json({ ...head, lists: cel ? [{ member: pubUser(cel), wishes: celWishes }] : [], ideas, mine: [] });
+      return res.json({ ...head, lists: cel ? [{ member: memberOut(cel), wishes: celWishes }] : [], ideas, mine: [] });
     }
     const gifters = members.length - 1; // everyone but the wish owner
     const [lists, mineRaw] = await Promise.all([
-      Promise.all(members.filter(x => x.id !== me).map(async u => ({ member: pubUser(u), wishes: await withReservations(await store.wishesSharedTo(u.id, r.id), me, gifters) }))),
+      Promise.all(members.filter(x => x.id !== me).map(async u => ({ member: memberOut(u), wishes: blocked.has(u.id) ? [] : await withReservations(await store.wishesSharedTo(u.id, r.id), me, gifters) }))),
       store.wishesSharedTo(me, r.id),
     ]);
     const mine = mineRaw.map(pubWish); // owner sees no reservations (surprise-safe)
     res.json({
       room: { ...roomOut(r, me), owner: r.ownerId === me },
-      members: members.map(u => pubUser(u, me)),
+      members: members.map(u => memberOut(u, me)),
       lists, mine,
     });
   });

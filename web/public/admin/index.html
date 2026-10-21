@@ -80,6 +80,7 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
         <button data-tab="banners" class="on">Баннеры</button>
         <button data-tab="strings">Тексты</button>
         <button data-tab="stickers">Стикеры</button>
+        <button data-tab="reports">Жалобы</button>
       </div>
       <p class="hint" style="margin-top:12px">Изменения попадают в приложение примерно за минуту, при следующем открытии.</p>
     </div>
@@ -111,6 +112,12 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
         <button class="btn2" id="stkUpload">Загрузить</button>
       </div>
       <p class="hint hidden" id="noStorage" style="color:#ff6b6b">Хранилище фото (R2) не настроено на сервере, загрузка не сработает.</p>
+    </div>
+
+    <div class="block hidden" data-pane="reports">
+      <h2 style="margin-top:0">Жалобы</h2>
+      <p class="hint">Жалобы пользователей на желания и людей (они же приходят на support@). По правилам Apple их нужно разбирать в течение 24 часов: удалить желание, если оно нарушает правила, и закрыть жалобу.</p>
+      <div id="reportList"></div>
     </div>
   </div>
 </div>

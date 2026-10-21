@@ -5,6 +5,7 @@ export type Member = {
   name: string;
   color: string;
   photo?: string | null;
+  blocked?: boolean;
 };
 
 export type Wish = {

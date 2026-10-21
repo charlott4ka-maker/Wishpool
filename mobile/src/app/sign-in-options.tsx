@@ -4,8 +4,9 @@
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Mail } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
-import { Alert, Platform, View } from "react-native";
+import { Alert, Platform, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
@@ -13,7 +14,7 @@ import { EmailSheet } from "../components/EmailSheet";
 import { SheetHeader } from "../components/SheetHeader";
 import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
-import { api } from "../services/api";
+import { api, SITE_URL } from "../services/api";
 import { C, H } from "../theme/tokens";
 
 export default function SignInOptions() {
@@ -66,6 +67,9 @@ export default function SignInOptions() {
           {t("signInEmail")}
         </Pill>
       </View>
+      <Pressable onPress={() => WebBrowser.openBrowserAsync(SITE_URL + "/terms").catch(() => {})} hitSlop={8} className="mt-4 self-center">
+        <Txt className="text-center text-[12.5px] text-t3">{t("signInAgree")}</Txt>
+      </Pressable>
       <EmailSheet visible={email} onClose={() => setEmail(false)} />
     </View>
   );

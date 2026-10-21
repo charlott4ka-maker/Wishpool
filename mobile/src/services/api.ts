@@ -91,6 +91,9 @@ export const api = {
     req<{ title: string; price: string; image: string | null; url: string; guess: boolean }>("GET", "/preview?url=" + encodeURIComponent(url), undefined, { timeout: 25000 }),
   // Account deletion (App Store guideline 5.1.1(v)): everything goes at once.
   deleteAccount: () => req("DELETE", "/me"),
+  report: (b: { wishId?: string; userId?: string; roomId?: string; reason: string }) => req("POST", "/reports", b),
+  block: (userId: string) => req("POST", "/blocks", { userId }),
+  unblock: (userId: string) => req("DELETE", "/blocks/" + encodeURIComponent(userId)),
   /** Name / photo from the profile editor (photo: a JPEG data URL, an unchanged https URL, or null). */
   updateMe: (b: { name?: string; photo?: string | null }) => req<{ user: AuthUser }>("PATCH", "/me", b),
   setBirthday: (birthday: string | null) => req("PUT", "/me/birthday", { birthday }),

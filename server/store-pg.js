@@ -40,9 +40,18 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS email_codes(email text primary key, code_hash text, expires bigint, attempts int)`);
       // what the admin page changes without a new app build: texts, banners, stickers
       await q(`CREATE TABLE IF NOT EXISTS app_config(key text primary key, value text, updated_at bigint)`);
+      // moderation: who blocked whom (their wishes disappear from your rooms) and reports
+      await q(`CREATE TABLE IF NOT EXISTS blocks(user_id text, blocked_id text, created_at bigint, primary key(user_id, blocked_id))`);
+      await q(`CREATE TABLE IF NOT EXISTS reports(id text primary key, reporter_id text, user_id text, wish_id text, room_id text, reason text, created_at bigint)`);
     },
     async getConfig() { const { rows } = await q(`SELECT key,value FROM app_config`); return Object.fromEntries(rows.map(r => [r.key, JSON.parse(r.value)])); },
     async setConfig(key, value) { await q(`INSERT INTO app_config(key,value,updated_at) VALUES($1,$2,$3) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`, [key, JSON.stringify(value), Date.now()]); },
+    async blockedIds(me) { const { rows } = await q(`SELECT blocked_id FROM blocks WHERE user_id=$1`, [me]); return rows.map(r => r.blocked_id); },
+    async block(me, id) { await q(`INSERT INTO blocks(user_id,blocked_id,created_at) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`, [me, id, Date.now()]); },
+    async unblock(me, id) { await q(`DELETE FROM blocks WHERE user_id=$1 AND blocked_id=$2`, [me, id]); },
+    async addReport(r) { await q(`INSERT INTO reports(id,reporter_id,user_id,wish_id,room_id,reason,created_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, [r.id, r.reporterId, r.userId, r.wishId, r.roomId, r.reason, r.createdAt]); },
+    async listReports() { const { rows } = await q(`SELECT * FROM reports ORDER BY created_at DESC LIMIT 200`); return rows.map(r => ({ id: r.id, reporterId: r.reporter_id, userId: r.user_id, wishId: r.wish_id, roomId: r.room_id, reason: r.reason, createdAt: Number(r.created_at) })); },
+    async dropReport(id) { await q(`DELETE FROM reports WHERE id=$1`, [id]); },
     async userEmails(id) { const { rows } = await q(`SELECT subject FROM identities WHERE user_id=$1 AND provider='email'`, [id]); return rows.map(r => r.subject); },
     async identityUser(provider, subject) { const { rows } = await q(`SELECT user_id FROM identities WHERE provider=$1 AND subject=$2`, [provider, subject]); return rows[0] ? rows[0].user_id : null; },
     async addIdentity(provider, subject, userId) { await q(`INSERT INTO identities(provider,subject,user_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`, [provider, subject, userId]); },
@@ -64,6 +73,7 @@ export function createPgStore(q) {
         else await this.deleteRoom(rid);
       }
       await q(`UPDATE rooms SET celebrant_id=NULL WHERE celebrant_id=$1`, [id]);
+      await q(`DELETE FROM blocks WHERE user_id=$1 OR blocked_id=$1`, [id]);
       const { rows: ws } = await q(`SELECT * FROM wishes WHERE owner_id=$1`, [id]);
       const photos = ws.map(mapWish).flatMap(w => w.images && w.images.length ? w.images : [w.image]).filter(Boolean);
       await q(`DELETE FROM wish_rooms WHERE wish_id IN (SELECT id FROM wishes WHERE owner_id=$1)`, [id]);

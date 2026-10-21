@@ -23,6 +23,10 @@
       "destination": "/support/index.html"
     },
     {
+      "source": "/terms",
+      "destination": "/terms/index.html"
+    },
+    {
       "source": "/.well-known/apple-app-site-association",
       "destination": "/api/index"
     },

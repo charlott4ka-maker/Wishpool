@@ -61,6 +61,7 @@
       document.querySelectorAll(".tabs button").forEach(function (x) { x.classList.toggle("on", x === b); });
       document.querySelectorAll("[data-pane]").forEach(function (p) { p.classList.toggle("hidden", p.dataset.pane !== tab); });
       updateBar();
+      if (tab === "reports") loadReports();
     };
   });
   function dirty(key) { return JSON.stringify(saved[key]) !== JSON.stringify(draft[key]); }
@@ -223,6 +224,35 @@
     img.onerror = function () { toast("Не получилось открыть картинку"); };
     img.src = URL.createObjectURL(file);
   };
+
+  // ---------- reports ----------
+  var REASON = { spam: "Спам", offensive: "Оскорбления", inappropriate: "Недопустимый контент", other: "Другое" };
+  function loadReports() {
+    $("reportList").innerHTML = '<p class="hint">Загружаю…</p>';
+    api("GET", "/admin/reports").then(function (r) {
+      var list = r.reports || [];
+      $("reportList").innerHTML = list.length ? list.map(function (x) {
+        var w = x.wish;
+        return '<div class="item"><div class="row" style="justify-content:space-between"><b>' + esc(REASON[x.reason] || x.reason) + '</b><span class="key">' + new Date(x.createdAt).toLocaleString("ru") + "</span></div>" +
+          '<p class="hint" style="margin-top:8px">На: <b>' + esc(x.user ? x.user.name : x.userId) + '</b> <span class="key">' + esc(x.userId) + "</span><br>От: " + esc(x.reporter ? x.reporter.name : x.reporterId) + "</p>" +
+          (w ? '<div class="row" style="margin-top:8px">' + (w.image ? '<img src="' + esc(w.image) + '" style="width:56px;height:56px;border-radius:12px;object-fit:cover" />' : "") +
+            "<div><b>" + esc(w.title) + "</b>" + (w.note ? '<div class="hint">' + esc(w.note) + "</div>" : "") + (w.link ? '<div class="hint">' + esc(w.link) + "</div>" : "") + "</div></div>" :
+            (x.wishId ? '<p class="hint">Желание уже удалено</p>' : "")) +
+          '<div class="row" style="margin-top:12px">' + (w ? '<button class="btn2 danger sm" data-delwish="' + esc(w.id) + '" data-rep="' + esc(x.id) + '">Удалить желание</button>' : "") +
+          '<button class="btn2 ghost sm" data-close="' + esc(x.id) + '">Закрыть жалобу</button></div></div>';
+      }).join("") : '<p class="hint" style="margin-top:12px">Жалоб нет.</p>';
+    }).catch(function (e) { $("reportList").innerHTML = '<p class="hint">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+  $("reportList").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.delwish) {
+      if (!confirm("Удалить это желание у пользователя навсегда?")) return;
+      api("DELETE", "/admin/wishes/" + b.dataset.delwish).then(function () { return api("DELETE", "/admin/reports/" + b.dataset.rep); })
+        .then(function () { toast("Желание удалено"); loadReports(); }).catch(function (er) { toast("Ошибка: " + er.message); });
+    } else if (b.dataset.close) {
+      api("DELETE", "/admin/reports/" + b.dataset.close).then(function () { toast("Жалоба закрыта"); loadReports(); }).catch(function (er) { toast("Ошибка: " + er.message); });
+    }
+  });
 
   start();
 })();

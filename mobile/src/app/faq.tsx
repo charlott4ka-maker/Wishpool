@@ -82,6 +82,14 @@ const FAQ: { q: L; a: L }[] = [
       en: "Settings › Delete account. Your account, wishes and photos are deleted at once; rooms you made pass to the other members.",
     },
   },
+  {
+    q: { uk: "Як поскаржитися або заблокувати когось?", ru: "Как пожаловаться или заблокировать кого-то?", en: "How do I report or block someone?" },
+    a: {
+      uk: "У кімнаті натисни ⋯ біля імені людини: Поскаржитися або Заблокувати. На окреме бажання можна поскаржитися, затиснувши його. Ми перевіряємо скарги протягом 24 годин, а бажання заблокованої людини зникають з усіх твоїх кімнат.",
+      ru: "В комнате нажми ⋯ рядом с именем человека: Пожаловаться или Заблокировать. На отдельное желание можно пожаловаться, зажав его. Мы проверяем жалобы в течение 24 часов, а желания заблокированного человека пропадают из всех твоих комнат.",
+      en: "In a room, tap ⋯ next to a person's name: Report or Block. To report a single wish, press and hold it. We review reports within 24 hours, and a blocked person's wishes disappear from all your rooms.",
+    },
+  },
 ];
 
 function Item({ q, a, open, onToggle, last }: { q: string; a: string; open: boolean; onToggle: () => void; last: boolean }) {

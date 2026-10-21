@@ -24,7 +24,7 @@ import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
 import { C, hex } from "../theme/tokens";
 
-const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://wishpool.clickbrickk.com/terms";
 const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || `${SITE_URL}/privacy`;
 const LANG_NAME: Record<Lang, string> = { uk: "Українська", ru: "Русский", en: "English" };
 

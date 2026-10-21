@@ -2,11 +2,17 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {} };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [] };
   return {
     async init() {},
     async getConfig() { return JSON.parse(JSON.stringify(D.config)); },
     async setConfig(key, value) { D.config[key] = JSON.parse(JSON.stringify(value)); },
+    async blockedIds(me) { return D.blocks.filter(b => b.userId === me).map(b => b.blockedId); },
+    async block(me, id) { if (!D.blocks.some(b => b.userId === me && b.blockedId === id)) D.blocks.push({ userId: me, blockedId: id }); },
+    async unblock(me, id) { D.blocks = D.blocks.filter(b => !(b.userId === me && b.blockedId === id)); },
+    async addReport(r) { D.reports.unshift({ ...r }); },
+    async listReports() { return D.reports.slice(0, 200); },
+    async dropReport(id) { D.reports = D.reports.filter(r => r.id !== id); },
     async userEmails(id) { return Object.entries(D.identities).filter(([k, v]) => v === id && k.startsWith("email:")).map(([k]) => k.slice(6)); },
     async identityUser(provider, subject) { return D.identities[provider + ":" + subject] || null; },
     async addIdentity(provider, subject, userId) { const k = provider + ":" + subject; if (!D.identities[k]) D.identities[k] = userId; },
@@ -24,6 +30,7 @@ export function createMemStore() {
         if (next) r.ownerId = next.userId; else await this.deleteRoom(r.id);
       }
       for (const r of Object.values(D.rooms)) if (r.celebrantId === id) r.celebrantId = null;
+      D.blocks = D.blocks.filter(b => b.userId !== id && b.blockedId !== id);
       const photos = [];
       for (const w of Object.values(D.wishes).filter(w => w.ownerId === id)) { photos.push(...(w.images && w.images.length ? w.images : [w.image]).filter(Boolean)); await this.deleteWish(w.id); }
       for (const [wid, g] of Object.entries(D.reservations)) if (g === id) delete D.reservations[wid];

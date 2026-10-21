@@ -47,9 +47,9 @@ export function WishThumb({ w, size = LIST.icon }: { w: Wish; size?: number }) {
   );
 }
 
-export function WishRow({ w, right }: { w: Wish; right?: React.ReactNode }) {
+export function WishRow({ w, right, onLongPress }: { w: Wish; right?: React.ReactNode; onLongPress?: () => void }) {
   return (
-    <View className="flex-row items-center py-4" style={{ gap: LIST.gap, minHeight: 64 }}>
+    <Pressable onLongPress={onLongPress} disabled={!onLongPress} className="flex-row items-center py-4" style={{ gap: LIST.gap, minHeight: 64 }}>
       <WishThumb w={w} />
       <View className="flex-1">
         <Txt numberOfLines={1} className="font-m600 text-base">{w.title}</Txt>
@@ -63,7 +63,7 @@ export function WishRow({ w, right }: { w: Wish; right?: React.ReactNode }) {
         ) : null}
       </View>
       {right}
-    </View>
+    </Pressable>
   );
 }
 
