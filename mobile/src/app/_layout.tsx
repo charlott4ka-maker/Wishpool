@@ -83,7 +83,9 @@ function Gate() {
           </Stack.Protected>
           {/* open both from the welcome screen and for guests ("Sign in" in the app) */}
           <Stack.Screen name="sign-in-options" options={FIT_SHEET} />
-          <Stack.Screen name="join/[id]" options={FIT_SHEET} />
+          {/* full screen: opened from a link it came up as a full-height sheet with the
+              close button under the status bar and everything stuck to the top */}
+          <Stack.Screen name="join/[id]" options={{ presentation: "fullScreenModal" }} />
           <Stack.Screen name="onboarding" options={{ presentation: "fullScreenModal" }} />
         </Stack>
       </WishpoolProvider>

@@ -81,48 +81,53 @@ export default function JoinRoom() {
   // a surprise for someone else, and they haven't come in yet
   const surprise = !!room && room.type === "birthday" && room.bdayMode === "other" && !room.hasCelebrant;
 
+  // full screen: the close button at the top, the room in the middle, the main
+  // button at the bottom (like the new wish / new room forms)
+  const body = !signedIn
+    ? { sticker: <Sticker emoji="stk:envelope" size={64} />, title: t("joinInvited"), sub: t("joinSignIn") }
+    : gone
+      ? { sticker: <Sticker emoji="stk:ghost" size={64} />, title: t("joinGone"), sub: "" }
+      : room
+        ? {
+            sticker: (
+              <View className="h-24 w-24 items-center justify-center rounded-[28px]" style={{ backgroundColor: room.tint || C.blue }}>
+                <Sticker emoji={room.emoji || "stk:gift"} size={52} />
+              </View>
+            ),
+            title: surprise ? t("bdayGateTitle", { name: room.celebrantName || room.name }) : room.name,
+            sub: surprise ? t("bdayGateSub") : t("membersColon", { n: room.memberCount }),
+          }
+        : null;
+
   return (
-    <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
+    <View className="flex-1 bg-card px-4" style={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }}>
       <SheetHeader />
-      {!signedIn ? (
-        <View className="items-center">
-          <Sticker emoji="stk:envelope" size={64} />
-          <Txt className="mt-4 text-center font-m800 text-[22px]">{t("joinInvited")}</Txt>
-          <Txt className="mt-1 text-center text-[14.5px] leading-5 text-t2">{t("joinSignIn")}</Txt>
-          <View className="mt-6 w-full">
-            <Pill full onPress={() => router.push("/sign-in-options")}>{t("signInLogin")}</Pill>
-          </View>
-        </View>
-      ) : gone ? (
-        <View className="items-center">
-          <Sticker emoji="stk:ghost" size={64} />
-          <Txt className="mt-4 text-center font-m800 text-[22px]">{t("joinGone")}</Txt>
-          <View className="mt-6 w-full">
-            <Pill full kind="ghost" onPress={() => router.back()}>{t("back")}</Pill>
-          </View>
-        </View>
-      ) : !room ? (
-        <View className="h-[220px] items-center justify-center">
+      <View className="flex-1 items-center justify-center" style={{ paddingBottom: 56 }}>
+        {body ? (
+          <>
+            {body.sticker}
+            <Txt className="mt-4 text-center font-m800 text-[22px]">{body.title}</Txt>
+            {body.sub ? <Txt className="mt-1 text-center text-[14.5px] leading-5 text-t2">{body.sub}</Txt> : null}
+          </>
+        ) : (
           <ActivityIndicator color={C.t2} />
-        </View>
-      ) : (
-        <View className="items-center">
-          <View className="h-24 w-24 items-center justify-center rounded-[28px]" style={{ backgroundColor: room.tint || C.blue }}>
-            <Sticker emoji={room.emoji || "stk:gift"} size={52} />
-          </View>
-          <Txt className="mt-4 text-center font-m800 text-[22px]">{surprise ? t("bdayGateTitle", { name: room.celebrantName || room.name }) : room.name}</Txt>
-          <Txt className="mt-1 text-center text-[14.5px] leading-5 text-t2">
-            {surprise ? t("bdayGateSub") : t("membersColon", { n: room.memberCount })}
-          </Txt>
-          <View className="mt-6 w-full gap-3">
+        )}
+      </View>
+      <View className="w-full gap-3">
+        {!signedIn ? (
+          <Pill full onPress={() => router.push("/sign-in-options")}>{t("signInLogin")}</Pill>
+        ) : gone ? (
+          <Pill full kind="ghost" onPress={() => router.back()}>{t("back")}</Pill>
+        ) : room ? (
+          <>
             <Pill full loading={busy} onPress={() => join(false)}>{surprise ? t("bdayGateIn") : t("joinRoomCta")}</Pill>
             {surprise ? (
               <Pill full kind="ghost" onPress={() => join(true)}>{t("bdayGateMe")}</Pill>
             ) : null}
-          </View>
-        </View>
-      )}
-      <ToastHost inSheet />
+          </>
+        ) : null}
+      </View>
+      <ToastHost />
     </View>
   );
 }
