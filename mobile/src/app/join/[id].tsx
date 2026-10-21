@@ -56,11 +56,9 @@ export default function JoinRoom() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, signedIn]);
 
-  // the sheet closes and the room opens in its place
-  const open = (roomId: string) => {
-    router.back();
-    setTimeout(() => router.push(`/room/${roomId}`), 50);
-  };
+  // the room takes this screen's place, so Back from the room never lands on
+  // the invite again (back() + push left it underneath, still spinning)
+  const open = (roomId: string) => router.replace(`/room/${roomId}`);
 
   const join = async (asCelebrant = false) => {
     if (busy || !id) return;

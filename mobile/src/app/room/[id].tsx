@@ -59,7 +59,10 @@ export default function RoomScreen() {
     }, [load]),
   );
 
-  if (!room) return <Empty emoji="stk:ghost" title={t("roomGone")} action={<Pill onPress={() => router.back()}>{t("back")}</Pill>} />;
+  // opened from an invite link there may be nothing underneath: then home
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
+
+  if (!room) return <Empty emoji="stk:ghost" title={t("roomGone")} action={<Pill onPress={goBack}>{t("back")}</Pill>} />;
 
   const members: (Member & { you?: boolean })[] = detail?.members || room.members || [];
   const mine = detail ? detail.mine : wishes.filter((w) => w.rooms.includes(room.id));
@@ -204,7 +207,7 @@ export default function RoomScreen() {
         text: t(isOwner ? "deleteRoom" : "leaveRoom"),
         style: "destructive",
         onPress: () => {
-          router.back();
+          goBack();
           removeRoom(room.id, isOwner)
             .then(() => toast.info(t(isOwner ? "toastRoomDeleted" : "toastLeftRoom")))
             .catch(() => toast.error(t("toastError")));
@@ -219,7 +222,7 @@ export default function RoomScreen() {
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>
         <RoomHeroBg tint={room.tint} />
         <View className="flex-row items-center justify-between" style={{ height: H.sm }}>
-          <GlassCircle onPress={() => router.back()} label={t("back")}>
+          <GlassCircle onPress={goBack} label={t("back")}>
             <SymbolView name="chevron.left" size={19} weight="semibold" tintColor="#fff" fallback={<ChevronLeft size={20} color="#fff" />} />
           </GlassCircle>
           {/* ⋯ menu: edit / delete for the owner, leave for everyone else */}
