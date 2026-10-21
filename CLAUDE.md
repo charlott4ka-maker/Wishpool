@@ -41,3 +41,6 @@
 ## Admin (web/public/admin)
 - `wishpool.clickbrickk.com/admin`: text overrides, Wishes-tab banners, hidden/uploaded stickers, stored in `app_config` and served by `GET /api/config`. Access: e-mails in `ADMIN_EMAILS` or ids in `ADMIN_IDS`. After changing app texts or bundled stickers run `npm run admin-data` in mobile/.
 - Moderation (App Review 1.2): in a room, ⋯ by a friend's name reports or blocks them, a long press on their wish reports it; `/terms` has the zero-tolerance terms (linked under the sign-in buttons). Reports land in the admin «Жалобы» tab and on support@; blocked people stay in the room with their wishes hidden.
+
+## Later (agreed, not started)
+- Admin-only alternate app icon: a Settings row "Icon" visible only to admins (`admin` from /state) to switch to the glossy star-with-bow icon on her own phone (expo alternate icons; one build for TestFlight and the App Store). Needs a new build, so after App Review approves 1.0.0; she sends the 1024x1024 artwork.
