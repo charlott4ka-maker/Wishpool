@@ -7,12 +7,11 @@ import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Lock, Plus, X } from "lucide-react-native";
-import MaskedView from "@react-native-masked-view/masked-view";
 import React, { useEffect, useId, useRef, useState } from "react";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TextProps, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Defs, Mask, Rect } from "react-native-svg";
+import Svg, { Circle, Defs, G, Image as SvgImage, Mask, Rect } from "react-native-svg";
 
 import { haptic } from "../lib/haptics";
 import { LiquidGlass } from "../lib/liquidGlass";
@@ -318,23 +317,29 @@ export function Avatar({ m, size = 34, cut = 0 }: { m: AvatarMember; size?: numb
     const css = `radial-gradient(circle at ${cx}px 50%, transparent ${size / 2 + gap}px, #000 ${size / 2 + gap + 0.5}px)`;
     return <View style={{ width: size, height: size, ...({ maskImage: css, WebkitMaskImage: css } as object) }}>{face}</View>;
   }
+  // Drawn in SVG (a MaskedView mask came out slightly off on iPhone, nicking
+  // the avatar's top): the circle minus the gap, filled with the colour, the
+  // letter on top, and the photo over both with the same mask.
+  const r = size / 2;
+  const layer = (id: string, child: React.ReactNode) => (
+    <Svg width={size} height={size} style={{ position: "absolute", left: 0, top: 0 }}>
+      <Defs>
+        <Mask id={id} maskUnits="userSpaceOnUse" x={0} y={0} width={size} height={size}>
+          <Circle cx={r} cy={r} r={r} fill="#fff" />
+          <Circle cx={cx} cy={r} r={r + gap} fill="#000" />
+        </Mask>
+      </Defs>
+      <G mask={`url(#${id})`}>{child}</G>
+    </Svg>
+  );
   return (
-    <MaskedView
-      style={{ width: size, height: size }}
-      maskElement={
-        <Svg width={size} height={size}>
-          <Defs>
-            <Mask id={maskId}>
-              <Rect width={size} height={size} fill="#fff" />
-              <Circle cx={cx} cy={size / 2} r={size / 2 + gap} fill="#000" />
-            </Mask>
-          </Defs>
-          <Rect width={size} height={size} fill="#000" mask={`url(#${maskId})`} />
-        </Svg>
-      }
-    >
-      {face}
-    </MaskedView>
+    <View style={{ width: size, height: size }}>
+      {layer(maskId + "c", <Rect width={size} height={size} fill={m.color} />)}
+      <View style={{ position: "absolute", left: 0, top: 0, width: size, height: size }} className="items-center justify-center">
+        <Txt className="font-m700 text-white" style={{ fontSize: size * 0.4 }}>{(m.name || "?").slice(0, 1)}</Txt>
+      </View>
+      {m.photo ? layer(maskId + "p", <SvgImage href={{ uri: m.photo }} width={size} height={size} preserveAspectRatio="xMidYMid slice" />) : null}
+    </View>
   );
 }
 
