@@ -2,9 +2,12 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {} };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {} };
   return {
     async init() {},
+    async getConfig() { return JSON.parse(JSON.stringify(D.config)); },
+    async setConfig(key, value) { D.config[key] = JSON.parse(JSON.stringify(value)); },
+    async userEmails(id) { return Object.entries(D.identities).filter(([k, v]) => v === id && k.startsWith("email:")).map(([k]) => k.slice(6)); },
     async identityUser(provider, subject) { return D.identities[provider + ":" + subject] || null; },
     async addIdentity(provider, subject, userId) { const k = provider + ":" + subject; if (!D.identities[k]) D.identities[k] = userId; },
     async createSession(hash, userId) { D.sessions[hash] = userId; },

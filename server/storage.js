@@ -45,6 +45,13 @@ async function r2(method, objectKey, body, contentType) {
   if (!r.ok && !(method === "DELETE" && r.status === 404)) throw new Error(`r2_${method}_${r.status}`);
 }
 
+// A file at a fixed key (admin stickers: stickers/<name>.webp), returned as its public URL.
+export async function putObject(objectKey, buffer, contentType) {
+  if (!storageOn()) throw new Error("r2_not_configured");
+  await r2("PUT", objectKey, buffer, contentType);
+  return `${env().pub}/${objectKey}`;
+}
+
 // data:image/...;base64 -> public URL in the bucket. Anything else (already a URL) is returned as is.
 export async function storeImage(src, prefix) {
   const m = typeof src === "string" && src.match(/^data:(image\/(jpeg|png|webp|gif));base64,(.*)$/s);

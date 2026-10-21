@@ -38,7 +38,12 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS identities(provider text, subject text, user_id text, primary key(provider,subject))`);
       await q(`CREATE TABLE IF NOT EXISTS sessions(token_hash text primary key, user_id text, created_at bigint)`);
       await q(`CREATE TABLE IF NOT EXISTS email_codes(email text primary key, code_hash text, expires bigint, attempts int)`);
+      // what the admin page changes without a new app build: texts, banners, stickers
+      await q(`CREATE TABLE IF NOT EXISTS app_config(key text primary key, value text, updated_at bigint)`);
     },
+    async getConfig() { const { rows } = await q(`SELECT key,value FROM app_config`); return Object.fromEntries(rows.map(r => [r.key, JSON.parse(r.value)])); },
+    async setConfig(key, value) { await q(`INSERT INTO app_config(key,value,updated_at) VALUES($1,$2,$3) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`, [key, JSON.stringify(value), Date.now()]); },
+    async userEmails(id) { const { rows } = await q(`SELECT subject FROM identities WHERE user_id=$1 AND provider='email'`, [id]); return rows.map(r => r.subject); },
     async identityUser(provider, subject) { const { rows } = await q(`SELECT user_id FROM identities WHERE provider=$1 AND subject=$2`, [provider, subject]); return rows[0] ? rows[0].user_id : null; },
     async addIdentity(provider, subject, userId) { await q(`INSERT INTO identities(provider,subject,user_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`, [provider, subject, userId]); },
     async createSession(hash, userId) { await q(`INSERT INTO sessions(token_hash,user_id,created_at) VALUES($1,$2,$3)`, [hash, userId, Date.now()]); },

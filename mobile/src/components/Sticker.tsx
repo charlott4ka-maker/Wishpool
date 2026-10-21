@@ -2,21 +2,25 @@
 // "stk:<name>" is an image sticker with the white rim and soft shadow baked
 // into the WebP (assets/stickers). Like the web <Sticker>, the image box is
 // larger than `size` and pulled back with a negative margin, because the file
-// has a 20% transparent margin around the sticker for the shadow.
+// has a 20% transparent margin around the sticker for the shadow. Stickers
+// uploaded on the admin page aren't bundled and load from the site instead.
 
 import { Image } from "expo-image";
 import { Text, View, ViewStyle } from "react-native";
 
+import { remoteStickerUrl } from "../lib/remoteConfig";
 import { STICKER_ASSETS, StickerName } from "./stickerAssets";
 
 export function Sticker({ emoji, size, rotate = 0, style }: { emoji: string; size: number; rotate?: number; style?: ViewStyle }) {
   const name = emoji.startsWith("stk:") ? (emoji.slice(4) as StickerName) : null;
   const box = size * 1.24 * 1.4;
   const transform = rotate ? [{ rotate: `${rotate}deg` }] : undefined;
-  if (name && STICKER_ASSETS[name]) {
+  if (name) {
+    // bundled with the app, or added later on the admin page (served by the site)
+    const source = STICKER_ASSETS[name] || { uri: remoteStickerUrl(name) };
     return (
       <View style={[{ width: box, height: box, margin: -size * 1.24 * 0.2, transform }, style]} pointerEvents="none">
-        <Image source={STICKER_ASSETS[name]} style={{ width: box, height: box }} contentFit="contain" />
+        <Image source={source} style={{ width: box, height: box }} contentFit="contain" cachePolicy="disk" />
       </View>
     );
   }

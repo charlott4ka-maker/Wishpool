@@ -63,7 +63,8 @@
     "test": "jest",
     "lint": "expo lint",
     "build:ios": "eas build --platform ios --profile production",
-    "build:dev": "eas build --platform ios --profile development"
+    "build:dev": "eas build --platform ios --profile development",
+    "admin-data": "node --experimental-strip-types scripts/export-admin-data.mjs"
   },
   "private": true
 }

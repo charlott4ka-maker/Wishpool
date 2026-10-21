@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wishpool Admin</title>
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#15181D" />
+<link rel="icon" href="/about/logo.png" />
+<link rel="stylesheet" href="/pages.css" />
+<style>
+body{padding:16px 16px 96px}
+.wrap{max-width:860px}
+.tabs{display:flex;gap:4px;background:var(--bg);border-radius:999px;padding:4px;width:max-content;max-width:100%;overflow-x:auto}
+.tabs button,.btn2{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:999px;height:40px;padding:0 16px;cursor:pointer;white-space:nowrap}
+.tabs button{background:none;color:var(--t2)}
+.tabs button.on{background:#353C49;color:var(--t1)}
+.btn2{background:var(--blue);color:#fff}
+.btn2.ghost{background:#2D3440;color:var(--t1)}
+.btn2.danger{background:#3a1f22;color:#ff6b6b}
+.btn2.sm{height:32px;padding:0 12px;font-size:13px}
+input[type=text],input[type=email],input[type=url],input[type=search],textarea,select{font:inherit;font-weight:500;font-size:15px;color:var(--t1);background:var(--bg);border:1px solid transparent;border-radius:14px;padding:10px 14px;width:100%;outline:none}
+textarea{min-height:44px;resize:vertical;line-height:1.4}
+input:focus,textarea:focus,select:focus{border-color:rgba(10,130,249,.5)}
+input[type=color]{width:44px;height:36px;border:0;background:none;padding:0;cursor:pointer}
+label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px 0 6px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:640px){.grid3{grid-template-columns:1fr}}
+.item{background:var(--raised);border-radius:20px;padding:16px;margin-top:8px}
+.item.changed{box-shadow:inset 0 0 0 1px rgba(10,130,249,.6)}
+.key{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--t3)}
+.def{font-size:12px;color:var(--t3);margin-top:4px}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(21,24,29,.92);backdrop-filter:blur(20px);display:none;justify-content:center;gap:8px;z-index:10}
+.bar.show{display:flex}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1E2228;color:#fff;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;z-index:20}
+.stk{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.stk .s{background:var(--raised);border-radius:16px;padding:8px;text-align:center;font-size:12px;color:var(--t2);cursor:pointer;user-select:none}
+.stk .s img{width:56px;height:56px;object-fit:contain;display:block;margin:0 auto 4px}
+.stk .s.off{opacity:.35}
+.stk .s.new{box-shadow:inset 0 0 0 1px rgba(52,199,89,.6)}
+.preview{border-radius:24px 24px 0 0;padding:10px 12px 34px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:15px;margin-top:12px}
+.preview img{width:30px;height:30px;object-fit:contain}
+.preview .b{width:32px;height:32px;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin-left:auto;flex-shrink:0}
+.previewunder{background:var(--block);border-radius:24px 24px 0 0;height:28px;margin-top:-24px}
+.hint{font-size:13px;color:var(--t2)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="wrap">
+  <div class="block top">
+    <a class="logo" href="/about"><img src="/about/star.png" alt="" />Wishpool Admin</a>
+    <button class="btn2 ghost sm hidden" id="logout">Выйти</button>
+  </div>
+
+  <!-- sign-in: the same e-mail code as in the iOS app -->
+  <div class="block hidden" id="login">
+    <h1>Вход</h1>
+    <p class="hint">Почта, с которой ты входишь в приложение. Доступ есть только у админов.</p>
+    <label class="f">E-mail</label>
+    <input type="email" id="email" placeholder="name@example.com" autocomplete="email" />
+    <div id="codeBox" class="hidden">
+      <label class="f">Код из письма</label>
+      <input type="text" id="code" inputmode="numeric" placeholder="123456" autocomplete="one-time-code" />
+    </div>
+    <div class="btns"><button class="btn" id="loginBtn" style="border:0;cursor:pointer;font:inherit;font-weight:700">Отправить код</button></div>
+    <p class="hint" id="loginErr" style="color:#ff6b6b;margin-top:12px"></p>
+  </div>
+
+  <div class="block hidden" id="denied">
+    <h1>Нет доступа</h1>
+    <p class="hint">Этот аккаунт не админ. Добавь его почту в переменную <b>ADMIN_EMAILS</b> на Vercel.</p>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="block">
+      <div class="tabs">
+        <button data-tab="banners" class="on">Баннеры</button>
+        <button data-tab="strings">Тексты</button>
+        <button data-tab="stickers">Стикеры</button>
+      </div>
+      <p class="hint" style="margin-top:12px">Изменения попадают в приложение примерно за минуту, при следующем открытии.</p>
+    </div>
+
+    <div class="block" data-pane="banners">
+      <h2 style="margin-top:0">Баннеры</h2>
+      <p class="hint">Полоска под заголовком на вкладке «Желания». Показывается первый включённый баннер, подходящий пользователю. Если пользователь закрыл баннер крестиком, он больше его не увидит.</p>
+      <div id="bannerList"></div>
+      <div class="btns"><button class="btn2 ghost" id="addBanner">+ Добавить баннер</button></div>
+    </div>
+
+    <div class="block hidden" data-pane="strings">
+      <h2 style="margin-top:0">Тексты приложения</h2>
+      <p class="hint">Найди текст по словам или ключу и поменяй. Пустое поле = стандартный текст. Без тире в текстах.</p>
+      <input type="search" id="q" placeholder="Поиск: «желание», «Войти», poolTitle…" style="margin-top:12px" />
+      <div class="row" style="margin-top:8px"><label class="hint"><input type="checkbox" id="onlyChanged" /> только изменённые</label></div>
+      <div id="stringList"></div>
+    </div>
+
+    <div class="block hidden" data-pane="stickers">
+      <h2 style="margin-top:0">Стикеры</h2>
+      <p class="hint">Нажми на стикер, чтобы скрыть его из выбора в приложении или вернуть. Старые желания со скрытым стикером продолжат его показывать.</p>
+      <div class="stk" id="stickerGrid" style="margin-top:12px"></div>
+      <h2>Новый стикер</h2>
+      <p class="hint">PNG или WebP с белой обводкой и прозрачным фоном, как у остальных. Квадрат, лучше 512×512. Имя латиницей, например <b>teddy</b>. Перезалить под тем же именем нельзя: удали и загрузи с новым.</p>
+      <div class="row" style="margin-top:12px">
+        <input type="text" id="stkName" placeholder="имя (a-z, 0-9, -)" style="max-width:220px" />
+        <input type="file" id="stkFile" accept="image/png,image/webp" />
+        <button class="btn2" id="stkUpload">Загрузить</button>
+      </div>
+      <p class="hint hidden" id="noStorage" style="color:#ff6b6b">Хранилище фото (R2) не настроено на сервере, загрузка не сработает.</p>
+    </div>
+  </div>
+</div>
+
+<div class="bar" id="bar">
+  <button class="btn2 ghost" id="discard">Отменить</button>
+  <button class="btn2" id="save">Сохранить</button>
+</div>
+
+<script src="/admin/admin.js"></script>
+</body>
+</html>

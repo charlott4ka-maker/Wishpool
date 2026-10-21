@@ -8,6 +8,7 @@ import { RefreshControl, ScrollView, useWindowDimensions, View } from "react-nat
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GUEST_OVERLAP, GuestBanner, useGuestBanner } from "../../../components/GuestBanner";
+import { RemoteBanner, useRemoteBanner } from "../../../components/RemoteBanner";
 import { Sticker } from "../../../components/Sticker";
 import { SearchField } from "../../../components/SearchField";
 import { Chip, Empty, HeaderAdd, Pill, Txt } from "../../../components/ui";
@@ -47,7 +48,12 @@ export default function PoolScreen() {
   const covered = winH - (kb > 0 ? kb : searching ? insets.bottom : insets.bottom + 49); // top edge of what covers the screen (no tab bar while searching)
   const missBottom = Math.max(0, frameBottom - covered);
   // the sign-in strip steps aside while searching
-  const guest = useGuestBanner() && !searching;
+  // one strip under the header: a banner from the admin page if there is one
+  // for this user, else the guest sign-in strip; none while searching
+  const { banner, close: closeBanner } = useRemoteBanner();
+  const remote = !searching && banner ? banner : null;
+  const guest = useGuestBanner() && !searching && !remote;
+  const strip = guest || !!remote;
 
   const { tabs, shown } = useMemo(() => {
     const active = wishes.filter((w) => !w.giftedAt);
@@ -81,14 +87,14 @@ export default function PoolScreen() {
         ) : null}
       </TabHeader>
       {/* the guest strip stays put; the content block below overlaps its lower part */}
-      {guest ? <GuestBanner /> : null}
+      {remote ? <RemoteBanner banner={remote} onClose={() => closeBanner(remote.id)} /> : guest ? <GuestBanner /> : null}
       {/* The content block is a fixed frame (rounded top, block fill down to the
           bottom) and the list scrolls inside it, so the 4pt gap under the header
           and the block's fill under the tab bar stay put while scrolling. */}
       <View
         ref={frame}
         onLayout={measureFrame}
-        style={{ flex: 1, marginTop: guest ? -GUEST_OVERLAP : BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}
+        style={{ flex: 1, marginTop: strip ? -GUEST_OVERLAP : BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}
       >
         <ScrollView showsVerticalScrollIndicator={false}
           // remounted when the list empties so it starts at the top

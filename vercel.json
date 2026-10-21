@@ -27,6 +27,14 @@
       "destination": "/api/index"
     },
     {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/stickers/:name",
+      "destination": "https://pub-f403a898e7fa471f804e291a1fdc1c66.r2.dev/stickers/:name"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/index"
     }
@@ -59,6 +67,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/stickers/:name",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
         }
       ]
     }

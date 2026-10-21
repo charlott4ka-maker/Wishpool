@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getLocales } from "expo-localization";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
+import { getRemoteConfig, useRemoteConfig } from "../lib/remoteConfig";
 import { MOBILE_STRINGS } from "./mobileStrings";
 import { WEB_STRINGS } from "./webStrings";
 
@@ -13,8 +14,10 @@ const STR: Record<string, Partial<Record<Lang, string>>> = { ...WEB_STRINGS, ...
 export type StrKey = keyof typeof WEB_STRINGS | keyof typeof MOBILE_STRINGS;
 
 export function tr(lang: Lang, id: StrKey | string, params?: Record<string, string | number>): string {
+  // a text changed on the admin page wins over the built-in one
+  const own = getRemoteConfig().strings[id]?.[lang];
   const row = STR[id];
-  let s = row ? row[lang] || row.en || id : id;
+  let s = own || (row ? row[lang] || row.en || id : id);
   if (params) for (const k in params) s = s.split("{" + k + "}").join(String(params[k]));
   return s;
 }
@@ -39,7 +42,9 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     setLangState(l);
     AsyncStorage.setItem(KEY, l).catch(() => {});
   }, []);
-  const value = useMemo(() => ({ lang, setLang, t: (id: StrKey | string, p?: Record<string, string | number>) => tr(lang, id, p) }), [lang, setLang]);
+  // new texts from the admin page re-render everything that reads them
+  const remote = useRemoteConfig();
+  const value = useMemo(() => ({ lang, setLang, t: (id: StrKey | string, p?: Record<string, string | number>) => tr(lang, id, p) }), [lang, setLang, remote]);
   return <LangCtx.Provider value={value}>{children}</LangCtx.Provider>;
 }
 

@@ -8,6 +8,7 @@ import { botRoute, ensureWebhook, ensureBotMenu, remindRoute, telegramBirthdate,
 import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
 import { nativeAuthRoutes, hashToken } from "./native-auth.js";
+import { publicConfigRoute, adminConfigRoutes } from "./app-config.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -197,6 +198,8 @@ export async function createApp() {
   });
   // Sign-in for the iOS app (Apple, e-mail code), before the auth below.
   app.use("/api/auth", nativeAuthRoutes(store));
+  // Texts, banners and stickers from the admin page (public, cached a minute).
+  app.get("/api/config", publicConfigRoute(store));
 
   const api = express.Router();
   // API responses must never be conditionally cached (304) — each call needs a fresh body.
@@ -215,7 +218,14 @@ export async function createApp() {
   // server-side events for the things that matter (counted even if the app's own tracking is blocked)
   const track = (req, name) => { if (req.user.id !== "demo") store.logEvents(req.user.id, [name], Date.now()).catch(() => {}); };
   const ADMINS = () => String(process.env.ADMIN_IDS || "").split(",").map(x => x.trim()).filter(Boolean);
-  const isAdmin = (id) => ADMINS().includes(String(id));
+  // admins: Telegram / account ids in ADMIN_IDS, or iOS accounts whose e-mail is in ADMIN_EMAILS
+  const ADMIN_EMAILS = () => String(process.env.ADMIN_EMAILS || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+  const isAdmin = async (id) => {
+    if (ADMINS().includes(String(id))) return true;
+    const emails = ADMIN_EMAILS();
+    return emails.length > 0 && (await store.userEmails(String(id))).some(e => emails.includes(e));
+  };
+  adminConfigRoutes(api, store, (req) => isAdmin(req.user.id));
 
   // clicks and screens from the app, batched: { names: ["open", "tab_rooms", ...] }
   api.post("/ev", async (req, res) => {
@@ -224,7 +234,7 @@ export async function createApp() {
     res.json({ ok: true });
   });
   api.get("/admin/stats", async (req, res) => {
-    if (!isAdmin(req.user.id)) return res.status(403).json({ error: "not_admin" });
+    if (!(await isAdmin(req.user.id))) return res.status(403).json({ error: "not_admin" });
     res.json(await store.analytics(Date.now()));
   });
 
@@ -287,7 +297,7 @@ export async function createApp() {
         };
       })),
     ]);
-    res.json({ me: meUser, admin: isAdmin(me), wishes, rooms: rooms.filter(Boolean) });
+    res.json({ me: meUser, admin: await isAdmin(me), wishes, rooms: rooms.filter(Boolean) });
   });
 
   api.post("/wishes", async (req, res) => {

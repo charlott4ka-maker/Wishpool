@@ -65,6 +65,27 @@ try {
   // sent back unchanged (the app strips its site again): the photo stays
   assert.equal((await call("PATCH", "/api/me", { name: "Rev", photo: av.body.user.photo }, rv.body.token)).body.user.photo, av.body.user.photo);
   assert.equal((await call("PATCH", "/api/me", { name: "Rev", photo: null }, rv.body.token)).body.user.photo, null);
+  // admin page: only ADMIN_EMAILS get in; config is public, banners only when active
+  assert.equal((await call("GET", "/api/admin/config", null, rv.body.token)).status, 403);
+  process.env.ADMIN_EMAILS = "Review@wishpool.test";
+  assert.equal((await call("GET", "/api/admin/config", null, rv.body.token)).status, 200);
+  await call("PUT", "/api/admin/config/strings", { value: { poolTitle: { ru: "Хотелки" }, "bad key!": { ru: "x" } } }, rv.body.token);
+  await call("PUT", "/api/admin/config/banners", { value: [
+    { id: "save", active: true, audience: "signedIn", text: { ru: "Привет" }, color1: "#ff0000", textColor: "#000000", action: "link", url: "https://example.com" },
+    { id: "off", active: false, text: { ru: "Нет" } },
+  ] }, rv.body.token);
+  const up = await call("POST", "/api/admin/sticker", { name: "star-new", image: "data:image/webp;base64,UklGRg==" }, rv.body.token);
+  assert.equal(up.status, 200);
+  assert.equal((await call("POST", "/api/admin/sticker", { name: "star-new", image: "data:image/webp;base64,UklGRg==" }, rv.body.token)).status, 409);
+  assert.equal((await call("POST", "/api/admin/sticker", { name: "x", image: "data:image/png;base64,AAAA" }, rv.body.token)).status, 400);
+  await call("PUT", "/api/admin/config/stickers", { value: { hidden: ["uno", "BAD NAME"], extra: up.body.value.extra } }, rv.body.token);
+  const pub = await call("GET", "/api/config");
+  assert.deepEqual(pub.body.strings, { poolTitle: { ru: "Хотелки" } });
+  assert.equal(pub.body.banners.length, 1);
+  assert.equal(pub.body.banners[0].color2, "#ff0000");
+  assert.deepEqual(pub.body.stickers, { hidden: ["uno"], extra: [{ name: "star-new" }] });
+  delete process.env.ADMIN_EMAILS;
+
   globalThis.fetch = realFetch;
   for (const k of ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_PUBLIC_URL"]) delete process.env[k];
 
