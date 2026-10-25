@@ -31,6 +31,8 @@ import { toAffiliateUrl } from "../../services/affiliateConverter";
 import { fetchLinkPreview } from "../../services/linkPreview";
 import { useWishpool, wishImages } from "../../store/WishpoolContext";
 import { PLAN_LIMITS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
+import { wishAdded } from "../../lib/review";
+import { usePrefs } from "../../settings/prefs";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C } from "../../theme/tokens";
 
@@ -50,6 +52,7 @@ export default function AddWishScreen() {
   // room: "New wish" from inside a room puts it in that room right away
   const { id, link: sharedLink, room: presetRoom } = useLocalSearchParams<{ id?: string; link?: string; room?: string }>();
   const { wishes, rooms, addWish, updateWish } = useWishpool();
+  const demo = usePrefs().demo;
   const { photoLimit, isPremium } = useSubscription();
   const initial = id ? wishes.find((w) => w.id === id) : undefined;
 
@@ -160,6 +163,7 @@ export default function AddWishScreen() {
       haptic("success");
       router.back();
       toast.success(t(initial ? "toastSaved" : "toastWishAdded"), { root: true });
+      if (!initial) wishAdded(demo);
     } catch {
       setBusy(false);
       haptic("error");

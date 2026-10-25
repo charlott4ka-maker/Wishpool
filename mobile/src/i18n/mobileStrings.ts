@@ -157,5 +157,6 @@ export const MOBILE_STRINGS = {
   toastBlocked: { uk: "Користувача заблоковано", ru: "Пользователь заблокирован", en: "User blocked" },
   unblockUser: { uk: "Розблокувати", ru: "Разблокировать", en: "Unblock" },
   blockedNote: { uk: "Приховано: цю людину заблоковано", ru: "Скрыто: этот человек заблокирован", en: "Hidden: you blocked this person" },
+  rateApp: { uk: "Оцінити Wishpool", ru: "Оценить Wishpool", en: "Rate Wishpool" },
   signInAgree: { uk: "Продовжуючи, ти приймаєш Умови використання", ru: "Продолжая, ты принимаешь Условия использования", en: "By continuing you accept the Terms of Use" },
 } as const;

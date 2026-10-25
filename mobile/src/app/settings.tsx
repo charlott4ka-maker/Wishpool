@@ -7,7 +7,7 @@ import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Trash2, UserPlus, Vibrate, Wand2 } from "lucide-react-native";
+import { Bell, Cake, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Vibrate, Wand2 } from "lucide-react-native";
 import { useState } from "react";
 import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 import { toast } from "../components/Toast";
 import { clearDemo, fillDemo } from "../lib/demo";
+import { openReviewPage } from "../lib/review";
 import { SUPPORT_EMAIL, writeSupport } from "../lib/support";
 import { SettingsCell, SettingsGroup } from "../components/SettingsList";
 import { GlassCircle, Txt } from "../components/ui";
@@ -120,6 +121,7 @@ export default function SettingsScreen() {
         <SettingsGroup title={t("setAbout")}>
           <SettingsCell icon={Sparkles} tint="#0A82F9" label={t("howItWorks")} onPress={() => router.push("/onboarding")} />
           <SettingsCell icon={CircleHelp} tint="#FF9500" label={t("faq")} onPress={() => router.push("/faq")} />
+          {Platform.OS === "ios" ? <SettingsCell icon={Star} tint="#FFCC00" label={t("rateApp")} onPress={openReviewPage} /> : null}
           {/* dev builds only: sample content for App Store screenshots */}
           {__DEV__ ? (
             <SettingsCell
