@@ -28,6 +28,9 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://wishpool.clickbrickk.com",
         "EXPO_PUBLIC_PRIVACY_URL": "https://wishpool.clickbrickk.com/privacy"
+      },
+      "ios": {
+        "image": "latest"
       }
     }
   },

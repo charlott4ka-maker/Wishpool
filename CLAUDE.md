@@ -46,3 +46,4 @@
 ## Later (agreed, not started)
 - Admin-only alternate app icon: a Settings row "Icon" visible only to admins (`admin` from /state) to switch to the glossy star-with-bow icon on her own phone (expo alternate icons; one build for TestFlight and the App Store). Needs a new build, so after App Review approves 1.0.0; she sends the 1024x1024 artwork.
 - Rating prompt (`lib/review.ts`, after the 3rd wish, plus "Rate Wishpool" in Settings) is on the work branch; it needs a new build (expo-store-review is native), so it ships with the build after 1.0.0 is approved.
+- iPhone Duo (foldable, inner display ~626x890pt, ignores the portrait lock): grids go to 3 columns from 560pt (`lib/gridColumns.ts`); the "Made for iPhone Duo" badge needs a build with the iOS 27.1 SDK (eas.json production `ios.image: latest`); Duo screenshots are required from April 2027.

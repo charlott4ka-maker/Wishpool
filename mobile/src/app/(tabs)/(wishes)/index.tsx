@@ -17,6 +17,7 @@ import { WishCard } from "../../../components/WishCard";
 import { TabBarFade } from "../../../components/TabBarFade";
 import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
+import { useGridColumns } from "../../../lib/gridColumns";
 import { setSearchMode } from "../../../lib/searchMode";
 import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
@@ -75,8 +76,9 @@ export default function PoolScreen() {
   const add = () => router.push("/wish/new");
 
   const searchMiss = !!query.trim() && shown.length === 0;
+  const cols = useGridColumns();
   const rows: (typeof shown)[] = [];
-  for (let i = 0; i < shown.length; i += 2) rows.push(shown.slice(i, i + 2));
+  for (let i = 0; i < shown.length; i += cols) rows.push(shown.slice(i, i + cols));
 
   return (
     <View className="flex-1 bg-bg">
@@ -155,7 +157,7 @@ export default function PoolScreen() {
                       <WishCard w={w} />
                     </View>
                   ))}
-                  {row.length === 1 ? <View className="flex-1" /> : null}
+                  {Array.from({ length: cols - row.length }, (_, k) => <View key={"pad" + k} className="flex-1" />)}
                 </View>
               ))}
             </View>

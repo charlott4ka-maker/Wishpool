@@ -6,6 +6,7 @@ import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 
+import { useGridColumns } from "../../../lib/gridColumns";
 import { RoomFolder } from "../../../components/RoomFolder";
 import { RoomGridSkeleton } from "../../../components/Skeleton";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
@@ -21,8 +22,9 @@ export default function RoomsScreen() {
   const insets = useSafeAreaInsets();
   const { rooms, wishes, ready } = useWishpool();
   const create = () => router.push("/room/new");
+  const cols = useGridColumns();
   const rows: (typeof rooms)[] = [];
-  for (let i = 0; i < rooms.length; i += 2) rows.push(rooms.slice(i, i + 2));
+  for (let i = 0; i < rooms.length; i += cols) rows.push(rooms.slice(i, i + cols));
 
   return (
     <View className="flex-1 bg-bg">
@@ -63,7 +65,7 @@ export default function RoomsScreen() {
                     <RoomFolder room={r} wishes={wishes} onPress={() => router.push({ pathname: "/room/[id]", params: { id: r.id } })} />
                   </Animated.View>
                 ))}
-                {row.length === 1 ? <View className="flex-1" /> : null}
+                {Array.from({ length: cols - row.length }, (_, k) => <View key={"pad" + k} className="flex-1" />)}
               </View>
             ))}
           </View>
