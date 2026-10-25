@@ -10,6 +10,7 @@ import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
 import { nativeAuthRoutes, hashToken } from "./native-auth.js";
 import { publicConfigRoute, adminConfigRoutes } from "./app-config.js";
 import { moderationRoutes } from "./moderation.js";
+import { adminLoginRoute, ADMIN_PANEL_ID } from "./admin-auth.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -199,6 +200,7 @@ export async function createApp() {
   });
   // Sign-in for the iOS app (Apple, e-mail code), before the auth below.
   app.use("/api/auth", nativeAuthRoutes(store));
+  app.use("/api/admin-login", adminLoginRoute(store));
   // Texts, banners and stickers from the admin page (public, cached a minute).
   app.get("/api/config", publicConfigRoute(store));
 
@@ -222,7 +224,7 @@ export async function createApp() {
   // admins: Telegram / account ids in ADMIN_IDS, or iOS accounts whose e-mail is in ADMIN_EMAILS
   const ADMIN_EMAILS = () => String(process.env.ADMIN_EMAILS || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
   const isAdmin = async (id) => {
-    if (ADMINS().includes(String(id))) return true;
+    if (id === ADMIN_PANEL_ID || ADMINS().includes(String(id))) return true;
     const emails = ADMIN_EMAILS();
     return emails.length > 0 && (await store.userEmails(String(id))).some(e => emails.includes(e));
   };

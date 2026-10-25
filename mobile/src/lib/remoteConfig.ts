@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 
 import { API_URL } from "../services/api";
+import { ADMIN_PREVIEW } from "./previewFlag";
 
 type L = { uk?: string; ru?: string; en?: string };
 export type RemoteBanner = {
@@ -27,6 +28,8 @@ export type RemoteConfig = {
   strings: Record<string, L>;
   banners: RemoteBanner[];
   stickers: { hidden: string[]; extra: { name: string }[] };
+  /** Admin preview only: show this banner whatever its audience. */
+  previewBanner?: string | null;
 };
 
 const KEY = "wp_remote_config";
@@ -60,10 +63,15 @@ async function load() {
   }
 }
 
+/** The admin page's phone preview hands over its unsaved config. */
+export function setPreviewConfig(c: Partial<RemoteConfig>) {
+  set({ ...EMPTY, ...c });
+}
+
 let started = false;
 /** Called once from the root layout. */
 export function startRemoteConfig() {
-  if (started) return;
+  if (started || ADMIN_PREVIEW) return;
   started = true;
   AsyncStorage.getItem(KEY)
     .then((raw) => raw && fetchedAt === 0 && set({ ...EMPTY, ...JSON.parse(raw) }))

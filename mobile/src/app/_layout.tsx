@@ -16,6 +16,7 @@ import { LangProvider } from "../i18n";
 import { ReminderSync } from "../settings/ReminderSync";
 import { ToastHost } from "../components/Toast";
 import { joinSheet, takePendingJoin } from "../lib/pendingJoin";
+import { startAdminPreview } from "../lib/adminPreview";
 import { startRemoteConfig } from "../lib/remoteConfig";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
@@ -27,6 +28,7 @@ const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.Store
 SplashScreen.preventAutoHideAsync().catch(() => {});
 // texts, banners and stickers from the admin page
 startRemoteConfig();
+startAdminPreview();
 
 // Native iOS sheets: system grabber, swipe down to close, and our close button inside.
 const SHEET = { presentation: "formSheet", sheetGrabberVisible: true, sheetCornerRadius: 32, contentStyle: { backgroundColor: C.card } } as const;

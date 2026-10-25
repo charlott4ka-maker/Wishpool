@@ -25,7 +25,7 @@ const KEY = "wp_banners_closed";
 
 /** The banner to show now, if any: active, for this kind of user, with text in this language, not closed. */
 export function useRemoteBanner(): { banner: Banner | null; close: (id: string) => void } {
-  const { banners } = useRemoteConfig();
+  const { banners, previewBanner } = useRemoteConfig();
   const { status } = useAuth();
   const { lang } = useT();
   const demo = usePrefs().demo;
@@ -40,6 +40,9 @@ export function useRemoteBanner(): { banner: Banner | null; close: (id: string) 
     setClosed(next);
     AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
   };
+  // the admin preview shows the banner being edited, whoever it's meant for
+  const forced = previewBanner ? banners.find((b) => b.id === previewBanner) || null : null;
+  if (forced) return { banner: forced, close: () => {} };
   if (!closed || demo) return { banner: null, close };
   const who = status === "signedIn" ? "signedIn" : "guest";
   const banner =

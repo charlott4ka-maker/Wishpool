@@ -39,7 +39,8 @@
 - Never put `className` on Reanimated views (`Animated.View`, `createAnimatedComponent`): NativeWind doesn't style them on device. Animated views get plain `style`; for press springs use `Press` (styled Pressable inside a transform-only Animated.View).
 
 ## Admin (web/public/admin)
-- `wishpool.clickbrickk.com/admin`: text overrides, Wishes-tab banners, hidden/uploaded stickers, stored in `app_config` and served by `GET /api/config`. Access: e-mails in `ADMIN_EMAILS` or ids in `ADMIN_IDS`. After changing app texts or bundled stickers run `npm run admin-data` in mobile/.
+- `wishpool.clickbrickk.com/admin`: stats, text overrides, Wishes-tab banners, hidden/uploaded stickers, reports; config stored in `app_config` and served by `GET /api/config`. Sign-in: one login and password (`ADMIN_LOGIN` / `ADMIN_PASSWORD` on Vercel, `server/admin-auth.js`), no e-mail codes.
+- Live phone preview (iPhone 14 Pro Max, 430x932) on the right: the app's web build in `web/public/admin/preview` (guest + demo content, `lib/adminPreview.ts`), fed the unsaved draft; tapping a text opens its screen and outlines it (`screens` in app-data.json). After app changes worth previewing run `npm run admin-preview` in mobile/ (rebuilds the preview and app-data.json).
 - Moderation (App Review 1.2): in a room, ⋯ by a friend's name reports or blocks them, a long press on their wish reports it; `/terms` has the zero-tolerance terms (linked under the sign-in buttons). Reports land in the admin «Жалобы» tab and on support@; blocked people stay in the room with their wishes hidden.
 
 ## Later (agreed, not started)

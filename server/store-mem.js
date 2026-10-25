@@ -48,7 +48,7 @@ export function createMemStore() {
     async touchUser(id, at) { const u = D.users[id]; if (u) { u.lastSeen = at; u.firstSeen = u.firstSeen || at; } },
     async logEvents(userId, names, at) { for (const name of names) D.events.push({ at, userId, name }); },
     async analytics(now) {
-      const DAY = 86400000, day0 = now - (now % DAY), us = Object.values(D.users), ws = Object.values(D.wishes).filter(w => !w.roomOnly);
+      const DAY = 86400000, day0 = now - (now % DAY), us = Object.values(D.users).filter(u => u.id !== "admin-panel"), ws = Object.values(D.wishes).filter(w => !w.roomOnly);
       const uniq = (from) => new Set(D.events.filter(e => e.at >= from).map(e => e.userId)).size;
       const since = day0 - 13 * DAY;
       const days = Array.from({ length: 14 }, (_, i) => { const d = since + i * DAY;
@@ -62,6 +62,7 @@ export function createMemStore() {
         rooms: Object.keys(D.rooms).length, rooms7: Object.values(D.rooms).filter(r => r.createdAt >= now - 7 * DAY).length,
         reserved: Object.keys(D.reservations).length, chips: new Set(D.chips.map(c => c.wishId)).size,
         gifted: ws.filter(w => w.giftedAt).length, invites: D.invites.length,
+        ios: new Set(Object.values(D.identities)).size, reports: D.reports.length,
         days, clicks: Object.values(cl).sort((a, b) => b.n - a.n).slice(0, 40).map(c => ({ name: c.name, n: c.n, users: c.u.size })),
       };
     },

@@ -10,7 +10,8 @@
   var data = null;            // app-data.json: built-in texts and stickers
   var saved = null;           // config as on the server
   var draft = null;           // config being edited
-  var tab = "banners";
+  var tab = "stats";
+  var focusBanner = null;     // the banner shown in the phone preview
 
   function toast(t) { var el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast.t); toast.t = setTimeout(function () { el.style.display = "none"; }, 2200); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -21,20 +22,15 @@
   }
   function show(id, on) { $(id).classList.toggle("hidden", !on); }
 
-  // ---------- sign-in ----------
-  var sent = false;
-  $("loginBtn").onclick = function () {
-    var email = $("email").value.trim().toLowerCase();
+  // ---------- sign-in: one login and password (server/admin-auth.js) ----------
+  $("login").onsubmit = function (e) {
+    e.preventDefault();
     $("loginErr").textContent = "";
-    if (!sent) {
-      api("POST", "/auth/email/start", { email: email, lang: "ru" }).then(function () {
-        sent = true; show("codeBox", true); $("loginBtn").textContent = "Войти"; $("code").focus();
-      }).catch(function (e) { $("loginErr").textContent = e.message === "too_soon" ? "Код уже отправлен, подожди полминуты" : "Не получилось отправить код (" + e.message + ")"; });
-    } else {
-      api("POST", "/auth/email/verify", { email: email, code: $("code").value.trim() }).then(function (r) {
-        token = r.token; localStorage.setItem("wp_admin_token", token); start();
-      }).catch(function () { $("loginErr").textContent = "Неверный или устаревший код"; });
-    }
+    api("POST", "/admin-login", { login: $("lgn").value.trim(), password: $("pwd").value }).then(function (r) {
+      token = r.token; localStorage.setItem("wp_admin_token", token); $("pwd").value = ""; start();
+    }).catch(function (er) {
+      $("loginErr").textContent = er.message === "too_soon" ? "Подожди пару секунд и попробуй ещё раз" : er.message === "not_configured" ? "Пароль админки не задан на сервере" : "Неверный логин или пароль";
+    });
   };
   $("logout").onclick = function () { localStorage.removeItem("wp_admin_token"); token = ""; location.reload(); };
 
@@ -47,9 +43,8 @@
       data = res[1];
       show("noStorage", !res[0].storage);
       show("app", true); show("logout", true);
-      renderAll();
-    }).catch(function (e) {
-      if (e.status === 403) { show("denied", true); show("logout", true); return; }
+      renderAll(); loadStats(); startPreview();
+    }).catch(function () {
       localStorage.removeItem("wp_admin_token"); token = ""; show("login", true);
     });
   }
@@ -61,11 +56,15 @@
       document.querySelectorAll(".tabs button").forEach(function (x) { x.classList.toggle("on", x === b); });
       document.querySelectorAll("[data-pane]").forEach(function (p) { p.classList.toggle("hidden", p.dataset.pane !== tab); });
       updateBar();
+      pv.clearMark(); pv.note("");
       if (tab === "reports") loadReports();
+      if (tab === "stats") loadStats();
+      if (tab === "banners") { pv.go("/"); pv.push(); }
+      if (tab === "stickers") pv.go("/wish/new");
     };
   });
   function dirty(key) { return JSON.stringify(saved[key]) !== JSON.stringify(draft[key]); }
-  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers"].some(dirty)); }
+  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers"].some(dirty)); pv.push(); }
   $("discard").onclick = function () { draft = clone(saved); renderAll(); };
   $("save").onclick = function () {
     var keys = ["banners", "strings", "stickers"].filter(dirty);
@@ -83,7 +82,7 @@
   function bannerHtml(b, i) {
     var stickers = allStickerNames().map(function (n) { return '<option value="stk:' + n + '"' + (b.sticker === "stk:" + n ? " selected" : "") + ">" + n + "</option>"; }).join("");
     var texts = LANGS.map(function (l) { return '<div><label class="f">Текст ' + LNAME[l] + '</label><textarea data-b="' + i + '" data-k="text.' + l + '" maxlength="200">' + esc(b.text[l]) + "</textarea></div>"; }).join("");
-    return '<div class="item">' +
+    return '<div class="item' + (b.id === focusBanner ? " focus" : "") + '" data-bid="' + esc(b.id) + '">' +
       '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-b="' + i + '" data-k="active"' + (b.active ? " checked" : "") + "> Включён</label>" +
       '<button class="btn2 danger sm" data-del="' + i + '" style="margin-left:auto">Удалить</button></div>' +
       '<label class="f">Кому показывать</label><select data-b="' + i + '" data-k="audience">' +
@@ -98,18 +97,15 @@
       [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       (b.action === "link" ? '<label class="f">Ссылка (https://…)</label><input type="url" data-b="' + i + '" data-k="url" value="' + esc(b.url) + '" placeholder="https://">' : "") +
       '<label class="row hint" style="gap:6px;margin-top:12px"><input type="checkbox" data-b="' + i + '" data-k="dismissible"' + (b.dismissible ? " checked" : "") + "> Можно закрыть крестиком</label>" +
-      '<label class="f">Как будет выглядеть (RU)</label>' +
-      '<div class="preview" style="background:linear-gradient(90deg,' + b.color1 + "," + b.color2 + ");color:" + b.textColor + '">' +
-      (b.sticker ? '<img src="' + stickerUrl(b.sticker.slice(4)) + '" alt="">' : "") +
-      "<span>" + esc(b.text.ru || b.text.en || b.text.uk || "Текст баннера") + "</span>" +
-      (b.dismissible || b.action !== "none" ? '<span class="b">' + (b.dismissible ? "✕" : "›") + "</span>" : "") +
-      '</div><div class="previewunder"></div></div>';
+      "</div>";
   }
   function renderBanners() {
     $("bannerList").innerHTML = draft.banners.length ? draft.banners.map(bannerHtml).join("") : '<p class="hint" style="margin-top:12px">Баннеров пока нет.</p>';
   }
   $("addBanner").onclick = function () {
-    draft.banners.push({ id: "b" + Date.now().toString(36), active: false, audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true });
+    var id = "b" + Date.now().toString(36);
+    focusBanner = id;
+    draft.banners.push({ id: id, active: false, audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true });
     renderBanners(); updateBar();
   };
   $("bannerList").addEventListener("input", onBannerEdit);
@@ -124,13 +120,15 @@
     // only selects, checkboxes and colours redraw the card: a text field's "change"
     // fires when it loses focus, and a redraw then would swallow the next click
     if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "color") { if (e.type === "change" || el.type === "color") renderBanners(); }
-    else {
-      var item = el.closest(".item"), pv = item.querySelector(".preview span");
-      if (pv && k.indexOf("text.") === 0) pv.textContent = b.text.ru || b.text.en || b.text.uk || "Текст баннера";
-    }
     updateBar();
   }
   $("bannerList").addEventListener("click", function (e) {
+    var item = e.target.closest(".item");
+    if (item && item.dataset.bid !== focusBanner) {
+      focusBanner = item.dataset.bid;
+      document.querySelectorAll("#bannerList .item").forEach(function (x) { x.classList.toggle("focus", x === item); });
+      pv.go("/"); pv.push();
+    }
     var d = e.target.dataset && e.target.dataset.del;
     if (d == null) return;
     if (!confirm("Удалить этот баннер?")) return;
@@ -149,8 +147,10 @@
     var shown = keys.slice(0, 40);
     $("stringList").innerHTML = shown.map(function (k) {
       var row = data.strings[k], own = draft.strings[k] || {};
-      return '<div class="item' + (draft.strings[k] ? " changed" : "") + '"><div class="row"><span class="key">' + esc(k) + "</span>" +
-        (draft.strings[k] ? '<button class="btn2 ghost sm" data-reset="' + esc(k) + '" style="margin-left:auto">Вернуть стандартный</button>' : "") + "</div>" +
+      var scr = data.screens && data.screens[k];
+      return '<div class="item' + (draft.strings[k] ? " changed" : "") + (k === focusKey ? " focus" : "") + '" data-key="' + esc(k) + '"><div class="row"><span class="key">' + esc(k) + "</span>" +
+        '<span class="where">' + (scr ? "Экран: " + esc(SCREEN_NAME[scr.split("?")[0]] || scr) : "Только в Telegram Mini App") + "</span>" +
+        (draft.strings[k] ? '<button class="btn2 ghost sm" data-reset="' + esc(k) + '">Вернуть стандартный</button>' : "") + "</div>" +
         '<div class="grid3" style="margin-top:8px">' + LANGS.map(function (l) {
           return '<div><label class="f" style="margin-top:0">' + LNAME[l] + '</label><textarea data-s="' + esc(k) + '" data-lang="' + l + '" placeholder="' + esc(row[l] || "") + '">' + esc(own[l] || "") + "</textarea>" +
             '<div class="def">' + esc(row[l] || "") + "</div></div>";
@@ -168,12 +168,30 @@
     if (Object.keys(own).length) draft.strings[k] = own; else delete draft.strings[k];
     el.closest(".item").classList.toggle("changed", !!draft.strings[k]);
     updateBar();
+    clearTimeout(focusString.t); focusString.t = setTimeout(function () { focusString(k, false); }, 350);
   });
   $("stringList").addEventListener("click", function (e) {
     var k = e.target.dataset && e.target.dataset.reset;
-    if (!k) return;
-    delete draft.strings[k]; renderStrings(); updateBar();
+    if (k) { delete draft.strings[k]; renderStrings(); updateBar(); focusString(k, false); return; }
+    var item = e.target.closest(".item");
+    if (item && item.dataset.key) focusString(item.dataset.key, true);
   });
+  $("stringList").addEventListener("focusin", function (e) {
+    var item = e.target.closest(".item");
+    if (item && item.dataset.key && item.dataset.key !== focusKey) focusString(item.dataset.key, true);
+  });
+  var focusKey = null;
+  function pvPath() { return pv.path(); }
+  // open the text's screen in the phone and light the text up
+  function focusString(k, go) {
+    focusKey = k;
+    document.querySelectorAll("#stringList .item").forEach(function (x) { x.classList.toggle("focus", x.dataset.key === k); });
+    var scr = data.screens && data.screens[k];
+    if (!scr) { pv.note("Этого текста нет в iPhone-приложении: он только в Telegram Mini App."); pv.clearMark(); return; }
+    if (go && scr !== pvPath()) pv.go(scr);
+    var l = pv.lang(), own = draft.strings[k] || {}, def = data.strings[k] || {};
+    pv.mark(own[l] || def[l] || def.en || "");
+  }
 
   // ---------- stickers ----------
   function renderStickers() {
@@ -201,6 +219,11 @@
     draft.stickers.hidden = h.indexOf(n) >= 0 ? h.filter(function (x) { return x !== n; }) : h.concat([n]);
     renderStickers(); updateBar();
   });
+  $("stkFile").addEventListener("change", function () {
+    var f = $("stkFile").files[0];
+    $("stkFileName").textContent = f ? f.name : "PNG или WebP";
+    $("stkFileBox").classList.toggle("has", !!f);
+  });
   // the file becomes a square WebP of at most 512px in the browser, then goes up
   $("stkUpload").onclick = function () {
     var name = $("stkName").value.trim().toLowerCase(), file = $("stkFile").files[0];
@@ -217,7 +240,7 @@
       if (url.indexOf("data:image/webp") !== 0) return toast("Этот браузер не умеет WebP, загрузи из Chrome");
       api("POST", "/admin/sticker", { name: name, image: url }).then(function (r) {
         saved.stickers = r.value; draft.stickers.extra = clone(r.value.extra);
-        $("stkName").value = ""; $("stkFile").value = "";
+        $("stkName").value = ""; $("stkFile").value = ""; $("stkFileName").textContent = "PNG или WebP"; $("stkFileBox").classList.remove("has");
         renderStickers(); updateBar(); renderBanners(); toast("Стикер добавлен");
       }).catch(function (e) { toast(e.message === "name_taken" ? "Такое имя уже есть" : e.message === "too_big" ? "Файл слишком большой" : "Ошибка: " + e.message); });
     };
@@ -253,6 +276,120 @@
       api("DELETE", "/admin/reports/" + b.dataset.close).then(function () { toast("Жалоба закрыта"); loadReports(); }).catch(function (er) { toast("Ошибка: " + er.message); });
     }
   });
+
+  // ---------- stats ----------
+  function kpi(n, label, sub) { return '<div class="kpi"><div class="n">' + n + '</div><div class="l">' + label + "</div>" + (sub ? '<div class="s">' + sub + "</div>" : "") + "</div>"; }
+  // event names as in the Mini App's own stats screen (web/src/App.jsx)
+  var EVENT = { open: "Открыли приложение", tab_pool: "Вкладка «Желания»", tab_rooms: "Вкладка «Комнаты»", tab_profile: "Вкладка «Профиль»", ov_add: "Открыли «Новое желание»", ov_room: "Открыли комнату", ov_pool: "Добавить из моих желаний", ov_idea: "Идея подарка", ov_history: "История подарков", ov_invites: "Мои приглашения", ov_gate: "Экран приглашения", ov_analytics: "Аналитика", share_room: "Поделились комнатой", share_app: "Поделились приложением", onboard_done: "Прошли онбординг", s_wish: "Добавили желание", s_wish_link: "Добавили желание по ссылке", s_room_friends: "Создали комнату «Друзья»", s_room_couple: "Создали комнату «Пара»", s_room_birthday: "Создали комнату «День рождения»", s_join: "Вступили в комнату", s_take: "Взяли подарок", s_chip: "Скинулись", s_gifted: "Отметили «Мне подарили»" };
+  function loadStats() {
+    if (!$("stats").innerHTML) $("stats").innerHTML = '<p class="hint" style="margin-top:12px">Загружаю…</p>';
+    api("GET", "/admin/stats").then(function (s) {
+      var max = Math.max(1, Math.max.apply(null, s.days.map(function (d) { return Math.max(d.active, d.new); })));
+      var bars = s.days.map(function (d) {
+        var dt = new Date(d.day + "T00:00:00Z");
+        return '<div class="c" title="' + d.day + ": активных " + d.active + ", новых " + d.new + '"><div class="bars">' +
+          '<div class="b" style="height:' + (d.active / max * 100) + '%;background:var(--blue)"></div>' +
+          '<div class="b" style="height:' + (d.new / max * 100) + '%;background:#34C759"></div></div>' +
+          '<div class="d">' + dt.getUTCDate() + "</div></div>";
+      }).join("");
+      $("stats").innerHTML =
+        '<div class="kpis">' +
+        kpi(s.online, "Сейчас в приложении", "за последние 5 минут") +
+        kpi(s.active1, "Активных сегодня") + kpi(s.active7, "За 7 дней") + kpi(s.active30, "За 30 дней") +
+        kpi(s.total, "Всего пользователей", "из них iPhone: " + (s.ios || 0)) +
+        kpi(s.new1, "Новых сегодня", "за 7 дней: " + s.new7) +
+        kpi(s.wishes, "Желаний", "за 7 дней: +" + s.wishes7) + kpi(s.rooms, "Комнат", "за 7 дней: +" + s.rooms7) +
+        kpi(s.reserved, "Подарков взяли", "вскладчину: " + s.chips) + kpi(s.gifted, "Подарено") +
+        kpi(s.invites, "Пришли по приглашению") + kpi(s.reports || 0, "Открытых жалоб") +
+        "</div>" +
+        '<h3 style="margin:24px 0 0">Последние 14 дней</h3><div class="chart">' + bars + "</div>" +
+        '<div class="legend"><span><i style="background:var(--blue)"></i>Активные</span><span><i style="background:#34C759"></i>Новые</span></div>' +
+        (s.clicks && s.clicks.length ? '<h3 style="margin:24px 0 0">Что делают за 7 дней</h3><table class="ev">' + s.clicks.slice(0, 15).map(function (c) {
+          return "<tr><td>" + esc(EVENT[c.name] || c.name) + ' <span class="key">' + esc(c.name) + '</span></td><td class="n">' + c.n + " раз · " + c.users + " чел.</td></tr>";
+        }).join("") + "</table>" : "");
+    }).catch(function (e) { $("stats").innerHTML = '<p class="hint" style="margin-top:12px">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+  $("statsReload").onclick = loadStats;
+
+  // ---------- phone preview ----------
+  // The iPhone app's web build in an iframe (same site), as a guest with the demo
+  // content. It exposes window.__wpPreview (mobile/src/lib/adminPreview.ts).
+  var SCREENS = [["/", "Желания"], ["/rooms", "Комнаты"], ["/room/r-friends", "Комната"], ["/wish/w1", "Желание"], ["/profile", "Профиль"],
+    ["/settings", "Настройки"], ["/faq", "Вопросы и ответы"], ["/wish/new", "Новое желание"], ["/room/new", "Новая комната"], ["/room/pick", "Выбор желаний"],
+    ["/birthday", "День рождения"], ["/profile-edit", "Редактирование профиля"], ["/sign-in-options", "Вход"], ["/onboarding", "Онбординг"]];
+  var SCREEN_NAME = {}; SCREENS.forEach(function (x) { SCREEN_NAME[x[0]] = x[1]; });
+  var pv = (function () {
+    var frame = $("pv"), cur = "/", markText = "", pushT;
+    function api() { try { return frame.contentWindow && frame.contentWindow.__wpPreview; } catch (e) { return null; } }
+    function doc() { try { return frame.contentDocument; } catch (e) { return null; } }
+    function lang() { return $("pvLang").value; }
+    function load() { frame.src = "/admin/preview" + (cur === "/" ? "/" : cur) + (cur.indexOf("?") >= 0 ? "&" : "?") + "lang=" + lang(); }
+    function cfg() {
+      var banners = draft ? draft.banners : [];
+      var forced = tab === "banners" ? (banners.some(function (b) { return b.id === focusBanner; }) ? focusBanner : banners[0] && banners[0].id) : null;
+      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, previewBanner: forced || null } : null;
+    }
+    function push() { clearTimeout(pushT); pushT = setTimeout(function () { var a = api(), c = cfg(); if (a && c) a.setConfig(c); }, 120); }
+    function go(path) {
+      markText = ""; clearMark();
+      cur = path; $("pvScreen").value = path.split("?")[0];
+      var a = api();
+      if (a && a.ready) a.go(path); else load();
+    }
+    function note(t) { $("pvNote").textContent = t || ""; }
+    function clearMark() { var d = doc(), o = d && d.getElementById("wp-mark"); if (o) o.remove(); }
+    // finds the text on the screen (waiting for the screen to open) and outlines it
+    function mark(text) {
+      markText = text; clearMark(); note("");
+      var parts = String(text).split(/\{\w+\}/).map(function (x) { return x.trim(); }).sort(function (a, b) { return b.length - a.length; });
+      var needle = (parts[0] || "").replace(/\s+/g, " ").slice(0, 60);
+      if (!needle) return;
+      var tries = 0;
+      (function find() {
+        if (markText !== text) return;
+        var d = doc(), el = null;
+        if (d && d.body) {
+          var w = d.createTreeWalker(d.body, NodeFilter.SHOW_TEXT), n;
+          while ((n = w.nextNode())) {
+            if (n.nodeValue.replace(/\s+/g, " ").indexOf(needle) >= 0) {
+              var p = n.parentElement, r = p && p.getBoundingClientRect();
+              if (r && r.width > 0 && r.height > 0) { el = p; break; }
+            }
+          }
+        }
+        if (!el) {
+          if (++tries < 25) return setTimeout(find, 200);
+          return note("На этом экране текст не виден: он во всплывающем окне, уведомлении или в другом состоянии экрана.");
+        }
+        el.scrollIntoView({ block: "center" });
+        setTimeout(function () {
+          var r = el.getBoundingClientRect(), o = d.createElement("div");
+          o.id = "wp-mark";
+          o.style.cssText = "position:fixed;z-index:99999;pointer-events:none;border-radius:10px;border:2px solid #0A82F9;box-shadow:0 0 0 4px rgba(10,130,249,.25),0 0 24px rgba(10,130,249,.6);left:" + (r.left - 6) + "px;top:" + (r.top - 4) + "px;width:" + (r.width + 12) + "px;height:" + (r.height + 8) + "px";
+          clearMark(); d.body.appendChild(o);
+        }, 250);
+      })();
+    }
+    frame.addEventListener("load", function () {
+      var tries = 0;
+      (function wait() { var a = api(); if (a) { push(); if (markText) mark(markText); } else if (++tries < 50) setTimeout(wait, 100); })();
+    });
+    return { path: function () { return cur; }, start: load, go: go, push: push, mark: mark, clearMark: clearMark, note: note, lang: lang };
+  })();
+  function startPreview() {
+    $("pvScreen").innerHTML = SCREENS.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + "</option>"; }).join("");
+    pv.start(); fitPhone();
+  }
+  $("pvScreen").onchange = function () { pv.go(this.value === "/room/pick" ? "/room/pick?id=r-friends" : this.value); };
+  $("pvLang").onchange = function () { pv.start(); };
+  // the whole phone fits the window height
+  function fitPhone() {
+    var s = Math.min(1, Math.max(0.45, (window.innerHeight - 250) / 954)), ph = $("phone");
+    ph.style.transform = "scale(" + s + ")";
+    ph.style.marginBottom = (954 * s - 954) + "px";
+    ph.style.marginLeft = ph.style.marginRight = (452 * s - 452) / 2 + "px";
+  }
+  window.addEventListener("resize", fitPhone);
 
   start();
 })();

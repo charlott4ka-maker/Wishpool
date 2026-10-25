@@ -61,9 +61,22 @@ try {
   process.env.ADMIN_EMAILS = "review@wishpool.test";
   const reps = (await call("GET", "/api/admin/reports", null, rvt)).body.reports;
   assert.equal(reps.length, 1); assert.equal(reps[0].wish.title, "Headphones"); assert.equal(reps[0].user.id, anna);
+  const stats = (await call("GET", "/api/admin/stats", null, rvt)).body;
+  assert.equal(stats.ios, 2); assert.equal(stats.reports, 1); assert.equal(stats.days.length, 14);
   await call("DELETE", `/api/admin/reports/${reps[0].id}`, null, rvt);
   assert.equal((await call("GET", "/api/admin/reports", null, rvt)).body.reports.length, 0);
   delete process.env.ADMIN_EMAILS;
+  // admin page: login + password from the environment
+  assert.equal((await call("POST", "/api/admin-login", { login: "a", password: "b" })).status, 503);
+  Object.assign(process.env, { ADMIN_LOGIN: "Panel@Wishpool.app", ADMIN_PASSWORD: "s3cret-pass" });
+  assert.equal((await call("POST", "/api/admin-login", { login: "panel@wishpool.app", password: "nope" })).status, 401);
+  assert.equal((await call("POST", "/api/admin-login", { login: "panel@wishpool.app", password: "s3cret-pass" })).status, 429, "one try per 3s");
+  await new Promise(r => setTimeout(r, 3100));
+  const adm = await call("POST", "/api/admin-login", { login: "panel@wishpool.app", password: "s3cret-pass" });
+  assert.equal(adm.status, 200);
+  assert.equal((await call("GET", "/api/admin/reports", null, adm.body.token)).status, 200);
+  assert.equal((await call("GET", "/api/admin/stats", null, adm.body.token)).status, 200);
+  delete process.env.ADMIN_LOGIN; delete process.env.ADMIN_PASSWORD;
   // same e-mail again -> same account
   await new Promise(r => setTimeout(r, 0));
   // delete: the room goes to the other member, the session dies

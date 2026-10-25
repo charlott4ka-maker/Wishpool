@@ -99,17 +99,18 @@ export function createPgStore(q) {
     },
     // everything the admin screen shows, in one go
     async analytics(now) {
+      // the admin page's own account (server/admin-auth.js) isn't a user
       const D = 86400000, M5 = 5 * 60000;
       const day0 = now - (now % D);
       const one = async (sql, p = []) => Number((await q(sql, p)).rows[0].n) || 0;
-      const [online, total, active1, active7, active30, new1, new7, wishes, wishes7, rooms, rooms7, reserved, chips, gifted, invites] = await Promise.all([
-        one(`SELECT count(*) n FROM users WHERE last_seen >= $1`, [now - M5]),
-        one(`SELECT count(*) n FROM users`),
-        one(`SELECT count(*) n FROM users WHERE last_seen >= $1`, [day0]),
+      const [online, total, active1, active7, active30, new1, new7, wishes, wishes7, rooms, rooms7, reserved, chips, gifted, invites, ios, reports] = await Promise.all([
+        one(`SELECT count(*) n FROM users WHERE last_seen >= $1 AND id <> 'admin-panel'`, [now - M5]),
+        one(`SELECT count(*) n FROM users WHERE id <> 'admin-panel'`),
+        one(`SELECT count(*) n FROM users WHERE last_seen >= $1 AND id <> 'admin-panel'`, [day0]),
         one(`SELECT count(DISTINCT user_id) n FROM events WHERE at >= $1`, [now - 7 * D]),
         one(`SELECT count(DISTINCT user_id) n FROM events WHERE at >= $1`, [now - 30 * D]),
-        one(`SELECT count(*) n FROM users WHERE first_seen >= $1`, [day0]),
-        one(`SELECT count(*) n FROM users WHERE first_seen >= $1`, [now - 7 * D]),
+        one(`SELECT count(*) n FROM users WHERE first_seen >= $1 AND id <> 'admin-panel'`, [day0]),
+        one(`SELECT count(*) n FROM users WHERE first_seen >= $1 AND id <> 'admin-panel'`, [now - 7 * D]),
         one(`SELECT count(*) n FROM wishes WHERE room_only IS NULL`),
         one(`SELECT count(*) n FROM wishes WHERE room_only IS NULL AND created_at >= $1`, [now - 7 * D]),
         one(`SELECT count(*) n FROM rooms`),
@@ -118,11 +119,14 @@ export function createPgStore(q) {
         one(`SELECT count(DISTINCT wish_id) n FROM chips`),
         one(`SELECT count(*) n FROM wishes WHERE gifted_at IS NOT NULL`),
         one(`SELECT count(*) n FROM invites`),
+        // iPhone app accounts (Apple ID / e-mail sign-in); everyone else came through Telegram
+        one(`SELECT count(DISTINCT user_id) n FROM identities`),
+        one(`SELECT count(*) n FROM reports`),
       ]);
       const since = day0 - 13 * D;
       const [act, fresh, clicks] = await Promise.all([
         q(`SELECT (at - at % ${D}) d, count(DISTINCT user_id) n FROM events WHERE at >= $1 GROUP BY 1`, [since]),
-        q(`SELECT (first_seen - first_seen % ${D}) d, count(*) n FROM users WHERE first_seen >= $1 GROUP BY 1`, [since]),
+        q(`SELECT (first_seen - first_seen % ${D}) d, count(*) n FROM users WHERE first_seen >= $1 AND id <> 'admin-panel' GROUP BY 1`, [since]),
         q(`SELECT name, count(*) n, count(DISTINCT user_id) u FROM events WHERE at >= $1 GROUP BY name ORDER BY n DESC LIMIT 40`, [now - 7 * D]),
       ]);
       const byDay = (rows) => Object.fromEntries(rows.map(r => [Number(r.d), Number(r.n)]));
@@ -130,7 +134,7 @@ export function createPgStore(q) {
       const days = Array.from({ length: 14 }, (_, i) => { const d = since + i * D; return { day: new Date(d).toISOString().slice(0, 10), active: a[d] || 0, new: f[d] || 0 }; });
       return {
         online, total, active1, active7, active30, new1, new7,
-        wishes, wishes7, rooms, rooms7, reserved, chips, gifted, invites,
+        wishes, wishes7, rooms, rooms7, reserved, chips, gifted, invites, ios, reports,
         days, clicks: clicks.rows.map(r => ({ name: r.name, n: Number(r.n), users: Number(r.u) })),
       };
     },

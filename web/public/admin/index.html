@@ -10,16 +10,20 @@
 <link rel="stylesheet" href="/pages.css" />
 <style>
 body{padding:16px 16px 96px}
-.wrap{max-width:860px}
+.wrap{max-width:1360px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:start}
+.col{display:flex;flex-direction:column;gap:4px;min-width:0}
+@media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.phoneCol{display:none}}
 .tabs{display:flex;gap:4px;background:var(--bg);border-radius:999px;padding:4px;width:max-content;max-width:100%;overflow-x:auto}
-.tabs button,.btn2{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:999px;height:40px;padding:0 16px;cursor:pointer;white-space:nowrap}
+.tabs button,.btn2{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:999px;height:40px;padding:0 16px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .tabs button{background:none;color:var(--t2)}
 .tabs button.on{background:#353C49;color:var(--t1)}
 .btn2{background:var(--blue);color:#fff}
 .btn2.ghost{background:#2D3440;color:var(--t1)}
 .btn2.danger{background:#3a1f22;color:#ff6b6b}
 .btn2.sm{height:32px;padding:0 12px;font-size:13px}
-input[type=text],input[type=email],input[type=url],input[type=search],textarea,select{font:inherit;font-weight:500;font-size:15px;color:var(--t1);background:var(--bg);border:1px solid transparent;border-radius:14px;padding:10px 14px;width:100%;outline:none}
+.btn2.full{width:100%;height:52px;font-size:16px}
+input[type=text],input[type=email],input[type=password],input[type=url],input[type=search],textarea,select{font:inherit;font-weight:500;font-size:15px;color:var(--t1);background:var(--bg);border:1px solid transparent;border-radius:14px;padding:10px 14px;width:100%;outline:none}
 textarea{min-height:44px;resize:vertical;line-height:1.4}
 input:focus,textarea:focus,select:focus{border-color:rgba(10,130,249,.5)}
 input[type=color]{width:44px;height:36px;border:0;background:none;padding:0;cursor:pointer}
@@ -29,8 +33,11 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
 @media (max-width:640px){.grid3{grid-template-columns:1fr}}
 .item{background:var(--raised);border-radius:20px;padding:16px;margin-top:8px}
 .item.changed{box-shadow:inset 0 0 0 1px rgba(10,130,249,.6)}
+.item.focus{box-shadow:inset 0 0 0 2px var(--blue)}
 .key{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--t3)}
 .def{font-size:12px;color:var(--t3);margin-top:4px}
+.where{font-size:12px;color:var(--t2);margin-left:auto;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.where:hover{color:var(--t1)}
 .bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(21,24,29,.92);backdrop-filter:blur(20px);display:none;justify-content:center;gap:8px;z-index:10}
 .bar.show{display:flex}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1E2228;color:#fff;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;z-index:20}
@@ -39,12 +46,43 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
 .stk .s img{width:56px;height:56px;object-fit:contain;display:block;margin:0 auto 4px}
 .stk .s.off{opacity:.35}
 .stk .s.new{box-shadow:inset 0 0 0 1px rgba(52,199,89,.6)}
-.preview{border-radius:24px 24px 0 0;padding:10px 12px 34px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:15px;margin-top:12px}
-.preview img{width:30px;height:30px;object-fit:contain}
-.preview .b{width:32px;height:32px;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin-left:auto;flex-shrink:0}
-.previewunder{background:var(--block);border-radius:24px 24px 0 0;height:28px;margin-top:-24px}
 .hint{font-size:13px;color:var(--t2)}
-.hidden{display:none}
+.hidden{display:none !important}
+/* file picker: our button instead of the browser's */
+.file{position:relative;display:inline-flex;align-items:center;gap:12px;background:var(--bg);border-radius:999px;height:40px;padding:0 16px 0 4px;cursor:pointer;max-width:100%}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file .pick{background:#2D3440;border-radius:999px;height:32px;padding:0 12px;display:inline-flex;align-items:center;font-weight:700;font-size:13px;color:var(--t1)}
+.file .name{font-size:14px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.file.has .name{color:var(--t1)}
+/* stats */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:12px}
+.kpi{background:var(--raised);border-radius:20px;padding:16px}
+.kpi .n{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.kpi .l{font-size:13px;color:var(--t2);margin-top:4px}
+.kpi .s{font-size:12px;color:var(--t3);margin-top:2px}
+.chart{display:flex;align-items:flex-end;gap:4px;height:160px;margin-top:16px}
+.chart .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;min-width:0}
+.chart .bars{display:flex;align-items:flex-end;gap:2px;width:100%;justify-content:center;flex:1}
+.chart .b{width:40%;max-width:14px;border-radius:4px 4px 0 0;min-height:2px}
+.chart .d{font-size:11px;color:var(--t3)}
+.legend{display:flex;gap:16px;margin-top:12px;font-size:13px;color:var(--t2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+table.ev{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+table.ev td{padding:8px 0;border-top:1px solid rgba(255,255,255,.06)}
+table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:12px}
+/* phone preview: iPhone 14 Pro Max, 430 x 932 pt */
+.phoneCol{position:sticky;top:16px}
+.phoneBlock{display:flex;flex-direction:column;align-items:center;gap:12px}
+.phoneCtl{display:flex;gap:8px;width:100%}
+.phoneCtl select{height:40px;padding:0 12px}
+.phone{position:relative;width:452px;height:954px;border-radius:68px;background:#0b0c0e;padding:11px;box-shadow:0 0 0 2px #2a2e35,0 24px 60px rgba(0,0,0,.5);transform-origin:top center}
+.screen{position:relative;width:430px;height:932px;border-radius:57px;overflow:hidden;background:#15181D}
+.status{position:absolute;left:0;right:0;top:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 52px;font-weight:700;font-size:17px;color:#fff;z-index:2;pointer-events:none;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:126px;height:37px;border-radius:20px;background:#000;z-index:3}
+.status .icons{display:flex;gap:6px;align-items:center}
+.screen iframe{position:absolute;left:0;top:54px;width:430px;height:878px;border:0;background:#15181D}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:150px;height:5px;border-radius:3px;background:rgba(255,255,255,.85);z-index:2;pointer-events:none}
+.phoneNote{font-size:12px;color:var(--t3);text-align:center;max-width:430px;min-height:16px}
 </style>
 </head>
 <body>
@@ -55,69 +93,92 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
     <button class="btn2 ghost sm hidden" id="logout">Выйти</button>
   </div>
 
-  <!-- sign-in: the same e-mail code as in the iOS app -->
-  <div class="block hidden" id="login">
+  <!-- sign-in: one login and password (ADMIN_LOGIN / ADMIN_PASSWORD on Vercel) -->
+  <form class="block hidden" id="login" style="max-width:480px">
     <h1>Вход</h1>
-    <p class="hint">Почта, с которой ты входишь в приложение. Доступ есть только у админов.</p>
-    <label class="f">E-mail</label>
-    <input type="email" id="email" placeholder="name@example.com" autocomplete="email" />
-    <div id="codeBox" class="hidden">
-      <label class="f">Код из письма</label>
-      <input type="text" id="code" inputmode="numeric" placeholder="123456" autocomplete="one-time-code" />
-    </div>
-    <div class="btns"><button class="btn" id="loginBtn" style="border:0;cursor:pointer;font:inherit;font-weight:700">Отправить код</button></div>
+    <label class="f">Логин</label>
+    <input type="text" id="lgn" autocomplete="username" autocapitalize="none" spellcheck="false" />
+    <label class="f">Пароль</label>
+    <input type="password" id="pwd" autocomplete="current-password" />
+    <div style="margin-top:24px"><button class="btn2 full" id="loginBtn" type="submit">Войти</button></div>
     <p class="hint" id="loginErr" style="color:#ff6b6b;margin-top:12px"></p>
-  </div>
+  </form>
 
-  <div class="block hidden" id="denied">
-    <h1>Нет доступа</h1>
-    <p class="hint">Этот аккаунт не админ. Добавь его почту в переменную <b>ADMIN_EMAILS</b> на Vercel.</p>
-  </div>
-
-  <div id="app" class="hidden">
-    <div class="block">
-      <div class="tabs">
-        <button data-tab="banners" class="on">Баннеры</button>
-        <button data-tab="strings">Тексты</button>
-        <button data-tab="stickers">Стикеры</button>
-        <button data-tab="reports">Жалобы</button>
+  <div id="app" class="hidden layout">
+    <div class="col">
+      <div class="block">
+        <div class="tabs">
+          <button data-tab="stats" class="on">Статистика</button>
+          <button data-tab="banners">Баннеры</button>
+          <button data-tab="strings">Тексты</button>
+          <button data-tab="stickers">Стикеры</button>
+          <button data-tab="reports">Жалобы</button>
+        </div>
+        <p class="hint" style="margin-top:12px">Справа живой предпросмотр: изменения видны в нём сразу, а в приложение попадают после «Сохранить», примерно за минуту.</p>
       </div>
-      <p class="hint" style="margin-top:12px">Изменения попадают в приложение примерно за минуту, при следующем открытии.</p>
-    </div>
 
-    <div class="block" data-pane="banners">
-      <h2 style="margin-top:0">Баннеры</h2>
-      <p class="hint">Полоска под заголовком на вкладке «Желания». Показывается первый включённый баннер, подходящий пользователю. Если пользователь закрыл баннер крестиком, он больше его не увидит.</p>
-      <div id="bannerList"></div>
-      <div class="btns"><button class="btn2 ghost" id="addBanner">+ Добавить баннер</button></div>
-    </div>
-
-    <div class="block hidden" data-pane="strings">
-      <h2 style="margin-top:0">Тексты приложения</h2>
-      <p class="hint">Найди текст по словам или ключу и поменяй. Пустое поле = стандартный текст. Без тире в текстах.</p>
-      <input type="search" id="q" placeholder="Поиск: «желание», «Войти», poolTitle…" style="margin-top:12px" />
-      <div class="row" style="margin-top:8px"><label class="hint"><input type="checkbox" id="onlyChanged" /> только изменённые</label></div>
-      <div id="stringList"></div>
-    </div>
-
-    <div class="block hidden" data-pane="stickers">
-      <h2 style="margin-top:0">Стикеры</h2>
-      <p class="hint">Нажми на стикер, чтобы скрыть его из выбора в приложении или вернуть. Старые желания со скрытым стикером продолжат его показывать.</p>
-      <div class="stk" id="stickerGrid" style="margin-top:12px"></div>
-      <h2>Новый стикер</h2>
-      <p class="hint">PNG или WebP с белой обводкой и прозрачным фоном, как у остальных. Квадрат, лучше 512×512. Имя латиницей, например <b>teddy</b>. Перезалить под тем же именем нельзя: удали и загрузи с новым.</p>
-      <div class="row" style="margin-top:12px">
-        <input type="text" id="stkName" placeholder="имя (a-z, 0-9, -)" style="max-width:220px" />
-        <input type="file" id="stkFile" accept="image/png,image/webp" />
-        <button class="btn2" id="stkUpload">Загрузить</button>
+      <div class="block" data-pane="stats">
+        <div class="row"><h2 style="margin:0">Статистика</h2><button class="btn2 ghost sm" id="statsReload" style="margin-left:auto">Обновить</button></div>
+        <p class="hint" style="margin-top:8px">iPhone-приложение и Telegram Mini App вместе.</p>
+        <div id="stats"></div>
       </div>
-      <p class="hint hidden" id="noStorage" style="color:#ff6b6b">Хранилище фото (R2) не настроено на сервере, загрузка не сработает.</p>
+
+      <div class="block hidden" data-pane="banners">
+        <h2 style="margin-top:0">Баннеры</h2>
+        <p class="hint">Полоска под заголовком на вкладке «Желания». Показывается первый включённый баннер, подходящий пользователю. Если пользователь закрыл баннер крестиком, он больше его не увидит. Нажми на баннер, чтобы увидеть его в телефоне справа.</p>
+        <div id="bannerList"></div>
+        <div class="btns"><button class="btn2 ghost" id="addBanner">+ Добавить баннер</button></div>
+      </div>
+
+      <div class="block hidden" data-pane="strings">
+        <h2 style="margin-top:0">Тексты приложения</h2>
+        <p class="hint">Найди текст по словам или ключу и поменяй. Пустое поле = стандартный текст. Без тире в текстах. Нажми на текст, и телефон справа откроет экран, где он стоит, и подсветит его.</p>
+        <input type="search" id="q" placeholder="Поиск: «желание», «Войти», poolTitle…" style="margin-top:12px" />
+        <div class="row" style="margin-top:8px"><label class="hint"><input type="checkbox" id="onlyChanged" /> только изменённые</label></div>
+        <div id="stringList"></div>
+      </div>
+
+      <div class="block hidden" data-pane="stickers">
+        <h2 style="margin-top:0">Стикеры</h2>
+        <p class="hint">Нажми на стикер, чтобы скрыть его из выбора в приложении или вернуть. Старые желания со скрытым стикером продолжат его показывать.</p>
+        <div class="stk" id="stickerGrid" style="margin-top:12px"></div>
+        <h2>Новый стикер</h2>
+        <p class="hint">PNG или WebP с белой обводкой и прозрачным фоном, как у остальных. Квадрат, лучше 512×512. Имя латиницей, например <b>teddy</b>. Перезалить под тем же именем нельзя: удали и загрузи с новым.</p>
+        <div class="row" style="margin-top:12px">
+          <input type="text" id="stkName" placeholder="имя (a-z, 0-9, -)" style="max-width:220px" />
+          <label class="file" id="stkFileBox"><span class="pick">Выбрать файл</span><span class="name" id="stkFileName">PNG или WebP</span><input type="file" id="stkFile" accept="image/png,image/webp" /></label>
+          <button class="btn2" id="stkUpload">Загрузить</button>
+        </div>
+        <p class="hint hidden" id="noStorage" style="color:#ff6b6b">Хранилище фото (R2) не настроено на сервере, загрузка не сработает.</p>
+      </div>
+
+      <div class="block hidden" data-pane="reports">
+        <h2 style="margin-top:0">Жалобы</h2>
+        <p class="hint">Жалобы пользователей на желания и людей (они же приходят на support@). По правилам Apple их нужно разбирать в течение 24 часов: удалить желание, если оно нарушает правила, и закрыть жалобу.</p>
+        <div id="reportList"></div>
+      </div>
     </div>
 
-    <div class="block hidden" data-pane="reports">
-      <h2 style="margin-top:0">Жалобы</h2>
-      <p class="hint">Жалобы пользователей на желания и людей (они же приходят на support@). По правилам Apple их нужно разбирать в течение 24 часов: удалить желание, если оно нарушает правила, и закрыть жалобу.</p>
-      <div id="reportList"></div>
+    <div class="col phoneCol">
+      <div class="block phoneBlock">
+        <div class="phoneCtl">
+          <select id="pvScreen" title="Экран"></select>
+          <select id="pvLang" title="Язык" style="width:auto"><option value="ru">RU</option><option value="uk">UA</option><option value="en">EN</option></select>
+        </div>
+        <div class="phone" id="phone">
+          <div class="screen">
+            <div class="island"></div>
+            <div class="status"><span>9:41</span><span class="icons">
+              <svg width="18" height="12" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="#fff"><path d="M8 2.5c2.3 0 4.4.9 6 2.4l1.2-1.3C13.3 1.7 10.8.7 8 .7S2.7 1.7.8 3.6L2 4.9c1.6-1.5 3.7-2.4 6-2.4zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3C11.4 5 9.8 4.3 8 4.3S4.6 5 3.4 6.1l1.2 1.3C5.5 6.6 6.7 6.1 8 6.1zm0 3.6c.4 0 .8.1 1.1.4L8 11.3l-1.1-1.2c.3-.3.7-.4 1.1-.4z"/></svg>
+              <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="#fff" stroke-opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="#fff"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="#fff" fill-opacity=".4"/></svg>
+            </span></div>
+            <iframe id="pv" title="Предпросмотр"></iframe>
+            <div class="homebar"></div>
+          </div>
+        </div>
+        <div class="phoneNote" id="pvNote"></div>
+      </div>
     </div>
   </div>
 </div>
