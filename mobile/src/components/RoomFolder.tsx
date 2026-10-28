@@ -38,7 +38,8 @@ export function folderPath(w: number, h: number) {
 
 /** Soft shadow along the front's top edge: many thin, faint strokes standing in
  *  for a blur (four thick ones showed as bands, like waves, over the photos). */
-const SHADOW_WIDTHS = Array.from({ length: 12 }, (_, i) => 24 - i * 2);
+// narrow and faint: it only darkens the photos right at the edge (about 20% at most)
+const SHADOW_WIDTHS = Array.from({ length: 10 }, (_, i) => 14 - i * 1.3);
 /** Kept between the folder's sides: the wide strokes used to stick out past them. */
 function EdgeShadow({ d, x0, x1, h, id }: { d: string; x0: number; x1: number; h: number; id: string }) {
   return (
@@ -50,7 +51,7 @@ function EdgeShadow({ d, x0, x1, h, id }: { d: string; x0: number; x1: number; h
       </Defs>
       <G clipPath={`url(#${id})`}>
         {SHADOW_WIDTHS.map((sw) => (
-          <Path key={sw} d={d} fill="none" stroke="#000" strokeOpacity={0.035} strokeWidth={sw} strokeLinecap="butt" strokeLinejoin="round" />
+          <Path key={sw} d={d} fill="none" stroke="#000" strokeOpacity={0.022} strokeWidth={sw} strokeLinecap="butt" strokeLinejoin="round" />
         ))}
       </G>
     </>
