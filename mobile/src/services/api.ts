@@ -62,12 +62,28 @@ async function req<T>(method: string, path: string, body?: unknown, opts: { time
   return absolutePhotos(await res.json()) as T;
 }
 
+// The server names you "You" in member lists (the Mini App's wording); here
+// your own avatar shows your real name, photo and colour, the same as on the
+// profile. /state brings them; room lists use the last copy.
+type Self = { name?: string; photo?: string | null; color?: string };
+let self: Self | null = null;
+type MemberLike = { you?: boolean; name: string; photo?: string | null; color: string };
+export function withSelf<T extends MemberLike>(list: T[] | undefined): T[] | undefined {
+  if (!list || !self) return list;
+  const me = self;
+  return list.map((m) => (m.you ? { ...m, name: me.name || m.name, photo: me.photo ?? m.photo, color: me.color || m.color } : m));
+}
+
 export type AuthUser = { id: string; name: string; photo?: string | null; color?: string; email?: string | null };
 export type AuthResponse = { token: string; user: AuthUser };
 
 export const api = {
   configured: () => !!API_URL,
-  state: () => req<AppState & { me?: unknown }>("GET", "/state"),
+  state: async () => {
+    const s = await req<AppState & { me?: unknown }>("GET", "/state");
+    if (s.me && typeof s.me === "object") self = s.me as Self;
+    return { ...s, rooms: (s.rooms || []).map((r) => ({ ...r, members: withSelf(r.members) || r.members })) };
+  },
   createWish: (w: NewWish) => req<{ wish?: Wish }>("POST", "/wishes", w),
   updateWish: (id: string, w: Partial<NewWish>) => req("PATCH", "/wishes/" + id, w),
   deleteWish: (id: string) => req("DELETE", "/wishes/" + id),
@@ -81,7 +97,10 @@ export const api = {
   /** What an invite shows before joining: name, sticker, colour, members, is it a surprise. */
   peekRoom: (id: string) =>
     req<{ room: Room & { member: boolean; memberCount: number; hasCelebrant: boolean } }>("GET", "/rooms/" + id + "/peek"),
-  room: (id: string) => req<any>("GET", "/rooms/" + id),
+  room: async (id: string) => {
+    const d = await req<any>("GET", "/rooms/" + id);
+    return { ...d, members: withSelf(d.members) };
+  },
   reserve: (id: string) => req("POST", "/wishes/" + id + "/reserve"),
   unreserve: (id: string) => req("DELETE", "/wishes/" + id + "/reserve"),
   chip: (id: string) => req("POST", "/wishes/" + id + "/chip"),

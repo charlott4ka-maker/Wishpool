@@ -34,7 +34,8 @@ export default function ProfileScreen() {
   const [icon, setIcon] = useState(currentAppIcon);
   const prefs = usePrefs();
   // your own name / photo from the profile editor win over the account's
-  const me = { name: prefs.displayName || user?.name || t("guest"), color: "#7B61FF", photo: prefs.avatar || user?.photo };
+  // the same colour friends see on your avatar in rooms
+  const me = { name: prefs.displayName || user?.name || t("guest"), color: user?.color || "#7B61FF", photo: prefs.avatar || user?.photo };
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
   const gifting = rooms.reduce((n, r) => n + (r.demoLists || []).reduce((k, l) => k + l.wishes.filter((x) => x.reservedByMe).length, 0), 0);
 
