@@ -12,7 +12,7 @@ import { LinearGradient as ExpoGradient } from "expo-linear-gradient";
 import { CalendarDays } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, LayoutChangeEvent, PanResponder, Platform, StyleSheet, View } from "react-native";
-import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
+import Svg, { ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { useT } from "../i18n";
 import { countdownLabel } from "../lib/dates";
@@ -29,7 +29,7 @@ export function folderPaths(w: number, h: number) {
   const R0 = Math.round;
   const x0 = R0(w * 0.04), x1 = R0(w * 0.96), yT = R0(h * 0.28), yB = R0(h * 0.37), y1 = R0(h * 0.96), xt = R0(w * 0.5), r = 18, rt = 14;
   const top = `M ${x0} ${yT + rt} Q ${x0} ${yT} ${x0 + rt} ${yT} L ${xt - 10} ${yT} C ${xt} ${yT} ${xt} ${yB} ${xt + 12} ${yB} L ${x1 - r} ${yB} Q ${x1} ${yB} ${x1} ${yB + r}`;
-  return { top, full: `${top} L ${x1} ${y1 - r} Q ${x1} ${y1} ${x1 - r} ${y1} L ${x0 + r} ${y1} Q ${x0} ${y1} ${x0} ${y1 - r} Z` };
+  return { top, x0, x1, full: `${top} L ${x1} ${y1 - r} Q ${x1} ${y1} ${x1 - r} ${y1} L ${x0 + r} ${y1} Q ${x0} ${y1} ${x0} ${y1 - r} Z` };
 }
 
 export function folderPath(w: number, h: number) {
@@ -39,12 +39,20 @@ export function folderPath(w: number, h: number) {
 /** Soft shadow along the front's top edge: many thin, faint strokes standing in
  *  for a blur (four thick ones showed as bands, like waves, over the photos). */
 const SHADOW_WIDTHS = Array.from({ length: 12 }, (_, i) => 24 - i * 2);
-function EdgeShadow({ d }: { d: string }) {
+/** Kept between the folder's sides: the wide strokes used to stick out past them. */
+function EdgeShadow({ d, x0, x1, h, id }: { d: string; x0: number; x1: number; h: number; id: string }) {
   return (
     <>
-      {SHADOW_WIDTHS.map((sw) => (
-        <Path key={sw} d={d} fill="none" stroke="#000" strokeOpacity={0.035} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
-      ))}
+      <Defs>
+        <ClipPath id={id}>
+          <Rect x={x0} y={0} width={x1 - x0} height={h} />
+        </ClipPath>
+      </Defs>
+      <G clipPath={`url(#${id})`}>
+        {SHADOW_WIDTHS.map((sw) => (
+          <Path key={sw} d={d} fill="none" stroke="#000" strokeOpacity={0.035} strokeWidth={sw} strokeLinecap="butt" strokeLinejoin="round" />
+        ))}
+      </G>
     </>
   );
 }
@@ -203,7 +211,7 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
               <PhotoCard key={i} src={src as string} spot={SPOTS[i]} />
             ))}
             <Svg width={dim.w} height={dim.h} style={{ position: "absolute", zIndex: 3 }}>
-              <EdgeShadow d={paths.top} />
+              <EdgeShadow d={paths.top} x0={paths.x0} x1={paths.x1} h={dim.h} id={`sh-${room.id}`} />
             </Svg>
           </MaskedView>
         ) : null}
