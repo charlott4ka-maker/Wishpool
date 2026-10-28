@@ -107,6 +107,11 @@ export function createMemStore() {
     async wishesWithInlineImages(limit) { return Object.values(D.wishes).filter(w => [w.image, ...(w.images || [])].some(x => typeof x === "string" && x.startsWith("data:image/"))).slice(0, limit); },
     async setWishImages(id, images) { const w = D.wishes[id]; if (w) { w.images = images; w.image = images[0] || null; } },
     async deleteWish(id) { delete D.wishes[id]; D.wishRooms = D.wishRooms.filter(x => x.wishId !== id); delete D.reservations[id]; D.chips = D.chips.filter(c => c.wishId !== id); },
+    async roomPhotoWishes(roomId, limit = 8) {
+      return D.wishRooms.filter(x => x.roomId === roomId).map(x => D.wishes[x.wishId])
+        .filter(w => w && !w.giftedAt && D.members.some(m => m.roomId === roomId && m.userId === w.ownerId) && ((w.images && w.images.length) || w.image))
+        .sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+    },
     async wishRoomIds(wishId) { return D.wishRooms.filter(x => x.wishId === wishId).map(x => x.roomId); },
     async toggleWishRoom(wishId, roomId) {
       const ex = D.wishRooms.find(x => x.wishId === wishId && x.roomId === roomId);

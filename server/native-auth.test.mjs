@@ -46,6 +46,11 @@ try {
   await call("POST", `/api/wishes/${w.body.wish.id}/room`, { roomId: room.id }, tok);
   assert.equal((await call("GET", `/api/rooms/${room.id}/peek`, null, rv.body.token)).body.room.memberCount, 1);
   assert.equal((await call("POST", `/api/rooms/${room.id}/join`, { inviterId: ok.body.user.id }, rv.body.token)).status, 200);
+  // the folder shows friends' wish photos too
+  const pic = await call("POST", "/api/wishes", { title: "Lamp", images: ["data:image/png;base64,iVBORw0KGgo="], rooms: [room.id] }, tok);
+  const rvRoom = (await call("GET", "/api/state", null, rv.body.token)).body.rooms.find(r => r.id === room.id);
+  assert.equal(rvRoom.photos.length, 1); assert.match(rvRoom.photos[0], /^\/api\/img\//);
+  await call("DELETE", `/api/wishes/${pic.body.wish.id}`, null, tok);
   assert.equal((await call("POST", `/api/wishes/${w.body.wish.id}/reserve`, null, rv.body.token)).status, 200);
   // report and block: the reviewer reports Anna's wish, blocks her, her wishes leave the room
   const anna = ok.body.user.id, rvt = rv.body.token;

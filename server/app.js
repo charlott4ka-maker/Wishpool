@@ -293,15 +293,18 @@ export async function createApp() {
   api.get("/state", async (req, res) => {
     const me = req.user.id;
     // Independent lookups run in parallel instead of one round trip after another.
-    const [raw, roomIds, meUser] = await Promise.all([store.userWishes(me), store.userRoomIds(me), store.getUser(me)]);
+    const [raw, roomIds, meUser, blockedIds] = await Promise.all([store.userWishes(me), store.userRoomIds(me), store.getUser(me), store.blockedIds(me)]);
+    const blocked = new Set(blockedIds);
     const [wishes, rooms] = await Promise.all([
       Promise.all(raw.map(async w => ({ ...pubWish(w), rooms: await store.wishRoomIds(w.id) }))),
       Promise.all(roomIds.map(async id => {
-        const [r, members, shared] = await Promise.all([store.getRoom(id), store.roomMembers(id), store.wishesSharedTo(me, id)]);
+        const [r, members, shared, pics] = await Promise.all([store.getRoom(id), store.roomMembers(id), store.wishesSharedTo(me, id), store.roomPhotoWishes(id)]);
         return r && {
           ...roomOut(r, me),
           members: members.map(u => pubUser(u, me)),
           sharedCount: shared.length,
+          // the folder's photos: everyone's newest wishes with a picture, not just yours
+          photos: pics.filter(w => !blocked.has(w.ownerId)).map(w => pubWish(w).image).filter(Boolean).slice(0, 3),
         };
       })),
     ]);

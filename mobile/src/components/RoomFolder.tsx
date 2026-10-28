@@ -36,12 +36,14 @@ export function folderPath(w: number, h: number) {
   return folderPaths(w, h).full;
 }
 
-/** Soft shadow along the front's top edge: stacked strokes standing in for a blur. */
+/** Soft shadow along the front's top edge: many thin, faint strokes standing in
+ *  for a blur (four thick ones showed as bands, like waves, over the photos). */
+const SHADOW_WIDTHS = Array.from({ length: 12 }, (_, i) => 24 - i * 2);
 function EdgeShadow({ d }: { d: string }) {
   return (
     <>
-      {[16, 11, 7, 4].map((sw, i) => (
-        <Path key={sw} d={d} fill="none" stroke="#000" strokeOpacity={0.07 + i * 0.03} strokeWidth={sw} strokeLinecap="round" />
+      {SHADOW_WIDTHS.map((sw) => (
+        <Path key={sw} d={d} fill="none" stroke="#000" strokeOpacity={0.035} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
       ))}
     </>
   );
@@ -153,7 +155,9 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
   const { lang, t } = useT();
   const [dim, setDim] = useState<{ w: number; h: number } | null>(null);
   const cd = countdownLabel(lang, t, room.eventDate);
-  const photos = wishes.filter((w) => w.rooms.includes(room.id)).map((w) => wishImages(w)[0]).filter(Boolean).slice(0, 3);
+  // everyone's photos from the server; a guest's rooms (or an older server) have only your own
+  const own = wishes.filter((w) => w.rooms.includes(room.id)).map((w) => wishImages(w)[0]).filter(Boolean);
+  const photos = (room.photos && room.photos.length ? room.photos : own).slice(0, 3);
   const members = room.members || [];
   const extra = members.length > MAX_AVATARS ? members.length - (MAX_AVATARS - 1) : 0;
   const shown = extra ? members.slice(0, MAX_AVATARS - 1) : members;

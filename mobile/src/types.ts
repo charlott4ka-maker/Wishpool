@@ -32,6 +32,8 @@ export type Room = {
   emoji: string;
   tint: string;
   members: Member[];
+  /** Newest photos from everyone's wishes in the room (server), for the folder. */
+  photos?: string[];
   eventTitle?: string;
   eventDate?: string;
   iAmCelebrant?: boolean;

@@ -24,11 +24,13 @@ import { countdownLabel } from "../../lib/dates";
 import { haptic } from "../../lib/haptics";
 import { useAuth } from "../../auth/AuthContext";
 import { api, SITE_URL } from "../../services/api";
+import { actionSheet } from "../../lib/actionSheet";
+import { askReport } from "../../lib/report";
+import { openedWish, type RoomWish } from "../../lib/openedWish";
 import { useWishpool } from "../../store/WishpoolContext";
 import { C, H } from "../../theme/tokens";
 import type { Member, Wish } from "../../types";
 
-type RoomWish = Wish & { reservedByMe?: boolean; taken?: boolean; chips?: { count: number; mine: boolean; total: number } | null };
 type Detail = { lists: { member: Member; wishes: RoomWish[] }[]; mine: Wish[]; members?: (Member & { you?: boolean })[]; owner?: boolean };
 
 export default function RoomScreen() {
@@ -102,6 +104,13 @@ export default function RoomScreen() {
       },
     ]);
 
+  // a friend's wish in full (long titles, photos, note) in a sheet
+  const openWish = (w: RoomWish) => {
+    openedWish.w = w;
+    openedWish.roomId = room.id;
+    router.push("/room/wish");
+  };
+
   const openTake = (w: RoomWish) => router.push({ pathname: "/room/take", params: { id: w.id, title: w.title, link: w.link || "" } });
 
   const reserveRight = (w: RoomWish) =>
@@ -120,32 +129,8 @@ export default function RoomScreen() {
 
   // Report / block someone else (App Review 1.2): ⋯ by a friend's name, or a
   // long press on one of their wishes. Reports go to support and the admin page.
-  const sheet = (title: string, actions: [string, () => void][], destructive?: number) => {
-    const options = [...actions.map((a) => a[0]), t("setCancel")];
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { title, options, destructiveButtonIndex: destructive, cancelButtonIndex: actions.length, userInterfaceStyle: "dark" },
-        (i) => i < actions.length && actions[i][1](),
-      );
-    } else {
-      Alert.alert(title, "", [...actions.map(([text, onPress]) => ({ text, onPress })), { text: t("setCancel"), style: "cancel" as const }]);
-    }
-  };
-  const report = (target: { wishId?: string; userId?: string }) =>
-    sheet(
-      t("reportWhy"),
-      (["spam", "offensive", "inappropriate", "other"] as const).map((reason) => [
-        t(("reason" + reason[0].toUpperCase() + reason.slice(1)) as "reasonSpam"),
-        () =>
-          api
-            .report({ ...target, roomId: room!.id, reason })
-            .then(() => {
-              haptic("success");
-              toast.success(t("toastReported"));
-            })
-            .catch(() => toast.error(t("toastError"))),
-      ]),
-    );
+  const sheet = (title: string, actions: [string, () => void][], destructive?: number) => actionSheet(title, t("setCancel"), actions, destructive);
+  const report = (target: { wishId?: string; userId?: string }) => askReport(t, { ...target, roomId: room.id });
   const block = (m: Member) =>
     Alert.alert(t("blockTitle", { name: m.name }), t("blockText"), [
       { text: t("setCancel"), style: "cancel" },
@@ -295,7 +280,7 @@ export default function RoomScreen() {
                       {ws.map((w) =>
                         // swipe left: "I'll get it", or "Not giving" on your own pick
                         w.taken && !w.reservedByMe ? (
-                          <WishRow key={w.id} w={w} right={reserveRight(w)} onLongPress={wishMenu(w)} />
+                          <WishRow key={w.id} w={w} right={reserveRight(w)} onPress={online ? () => openWish(w) : undefined} onLongPress={wishMenu(w)} />
                         ) : (
                           <SwipeRow
                             key={w.id}
@@ -304,7 +289,7 @@ export default function RoomScreen() {
                             icon={w.reservedByMe ? <X size={20} color="#fff" /> : <Gift size={20} color="#fff" />}
                             onAction={() => (w.reservedByMe ? untake(w) : openTake(w))}
                           >
-                            <WishRow w={w} right={reserveRight(w)} onLongPress={wishMenu(w)} />
+                            <WishRow w={w} right={reserveRight(w)} onPress={online ? () => openWish(w) : undefined} onLongPress={wishMenu(w)} />
                           </SwipeRow>
                         ),
                       )}
@@ -334,7 +319,7 @@ export default function RoomScreen() {
             ) : (
               <WishList>
                 {mine.map((w) => (
-                  <WishRow key={w.id} w={w} right={<Txt className="text-[12.5px] text-t3">{t("visibleToAll")}</Txt>} />
+                  <WishRow key={w.id} w={w} right={<Txt className="text-[12.5px] text-t3">{t("visibleToAll")}</Txt>} onPress={() => router.push({ pathname: "/wish/[id]", params: { id: w.id } })} />
                 ))}
               </WishList>
             )}

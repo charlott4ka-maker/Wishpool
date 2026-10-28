@@ -178,6 +178,12 @@ export function createPgStore(q) {
     async wishesWithInlineImages(limit) { const { rows } = await q(`SELECT * FROM wishes WHERE images LIKE '%data:image/%' OR image LIKE 'data:image/%' LIMIT $1`, [limit]); return rows.map(mapWish); },
     async setWishImages(id, images) { await q(`UPDATE wishes SET images=$2, image=$3 WHERE id=$1`, [id, JSON.stringify(images), images[0] || null]); },
     async deleteWish(id) { await q(`DELETE FROM wishes WHERE id=$1`, [id]); await q(`DELETE FROM wish_rooms WHERE wish_id=$1`, [id]); await q(`DELETE FROM reservations WHERE wish_id=$1`, [id]); await q(`DELETE FROM chips WHERE wish_id=$1`, [id]); },
+    // the newest wishes with a photo shared in a room by its members (the folder's photos)
+    async roomPhotoWishes(roomId, limit = 8) {
+      const { rows } = await q(`SELECT w.* FROM wish_rooms wr JOIN wishes w ON w.id=wr.wish_id JOIN members m ON m.room_id=wr.room_id AND m.user_id=w.owner_id
+        WHERE wr.room_id=$1 AND w.gifted_at IS NULL AND (w.image IS NOT NULL OR (w.images IS NOT NULL AND w.images <> '[]')) ORDER BY w.created_at DESC LIMIT $2`, [roomId, limit]);
+      return rows.map(mapWish);
+    },
     async wishRoomIds(wishId) { const { rows } = await q(`SELECT room_id FROM wish_rooms WHERE wish_id=$1`, [wishId]); return rows.map(r => r.room_id); },
     async toggleWishRoom(wishId, roomId) {
       const { rows } = await q(`SELECT 1 FROM wish_rooms WHERE wish_id=$1 AND room_id=$2`, [wishId, roomId]);

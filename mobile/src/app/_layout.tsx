@@ -75,6 +75,7 @@ function Gate() {
             <Stack.Screen name="room/new" options={FULL_FORM} />
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />
             <Stack.Screen name="room/take" options={FIT_SHEET} />
+            <Stack.Screen name="room/wish" options={FIT_SHEET} />
             <Stack.Screen name="room/pick" options={FIT_SHEET} />
             <Stack.Screen name="birthday" options={FIT_SHEET} />
             <Stack.Screen name="profile-edit" options={FIT_SHEET} />

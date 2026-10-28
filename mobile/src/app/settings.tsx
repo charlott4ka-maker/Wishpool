@@ -119,7 +119,6 @@ export default function SettingsScreen() {
         </SettingsGroup>
 
         <SettingsGroup title={t("setAbout")}>
-          <SettingsCell icon={Sparkles} tint="#0A82F9" label={t("howItWorks")} onPress={() => router.push("/onboarding")} />
           <SettingsCell icon={CircleHelp} tint="#FF9500" label={t("faq")} onPress={() => router.push("/faq")} />
           {Platform.OS === "ios" ? <SettingsCell icon={Star} tint="#FFCC00" label={t("rateApp")} onPress={openReviewPage} /> : null}
           {/* dev builds only: sample content for App Store screenshots */}

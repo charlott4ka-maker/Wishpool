@@ -19,21 +19,15 @@ import { Chip, Pill, Txt } from "./ui";
 
 const PHOTO_H = 260;
 
-export function WishDetails({
-  w, rooms, onToggleRoom, onEdit, onGifted, onDelete,
-}: {
-  w: Wish; rooms: Room[]; onToggleRoom: (id: string, roomId: string) => void;
-  onEdit: () => void; onGifted: (gifted: boolean) => void; onDelete: () => void;
-}) {
-  const { t } = useT();
+/** The wish itself: photos (tap for full screen), full title, price, shop link, note.
+ *  Your own wish adds its actions below (WishDetails); a friend's in a room, the gift ones. */
+export function WishInfo({ w }: { w: Wish }) {
   const { width } = useWindowDimensions();
   const imgs = wishImages(w);
   const [cur, setCur] = useState(0);
   const [viewer, setViewer] = useState<number | null>(null); // full-screen photo
   const [stripW, setStripW] = useState(0);
   const photoW = stripW || width - 32;
-  const confirm = (text: string, yes: () => void) => Alert.alert("", text, [{ text: t("back"), style: "cancel" }, { text: "OK", onPress: yes }]);
-  const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
   return (
     <>
       {imgs.length ? (
@@ -83,6 +77,22 @@ export function WishDetails({
       ) : null}
       {w.note ? <View className="mt-4"><WishNote text={w.note} /></View> : null}
       {viewer != null ? <ImageLightbox images={imgs} start={viewer} onClose={() => setViewer(null)} /> : null}
+    </>
+  );
+}
+
+export function WishDetails({
+  w, rooms, onToggleRoom, onEdit, onGifted, onDelete,
+}: {
+  w: Wish; rooms: Room[]; onToggleRoom: (id: string, roomId: string) => void;
+  onEdit: () => void; onGifted: (gifted: boolean) => void; onDelete: () => void;
+}) {
+  const { t } = useT();
+  const confirm = (text: string, yes: () => void) => Alert.alert("", text, [{ text: t("back"), style: "cancel" }, { text: "OK", onPress: yes }]);
+  const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
+  return (
+    <>
+      <WishInfo w={w} />
       <View className="mt-6 flex-row gap-2">
         {!w.giftedAt ? <Pill size="sm" kind="ghost" icon={<Pencil size={15} color={C.t1} />} onPress={onEdit}>{t("editShort")}</Pill> : null}
         {w.giftedAt ? (
