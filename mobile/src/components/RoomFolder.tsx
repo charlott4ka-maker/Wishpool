@@ -54,6 +54,19 @@ const SPOTS = [
   { left: "9%", top: "16%", rot: -10, z: 1 },
   { left: "57%", top: "12%", rot: 9, z: 1 },
 ] as const;
+/** A photo peeking out of the folder: a white card with the picture inset in it.
+ *  (A white border over a dark card let a dark hairline show around white photos.) */
+function PhotoCard({ src, spot }: { src: string; spot: (typeof SPOTS)[number] }) {
+  return (
+    <View
+      className="absolute bg-white"
+      style={{ left: spot.left, top: spot.top, width: "34%", aspectRatio: 0.82, zIndex: spot.z, padding: 3, borderRadius: 10, transform: [{ rotate: `${spot.rot}deg` }] }}
+    >
+      <Image source={{ uri: src }} style={{ flex: 1, borderRadius: 7, backgroundColor: "#fff" }} contentFit="cover" />
+    </View>
+  );
+}
+
 const MAX_AVATARS = 5;
 const AV = 24, OV = 8;
 
@@ -186,18 +199,9 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
               </Svg>
             }
           >
-            {photos.map((src, i) => {
-              const sp = SPOTS[i];
-              return (
-                <View
-                  key={i}
-                  className="absolute overflow-hidden rounded-[10px] bg-card2"
-                  style={{ left: sp.left, top: sp.top, width: "34%", aspectRatio: 0.82, zIndex: sp.z, borderWidth: 3, borderColor: "#fff", transform: [{ rotate: `${sp.rot}deg` }] }}
-                >
-                  <Image source={{ uri: src as string }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-                </View>
-              );
-            })}
+            {photos.map((src, i) => (
+              <PhotoCard key={i} src={src as string} spot={SPOTS[i]} />
+            ))}
             <Svg width={dim.w} height={dim.h} style={{ position: "absolute", zIndex: 3 }}>
               <EdgeShadow d={paths.top} />
             </Svg>
@@ -206,18 +210,9 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
         {dim && web ? (
           // web previews: the photos simply sit under the flat front
           <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, width: dim.w, height: dim.h, zIndex: 2 }}>
-            {photos.map((src, i) => {
-              const sp = SPOTS[i];
-              return (
-                <View
-                  key={i}
-                  className="absolute overflow-hidden rounded-[10px] bg-card2"
-                  style={{ left: sp.left, top: sp.top, width: "34%", aspectRatio: 0.82, zIndex: sp.z, borderWidth: 3, borderColor: "#fff", transform: [{ rotate: `${sp.rot}deg` }] }}
-                >
-                  <Image source={{ uri: src as string }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-                </View>
-              );
-            })}
+            {photos.map((src, i) => (
+              <PhotoCard key={i} src={src as string} spot={SPOTS[i]} />
+            ))}
           </View>
         ) : null}
         {dim && paths ? (
