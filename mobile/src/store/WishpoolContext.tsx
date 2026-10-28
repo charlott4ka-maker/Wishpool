@@ -45,6 +45,17 @@ async function moveLocalToAccount(): Promise<boolean> {
   const raw = await AsyncStorage.getItem(LOCAL_KEY).catch(() => null);
   const left: AppState = raw ? JSON.parse(raw) : EMPTY;
   if (!left.wishes.length && !left.rooms.length) return false;
+  // what the account already has isn't a guest's: never upload it a second time
+  // (a copy of the account's rooms and wishes once ended up here and came back doubled)
+  const acc = await api.state();
+  const haveRooms = new Set((acc.rooms || []).map((r) => r.id));
+  const haveWishes = new Set((acc.wishes || []).map((w) => w.id));
+  left.rooms = left.rooms.filter((r) => !haveRooms.has(r.id));
+  left.wishes = left.wishes.filter((w) => !haveWishes.has(w.id));
+  if (!left.wishes.length && !left.rooms.length) {
+    await AsyncStorage.removeItem(LOCAL_KEY);
+    return false;
+  }
   const save = () => AsyncStorage.setItem(LOCAL_KEY, JSON.stringify(left));
   const ids: Record<string, string> = {};
   while (left.rooms.length) {
@@ -77,9 +88,14 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const persistLocal = useCallback((s: AppState) => {
-    AsyncStorage.setItem(LOCAL_KEY, JSON.stringify(s)).catch(() => {});
-  }, []);
+  // only a guest's things live on the phone: right after signing out the account's
+  // rooms are still in memory for a moment, and they must not land here
+  const persistLocal = useCallback(
+    (s: AppState) => {
+      if (status === "guest") AsyncStorage.setItem(LOCAL_KEY, JSON.stringify(s)).catch(() => {});
+    },
+    [status],
+  );
 
   const refresh = useCallback(async () => {
     if (!online) {
@@ -97,6 +113,8 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
     if (status === "loading") return;
     let live = true;
     setReady(false);
+    // leaving the account: drop its rooms and wishes from memory at once
+    if (!online) setState(EMPTY);
     (async () => {
       // show the last known server state at once, then refresh it
       if (online) {
