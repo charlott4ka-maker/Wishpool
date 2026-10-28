@@ -46,12 +46,14 @@ async function moveLocalToAccount(): Promise<boolean> {
   const left: AppState = raw ? JSON.parse(raw) : EMPTY;
   if (!left.wishes.length && !left.rooms.length) return false;
   // what the account already has isn't a guest's: never upload it a second time
-  // (a copy of the account's rooms and wishes once ended up here and came back doubled)
+  // (the same id, or the same room / wish by name: copies once came back doubled)
   const acc = await api.state();
-  const haveRooms = new Set((acc.rooms || []).map((r) => r.id));
-  const haveWishes = new Set((acc.wishes || []).map((w) => w.id));
-  left.rooms = left.rooms.filter((r) => !haveRooms.has(r.id));
-  left.wishes = left.wishes.filter((w) => !haveWishes.has(w.id));
+  const roomKey = (r: Room) => `${r.name.trim().toLowerCase()}|${r.type}|${r.emoji}`;
+  const wishKey = (w: Wish) => `${w.title.trim().toLowerCase()}|${w.link || ""}`;
+  const haveRooms = new Set((acc.rooms || []).flatMap((r) => [r.id, roomKey(r)]));
+  const haveWishes = new Set((acc.wishes || []).flatMap((w) => [w.id, wishKey(w)]));
+  left.rooms = left.rooms.filter((r) => !haveRooms.has(r.id) && !haveRooms.has(roomKey(r)));
+  left.wishes = left.wishes.filter((w) => !haveWishes.has(w.id) && !haveWishes.has(wishKey(w)));
   if (!left.wishes.length && !left.rooms.length) {
     await AsyncStorage.removeItem(LOCAL_KEY);
     return false;
