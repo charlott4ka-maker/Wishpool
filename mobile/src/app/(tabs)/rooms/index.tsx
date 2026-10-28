@@ -2,7 +2,8 @@
 
 import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
-import { ScrollView, View } from "react-native";
+import { useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 
@@ -20,7 +21,8 @@ export default function RoomsScreen() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { rooms, wishes, ready } = useWishpool();
+  const { rooms, wishes, ready, refresh } = useWishpool();
+  const [refreshing, setRefreshing] = useState(false);
   const create = () => router.push("/room/new");
   const cols = useGridColumns();
   const rows: (typeof rooms)[] = [];
@@ -37,6 +39,18 @@ export default function RoomsScreen() {
         contentInsetAdjustmentBehavior="never"
         scrollEnabled={rooms.length > 0}
         contentContainerStyle={{ flexGrow: 1 }}
+        // pull down to reload, like the Wishes tab
+        refreshControl={
+          <RefreshControl
+            tintColor={C.t2}
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await refresh().catch(() => {});
+              setRefreshing(false);
+            }}
+          />
+        }
       >
         {/* one content block down to the bottom; extra top room for the photos peeking out of the folders */}
         <Block grow style={{ paddingTop: 24, paddingBottom: rooms.length ? 120 : insets.bottom + 90 }}>

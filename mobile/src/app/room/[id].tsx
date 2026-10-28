@@ -8,7 +8,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { CalendarDays, Check, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, Share, View } from "react-native";
+import { ActionSheetIOS, Alert, Platform, Pressable, RefreshControl, ScrollView, Share, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -38,12 +38,13 @@ export default function RoomScreen() {
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { rooms, wishes, online, removeRoom } = useWishpool();
+  const { rooms, wishes, online, removeRoom, refresh } = useWishpool();
   const { user } = useAuth();
   const room = rooms.find((r) => r.id === id);
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(online);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!online || !id) return;
@@ -201,7 +202,26 @@ export default function RoomScreen() {
     ]);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} className="flex-1" style={{ backgroundColor: C.card }} contentContainerStyle={{ flexGrow: 1 }}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      className="flex-1"
+      style={{ backgroundColor: C.card }}
+      contentContainerStyle={{ flexGrow: 1 }}
+      // pull down to reload the room (friends' lists, who's in) and the room list
+      refreshControl={
+        online ? (
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await Promise.all([load().catch(() => {}), refresh().catch(() => {})]);
+              setRefreshing(false);
+            }}
+          />
+        ) : undefined
+      }
+    >
       {/* overscroll at the top shows the hero colour, not black */}
       <View pointerEvents="none" style={{ position: "absolute", top: -1000, left: 0, right: 0, height: 1000, backgroundColor: heroTop(room.tint) }} />
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>
