@@ -235,7 +235,14 @@ export default function RoomScreen() {
           <View style={{ marginTop: 4, width: 80, height: 80, alignItems: "center", justifyContent: "center" }}>
             <Sticker emoji={room.emoji} size={45} />
           </View>
-          <Txt className="mt-3 text-center font-m800 text-[26px] text-white" style={{ textShadowColor: "rgba(0,0,0,0.25)", textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 } }}>{room.name}</Txt>
+          {/* the shadow is drawn only inside the text's own box: padding gives it room
+              (it showed as a rectangle cut off around the name), the margins take it back */}
+          <Txt
+            className="text-center font-m800 text-[26px] text-white"
+            style={{ textShadowColor: "rgba(0,0,0,0.25)", textShadowRadius: 12, textShadowOffset: { width: 0, height: 1 }, paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: -16, marginTop: 2, marginBottom: -10 }}
+          >
+            {room.name}
+          </Txt>
           {cd ? (
             <View className="mt-2 flex-row items-center gap-2 rounded-full px-3 py-1.5" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
               <CalendarDays size={15} color="#fff" />
