@@ -25,6 +25,7 @@ import { haptic } from "../../lib/haptics";
 import { useAuth } from "../../auth/AuthContext";
 import { api, SITE_URL } from "../../services/api";
 import { actionSheet } from "../../lib/actionSheet";
+import { usePullRefresh } from "../../lib/pullRefresh";
 import { askReport } from "../../lib/report";
 import { openedWish, type RoomWish } from "../../lib/openedWish";
 import { useWishpool } from "../../store/WishpoolContext";
@@ -44,7 +45,6 @@ export default function RoomScreen() {
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(online);
-  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!online || !id) return;
@@ -61,6 +61,9 @@ export default function RoomScreen() {
       load().catch(() => {});
     }, [load]),
   );
+
+  // pull down: the room (friends' lists, who's in) and the room list
+  const pull = usePullRefresh(useCallback(() => Promise.all([load(), refresh()]), [load, refresh]));
 
   // opened from an invite link there may be nothing underneath: then home
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
@@ -207,18 +210,9 @@ export default function RoomScreen() {
       className="flex-1"
       style={{ backgroundColor: C.card }}
       contentContainerStyle={{ flexGrow: 1 }}
-      // pull down to reload the room (friends' lists, who's in) and the room list
       refreshControl={
         online ? (
-          <RefreshControl
-            tintColor="#fff"
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              await Promise.all([load().catch(() => {}), refresh().catch(() => {})]);
-              setRefreshing(false);
-            }}
-          />
+          <RefreshControl tintColor="#fff" refreshing={pull.refreshing} onRefresh={pull.onRefresh} />
         ) : undefined
       }
     >

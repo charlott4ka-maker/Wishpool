@@ -2,12 +2,12 @@
 
 import { useRouter } from "expo-router";
 import { Plus } from "lucide-react-native";
-import { useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 
 import { useGridColumns } from "../../../lib/gridColumns";
+import { usePullRefresh } from "../../../lib/pullRefresh";
 import { RoomFolder } from "../../../components/RoomFolder";
 import { RoomGridSkeleton } from "../../../components/Skeleton";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
@@ -22,7 +22,7 @@ export default function RoomsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { rooms, wishes, ready, refresh } = useWishpool();
-  const [refreshing, setRefreshing] = useState(false);
+  const pull = usePullRefresh(refresh);
   const create = () => router.push("/room/new");
   const cols = useGridColumns();
   const rows: (typeof rooms)[] = [];
@@ -41,15 +41,7 @@ export default function RoomsScreen() {
         contentContainerStyle={{ flexGrow: 1 }}
         // pull down to reload, like the Wishes tab
         refreshControl={
-          <RefreshControl
-            tintColor={C.t2}
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              await refresh().catch(() => {});
-              setRefreshing(false);
-            }}
-          />
+          <RefreshControl tintColor={C.t2} refreshing={pull.refreshing} onRefresh={pull.onRefresh} />
         }
       >
         {/* one content block down to the bottom; extra top room for the photos peeking out of the folders */}

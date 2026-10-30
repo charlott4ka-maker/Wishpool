@@ -18,6 +18,7 @@ import { TabBarFade } from "../../../components/TabBarFade";
 import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
 import { useGridColumns } from "../../../lib/gridColumns";
+import { usePullRefresh } from "../../../lib/pullRefresh";
 import { setSearchMode } from "../../../lib/searchMode";
 import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
@@ -37,7 +38,7 @@ export default function PoolScreen() {
     setSearchMode(v);
   };
   useEffect(() => () => setSearchMode(false), []);
-  const [refreshing, setRefreshing] = useState(false);
+  const pull = usePullRefresh(refresh);
   const kb = useKeyboardHeight();
   // Where the content frame really ends on screen, so the "nothing found"
   // state centres between the header and whatever covers the frame's bottom:
@@ -107,15 +108,7 @@ export default function PoolScreen() {
           scrollEnabled={wishes.length > 0 && !searchMiss}
           contentContainerStyle={{ flexGrow: 1 }}
           refreshControl={
-            <RefreshControl
-              tintColor={C.t2}
-              refreshing={refreshing}
-              onRefresh={async () => {
-                setRefreshing(true);
-                await refresh().catch(() => {});
-                setRefreshing(false);
-              }}
-            />
+            <RefreshControl tintColor={C.t2} refreshing={pull.refreshing} onRefresh={pull.onRefresh} />
           }
         >
           <Block grow style={{ paddingBottom: wishes.length ? 120 : insets.bottom + 90 }}>
