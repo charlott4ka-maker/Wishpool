@@ -11,6 +11,7 @@ import { useT } from "../i18n";
 import { api } from "../services/api";
 import { getPrefs, setPref } from "../settings/prefs";
 import type { AppState, NewWish, Room, Wish } from "../types";
+import { asMe, useMe } from "../lib/me";
 
 const LOCAL_KEY = "wp_local_state";
 const CACHE_KEY = "wp_server_cache";
@@ -244,9 +245,12 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
     [online, refresh, local],
   );
 
+  // your own avatar everywhere reads exactly as the profile (never "You")
+  const me = useMe();
+  const rooms = useMemo(() => state.rooms.map((r) => ({ ...r, members: (r.members || []).map((m) => asMe(m, me)) })), [state.rooms, me.name, me.color, me.photo]); // eslint-disable-line react-hooks/exhaustive-deps
   const value = useMemo<WishpoolValue>(
-    () => ({ ...state, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom, updateRoom, removeRoom }),
-    [state, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom, updateRoom, removeRoom],
+    () => ({ ...state, rooms, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom, updateRoom, removeRoom }),
+    [state, rooms, ready, online, refresh, addWish, updateWish, deleteWish, setGifted, toggleWishRoom, createRoom, updateRoom, removeRoom],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

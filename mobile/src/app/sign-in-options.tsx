@@ -12,7 +12,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 import { EmailSheet } from "../components/EmailSheet";
 import { SheetHeader } from "../components/SheetHeader";
-import { Pill, Txt } from "../components/ui";
+import { Press } from "../components/Press";
+import { Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { api, SITE_URL } from "../services/api";
 import { C, H } from "../theme/tokens";
@@ -63,9 +64,11 @@ export default function SignInOptions() {
             onPress={run(signInWithApple)}
           />
         ) : null}
-        <Pill full icon={<Mail size={18} color="#fff" />} onPress={run(async () => setEmail(true))}>
-          {t("signInEmail")}
-        </Pill>
+        {/* the same size, shape and type as Apple's button above it */}
+        <Press onPress={run(async () => setEmail(true))} className="w-full flex-row items-center justify-center gap-2 bg-blue" style={{ height: H.lg, borderRadius: H.lg / 2 }}>
+          <Mail size={20} color="#fff" />
+          <Txt className="font-m600 text-white" style={{ fontSize: 19 }}>{t("signInEmail")}</Txt>
+        </Press>
       </View>
       <Pressable onPress={() => WebBrowser.openBrowserAsync(SITE_URL + "/terms").catch(() => {})} hitSlop={8} className="mt-4 self-center">
         <Txt className="text-center text-[12.5px] text-t3">{t("signInAgree")}</Txt>

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useMe } from "../../lib/me";
 import { useAuth } from "../../auth/AuthContext";
 import { BirthdayCard } from "../../components/BirthdayCard";
 import { Press } from "../../components/Press";
@@ -34,8 +35,8 @@ export default function ProfileScreen() {
   const [icon, setIcon] = useState(currentAppIcon);
   const prefs = usePrefs();
   // your own name / photo from the profile editor win over the account's
-  // the same colour friends see on your avatar in rooms
-  const me = { name: prefs.displayName || user?.name || t("guest"), color: user?.color || "#7B61FF", photo: prefs.avatar || user?.photo };
+  // the same name, photo and colour your avatar has in rooms
+  const me = useMe();
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
   const gifting = rooms.reduce((n, r) => n + (r.demoLists || []).reduce((k, l) => k + l.wishes.filter((x) => x.reservedByMe).length, 0), 0);
 

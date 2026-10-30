@@ -296,7 +296,12 @@ export type AvatarMember = { name: string; color: string; photo?: string | null 
  * masked out of this avatar's right side (a see-through gap, not a painted
  * ring), like the Mini App, so the stack reads cleanly on any background.
  */
-export function Avatar({ m, size = 34, cut = 0 }: { m: AvatarMember; size?: number; cut?: number }) {
+// Telegram's stand-in picture for people without a photo is an SVG with a tiny
+// letter; our own letter avatar reads better (and the same in every stack)
+const realPhoto = (p?: string | null) => (p && !/\.svg(\?|$)|\/i\/userpic\//i.test(p) ? p : null);
+
+export function Avatar({ m: raw, size = 34, cut = 0 }: { m: AvatarMember; size?: number; cut?: number }) {
+  const m = { ...raw, photo: realPhoto(raw.photo) };
   const [failed, setFailed] = useState(false);
   // a new photo gets a fresh try (a failed old one used to leave just the letter)
   useEffect(() => setFailed(false), [m.photo]);

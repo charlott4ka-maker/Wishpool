@@ -25,6 +25,7 @@ import { haptic } from "../../lib/haptics";
 import { useAuth } from "../../auth/AuthContext";
 import { api, SITE_URL } from "../../services/api";
 import { actionSheet } from "../../lib/actionSheet";
+import { asMe, useMe } from "../../lib/me";
 import { usePullRefresh } from "../../lib/pullRefresh";
 import { askReport } from "../../lib/report";
 import { openedWish, type RoomWish } from "../../lib/openedWish";
@@ -41,6 +42,7 @@ export default function RoomScreen() {
   const insets = useSafeAreaInsets();
   const { rooms, wishes, online, removeRoom, refresh } = useWishpool();
   const { user } = useAuth();
+  const me = useMe();
   const room = rooms.find((r) => r.id === id);
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -70,7 +72,7 @@ export default function RoomScreen() {
 
   if (!room) return <Empty emoji="stk:ghost" title={t("roomGone")} action={<Pill onPress={goBack}>{t("back")}</Pill>} />;
 
-  const members: (Member & { you?: boolean })[] = detail?.members || room.members || [];
+  const members: (Member & { you?: boolean })[] = (detail?.members || room.members || []).map((m) => asMe(m, me));
   const mine = detail ? detail.mine : wishes.filter((w) => w.rooms.includes(room.id));
   const lists = detail?.lists || room.demoLists || [];
   const others = members.filter((m) => !m.you && m.id !== "me");
