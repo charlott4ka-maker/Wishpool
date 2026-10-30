@@ -63,6 +63,7 @@ export const MOBILE_STRINGS = {
   yourName: { uk: "Ім'я", ru: "Имя", en: "Name" },
   yourNamePh: { uk: "Як тебе звати", ru: "Как тебя зовут", en: "Your name" },
   changePhoto: { uk: "Змінити фото", ru: "Изменить фото", en: "Change photo" },
+  addPhoto: { uk: "Додати фото", ru: "Добавить фото", en: "Add photo" },
   removePhoto: { uk: "Прибрати фото", ru: "Убрать фото", en: "Remove photo" },
   // label-first so a count of 1 reads right in every language
   statsLine: { uk: "бажань: {w} · кімнат: {r}", ru: "желаний: {w} · комнат: {r}", en: "wishes: {w} · rooms: {r}" },

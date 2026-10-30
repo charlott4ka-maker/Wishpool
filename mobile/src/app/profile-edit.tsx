@@ -4,9 +4,9 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Camera } from "lucide-react-native";
+import { Camera, ImagePlus, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
@@ -16,6 +16,7 @@ import { toast, ToastHost } from "../components/Toast";
 import { Avatar, Field, Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
+import { useMe } from "../lib/me";
 import { api } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
@@ -28,17 +29,32 @@ export default function ProfileEdit() {
   const { user, updateUser } = useAuth();
   const { online } = useWishpool();
   const prefs = usePrefs();
+  const me = useMe();
   const [name, setName] = useState(prefs.displayName || user?.name || "");
   const [photo, setPhoto] = useState<string | null>(prefs.avatar ?? user?.photo ?? null);
   const [tried, setTried] = useState(false);
 
+  // picking + shrinking the photo takes a moment: a spinner on the avatar and the button meanwhile
+  const [picking, setPicking] = useState(false);
   const pick = async () => {
+    if (picking) return;
     haptic("light");
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 1 });
-    if (res.canceled) return;
-    // small square JPEG as a data URL: survives cache clean-ups, fits in prefs
-    const r = await ImageManipulator.manipulateAsync(res.assets[0].uri, [{ resize: { width: 320 } }], { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true });
-    setPhoto(`data:image/jpeg;base64,${r.base64}`);
+    setPicking(true);
+    try {
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 1 });
+      if (res.canceled) return;
+      // small square JPEG as a data URL: survives cache clean-ups, fits in prefs
+      const r = await ImageManipulator.manipulateAsync(res.assets[0].uri, [{ resize: { width: 320 } }], { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true });
+      setPhoto(`data:image/jpeg;base64,${r.base64}`);
+    } catch {
+      toast.error(t("toastError"));
+    } finally {
+      setPicking(false);
+    }
+  };
+  const remove = () => {
+    haptic("light");
+    setPhoto(null);
   };
 
   const [busy, setBusy] = useState(false);
@@ -78,14 +94,27 @@ export default function ProfileEdit() {
       <SheetHeader title={t("editProfile")} />
       <View className="mb-6 items-center">
         <Press scaleTo={0.95} onPress={pick} accessibilityLabel={t("changePhoto")}>
-          <Avatar m={{ name: name || t("guest"), color: "#7B61FF", photo }} size={96} />
+          <Avatar m={{ name: name || t("guest"), color: me.color, photo }} size={96} />
+          {picking ? (
+            <View className="absolute inset-0 items-center justify-center rounded-full bg-black/45">
+              <ActivityIndicator color="#fff" />
+            </View>
+          ) : null}
           <View className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full bg-blue" style={{ borderWidth: 3, borderColor: C.card }}>
-            <Camera size={15} color="#fff" />
+            <Camera size={16} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
           </View>
         </Press>
-        <Pressable onPress={photo ? () => setPhoto(null) : pick} hitSlop={6} className="mt-3">
-          <Txt className={`font-m600 text-sm ${photo ? "text-t2" : "text-blueText"}`}>{t(photo ? "removePhoto" : "changePhoto")}</Txt>
-        </Pressable>
+        {/* real buttons, easy to hit: change (or add) and remove */}
+        <View className="mt-4 flex-row gap-2">
+          <Pill size="sm" kind="ghost" loading={picking} icon={<ImagePlus size={16} color={C.t1} />} onPress={pick}>
+            {t(photo ? "changePhoto" : "addPhoto")}
+          </Pill>
+          {photo ? (
+            <Pill size="sm" kind="ghost" icon={<Trash2 size={16} color={C.danger} />} onPress={remove}>
+              <Txt className="font-m600 text-sm text-danger">{t("removePhoto")}</Txt>
+            </Pill>
+          ) : null}
+        </View>
       </View>
       <Field label={t("yourName")} value={name} onChangeText={setName} placeholder={t("yourNamePh")} error={tried && !name.trim() && t("requiredField")} />
       <Pill full loading={busy} onPress={save}>{t("saveChanges")}</Pill>
