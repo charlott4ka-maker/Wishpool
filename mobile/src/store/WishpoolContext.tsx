@@ -220,7 +220,8 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
         return res.room.id;
       }
       const id = uid("r");
-      const me = { id: "me", name: user?.name || "You", color: "#7B61FF" };
+      // shown with the profile's name, photo and colour (lib/me.ts asMe)
+      const me = { id: "me", name: user?.name || "", color: "#7B61FF" };
       local((s) => ({ ...s, rooms: [...s.rooms, { members: [me], ...r, id }] }));
       return id;
     },
