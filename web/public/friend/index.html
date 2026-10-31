@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wishpool</title>
+<meta name="description" content="A friend invites you to Wishpool: wishlists for friends, couples and birthdays." />
+<meta property="og:title" content="Wishpool" />
+<meta property="og:description" content="A friend invites you to Wishpool: wishlists for friends, couples and birthdays." />
+<meta property="og:image" content="https://wishpool.clickbrickk.com/about/og3.jpg" />
+<meta name="theme-color" content="#15181D" />
+<link rel="icon" href="/about/logo.png" />
+<link rel="stylesheet" href="/pages.css" />
+<style>
+body{min-height:100vh;display:flex;align-items:center}
+.wrap{width:100%;max-width:420px}
+.card{text-align:center;padding:32px 24px}
+.card img{width:96px;height:96px;margin:0 auto 16px}
+.card p{color:var(--t2)}
+</style>
+</head>
+<body>
+<!-- https://<domain>/friend/<code>: someone's personal "add me as a friend" link.
+     With the iOS app installed it opens the app (universal link) and this page is never seen.
+     Everyone else gets the App Store, and the app by its scheme if it's there. -->
+<div class="wrap">
+  <div class="block card">
+    <img src="/about/star.png" alt="" />
+    <h1 data-l="uk">Тебе додають у друзі</h1>
+    <h1 data-l="ru">Тебя добавляют в друзья</h1>
+    <h1 data-l="en">A friend wants to add you</h1>
+    <p data-l="uk">Встанови Wishpool, відкрий це посилання ще раз, і ви станете друзями.</p>
+    <p data-l="ru">Установи Wishpool, открой эту ссылку ещё раз, и вы станете друзьями.</p>
+    <p data-l="en">Get Wishpool, open this link again, and you'll be friends.</p>
+    <div class="btns">
+      <a class="btn" href="https://apps.apple.com/app/id6825104468">
+        <span data-l="uk">Завантажити в App Store</span><span data-l="ru">Скачать в App Store</span><span data-l="en">Get it on the App Store</span>
+      </a>
+      <a class="btn ghost" id="ios">
+        <span data-l="uk">Відкрити в застосунку</span><span data-l="ru">Открыть в приложении</span><span data-l="en">Open in the app</span>
+      </a>
+    </div>
+  </div>
+</div>
+<script src="/pages.js"></script>
+<script>
+(function () {
+  var code = (location.pathname.match(/^\/friend\/([\w-]{1,40})/) || [])[1] || "";
+  var ios = document.getElementById("ios");
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) && code) ios.href = "wishpool://friend/" + code;
+  else ios.style.display = "none";
+})();
+</script>
+</body>
+</html>

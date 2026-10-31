@@ -7,7 +7,7 @@
 //   POST /api/auth/email/start     { email, lang }                     -> { ok }
 //   POST /api/auth/email/verify    { email, code }                     -> { token, user }
 
-import type { AppState, NewWish, Room, Wish } from "../types";
+import type { AppState, Member, NewWish, Room, Wish } from "../types";
 
 export const SITE_URL = "https://wishpool.clickbrickk.com";
 export const API_URL = (process.env.EXPO_PUBLIC_API_URL || SITE_URL).replace(/\/+$/, "");
@@ -77,6 +77,15 @@ export function withSelf<T extends MemberLike>(list: T[] | undefined): T[] | und
 export type AuthUser = { id: string; name: string; photo?: string | null; color?: string; email?: string | null };
 export type AuthResponse = { token: string; user: AuthUser };
 
+export type FriendsData = {
+  friends: Member[];
+  requests: { user: Member; at: number }[];
+  outgoing: string[];
+  roomInvites: { room: { id: string; name: string; emoji: string; tint: string; type: string; memberCount: number }; inviter: Member | null; at: number }[];
+  roomAdd: "invite" | "instant";
+};
+export type DrawData = { drawn: boolean; budget?: string | null; target: Member | null; wishes?: Wish[] };
+
 export const api = {
   configured: () => !!API_URL,
   state: async () => {
@@ -110,6 +119,21 @@ export const api = {
     req<{ title: string; price: string; image: string | null; url: string; guess: boolean }>("GET", "/preview?url=" + encodeURIComponent(url), undefined, { timeout: 25000 }),
   // Account deletion (App Store guideline 5.1.1(v)): everything goes at once.
   deleteAccount: () => req("DELETE", "/me"),
+  // friends (server/friends.js)
+  friends: () => req<FriendsData>("GET", "/friends"),
+  friendRequest: (userId: string) => req<{ status: "requested" | "friends" }>("POST", "/friends/request", { userId }),
+  acceptFriend: (id: string) => req("POST", "/friends/" + encodeURIComponent(id) + "/accept"),
+  declineFriend: (id: string) => req("POST", "/friends/" + encodeURIComponent(id) + "/decline"),
+  removeFriend: (id: string) => req("DELETE", "/friends/" + encodeURIComponent(id)),
+  friendLink: () => req<{ code: string; url: string }>("GET", "/friends/link"),
+  friendByCode: (code: string) => req<{ user: Member; self: boolean; friend: boolean }>("GET", "/friends/code/" + encodeURIComponent(code)),
+  addFriendByCode: (code: string) => req<{ user: Member }>("POST", "/friends/code/" + encodeURIComponent(code)),
+  setRoomAdd: (value: "invite" | "instant") => req("PUT", "/me/room-add", { value }),
+  addToRoom: (roomId: string, userIds: string[]) => req<{ added: string[]; invited: string[] }>("POST", "/rooms/" + roomId + "/add", { userIds }),
+  acceptRoomInvite: (roomId: string) => req<{ room: { id: string } }>("POST", "/room-invites/" + roomId + "/accept"),
+  declineRoomInvite: (roomId: string) => req("POST", "/room-invites/" + roomId + "/decline"),
+  draw: (roomId: string) => req<DrawData>("GET", "/rooms/" + roomId + "/draw"),
+  runDraw: (roomId: string, budget: string) => req("POST", "/rooms/" + roomId + "/draw", { budget }),
   report: (b: { wishId?: string; userId?: string; roomId?: string; reason: string }) => req("POST", "/reports", b),
   block: (userId: string) => req("POST", "/blocks", { userId }),
   unblock: (userId: string) => req("DELETE", "/blocks/" + encodeURIComponent(userId)),

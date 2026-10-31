@@ -10,6 +10,7 @@ import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateRow } from "../../components/DateRow";
+import { FriendPicker, useFriendList } from "../../components/FriendPicker";
 import { RoomFolder } from "../../components/RoomFolder";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { SheetHeader } from "../../components/SheetHeader";
@@ -20,6 +21,7 @@ import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
+import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, ROOM_COLORS } from "../../theme/tokens";
@@ -65,7 +67,7 @@ export default function CreateRoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { rooms, createRoom, updateRoom } = useWishpool();
+  const { rooms, createRoom, updateRoom, online, refresh } = useWishpool();
   const editing = id ? rooms.find((r) => r.id === id) : undefined;
   const { isStickerLocked } = useSubscription();
   const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
@@ -76,6 +78,8 @@ export default function CreateRoomScreen() {
   const [celName, setCelName] = useState(editing?.celebrantName || "");
   const [date, setDate] = useState<string | null>(editing?.eventDate || null);
   const [busy, setBusy] = useState(false);
+  const friends = useFriendList(online && !id);
+  const [picked, setPicked] = useState<string[]>([]);
   // the sticker's spot on the folder, dragged on the preview
   const [stickerPos, setStickerPos] = useState(editing?.stickerPos || "");
   const [dragging, setDragging] = useState(false);
@@ -103,9 +107,12 @@ export default function CreateRoomScreen() {
         return;
       }
       const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, ...extra } as Parameters<typeof createRoom>[0]);
+      // friends picked below: in at once or invited, as each of them prefers
+      const res = picked.length ? await api.addToRoom(id, picked).catch(() => null) : null;
+      if (res && res.added.length) await refresh().catch(() => {});
       haptic("success");
       router.replace({ pathname: "/room/[id]", params: { id } });
-      toast.success(t("toastRoomCreated"), { root: true });
+      toast.success(t(res && res.invited.length && !res.added.length ? "toastInvitesSent" : "toastRoomCreated"), { root: true });
     } catch {
       setBusy(false);
       haptic("error");
@@ -169,6 +176,20 @@ export default function CreateRoomScreen() {
       ) : null}
 
       <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
+
+      {/* bring friends in right away (signed in, new room) */}
+      {!editing && online && friends && friends.length ? (
+        <View className="mt-2">
+          <Label>{t("inviteFriendsHere")}</Label>
+          <FriendPicker
+            friends={friends}
+            selected={picked}
+            onToggle={(fid) =>
+              setPicked((cur) => (cur.includes(fid) ? cur.filter((x) => x !== fid) : preset.type === "couple" ? [fid] : [...cur, fid]))
+            }
+          />
+        </View>
+      ) : null}
 
     </ScrollView>
     {/* the action stays at the bottom of the screen */}

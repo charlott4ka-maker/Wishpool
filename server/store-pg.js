@@ -43,9 +43,38 @@ export function createPgStore(q) {
       // moderation: who blocked whom (their wishes disappear from your rooms) and reports
       await q(`CREATE TABLE IF NOT EXISTS blocks(user_id text, blocked_id text, created_at bigint, primary key(user_id, blocked_id))`);
       await q(`CREATE TABLE IF NOT EXISTS reports(id text primary key, reporter_id text, user_id text, wish_id text, room_id text, reason text, created_at bigint)`);
+      // friends: both directions stored; requests wait for the other side; a personal
+      // link adds a friend at once; room invites wait when someone adds you to a room
+      await q(`CREATE TABLE IF NOT EXISTS friends(user_id text, friend_id text, created_at bigint, primary key(user_id, friend_id))`);
+      await q(`CREATE TABLE IF NOT EXISTS friend_requests(from_id text, to_id text, created_at bigint, primary key(from_id, to_id))`);
+      await q(`CREATE TABLE IF NOT EXISTS friend_codes(code text primary key, user_id text unique)`);
+      await q(`CREATE TABLE IF NOT EXISTS room_invites(room_id text, user_id text, inviter_id text, created_at bigint, primary key(room_id, user_id))`);
+      await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS room_add text`);
     },
     async getConfig() { const { rows } = await q(`SELECT key,value FROM app_config`); return Object.fromEntries(rows.map(r => [r.key, JSON.parse(r.value)])); },
     async setConfig(key, value) { await q(`INSERT INTO app_config(key,value,updated_at) VALUES($1,$2,$3) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`, [key, JSON.stringify(value), Date.now()]); },
+    async friendIds(me) { const { rows } = await q(`SELECT friend_id FROM friends WHERE user_id=$1 ORDER BY created_at DESC`, [me]); return rows.map(r => r.friend_id); },
+    async isFriend(a, b) { const { rows } = await q(`SELECT 1 FROM friends WHERE user_id=$1 AND friend_id=$2`, [a, b]); return rows.length > 0; },
+    async addFriends(a, b) {
+      const now = Date.now();
+      await q(`INSERT INTO friends(user_id,friend_id,created_at) VALUES($1,$2,$3),($2,$1,$3) ON CONFLICT DO NOTHING`, [a, b, now]);
+      await q(`DELETE FROM friend_requests WHERE (from_id=$1 AND to_id=$2) OR (from_id=$2 AND to_id=$1)`, [a, b]);
+    },
+    async removeFriends(a, b) { await q(`DELETE FROM friends WHERE (user_id=$1 AND friend_id=$2) OR (user_id=$2 AND friend_id=$1)`, [a, b]); },
+    async addFriendRequest(from, to) { await q(`INSERT INTO friend_requests(from_id,to_id,created_at) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`, [from, to, Date.now()]); },
+    async hasFriendRequest(from, to) { const { rows } = await q(`SELECT 1 FROM friend_requests WHERE from_id=$1 AND to_id=$2`, [from, to]); return rows.length > 0; },
+    async dropFriendRequest(from, to) { await q(`DELETE FROM friend_requests WHERE from_id=$1 AND to_id=$2`, [from, to]); },
+    async incomingRequests(me) { const { rows } = await q(`SELECT from_id, created_at FROM friend_requests WHERE to_id=$1 ORDER BY created_at DESC`, [me]); return rows.map(r => ({ from: r.from_id, at: Number(r.created_at) })); },
+    async outgoingRequests(me) { const { rows } = await q(`SELECT to_id FROM friend_requests WHERE from_id=$1`, [me]); return rows.map(r => r.to_id); },
+    async friendCode(me) { const { rows } = await q(`SELECT code FROM friend_codes WHERE user_id=$1`, [me]); return rows[0] ? rows[0].code : null; },
+    async setFriendCode(me, code) { await q(`INSERT INTO friend_codes(code,user_id) VALUES($1,$2) ON CONFLICT(user_id) DO NOTHING`, [code, me]); },
+    async friendCodeUser(code) { const { rows } = await q(`SELECT user_id FROM friend_codes WHERE code=$1`, [code]); return rows[0] ? rows[0].user_id : null; },
+    async roomAddPolicy(id) { const { rows } = await q(`SELECT room_add FROM users WHERE id=$1`, [id]); return (rows[0] && rows[0].room_add) || "invite"; },
+    async setRoomAddPolicy(id, v) { await q(`UPDATE users SET room_add=$2 WHERE id=$1`, [id, v]); },
+    async addRoomInvite(roomId, userId, inviterId) { await q(`INSERT INTO room_invites(room_id,user_id,inviter_id,created_at) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING`, [roomId, userId, inviterId, Date.now()]); },
+    async roomInvitesFor(me) { const { rows } = await q(`SELECT room_id, inviter_id, created_at FROM room_invites WHERE user_id=$1 ORDER BY created_at DESC`, [me]); return rows.map(r => ({ roomId: r.room_id, inviterId: r.inviter_id, at: Number(r.created_at) })); },
+    async hasRoomInvite(roomId, me) { const { rows } = await q(`SELECT 1 FROM room_invites WHERE room_id=$1 AND user_id=$2`, [roomId, me]); return rows.length > 0; },
+    async dropRoomInvite(roomId, me) { await q(`DELETE FROM room_invites WHERE room_id=$1 AND user_id=$2`, [roomId, me]); },
     async blockedIds(me) { const { rows } = await q(`SELECT blocked_id FROM blocks WHERE user_id=$1`, [me]); return rows.map(r => r.blocked_id); },
     async block(me, id) { await q(`INSERT INTO blocks(user_id,blocked_id,created_at) VALUES($1,$2,$3) ON CONFLICT DO NOTHING`, [me, id, Date.now()]); },
     async unblock(me, id) { await q(`DELETE FROM blocks WHERE user_id=$1 AND blocked_id=$2`, [me, id]); },
@@ -74,6 +103,10 @@ export function createPgStore(q) {
       }
       await q(`UPDATE rooms SET celebrant_id=NULL WHERE celebrant_id=$1`, [id]);
       await q(`DELETE FROM blocks WHERE user_id=$1 OR blocked_id=$1`, [id]);
+      await q(`DELETE FROM friends WHERE user_id=$1 OR friend_id=$1`, [id]);
+      await q(`DELETE FROM friend_requests WHERE from_id=$1 OR to_id=$1`, [id]);
+      await q(`DELETE FROM friend_codes WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM room_invites WHERE user_id=$1 OR inviter_id=$1`, [id]);
       const { rows: ws } = await q(`SELECT * FROM wishes WHERE owner_id=$1`, [id]);
       const photos = ws.map(mapWish).flatMap(w => w.images && w.images.length ? w.images : [w.image]).filter(Boolean);
       await q(`DELETE FROM wish_rooms WHERE wish_id IN (SELECT id FROM wishes WHERE owner_id=$1)`, [id]);
@@ -206,7 +239,7 @@ export function createPgStore(q) {
     async setReservation(wishId, gifterId) { await q(`INSERT INTO reservations(wish_id,gifter_id) VALUES($1,$2) ON CONFLICT(wish_id) DO UPDATE SET gifter_id=EXCLUDED.gifter_id`, [wishId, gifterId]); },
     async clearReservation(wishId, gifterId) { await q(`DELETE FROM reservations WHERE wish_id=$1 AND gifter_id=$2`, [wishId, gifterId]); },
     async setDraw(roomId, assignments, budget) { await q(`INSERT INTO draws(room_id,assignments,budget,at) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(room_id) DO UPDATE SET assignments=EXCLUDED.assignments, budget=EXCLUDED.budget, at=EXCLUDED.at`, [roomId, JSON.stringify(assignments), budget, Date.now()]); },
-    async getDraw(roomId) { const { rows } = await q(`SELECT assignments,budget FROM draws WHERE room_id=$1`, [roomId]); if (!rows[0]) return null; const a = rows[0].assignments; return { assignments: typeof a === "string" ? JSON.parse(a) : a, budget: rows[0].budget }; },
+    async getDraw(roomId) { const { rows } = await q(`SELECT assignments,budget,at FROM draws WHERE room_id=$1`, [roomId]); if (!rows[0]) return null; const a = rows[0].assignments; return { assignments: typeof a === "string" ? JSON.parse(a) : a, budget: rows[0].budget, at: Number(rows[0].at) || 0 }; },
     async removeMember(roomId, userId) { await q(`DELETE FROM members WHERE room_id=$1 AND user_id=$2`, [roomId, userId]); },
     async removeUserSharesInRoom(roomId, userId) { await q(`DELETE FROM wish_rooms WHERE room_id=$1 AND wish_id IN (SELECT id FROM wishes WHERE owner_id=$2)`, [roomId, userId]); },
     async deleteRoom(roomId) {

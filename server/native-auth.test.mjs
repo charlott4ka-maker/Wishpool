@@ -82,6 +82,41 @@ try {
   assert.equal((await call("GET", "/api/admin/reports", null, adm.body.token)).status, 200);
   assert.equal((await call("GET", "/api/admin/stats", null, adm.body.token)).status, 200);
   delete process.env.ADMIN_LOGIN; delete process.env.ADMIN_PASSWORD;
+  // friends: a request from a room, accepted; the personal link; adding to rooms by preference
+  const third = await (async () => {
+    await call("POST", "/api/auth/email/start", { email: "carl@example.com" });
+    const c = logs.filter(l => l.includes("carl@example.com")).pop().match(/(\d{6})$/)[1];
+    return (await call("POST", "/api/auth/email/verify", { email: "carl@example.com", code: c })).body;
+  })();
+  const ct = third.token, carl = third.user.id;
+  assert.equal((await call("POST", "/api/friends/request", { userId: carl }, rvt)).status, 403, "no shared room");
+  assert.equal((await call("POST", "/api/friends/request", { userId: anna }, rvt)).body.status, "requested");
+  const annaInbox = (await call("GET", "/api/friends", null, tok)).body;
+  assert.equal(annaInbox.requests.length, 1); assert.equal(annaInbox.requests[0].user.id, rv.body.user.id);
+  assert.equal((await call("GET", "/api/state", null, tok)).body.inbox, 1);
+  await call("POST", `/api/friends/${rv.body.user.id}/accept`, null, tok);
+  assert.deepEqual((await call("GET", "/api/friends", null, rvt)).body.friends.map(f => f.id), [anna]);
+  // Carl opens the reviewer's link: friends at once
+  const link = (await call("GET", "/api/friends/link", null, rvt)).body;
+  assert.match(link.url, /\/friend\/[\w-]+$/);
+  assert.equal((await call("GET", `/api/friends/code/${link.code}`, null, ct)).body.user.id, rv.body.user.id);
+  await call("POST", `/api/friends/code/${link.code}`, null, ct);
+  assert.equal((await call("GET", "/api/friends", null, rvt)).body.friends.length, 2);
+  // a new room: Anna (default "invite") gets an invitation, Carl ("instant") is in at once
+  await call("PUT", "/api/me/room-add", { value: "instant" }, ct);
+  const r2 = (await call("POST", "/api/rooms", { name: "Party", type: "friends" }, rvt)).body.room;
+  const add = (await call("POST", `/api/rooms/${r2.id}/add`, { userIds: [anna, carl, "nobody"] }, rvt)).body;
+  assert.deepEqual(add, { added: [carl], invited: [anna] });
+  assert.equal((await call("GET", "/api/friends", null, tok)).body.roomInvites[0].room.name, "Party");
+  await call("POST", `/api/room-invites/${r2.id}/accept`, null, tok);
+  assert.equal((await call("GET", `/api/rooms/${r2.id}`, null, rvt)).body.members.length, 3);
+  // draw: three people, everyone gets someone; only the owner draws again
+  assert.equal((await call("POST", `/api/rooms/${r2.id}/draw`, { budget: " 500 " }, ct)).status, 200);
+  const d = (await call("GET", `/api/rooms/${r2.id}/draw`, null, tok)).body;
+  assert.equal(d.drawn, true); assert.equal(d.budget, "500"); assert.ok(d.target && d.target.id !== anna);
+  assert.equal((await call("POST", `/api/rooms/${r2.id}/draw`, {}, ct)).status, 403);
+  assert.equal((await call("POST", `/api/rooms/${r2.id}/draw`, {}, rvt)).status, 200);
+  await call("DELETE", `/api/me`, null, ct);
   // same e-mail again -> same account
   await new Promise(r => setTimeout(r, 0));
   // delete: the room goes to the other member, the session dies

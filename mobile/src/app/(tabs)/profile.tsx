@@ -2,7 +2,7 @@
 
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ChevronRight, Crown, Gift, Heart, Pencil, Settings, Smartphone } from "lucide-react-native";
+import { ChevronRight, Crown, Gift, Heart, Pencil, Settings, Smartphone, Users } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,7 +30,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, status } = useAuth();
-  const { wishes, rooms } = useWishpool();
+  const { wishes, rooms, inbox } = useWishpool();
   const { isPremium } = useSubscription();
   const [icon, setIcon] = useState(currentAppIcon);
   const prefs = usePrefs();
@@ -117,6 +117,21 @@ export default function ProfileScreen() {
 
         <View className="mt-8">
           <SettingsGroup>
+            {/* friends, with a red count while requests / room invitations wait */}
+            <SettingsCell
+              icon={Users}
+              tint="#34C759"
+              label={t("friendsTitle")}
+              onPress={() => router.push("/friends")}
+              chevron
+              right={
+                inbox ? (
+                  <View className="ml-2 h-6 min-w-6 items-center justify-center rounded-full px-2" style={{ backgroundColor: "#FF3B30" }}>
+                    <Txt className="font-m700 text-[13px] text-white">{inbox}</Txt>
+                  </View>
+                ) : null
+              }
+            />
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
           </SettingsGroup>
         </View>

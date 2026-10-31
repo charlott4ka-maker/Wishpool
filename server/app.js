@@ -10,6 +10,7 @@ import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
 import { nativeAuthRoutes, hashToken } from "./native-auth.js";
 import { publicConfigRoute, adminConfigRoutes } from "./app-config.js";
 import { moderationRoutes } from "./moderation.js";
+import { friendRoutes } from "./friends.js";
 import { adminLoginRoute, ADMIN_PANEL_ID } from "./admin-auth.js";
 
 export async function createApp() {
@@ -196,7 +197,7 @@ export async function createApp() {
     if (!team) return res.status(404).end();
     const appID = `${team}.${process.env.IOS_BUNDLE_ID || "app.wishpool.ios"}`;
     res.set("Content-Type", "application/json").set("Cache-Control", "public, max-age=3600");
-    res.send(JSON.stringify({ applinks: { apps: [], details: [{ appID, appIDs: [appID], paths: ["/join/*"], components: [{ "/": "/join/*" }] }] } }));
+    res.send(JSON.stringify({ applinks: { apps: [], details: [{ appID, appIDs: [appID], paths: ["/join/*", "/friend/*"], components: [{ "/": "/join/*" }, { "/": "/friend/*" }] }] } }));
   });
   // Sign-in for the iOS app (Apple, e-mail code), before the auth below.
   app.use("/api/auth", nativeAuthRoutes(store));
@@ -229,6 +230,7 @@ export async function createApp() {
     return emails.length > 0 && (await store.userEmails(String(id))).some(e => emails.includes(e));
   };
   adminConfigRoutes(api, store, (req) => isAdmin(req.user.id));
+  friendRoutes(api, store);
   moderationRoutes(api, store, {
     isAdmin: (req) => isAdmin(req.user.id),
     pubWish,
@@ -308,7 +310,9 @@ export async function createApp() {
         };
       })),
     ]);
-    res.json({ me: meUser, admin: await isAdmin(me), wishes, rooms: rooms.filter(Boolean) });
+    // friend requests and room invitations waiting for you (a dot on the profile)
+    const [reqs, invs] = await Promise.all([store.incomingRequests(me), store.roomInvitesFor(me)]);
+    res.json({ me: meUser, admin: await isAdmin(me), wishes, rooms: rooms.filter(Boolean), inbox: reqs.length + invs.length });
   });
 
   api.post("/wishes", async (req, res) => {
@@ -589,10 +593,13 @@ export async function createApp() {
     if (!r || !(await store.isMember(r.id, req.user.id))) return res.status(404).json({ error: "not_found" });
     const ids = (await store.roomMembers(r.id)).map(u => u.id);
     if (ids.length < 3) return res.status(400).json({ error: "need_three" });
+    // once drawn, only the room's owner can draw again (everyone's pair changes)
+    if ((await store.getDraw(r.id)) && r.ownerId !== req.user.id) return res.status(403).json({ error: "owner_only" });
     const shuffled = [...ids].sort(() => Math.random() - 0.5);
     const map = {};
     shuffled.forEach((id, i) => { map[id] = shuffled[(i + 1) % shuffled.length]; });
-    await store.setDraw(r.id, map, (req.body && req.body.budget) || null);
+    const budget = typeof (req.body && req.body.budget) === "string" ? req.body.budget.trim().slice(0, 40) : "";
+    await store.setDraw(r.id, map, budget || null);
     res.json({ ok: true });
   });
 
@@ -604,10 +611,13 @@ export async function createApp() {
   api.get("/rooms/:id/draw", async (req, res) => {
     const me = req.user.id;
     const draw = await store.getDraw(req.params.id);
-    if (!draw || !draw.assignments[me]) return res.json({ target: null });
+    if (!draw) return res.json({ drawn: false, target: null });
+    // drawn before you joined: you're not in it until the owner draws again
+    if (!draw.assignments[me]) return res.json({ drawn: true, budget: draw.budget, target: null });
     const u = await store.getUser(draw.assignments[me]);
+    if (!u) return res.json({ drawn: true, budget: draw.budget, target: null });
     const wishes = await withReservations(await store.wishesSharedTo(u.id, req.params.id), me, (await store.roomMembers(req.params.id)).length - 1);
-    res.json({ budget: draw.budget, target: pubUser(u), wishes });
+    res.json({ drawn: true, budget: draw.budget, target: pubUser(u), wishes });
   });
 
   app.use("/api", api);

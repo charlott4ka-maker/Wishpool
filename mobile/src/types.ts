@@ -50,6 +50,8 @@ export type Room = {
 export type AppState = {
   wishes: Wish[];
   rooms: Room[];
+  /** Friend requests and room invitations waiting (server), for the dot on the profile. */
+  inbox?: number;
 };
 
 export type NewWish = Omit<Wish, "id" | "giftedAt"> & { rooms: string[] };

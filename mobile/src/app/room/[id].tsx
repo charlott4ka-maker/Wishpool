@@ -12,6 +12,7 @@ import { ActionSheetIOS, Alert, Platform, Pressable, RefreshControl, ScrollView,
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { DrawCard } from "../../components/DrawCard";
 import { RoomListSkeleton } from "../../components/Skeleton";
 import { SwipeRow } from "../../components/SwipeRow";
 import { heroTop, RoomHeroBg } from "../../components/RoomHeroBg";
@@ -23,7 +24,7 @@ import { useT } from "../../i18n";
 import { countdownLabel } from "../../lib/dates";
 import { haptic } from "../../lib/haptics";
 import { useAuth } from "../../auth/AuthContext";
-import { api, SITE_URL } from "../../services/api";
+import { api, SITE_URL, type DrawData } from "../../services/api";
 import { actionSheet } from "../../lib/actionSheet";
 import { asMe, useMe } from "../../lib/me";
 import { usePullRefresh } from "../../lib/pullRefresh";
@@ -47,11 +48,15 @@ export default function RoomScreen() {
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(online);
+  const [friendIds, setFriendIds] = useState<string[]>([]);
+  const [draw, setDraw] = useState<DrawData | null>(null);
 
   const load = useCallback(async () => {
     if (!online || !id) return;
     try {
-      const d = await api.room(id);
+      const [d, fr, dr] = await Promise.all([api.room(id), api.friends().catch(() => null), api.draw(id).catch(() => null)]);
+      setDraw(dr);
+      if (fr) setFriendIds(fr.friends.map((f) => f.id));
       setDetail({ lists: d.lists || [], mine: d.mine || [], members: d.members, owner: d.room?.owner });
     } finally {
       setLoading(false);
@@ -161,9 +166,22 @@ export default function RoomScreen() {
       .catch(() => toast.error(t("toastError")))
       .finally(() => load().catch(() => {}));
   };
+  // add a friend from the room: a request they accept (or friends at once if they asked first)
+  const addFriend = (m: Member) =>
+    api
+      .friendRequest(m.id)
+      .then((r) => {
+        haptic("success");
+        toast.success(t(r.status === "friends" ? "toastFriendsNow" : "toastRequestSent"));
+        if (r.status === "friends") setFriendIds((cur) => [...cur, m.id]);
+      })
+      .catch(() => toast.error(t("toastError")));
   const memberMenu = (m: Member) => {
     haptic("select");
-    sheet(m.name, [[t("reportUser"), () => report({ userId: m.id })], [t("blockUser"), () => block(m)]], 1);
+    const acts: [string, () => void][] = [];
+    if (!friendIds.includes(m.id)) acts.push([t("addFriend"), () => addFriend(m)]);
+    acts.push([t("reportUser"), () => report({ userId: m.id })], [t("blockUser"), () => block(m)]);
+    sheet(m.name, acts, acts.length - 1);
   };
   const wishMenu = online
     ? (w: RoomWish) => () => {
@@ -174,12 +192,16 @@ export default function RoomScreen() {
 
   const openMenu = () => {
     haptic("select");
+    // bring friends in (signed in; a couple room has room for two)
+    const addFriends: [string, () => void][] =
+      online && !(room.type === "couple" && members.length >= 2) ? [[t("addFriendsToRoom"), () => router.push({ pathname: "/room/add", params: { id: room.id } })]] : [];
     const actions: [string, () => void][] = isOwner
       ? [
+          ...addFriends,
           [t("editRoom"), () => router.push({ pathname: "/room/new", params: { id: room.id } })],
           [t("deleteRoom"), leaveOrDelete],
         ]
-      : [[t("leaveRoom"), leaveOrDelete]];
+      : [...addFriends, [t("leaveRoom"), leaveOrDelete]];
     const options = [...actions.map((a) => a[0]), t("setCancel")];
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -281,6 +303,8 @@ export default function RoomScreen() {
             </View>
           ) : (
             <View className="gap-6">
+              {/* the draw lives in friends rooms (not couple / birthday) */}
+              {online && room.type === "friends" ? <DrawCard roomId={room.id} draw={draw} members={members.length} owner={isOwner} /> : null}
               {lists.map(({ member, wishes: ws }, i) => (
                 <Animated.View key={member.id} entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(18)}>
                   <View className="mb-1 flex-row items-center gap-3">

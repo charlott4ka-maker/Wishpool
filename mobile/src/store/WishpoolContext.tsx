@@ -107,7 +107,7 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const s = await api.state();
-    const next = { wishes: s.wishes || [], rooms: s.rooms || [] };
+    const next = { wishes: s.wishes || [], rooms: s.rooms || [], inbox: (s as { inbox?: number }).inbox || 0 };
     setState(next);
     AsyncStorage.setItem(CACHE_KEY, JSON.stringify(next)).catch(() => {});
   }, [online]);

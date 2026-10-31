@@ -69,6 +69,7 @@ function Gate() {
             <Stack.Screen name="room/[id]" />
             <Stack.Screen name="settings" />
             <Stack.Screen name="faq" />
+            <Stack.Screen name="friends" />
             {/* the two long forms are full screen, not sheets: dragging the folder sticker
                 (and the photos) used to drag the sheet along */}
             <Stack.Screen name="wish/new" options={FULL_FORM} />
@@ -76,6 +77,8 @@ function Gate() {
             <Stack.Screen name="wish/[id]" options={FIT_SHEET} />
             <Stack.Screen name="room/take" options={FIT_SHEET} />
             <Stack.Screen name="room/wish" options={FIT_SHEET} />
+            <Stack.Screen name="room/add" options={FIT_SHEET} />
+            <Stack.Screen name="room/draw" options={FIT_SHEET} />
             <Stack.Screen name="room/pick" options={FIT_SHEET} />
             <Stack.Screen name="birthday" options={FIT_SHEET} />
             <Stack.Screen name="profile-edit" options={FIT_SHEET} />
@@ -89,6 +92,8 @@ function Gate() {
           {/* full screen: opened from a link it came up as a full-height sheet with the
               close button under the status bar and everything stuck to the top */}
           <Stack.Screen name="join/[id]" options={{ presentation: "fullScreenModal" }} />
+          {/* someone's friend link, for guests too (they're asked to sign in) */}
+          <Stack.Screen name="friend/[code]" options={{ presentation: "fullScreenModal" }} />
           <Stack.Screen name="onboarding" options={{ presentation: "fullScreenModal" }} />
         </Stack>
       </WishpoolProvider>

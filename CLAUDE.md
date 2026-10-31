@@ -43,6 +43,11 @@
 - Live phone preview (iPhone 14 Pro Max, 430x932) on the right: the app's web build in `web/public/admin/preview` (guest + demo content, `lib/adminPreview.ts`), fed the unsaved draft; tapping a text opens its screen and outlines it (`screens` in app-data.json). After app changes worth previewing run `npm run admin-preview` in mobile/ (rebuilds the preview and app-data.json).
 - Moderation (App Review 1.2): in a room, ⋯ by a friend's name reports or blocks them, a long press on their wish reports it; `/terms` has the zero-tolerance terms (linked under the sign-in buttons). Reports land in the admin «Жалобы» tab and on support@; blocked people stay in the room with their wishes hidden.
 
+## Friends and the draw (server/friends.js)
+- No search and no public IDs: friends come from a room (member ⋯ › Add friend, a request the other accepts) or a personal link `/friend/<code>` (whoever opens it becomes a friend at once). Profile › Friends lists room invitations, requests, the link and friends; a red count on the profile row while some wait (`inbox` in /state).
+- One privacy setting (Settings › Privacy › Rooms): friends add you to rooms right away, or with an invitation you accept (default). Strangers can't add anyone. New room: pick friends; room ⋯ › Add friends.
+- The draw lives in friends rooms only (not couple / birthday): a card above the friends' lists, 3+ people, optional budget, "You got …" once drawn, only the owner draws again.
+
 ## Later (agreed, not started)
 - Admin-only alternate app icon: a Settings row "Icon" visible only to admins (`admin` from /state) to switch to the glossy star-with-bow icon on her own phone (expo alternate icons; one build for TestFlight and the App Store). Needs a new build, so after App Review approves 1.0.0; she sends the 1024x1024 artwork.
 - Rating prompt (`lib/review.ts`, after the 3rd wish, plus "Rate Wishpool" in Settings) is on the work branch; it needs a new build (expo-store-review is native), so it ships with the build after 1.0.0 is approved.

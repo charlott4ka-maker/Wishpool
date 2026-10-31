@@ -15,6 +15,10 @@
       "destination": "/join/index.html"
     },
     {
+      "source": "/friend/:code",
+      "destination": "/friend/index.html"
+    },
+    {
       "source": "/privacy",
       "destination": "/privacy/index.html"
     },

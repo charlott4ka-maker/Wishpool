@@ -2,11 +2,33 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [] };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [], friends: [], friendRequests: [], friendCodes: {}, roomInvites: [], roomAdd: {} };
   return {
     async init() {},
     async getConfig() { return JSON.parse(JSON.stringify(D.config)); },
     async setConfig(key, value) { D.config[key] = JSON.parse(JSON.stringify(value)); },
+    async friendIds(me) { return D.friends.filter(f => f.a === me).sort((x, y) => y.at - x.at).map(f => f.b); },
+    async isFriend(a, b) { return D.friends.some(f => f.a === a && f.b === b); },
+    async addFriends(a, b) {
+      const at = Date.now();
+      for (const [x, y] of [[a, b], [b, a]]) if (!D.friends.some(f => f.a === x && f.b === y)) D.friends.push({ a: x, b: y, at });
+      D.friendRequests = D.friendRequests.filter(r => !((r.from === a && r.to === b) || (r.from === b && r.to === a)));
+    },
+    async removeFriends(a, b) { D.friends = D.friends.filter(f => !((f.a === a && f.b === b) || (f.a === b && f.b === a))); },
+    async addFriendRequest(from, to) { if (!D.friendRequests.some(r => r.from === from && r.to === to)) D.friendRequests.push({ from, to, at: Date.now() }); },
+    async hasFriendRequest(from, to) { return D.friendRequests.some(r => r.from === from && r.to === to); },
+    async dropFriendRequest(from, to) { D.friendRequests = D.friendRequests.filter(r => !(r.from === from && r.to === to)); },
+    async incomingRequests(me) { return D.friendRequests.filter(r => r.to === me).map(r => ({ from: r.from, at: r.at })); },
+    async outgoingRequests(me) { return D.friendRequests.filter(r => r.from === me).map(r => r.to); },
+    async friendCode(me) { return Object.keys(D.friendCodes).find(c => D.friendCodes[c] === me) || null; },
+    async setFriendCode(me, code) { if (!Object.values(D.friendCodes).includes(me)) D.friendCodes[code] = me; },
+    async friendCodeUser(code) { return D.friendCodes[code] || null; },
+    async roomAddPolicy(id) { return D.roomAdd[id] || "invite"; },
+    async setRoomAddPolicy(id, v) { D.roomAdd[id] = v; },
+    async addRoomInvite(roomId, userId, inviterId) { if (!D.roomInvites.some(i => i.roomId === roomId && i.userId === userId)) D.roomInvites.push({ roomId, userId, inviterId, at: Date.now() }); },
+    async roomInvitesFor(me) { return D.roomInvites.filter(i => i.userId === me).map(i => ({ roomId: i.roomId, inviterId: i.inviterId, at: i.at })); },
+    async hasRoomInvite(roomId, me) { return D.roomInvites.some(i => i.roomId === roomId && i.userId === me); },
+    async dropRoomInvite(roomId, me) { D.roomInvites = D.roomInvites.filter(i => !(i.roomId === roomId && i.userId === me)); },
     async blockedIds(me) { return D.blocks.filter(b => b.userId === me).map(b => b.blockedId); },
     async block(me, id) { if (!D.blocks.some(b => b.userId === me && b.blockedId === id)) D.blocks.push({ userId: me, blockedId: id }); },
     async unblock(me, id) { D.blocks = D.blocks.filter(b => !(b.userId === me && b.blockedId === id)); },
@@ -31,6 +53,10 @@ export function createMemStore() {
       }
       for (const r of Object.values(D.rooms)) if (r.celebrantId === id) r.celebrantId = null;
       D.blocks = D.blocks.filter(b => b.userId !== id && b.blockedId !== id);
+      D.friends = D.friends.filter(f => f.a !== id && f.b !== id);
+      D.friendRequests = D.friendRequests.filter(r => r.from !== id && r.to !== id);
+      for (const c of Object.keys(D.friendCodes)) if (D.friendCodes[c] === id) delete D.friendCodes[c];
+      D.roomInvites = D.roomInvites.filter(i => i.userId !== id && i.inviterId !== id);
       const photos = [];
       for (const w of Object.values(D.wishes).filter(w => w.ownerId === id)) { photos.push(...(w.images && w.images.length ? w.images : [w.image]).filter(Boolean)); await this.deleteWish(w.id); }
       for (const [wid, g] of Object.entries(D.reservations)) if (g === id) delete D.reservations[wid];

@@ -7,13 +7,15 @@ import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Vibrate, Wand2 } from "lucide-react-native";
-import { useState } from "react";
+import { Bell, Cake, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Users, Vibrate, Wand2 } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
 import { toast } from "../components/Toast";
+import { actionSheet } from "../lib/actionSheet";
+import { haptic } from "../lib/haptics";
 import { clearDemo, fillDemo } from "../lib/demo";
 import { openReviewPage } from "../lib/review";
 import { SUPPORT_EMAIL, writeSupport } from "../lib/support";
@@ -38,6 +40,26 @@ export default function SettingsScreen() {
   const { refresh } = useWishpool();
   const version = Constants.expoConfig?.version || "1.0.0";
   const [scrolled, setScrolled] = useState(false);
+  // how friends add you to rooms (signed in): read from the server, changed in an action sheet
+  const [roomAdd, setRoomAdd] = useState<"invite" | "instant" | null>(null);
+  useEffect(() => {
+    if (status === "signedIn") api.friends().then((d) => setRoomAdd(d.roomAdd)).catch(() => {});
+  }, [status]);
+  const pickRoomAdd = () => {
+    haptic("select");
+    const set = (v: "invite" | "instant") => {
+      const was = roomAdd;
+      setRoomAdd(v);
+      api.setRoomAdd(v).catch(() => {
+        setRoomAdd(was);
+        toast.error(t("toastError"));
+      });
+    };
+    actionSheet(t("roomAddSetting"), t("setCancel"), [
+      [t("roomAddInvite"), () => set("invite")],
+      [t("roomAddInstant"), () => set("instant")],
+    ]);
+  };
 
   const toggleNotifications = async (on: boolean) => {
     if (!on) return setPref("notifications", false);
@@ -112,6 +134,12 @@ export default function SettingsScreen() {
           <SettingsCell icon={UserPlus} tint="#34C759" label={t("setRoomJoins")} toggle={{ value: prefs.notifyRoomJoins && !sub, disabled: sub, onChange: (v) => setPref("notifyRoomJoins", v) }} />
           <SettingsCell icon={Sparkles} tint="#AF52DE" label={t("setGiftReminders")} toggle={{ value: prefs.notifyGiftReminders && !sub, disabled: sub, onChange: (v) => setPref("notifyGiftReminders", v) }} />
         </SettingsGroup>
+
+        {status === "signedIn" ? (
+          <SettingsGroup title={t("privacy")} footer={t("roomAddHint")}>
+            <SettingsCell icon={Users} tint="#34C759" label={t("roomAddShort")} value={roomAdd ? t(roomAdd === "instant" ? "roomAddInstant" : "roomAddAsk") : ""} onPress={pickRoomAdd} />
+          </SettingsGroup>
+        ) : null}
 
         <SettingsGroup title={t("setGeneral")}>
           <SettingsCell icon={Globe} tint="#5856D6" label={t("language")} value={LANG_SHORT[lang]} onPress={pickLanguage} />
