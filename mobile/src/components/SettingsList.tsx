@@ -4,7 +4,7 @@
 
 import { ChevronRight, LucideIcon } from "lucide-react-native";
 import React from "react";
-import { Pressable, Switch, View } from "react-native";
+import { Pressable, StyleSheet, Switch, View } from "react-native";
 
 import { haptic } from "../lib/haptics";
 import { C } from "../theme/tokens";
@@ -24,7 +24,7 @@ export function SettingsGroup({ title, footer, children }: { title?: string; foo
         {rows.map((row, i) => (
           <View key={i}>
             {row}
-            {i < rows.length - 1 ? <View style={{ height: 0.5, backgroundColor: "rgba(255,255,255,0.12)", marginLeft: PAD + TILE + GAP }} /> : null}
+            {i < rows.length - 1 ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: "rgba(255,255,255,0.12)", marginLeft: PAD + TILE + GAP }} /> : null}
           </View>
         ))}
       </View>

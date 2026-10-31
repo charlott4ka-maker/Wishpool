@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { ChevronDown, ChevronLeft } from "lucide-react-native";
 import { useState } from "react";
-import { LayoutAnimation, Pressable, ScrollView, View } from "react-native";
+import { LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GlassCircle, Pill, Txt } from "../components/ui";
@@ -102,7 +102,7 @@ function Item({ q, a, open, onToggle, last }: { q: string; a: string; open: bool
         </View>
       </Pressable>
       {open ? <Txt className="-mt-1 px-4 pb-4 text-[14.5px] leading-[21px] text-t2">{a}</Txt> : null}
-      {!last ? <View style={{ height: 0.5, backgroundColor: "rgba(255,255,255,0.12)", marginLeft: 16 }} /> : null}
+      {!last ? <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: "rgba(255,255,255,0.12)", marginLeft: 16 }} /> : null}
     </View>
   );
 }
