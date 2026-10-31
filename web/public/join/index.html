@@ -17,6 +17,8 @@ body{min-height:100vh;display:flex;align-items:center}
 .card{text-align:center;padding:32px 24px}
 .card img{width:96px;height:96px;margin:0 auto 16px}
 .card p{color:var(--t2)}
+.card p.small{margin-top:16px;font-size:14px}
+.card p.small a{color:var(--t2);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -33,13 +35,19 @@ body{min-height:100vh;display:flex;align-items:center}
     <p data-l="ru">Вишлисты друзей и подарки без повторов в Wishpool.</p>
     <p data-l="en">Your friends' wishlists and gifts without duplicates, in Wishpool.</p>
     <div class="btns">
+      <a class="btn" id="open">
+        <span data-l="uk">Відкрити в Wishpool</span><span data-l="ru">Открыть в Wishpool</span><span data-l="en">Open in Wishpool</span>
+      </a>
+      <a class="btn ghost" id="store" href="https://apps.apple.com/app/id6825104468">
+        <span data-l="uk">Завантажити в App Store</span><span data-l="ru">Скачать в App Store</span><span data-l="en">Get it on the App Store</span>
+      </a>
       <a class="btn" id="tg">
         <span data-l="uk">Відкрити в Telegram</span><span data-l="ru">Открыть в Telegram</span><span data-l="en">Open in Telegram</span>
       </a>
-      <a class="btn ghost" id="ios">
-        <span data-l="uk">У застосунку для iPhone</span><span data-l="ru">В приложении для iPhone</span><span data-l="en">In the iPhone app</span>
-      </a>
     </div>
+    <p class="small"><a id="tgSmall">
+      <span data-l="uk">або відкрити в Telegram</span><span data-l="ru">или открыть в Telegram</span><span data-l="en">or open in Telegram</span>
+    </a></p>
   </div>
 </div>
 <script src="/pages.js"></script>
@@ -50,10 +58,25 @@ body{min-height:100vh;display:flex;align-items:center}
   if (!/^[\w-]{0,64}$/.test(from)) from = "";
   // the Mini App reads "<room>__<inviter>" from startapp
   var tail = id ? (from ? id + "__" + from : id) : "";
-  document.getElementById("tg").href = "https://t.me/wishpool_bot/app" + (tail ? "?startapp=" + tail : "");
-  var ios = document.getElementById("ios");
-  if (/iPhone|iPad|iPod/.test(navigator.userAgent) && id) ios.href = "wishpool://join/" + id + (from ? "?from=" + from : "");
-  else ios.style.display = "none";
+  var tg = "https://t.me/wishpool_bot/app" + (tail ? "?startapp=" + tail : "");
+  var iphone = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  var $ = function (x) { return document.getElementById(x); };
+  $("tg").href = tg; $("tgSmall").href = tg;
+  if (iphone) {
+    // the iPhone app first: these links come from it. With the app installed the
+    // scheme opens the room; without it the page stays, and the App Store opens.
+    $("tg").style.display = "none";
+    $("open").onclick = function (e) {
+      e.preventDefault();
+      var left = false;
+      document.addEventListener("visibilitychange", function () { if (document.hidden) left = true; });
+      location.href = "wishpool://join/" + id + (from ? "?from=" + from : "");
+      setTimeout(function () { if (!left) location.href = "https://apps.apple.com/app/id6825104468"; }, 1500);
+    };
+  } else {
+    // no app for Android or a computer: the Mini App works everywhere
+    $("open").style.display = "none"; $("store").style.display = "none"; $("tgSmall").parentNode.style.display = "none";
+  }
 })();
 </script>
 </body>

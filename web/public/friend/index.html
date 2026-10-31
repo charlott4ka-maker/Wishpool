@@ -33,11 +33,11 @@ body{min-height:100vh;display:flex;align-items:center}
     <p data-l="ru">Установи Wishpool, открой эту ссылку ещё раз, и вы станете друзьями.</p>
     <p data-l="en">Get Wishpool, open this link again, and you'll be friends.</p>
     <div class="btns">
-      <a class="btn" href="https://apps.apple.com/app/id6825104468">
-        <span data-l="uk">Завантажити в App Store</span><span data-l="ru">Скачать в App Store</span><span data-l="en">Get it on the App Store</span>
+      <a class="btn" id="ios">
+        <span data-l="uk">Відкрити в Wishpool</span><span data-l="ru">Открыть в Wishpool</span><span data-l="en">Open in Wishpool</span>
       </a>
-      <a class="btn ghost" id="ios">
-        <span data-l="uk">Відкрити в застосунку</span><span data-l="ru">Открыть в приложении</span><span data-l="en">Open in the app</span>
+      <a class="btn ghost" href="https://apps.apple.com/app/id6825104468">
+        <span data-l="uk">Завантажити в App Store</span><span data-l="ru">Скачать в App Store</span><span data-l="en">Get it on the App Store</span>
       </a>
     </div>
   </div>
@@ -47,8 +47,16 @@ body{min-height:100vh;display:flex;align-items:center}
 (function () {
   var code = (location.pathname.match(/^\/friend\/([\w-]{1,40})/) || [])[1] || "";
   var ios = document.getElementById("ios");
-  if (/iPhone|iPad|iPod/.test(navigator.userAgent) && code) ios.href = "wishpool://friend/" + code;
-  else ios.style.display = "none";
+  // installed: the scheme opens the app; not installed: the App Store after a moment
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) && code) {
+    ios.onclick = function (e) {
+      e.preventDefault();
+      var left = false;
+      document.addEventListener("visibilitychange", function () { if (document.hidden) left = true; });
+      location.href = "wishpool://friend/" + code;
+      setTimeout(function () { if (!left) location.href = "https://apps.apple.com/app/id6825104468"; }, 1500);
+    };
+  } else ios.style.display = "none";
 })();
 </script>
 </body>
