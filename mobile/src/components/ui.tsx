@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, G, Image as SvgImage, Mask, Rect } from "react-native-svg";
 
 import { haptic } from "../lib/haptics";
+import { initial } from "../lib/initial";
 import { LiquidGlass } from "../lib/liquidGlass";
 import { C, H } from "../theme/tokens";
 import { Press } from "./Press";
@@ -311,7 +312,7 @@ export function Avatar({ m: raw, size = 34, cut = 0 }: { m: AvatarMember; size?:
       {m.photo && !failed ? (
         <Image source={{ uri: m.photo }} style={{ width: size, height: size }} onError={() => setFailed(true)} />
       ) : (
-        <Txt className="font-m700 text-white" style={{ fontSize: size * 0.4 }}>{(m.name || "?").slice(0, 1)}</Txt>
+        <Txt className="font-m700 text-white" style={{ fontSize: size * 0.4 }}>{initial(m.name)}</Txt>
       )}
     </View>
   );
@@ -341,9 +342,21 @@ export function Avatar({ m: raw, size = 34, cut = 0 }: { m: AvatarMember; size?:
     <View style={{ width: size, height: size }}>
       {layer(maskId + "c", <Rect width={size} height={size} fill={m.color} />)}
       <View style={{ position: "absolute", left: 0, top: 0, width: size, height: size }} className="items-center justify-center">
-        <Txt className="font-m700 text-white" style={{ fontSize: size * 0.4 }}>{(m.name || "?").slice(0, 1)}</Txt>
+        <Txt className="font-m700 text-white" style={{ fontSize: size * 0.4 }}>{initial(m.name)}</Txt>
       </View>
       {m.photo ? layer(maskId + "p", <SvgImage href={{ uri: m.photo }} width={size} height={size} preserveAspectRatio="xMidYMid slice" />) : null}
+    </View>
+  );
+}
+
+/** A small round badge on an avatar (edit, camera, remove). The ring that sets it
+ *  apart is a plain circle of the background behind it, not a border: an iOS
+ *  border over a coloured fill left an uneven, tinted edge. */
+export function AvatarBadge({ bg, ring, size = 32, children, style }: { bg: string; ring: string; size?: number; children: React.ReactNode; style?: ViewStyle }) {
+  const outer = size + 6;
+  return (
+    <View pointerEvents="none" style={[{ position: "absolute", width: outer, height: outer, borderRadius: outer / 2, backgroundColor: ring, alignItems: "center", justifyContent: "center" }, style]}>
+      <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: "center", justifyContent: "center" }}>{children}</View>
     </View>
   );
 }

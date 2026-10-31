@@ -650,6 +650,15 @@ function compressImage(file, maxDim = 1000, quality = 0.82) {
 // `cut` = how much the next avatar in a stack overlaps this one: a crescent is
 // masked out of this avatar's right side (a gap, not a painted ring), so the
 // stack reads cleanly on any background.
+// The letter on an avatar. Names in "fancy fonts" (𝘖𝘴𝘪𝘵𝘬𝘰𝘷𝘴𝘬𝘢𝘺𝘢) use characters
+// that take two halves of a JS string: taking only the first half drew a "?"
+// box. NFKC makes them plain letters; the first real letter or digit wins.
+function avatarInitial(name) {
+  const chars = Array.from(String(name || "").normalize("NFKC").trim());
+  const letter = chars.find((c) => c.toLowerCase() !== c.toUpperCase() || (c >= "0" && c <= "9"));
+  return (letter || chars[0] || "•").toUpperCase();
+}
+
 function Avatar({ m, size = 34, cut = 0 }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => { setFailed(false); }, [m.photo]);
@@ -664,7 +673,7 @@ function Avatar({ m, size = 34, cut = 0 }) {
     }}>
       {m.photo && !failed
         ? <img src={m.photo} alt="" onError={() => setFailed(true)} referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        : m.name.slice(0, 1)}
+        : avatarInitial(m.name)}
     </div>
   );
 }

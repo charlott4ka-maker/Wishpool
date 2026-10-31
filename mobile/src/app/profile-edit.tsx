@@ -4,16 +4,16 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Camera, ImagePlus, Trash2 } from "lucide-react-native";
+import { Camera, ImagePlus, X } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
 import { Press } from "../components/Press";
 import { SheetHeader } from "../components/SheetHeader";
 import { toast, ToastHost } from "../components/Toast";
-import { Avatar, Field, Pill, Txt } from "../components/ui";
+import { Avatar, AvatarBadge, Field, Pill } from "../components/ui";
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { useMe } from "../lib/me";
@@ -93,27 +93,34 @@ export default function ProfileEdit() {
     <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
       <SheetHeader title={t("editProfile")} />
       <View className="mb-6 items-center">
-        <Press scaleTo={0.95} onPress={pick} accessibilityLabel={t("changePhoto")}>
-          <Avatar m={{ name: name || t("guest"), color: me.color, photo }} size={96} />
-          {picking ? (
-            <View className="absolute inset-0 items-center justify-center rounded-full bg-black/45">
-              <ActivityIndicator color="#fff" />
-            </View>
+        <View>
+          <Press scaleTo={0.95} onPress={pick} accessibilityLabel={t(photo ? "changePhoto" : "addPhoto")}>
+            <Avatar m={{ name: name || t("guest"), color: me.color, photo }} size={96} />
+            {picking ? (
+              <View className="absolute inset-0 items-center justify-center rounded-full bg-black/45">
+                <ActivityIndicator color="#fff" />
+              </View>
+            ) : null}
+            {!photo ? (
+              <AvatarBadge bg={C.blue} ring={C.card} style={{ right: -3, bottom: -3 }}>
+                <Camera size={16} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+              </AvatarBadge>
+            ) : null}
+          </Press>
+          {/* with a photo: remove it right on the avatar */}
+          {photo && !picking ? (
+            <Pressable onPress={remove} hitSlop={10} accessibilityLabel={t("removePhoto")} style={{ position: "absolute", right: -3, top: -3, width: 38, height: 38 }}>
+              <AvatarBadge bg="#2D3440" ring={C.card}>
+                <X size={16} color={C.t1} strokeWidth={1.5} absoluteStrokeWidth />
+              </AvatarBadge>
+            </Pressable>
           ) : null}
-          <View className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full bg-blue" style={{ borderWidth: 3, borderColor: C.card }}>
-            <Camera size={16} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
-          </View>
-        </Press>
-        {/* real buttons, easy to hit: change (or add) and remove */}
-        <View className="mt-4 flex-row gap-2">
+        </View>
+        {/* one button: change the photo, or add one */}
+        <View className="mt-4">
           <Pill size="sm" kind="ghost" loading={picking} icon={<ImagePlus size={16} color={C.t1} />} onPress={pick}>
             {t(photo ? "changePhoto" : "addPhoto")}
           </Pill>
-          {photo ? (
-            <Pill size="sm" kind="ghost" icon={<Trash2 size={16} color={C.danger} />} onPress={remove}>
-              <Txt className="font-m600 text-sm text-danger">{t("removePhoto")}</Txt>
-            </Pill>
-          ) : null}
         </View>
       </View>
       <Field label={t("yourName")} value={name} onChangeText={setName} placeholder={t("yourNamePh")} error={tried && !name.trim() && t("requiredField")} />

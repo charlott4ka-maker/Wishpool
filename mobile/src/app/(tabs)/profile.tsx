@@ -14,7 +14,7 @@ import { Press } from "../../components/Press";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
 import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
-import { Avatar, Card, Pill, PremiumBadge, Txt } from "../../components/ui";
+import { Avatar, AvatarBadge, Card, Pill, PremiumBadge, Txt } from "../../components/ui";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { usePrefs } from "../../settings/prefs";
@@ -53,9 +53,9 @@ export default function ProfileScreen() {
           {/* tap: edit name and photo */}
           <Press scaleTo={0.95} onPress={() => router.push("/profile-edit")} accessibilityLabel={t("editProfile")}>
             <Avatar m={me} size={92} />
-            <View className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full bg-raised" style={{ borderWidth: 3, borderColor: C.card }}>
+            <AvatarBadge bg={C.raised} ring={C.card} style={{ right: -3, bottom: -3 }}>
               <Pencil size={14} color={C.t1} />
-            </View>
+            </AvatarBadge>
           </Press>
           <Txt className="mt-4 font-m800 text-2xl">{me.name}</Txt>
           <Txt className="mt-1 text-[14.5px] text-t2">{t("statsLine", { w: wishes.length, r: rooms.length })}</Txt>
