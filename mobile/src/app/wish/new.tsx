@@ -38,6 +38,10 @@ import { C } from "../../theme/tokens";
 
 type LinkState = null | "loading" | "done" | "guess" | "fail";
 
+// price fields take numbers only (a decimal point or comma for cents); the
+// currency sign is added on save
+const digits = (v: string) => v.replace(/[^\d.,]/g, "");
+
 // Same size/quality as compressImage() in the Mini App: keeps request bodies small.
 async function toDataUrl(uri: string): Promise<string> {
   const r = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: 1000 } }], { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG, base64: true });
@@ -320,14 +324,14 @@ export default function AddWishScreen() {
         </View>
       </View>
       {priceMode === "one" ? (
-        <Field value={price} onChangeText={setPrice} placeholder={lang === "en" ? "$50" : "4 200 ₴"} />
+        <Field value={price} onChangeText={(v) => setPrice(digits(v))} keyboardType="decimal-pad" placeholder={lang === "en" ? "$50" : "4 200 ₴"} />
       ) : (
         <View className="flex-row gap-2">
           <View className="flex-1">
-            <Field value={priceA} onChangeText={setPriceA} placeholder={t("priceFrom") + (lang === "en" ? " $20" : " 1 000")} />
+            <Field value={priceA} onChangeText={(v) => setPriceA(digits(v))} keyboardType="decimal-pad" placeholder={t("priceFrom") + (lang === "en" ? " $20" : " 1 000")} />
           </View>
           <View className="flex-1">
-            <Field value={priceB} onChangeText={setPriceB} placeholder={t("priceTo") + (lang === "en" ? " $50" : " 2 000 ₴")} />
+            <Field value={priceB} onChangeText={(v) => setPriceB(digits(v))} keyboardType="decimal-pad" placeholder={t("priceTo") + (lang === "en" ? " $50" : " 2 000 ₴")} />
           </View>
         </View>
       )}

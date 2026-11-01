@@ -259,7 +259,7 @@ export function Field({
   label, value, onChangeText, placeholder, multiline, keyboardType, autoCapitalize, autoFocus, error, textContentType,
 }: {
   label?: string; value: string; onChangeText: (v: string) => void; placeholder?: string; multiline?: boolean;
-  keyboardType?: "default" | "email-address" | "url" | "number-pad"; autoCapitalize?: "none" | "sentences"; autoFocus?: boolean;
+  keyboardType?: "default" | "email-address" | "url" | "number-pad" | "decimal-pad"; autoCapitalize?: "none" | "sentences"; autoFocus?: boolean;
   /** Required and still empty after a tap on the action: a red outline and this text under it. */
   error?: string | false;
   /** iOS autofill, e.g. "oneTimeCode" to offer the code from Mail. */
