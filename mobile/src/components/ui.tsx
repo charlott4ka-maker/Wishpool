@@ -249,7 +249,7 @@ export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: {
       {/* the same space above the text (from the sticker) and below it (to the button); the sub sits close to the title */}
       <Txt className={`${compact && !fill ? "mt-4" : "mt-6"} text-center font-m700 ${compact ? "text-base" : "text-lg"}`}>{title}</Txt>
       {sub ? <Txt className="mt-1 max-w-[280px] text-center text-[14.5px] leading-5 text-t2">{sub}</Txt> : null}
-      {action ? <View className={fill ? "mt-6 self-stretch" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
+      {action ? <View className={fill ? "mt-6" : compact ? "mt-4" : "mt-6"}>{action}</View> : null}
     </View>
     </Animated.View>
   );
