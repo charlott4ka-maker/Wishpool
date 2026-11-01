@@ -143,7 +143,7 @@ export default function FriendsScreen() {
 
       {!signedIn ? (
         <View style={{ flex: 1, paddingBottom: insets.bottom + 40 }}>
-          <Empty fill compact emoji="stk:envelope" tilt={0} title={t("friendsSignIn")} action={<Pill onPress={() => router.push("/sign-in-options")}>{t("signInLogin")}</Pill>} />
+          <Empty fill compact emoji="stk:envelope" tilt={0} title={t("friendsSignIn")} action={<View style={{ width: 220 }}><Pill full onPress={() => router.push("/sign-in-options")}>{t("signInLogin")}</Pill></View>} />
         </View>
       ) : !data ? (
         <View className="flex-1 items-center justify-center">
