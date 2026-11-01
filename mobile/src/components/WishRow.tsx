@@ -7,6 +7,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Link2 } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
+import Svg, { Path } from "react-native-svg";
 
 import { linkHost } from "../services/affiliate/urlCleanup";
 import { wishImages } from "../store/WishpoolContext";
@@ -18,10 +19,23 @@ import { Txt } from "./ui";
 
 export const LIST = { pad: 16, icon: 30, gap: 16 } as const;
 
+// a filled grey circle with an "i" cut out (coolicons circle-info-fill-round)
+function NoteIcon({ size }: { size: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        fill={C.t3}
+        fillRule="evenodd"
+        d="M2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22C6.477 22 2 17.523 2 12ZM12 7C11.448 7 11 7.448 11 8C11 8.552 11.448 9 12 9H12.01C12.562 9 13.01 8.552 13.01 8C13.01 7.448 12.562 7 12.01 7H12ZM13 11C13 10.448 12.552 10 12 10C11.448 10 11 10.448 11 11V16C11 16.552 11.448 17 12 17C12.552 17 13 16.552 13 16V11Z"
+      />
+    </Svg>
+  );
+}
+
 export function WishNote({ text, compact }: { text: string; compact?: boolean }) {
   return (
     <View className="flex-row items-start bg-card2" style={{ borderRadius: compact ? 12 : 16, paddingVertical: compact ? 8 : 12, paddingHorizontal: compact ? 12 : 16, gap: compact ? 8 : 12 }}>
-      <Sticker emoji="stk:note" size={compact ? 14 : 18} style={{ margin: compact ? -5 : -6 }} />
+      <View style={{ marginTop: 1 }}><NoteIcon size={compact ? 16 : 18} /></View>
       <Txt className="flex-1" style={{ fontSize: compact ? 13 : 14.5, lineHeight: compact ? 18 : 20 }}>{text}</Txt>
     </View>
   );
