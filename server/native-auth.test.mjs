@@ -159,6 +159,13 @@ try {
   globalThis.fetch = realFetch;
   for (const k of ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_PUBLIC_URL"]) delete process.env[k];
 
+  // Secret Santa: a friends room keeps its swap date
+  const santa = (await call("POST", "/api/rooms", { name: "Santa", type: "friends", emoji: "stk:gift", tint: "#FF4D8D", eventDate: "2030-12-20" }, rv.body.token)).body;
+  const santaId = (santa.room || santa).id;
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.rooms.find(r => r.id === santaId).eventDate, "2030-12-20");
+  await call("PATCH", "/api/rooms/" + santaId, { name: "Santa", eventDate: "" }, rv.body.token);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.rooms.find(r => r.id === santaId).eventDate, "");
+
   // review account demo: only the review account, and a refill replaces the old one
   await call("POST", "/api/auth/email/start", { email: "demo.check@example.com" });
   const dc = logs.filter(l => l.includes("demo.check@example.com")).pop().match(/(\d{6})$/)[1];

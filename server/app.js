@@ -389,8 +389,8 @@ export async function createApp() {
     const mode = t === "birthday" ? (bdayMode === "other" ? "other" : "self") : "";
     const r = {
       id: uid("r"), name: name || "Room", type: t, emoji: emoji || "🎁", tint: tint || "#2E7DF6", ownerId: req.user.id, createdAt: Date.now(),
-      // only birthday rooms carry a date now
-      ...(t === "birthday" ? cleanEvent(eventTitle, eventDate) : {}),
+      // birthday rooms carry a date; friends rooms may too (a Secret Santa swap date)
+      ...(t === "birthday" || t === "friends" ? cleanEvent(eventTitle, eventDate) : {}),
       bdayMode: mode, celebrantName: mode === "other" ? cleanName(celebrantName) : (mode === "self" ? cleanName(req.user.name) : ""),
       celebrantId: mode === "self" ? req.user.id : null,
       stickerPos: cleanStickerPos(stickerPos),
@@ -410,7 +410,7 @@ export async function createApp() {
     if (!name || !name.trim()) return res.status(400).json({ error: "name_required" });
     const okTint = typeof tint === "string" && /^#[0-9a-fA-F]{6}$/.test(tint) ? tint : r.tint;
     // event fields are optional; sending them (even empty) sets/clears the event
-    const ev = r.type === "birthday" && ("eventTitle" in body || "eventDate" in body) ? cleanEvent(body.eventTitle, body.eventDate) : {};
+    const ev = (r.type === "birthday" || r.type === "friends") && ("eventTitle" in body || "eventDate" in body) ? cleanEvent(body.eventTitle, body.eventDate) : {};
     await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint, ...ev, ...("stickerPos" in body ? { stickerPos: cleanStickerPos(body.stickerPos) } : {}) });
     if (r.type === "birthday" && r.bdayMode === "other" && "celebrantName" in body) await store.setCelebrantName(r.id, cleanName(body.celebrantName));
     res.json({ ok: true });

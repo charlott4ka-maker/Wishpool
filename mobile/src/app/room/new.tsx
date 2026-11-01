@@ -26,8 +26,11 @@ import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, ROOM_COLORS } from "../../theme/tokens";
 import type { RoomType } from "../../types";
 
-const PRESETS: { type: RoomType; key: string; hint: string }[] = [
+// Secret Santa is a friends room (so it has the draw) with its own name,
+// sticker and colour, and an optional gift swap date with a countdown
+const PRESETS: { type: RoomType; key: string; hint: string; santa?: boolean }[] = [
   { type: "friends", key: "roomFriends", hint: "friendsRoomHint" },
+  { type: "friends", key: "roomSanta", hint: "santaRoomHint", santa: true },
   { type: "couple", key: "roomCouple", hint: "coupleRoomHint" },
   { type: "birthday", key: "roomBirthday", hint: "birthdayRoomHint" },
 ];
@@ -84,6 +87,16 @@ export default function CreateRoomScreen() {
   const [stickerPos, setStickerPos] = useState(editing?.stickerPos || "");
   const [dragging, setDragging] = useState(false);
   const bday = preset.type === "birthday";
+  // the swap date: a new Secret Santa, or a friends room that already has a date
+  const swapDate = !bday && (!!preset.santa || (!!editing && editing.type === "friends" && !!editing.eventDate));
+  const pickPreset = (p: (typeof PRESETS)[number]) => {
+    setPreset(p);
+    // Secret Santa gets its own look unless a sticker or colour was already chosen
+    if (p.santa && emoji === "stk:candle" && tint === ROOM_COLORS[0]) {
+      setEmoji("stk:gift");
+      setTint("#FF4D8D");
+    }
+  };
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
   const title = name.trim() || autoName;
   const [tried, setTried] = useState(false);
@@ -97,10 +110,10 @@ export default function CreateRoomScreen() {
       return haptic("error");
     }
     setBusy(true);
-    const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : {};
+    const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : swapDate && date ? { eventDate: date } : {};
     try {
       if (editing) {
-        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : {}) });
+        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
         haptic("success");
         router.back();
         toast.success(t("toastSaved"), { root: true });
@@ -128,7 +141,7 @@ export default function CreateRoomScreen() {
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto w-1/2">
         <RoomFolder
-          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, members: editing?.members || [], eventDate: bday && date ? date : undefined }}
+          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, members: editing?.members || [], eventDate: (bday || swapDate) && date ? date : undefined }}
           wishes={[]}
           onPress={() => {}}
           onStickerMove={setStickerPos}
@@ -151,7 +164,7 @@ export default function CreateRoomScreen() {
           <Label>{t("roomType")}</Label>
           <View className="mb-2 flex-row flex-wrap gap-2">
             {PRESETS.map((p) => (
-              <Chip key={p.type} active={preset.type === p.type} onPress={() => setPreset(p)}>
+              <Chip key={p.key} active={preset.key === p.key} onPress={() => pickPreset(p)}>
                 {t(p.key)}
               </Chip>
             ))}
@@ -159,6 +172,8 @@ export default function CreateRoomScreen() {
           <Txt className="mb-4 text-[13px] leading-[19px] text-t2">{t(preset.hint)}</Txt>
         </>
       ) : null}
+
+      {swapDate ? <DateRow label={t("santaDate")} value={date} onChange={setDate} hint={t("santaDateHint")} minimumDate={new Date()} /> : null}
 
       {bday ? (
         <View>
