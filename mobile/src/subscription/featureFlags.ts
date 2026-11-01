@@ -44,6 +44,13 @@ export const STICKER_PACKS: StickerPack[] = [
     ],
   },
   {
+    // New Year: only in the Secret Santa room's picker (pack="newyear")
+    id: "newyear",
+    titleKey: "packNewYear",
+    isPremiumOnly: false,
+    stickers: ["santa", "tree", "snowman", "gingerbread", "bauble", "reindeer"],
+  },
+  {
     // Placeholder contents until the exclusive 3D pack is drawn: drop new WebPs
     // into assets/stickers, re-run the asset list, and list them here.
     id: "party",
@@ -52,6 +59,8 @@ export const STICKER_PACKS: StickerPack[] = [
     stickers: ["basket", "bulb", "envelope", "eyes", "note"],
   },
 ];
+
+export const NEW_YEAR_STICKERS = ["santa", "tree", "snowman", "gingerbread", "bauble", "reindeer"].map((n) => `stk:${n}`);
 
 export const stickerId = (name: StickerName) => `stk:${name}`;
 

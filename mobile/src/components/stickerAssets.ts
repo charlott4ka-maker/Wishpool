@@ -33,6 +33,12 @@ export const STICKER_ASSETS = {
   "sneakers": require("../../assets/stickers/sneakers.webp"),
   "tag": require("../../assets/stickers/tag.webp"),
   "uno": require("../../assets/stickers/uno.webp"),
+  "tree": require("../../assets/stickers/tree.webp"),
+  "santa": require("../../assets/stickers/santa.webp"),
+  "snowman": require("../../assets/stickers/snowman.webp"),
+  "gingerbread": require("../../assets/stickers/gingerbread.webp"),
+  "bauble": require("../../assets/stickers/bauble.webp"),
+  "reindeer": require("../../assets/stickers/reindeer.webp"),
 } as const;
 
 export type StickerName = keyof typeof STICKER_ASSETS;

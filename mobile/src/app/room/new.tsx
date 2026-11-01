@@ -24,6 +24,7 @@ import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, ROOM_COLORS } from "../../theme/tokens";
+import { NEW_YEAR_STICKERS } from "../../subscription/featureFlags";
 import type { RoomType } from "../../types";
 
 // Secret Santa is a friends room (so it has the draw) with its own name,
@@ -87,15 +88,17 @@ export default function CreateRoomScreen() {
   const [stickerPos, setStickerPos] = useState(editing?.stickerPos || "");
   const [dragging, setDragging] = useState(false);
   const bday = preset.type === "birthday";
+  // a Secret Santa (new, or one being edited: it wears a New Year sticker)
+  const santa = !!preset.santa || (!!editing && NEW_YEAR_STICKERS.includes(editing.emoji));
   // the swap date: a new Secret Santa, or a friends room that already has a date
   const swapDate = !bday && (!!preset.santa || (!!editing && editing.type === "friends" && !!editing.eventDate));
   const pickPreset = (p: (typeof PRESETS)[number]) => {
     setPreset(p);
     // Secret Santa gets its own look unless a sticker or colour was already chosen
-    if (p.santa && emoji === "stk:candle" && tint === ROOM_COLORS[0]) {
-      setEmoji("stk:gift");
-      setTint("#FF4D8D");
-    }
+    // and only New Year stickers; leaving it puts back an ordinary one
+    if (p.santa && !NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:santa");
+    if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:candle");
+    if (p.santa && tint === ROOM_COLORS[0]) setTint("#FF4D8D");
   };
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
   const title = name.trim() || autoName;
@@ -152,7 +155,7 @@ export default function CreateRoomScreen() {
 
       <Label>{t("roomSticker")}</Label>
       <View className="mb-4">
-        <StickerPicker value={emoji} onChange={setEmoji} />
+        <StickerPicker value={emoji} onChange={setEmoji} pack={santa ? "newyear" : undefined} />
       </View>
 
       <Label>{t("roomColor")}</Label>

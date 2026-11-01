@@ -15,7 +15,9 @@ import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { PremiumBadge, Txt } from "./ui";
 
-export function StickerPicker({ value, onChange, size = 28 }: { value: string; onChange: (emoji: string) => void; size?: number }) {
+// pack: show just that one pack (the Secret Santa room shows only "newyear");
+// otherwise every pack but that one
+export function StickerPicker({ value, onChange, size = 28, pack: only }: { value: string; onChange: (emoji: string) => void; size?: number; pack?: string }) {
   const { t } = useT();
   const { isPremium } = useSubscription();
   const router = useRouter();
@@ -25,9 +27,9 @@ export function StickerPicker({ value, onChange, size = 28 }: { value: string; o
   const extra = stickers.extra.map((s) => s.name);
   return (
     <View className="gap-4">
-      {STICKER_PACKS.filter((p) => PREMIUM_ENABLED || !p.isPremiumOnly).map((pack, i, packs) => {
+      {STICKER_PACKS.filter((p) => (only ? p.id === only : p.id !== "newyear") && (PREMIUM_ENABLED || !p.isPremiumOnly)).map((pack, i, packs) => {
         const locked = pack.isPremiumOnly && !isPremium;
-        const names = [...(pack.stickers as string[]), ...(i === 0 ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k);
+        const names = [...(pack.stickers as string[]), ...(i === 0 && !only ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k);
         return (
           <View key={pack.id}>
             {packs.length > 1 ? (

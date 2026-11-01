@@ -130,6 +130,7 @@ export const MOBILE_STRINGS = {
   iconBlush: { uk: "Рум'янець", ru: "Румянец", en: "Blush" },
   iconMatcha: { uk: "Матча", ru: "Матча", en: "Matcha" },
   packClassic: { uk: "Класичні", ru: "Классические", en: "Classic" },
+  packNewYear: { uk: "Новий рік", ru: "Новый год", en: "New Year" },
   packParty: { uk: "Вечірка", ru: "Вечеринка", en: "Party" },
 
   planYearly: { uk: "Рік", ru: "Год", en: "Yearly" },
