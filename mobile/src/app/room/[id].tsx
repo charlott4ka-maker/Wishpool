@@ -8,12 +8,14 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView } from "expo-symbols";
 import { CalendarDays, Check, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useCallback, useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Platform, Pressable, RefreshControl, ScrollView, Share, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DrawCard } from "../../components/DrawCard";
+import { Snowfall } from "../../components/Snowfall";
 import { RoomListSkeleton } from "../../components/Skeleton";
 import { SwipeRow } from "../../components/SwipeRow";
 import { heroTop, RoomHeroBg } from "../../components/RoomHeroBg";
@@ -32,6 +34,7 @@ import { usePullRefresh } from "../../lib/pullRefresh";
 import { askReport } from "../../lib/report";
 import { openedWish, type RoomWish } from "../../lib/openedWish";
 import { useWishpool } from "../../store/WishpoolContext";
+import { NEW_YEAR_STICKERS } from "../../subscription/featureFlags";
 import { C, H, hex } from "../../theme/tokens";
 import type { Member, Wish } from "../../types";
 
@@ -76,6 +79,23 @@ export default function RoomScreen() {
 
   // opened from an invite link there may be nothing underneath: then home
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
+
+  // a Secret Santa room (it wears a New Year sticker): snow the first time you
+  // open it on this phone, whether you made it or were invited
+  const santa = !!room && NEW_YEAR_STICKERS.includes(room.emoji);
+  const [snow, setSnow] = useState(false);
+  useEffect(() => {
+    if (!santa || !room) return;
+    const key = "wp_snow_" + room.id;
+    AsyncStorage.getItem(key)
+      .then((seen) => {
+        if (seen) return;
+        setSnow(true);
+        return AsyncStorage.setItem(key, "1");
+      })
+      .catch(() => {});
+  }, [santa, room?.id]);
+  const snowDone = useCallback(() => setSnow(false), []);
 
   if (!room) return <Empty emoji="stk:ghost" title={t("roomGone")} action={<Pill onPress={goBack}>{t("back")}</Pill>} />;
 
@@ -397,6 +417,7 @@ export default function RoomScreen() {
         {scrolled ? <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 32 }} /> : null}
         </View>
       </View>
+      {snow ? <Snowfall onDone={snowDone} /> : null}
     </View>
   );
 }
