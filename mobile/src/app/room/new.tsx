@@ -13,8 +13,7 @@ import { DateRow } from "../../components/DateRow";
 import { FriendPicker, useFriendList } from "../../components/FriendPicker";
 import { RoomFolder } from "../../components/RoomFolder";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
-import { SheetHeader } from "../../components/SheetHeader";
-import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
+import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
@@ -71,6 +70,7 @@ export default function CreateRoomScreen() {
   const editing = id ? rooms.find((r) => r.id === id) : undefined;
   const { isStickerLocked } = useSubscription();
   const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
+  const [scrolled, setScrolled] = useState(false);
   const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
   const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
   const [name, setName] = useState(editing?.name || "");
@@ -124,8 +124,7 @@ export default function CreateRoomScreen() {
     // a fragment, not a wrapping View: a formSheet lays out its root child
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
-    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!dragging} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
-      <SheetHeader title={t(editing ? "editRoom" : "newRoom")} />
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!dragging} scrollEventThrottle={16} onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 4)} contentContainerStyle={{ padding: 16, paddingTop: formHeaderSpace(insets.top), paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto w-1/2">
         <RoomFolder
@@ -198,8 +197,8 @@ export default function CreateRoomScreen() {
         {editing ? t("saveChanges") : t("createRoom")}
       </Pill>
     </SheetFooter>
-    {/* full screen: the form scrolls under a status bar strip of the same colour */}
-    <StatusBarBackdrop color={C.card} />
+    {/* full screen: the title and close stay pinned while the form scrolls under them */}
+    <FormHeader title={t(editing ? "editRoom" : "newRoom")} scrolled={scrolled} />
     <ToastHost />
     </>
   );

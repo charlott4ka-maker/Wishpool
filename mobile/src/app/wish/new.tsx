@@ -21,8 +21,7 @@ import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
-import { SheetHeader } from "../../components/SheetHeader";
-import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
+import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
@@ -61,6 +60,7 @@ export default function AddWishScreen() {
   const initial = id ? wishes.find((w) => w.id === id) : undefined;
 
   const [title, setTitle] = useState(initial?.title || "");
+  const [scrolled, setScrolled] = useState(false);
   // "Price" or "From / to", like the Mini App; an existing range is split back
   const initRange = initial?.price ? initial.price.match(RANGE_RE) : null;
   const [price, setPrice] = useState(initRange ? "" : initial?.price || "");
@@ -183,8 +183,7 @@ export default function AddWishScreen() {
     // a fragment, not a wrapping View: a formSheet lays out its root child
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
-    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!lifted} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
-      <SheetHeader title={t(initial ? "editWish" : "newWish")} />
+    <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!lifted} scrollEventThrottle={16} onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 4)} contentContainerStyle={{ padding: 16, paddingTop: formHeaderSpace(insets.top), paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
 
       <Segmented options={[["photo", t("photo")], ["emoji", t("emojiTab")]]} value={cover} onChange={setCover} neutral fill={C.bg} className="mb-4" />
 
@@ -364,8 +363,8 @@ export default function AddWishScreen() {
         {t(initial ? "saveChanges" : "saveWish")}
       </Pill>
     </SheetFooter>
-    {/* full screen: the form scrolls under a status bar strip of the same colour */}
-    <StatusBarBackdrop color={C.card} />
+    {/* full screen: the title and close stay pinned while the form scrolls under them */}
+    <FormHeader title={t(initial ? "editWish" : "newWish")} scrolled={scrolled} />
     <ToastHost />
     </>
   );

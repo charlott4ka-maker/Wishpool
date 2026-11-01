@@ -36,7 +36,8 @@ export function WishNote({ text, compact }: { text: string; compact?: boolean })
   return (
     // in a list row it sits flush with the title above (no box); in the wish sheet it's a block
     <View className={`flex-row items-start ${compact ? "" : "bg-card2"}`} style={compact ? { gap: 8 } : { borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, gap: 12 }}>
-      <View style={{ marginTop: 1 }}><NoteIcon size={compact ? 16 : 18} /></View>
+      {/* centred on the first line's capitals (marginTop 1 sat it ~1pt low) */}
+      <View style={{ marginTop: compact ? 0 : 1 }}><NoteIcon size={compact ? 16 : 18} /></View>
       <Txt className="flex-1" style={{ fontSize: compact ? 13 : 14.5, lineHeight: compact ? 18 : 20 }}>{text}</Txt>
     </View>
   );

@@ -29,7 +29,8 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
         onPress?.(e);
       }}
       className="flex-1 overflow-hidden rounded-[24px] p-2"
-      style={{ backgroundColor: C.raised, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
+      // no outline: the same fill as the blocks in Settings (raised)
+      style={{ backgroundColor: C.raised }}
     >
       {/* picture tile: a touch lighter than the card, a cool blue-grey (white on top read brownish) */}
       <View className="w-full items-center justify-center overflow-hidden rounded-2xl" style={{ aspectRatio: 1, backgroundColor: "#252B36" }}>
