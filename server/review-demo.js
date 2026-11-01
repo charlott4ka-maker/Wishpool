@@ -87,7 +87,7 @@ export async function fillReviewDemo(store, me, lang) {
   await wish(me, "stk:headphones", { uk: "Бездротові навушники", ru: "Беспроводные наушники", en: "Wireless headphones" }, price("4 200 ₴", "$99"), ["friends", "us"], {
     link: "https://rozetka.com.ua/ua/headphones/", note: { uk: "Чорні або білі, з шумодавом", ru: "Чёрные или белые, с шумоподавлением", en: "Black or white, with noise cancelling" },
   });
-  await wish(me, "stk:plane", { uk: "Квитки до Барселони", ru: "Билеты в Барселону", en: "Trip to Barcelona" }, price("від 6 000 ₴", "from $150"), ["us"]);
+  await wish(me, "stk:plane", { uk: "Квитки до Барселони", ru: "Билеты в Барселону", en: "Trip to Barcelona" }, p({ uk: "від 6 000 ₴", ru: "от 6 000 ₴", en: "from $150" }), ["us"]);
   await wish(me, "stk:book", { uk: "Книга «Атомні звички»", ru: "Книга «Атомные привычки»", en: "Atomic Habits book" }, price("450 ₴", "$15"), ["friends", "family"], { link: "https://www.yakaboo.ua/" });
   await wish(me, "stk:matcha", { uk: "Набір для матчі", ru: "Набор для матчи", en: "Matcha set" }, price("1 300 ₴", "$35"), []);
   await wish(me, "stk:lipstick", { uk: "Помада Dior Addict", ru: "Помада Dior Addict", en: "Dior Addict lipstick" }, price("1 850 ₴", "$42"), ["friends"], {
