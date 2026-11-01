@@ -14,6 +14,7 @@ import { FriendPicker, useFriendList } from "../../components/FriendPicker";
 import { RoomFolder } from "../../components/RoomFolder";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
+import { Press } from "../../components/Press";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
@@ -29,11 +30,12 @@ import type { RoomType } from "../../types";
 
 // Secret Santa is a friends room (so it has the draw) with its own name,
 // sticker and colour, and an optional gift swap date with a countdown
-const PRESETS: { type: RoomType; key: string; hint: string; santa?: boolean }[] = [
-  { type: "friends", key: "roomFriends", hint: "friendsRoomHint" },
-  { type: "friends", key: "roomSanta", hint: "santaRoomHint", santa: true },
-  { type: "couple", key: "roomCouple", hint: "coupleRoomHint" },
-  { type: "birthday", key: "roomBirthday", hint: "birthdayRoomHint" },
+// each type starts with its own sticker and colour (changed under "Change look")
+const PRESETS: { type: RoomType; key: string; hint: string; emoji: string; tint: string; santa?: boolean }[] = [
+  { type: "friends", key: "roomFriends", hint: "friendsRoomHint", emoji: "stk:uno", tint: "#0A82F9" },
+  { type: "friends", key: "roomSanta", hint: "santaRoomHint", emoji: "stk:santa", tint: "#FF4D8D", santa: true },
+  { type: "couple", key: "roomCouple", hint: "coupleRoomHint", emoji: "stk:ring", tint: "#AF52DE" },
+  { type: "birthday", key: "roomBirthday", hint: "birthdayRoomHint", emoji: "stk:cake", tint: "#34C759" },
 ];
 
 const Label = ({ children }: { children: string }) => <Txt className="mb-2 font-m600 text-[13px] text-t2">{children}</Txt>;
@@ -75,6 +77,9 @@ export default function CreateRoomScreen() {
   const { isStickerLocked } = useSubscription();
   const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
   const [scrolled, setScrolled] = useState(false);
+  // a new room: first the type (four cards), then a short form for it
+  const [step, setStep] = useState<"type" | "form">(editing ? "form" : "type");
+  const [look, setLook] = useState(false); // sticker and colour, folded away
   const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
   const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
   const [name, setName] = useState(editing?.name || "");
@@ -93,12 +98,12 @@ export default function CreateRoomScreen() {
   // the swap date: a new Secret Santa, or a friends room that already has a date
   const swapDate = !bday && (!!preset.santa || (!!editing && editing.type === "friends" && !!editing.eventDate));
   const pickPreset = (p: (typeof PRESETS)[number]) => {
+    haptic("select");
     setPreset(p);
-    // Secret Santa gets its own look unless a sticker or colour was already chosen
-    // and only New Year stickers; leaving it puts back an ordinary one
-    if (p.santa && !NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:santa");
-    if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:candle");
-    if (p.santa && tint === ROOM_COLORS[0]) setTint("#FF4D8D");
+    setEmoji(p.emoji);
+    setTint(p.tint);
+    setStickerPos("");
+    setStep("form");
   };
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
   const title = name.trim() || autoName;
@@ -141,6 +146,22 @@ export default function CreateRoomScreen() {
     // itself, and a flex-1 View around the ScrollView came out empty
     <>
     <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets scrollEnabled={!dragging} scrollEventThrottle={16} onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 4)} contentContainerStyle={{ padding: 16, paddingTop: formHeaderSpace(insets.top), paddingBottom: insets.bottom + 16 + SHEET_FOOTER_SPACE }}>
+      {step === "type" ? (
+        <View className="gap-3">
+          {PRESETS.map((p) => (
+            <Press key={p.key} onPress={() => pickPreset(p)} className="flex-row items-center gap-4 rounded-card bg-raised p-4">
+              <View className="h-14 w-14 items-center justify-center rounded-[16px]" style={{ backgroundColor: p.tint }}>
+                <Sticker emoji={p.emoji} size={34} />
+              </View>
+              <View className="flex-1">
+                <Txt className="font-m700 text-[17px]">{t(p.key)}</Txt>
+                <Txt className="mt-1 text-[13px] leading-[18px] text-t2">{t(p.hint)}</Txt>
+              </View>
+            </Press>
+          ))}
+        </View>
+      ) : (
+      <>
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto w-1/2">
         <RoomFolder
@@ -151,29 +172,31 @@ export default function CreateRoomScreen() {
           onStickerDrag={setDragging}
         />
       </View>
-      <Txt className="mb-6 mt-2 text-center text-[12.5px] text-t3">{t("stickerDragHint")}</Txt>
-
-      <Label>{t("roomSticker")}</Label>
-      <View className="mb-4">
-        <StickerPicker value={emoji} onChange={setEmoji} pack={santa ? "newyear" : undefined} />
+      {/* sticker and colour fold away under the preview */}
+      <View className="mb-6 mt-3 items-center">
+        <Pill size="sm" kind="ghost" onPress={() => { haptic("select"); setLook((v) => !v); }}>{t(look ? "lookDone" : "changeLook")}</Pill>
       </View>
-
-      <Label>{t("roomColor")}</Label>
-      <ColorPicker value={tint} onChange={setTint} />
-
-      {/* the type is set when the room is made */}
-      {!editing ? (
+      {look ? (
         <>
-          <Label>{t("roomType")}</Label>
-          <View className="mb-2 flex-row flex-wrap gap-2">
-            {PRESETS.map((p) => (
-              <Chip key={p.key} active={preset.key === p.key} onPress={() => pickPreset(p)}>
-                {t(p.key)}
-              </Chip>
-            ))}
+          <Label>{t("roomSticker")}</Label>
+          <View className="mb-4">
+            <StickerPicker value={emoji} onChange={setEmoji} pack={santa ? "newyear" : undefined} />
           </View>
-          <Txt className="mb-4 text-[13px] leading-[19px] text-t2">{t(preset.hint)}</Txt>
+          <Label>{t("roomColor")}</Label>
+          <ColorPicker value={tint} onChange={setTint} />
+          <Txt className="mb-6 text-[12.5px] text-t3">{t("stickerDragHint")}</Txt>
         </>
+      ) : null}
+
+      {/* the type, chosen on the first step (fixed once the room exists) */}
+      {!editing ? (
+        <Press onPress={() => setStep("type")} className="mb-4 flex-row items-center justify-between rounded-tile bg-card2 px-4" style={{ height: 52 }}>
+          <Txt className="text-[15px] text-t2">{t("roomType")}</Txt>
+          <View className="flex-row items-center gap-2">
+            <Txt className="font-m600 text-[15px]">{t(preset.key)}</Txt>
+            <Txt className="font-m600 text-[15px] text-blueText">{t("changeShort")}</Txt>
+          </View>
+        </Press>
       ) : null}
 
       {swapDate ? <DateRow label={t("santaDate")} value={date} onChange={setDate} hint={t("santaDateHint")} minimumDate={new Date()} /> : null}
@@ -207,14 +230,18 @@ export default function CreateRoomScreen() {
           />
         </View>
       ) : null}
+      </>
+      )}
 
     </ScrollView>
     {/* the action stays at the bottom of the screen */}
-    <SheetFooter>
-      <Pill full loading={busy} icon={editing ? undefined : <Plus size={18} color="#fff" />} onPress={submit}>
-        {editing ? t("saveChanges") : t("createRoom")}
-      </Pill>
-    </SheetFooter>
+    {step === "form" ? (
+      <SheetFooter>
+        <Pill full loading={busy} icon={editing ? undefined : <Plus size={18} color="#fff" />} onPress={submit}>
+          {editing ? t("saveChanges") : t("createRoom")}
+        </Pill>
+      </SheetFooter>
+    ) : null}
     {/* full screen: the title and close stay pinned while the form scrolls under them */}
     <FormHeader title={t(editing ? "editRoom" : "newRoom")} scrolled={scrolled} />
     <ToastHost />
