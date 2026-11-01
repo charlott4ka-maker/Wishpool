@@ -11,6 +11,7 @@ import { nativeAuthRoutes, hashToken } from "./native-auth.js";
 import { publicConfigRoute, adminConfigRoutes } from "./app-config.js";
 import { moderationRoutes } from "./moderation.js";
 import { friendRoutes } from "./friends.js";
+import { reviewDemoRoutes } from "./review-demo.js";
 import { adminLoginRoute, ADMIN_PANEL_ID } from "./admin-auth.js";
 
 export async function createApp() {
@@ -231,6 +232,7 @@ export async function createApp() {
   };
   adminConfigRoutes(api, store, (req) => isAdmin(req.user.id));
   friendRoutes(api, store);
+  reviewDemoRoutes(api, store);
   moderationRoutes(api, store, {
     isAdmin: (req) => isAdmin(req.user.id),
     pubWish,

@@ -134,6 +134,8 @@ export const api = {
   declineRoomInvite: (roomId: string) => req("POST", "/room-invites/" + roomId + "/decline"),
   draw: (roomId: string) => req<DrawData>("GET", "/rooms/" + roomId + "/draw"),
   runDraw: (roomId: string, budget: string) => req("POST", "/rooms/" + roomId + "/draw", { budget }),
+  // App Review account only: refill it with the demo content in this language
+  reviewDemo: (lang: string) => req("POST", "/review-demo", { lang }),
   report: (b: { wishId?: string; userId?: string; roomId?: string; reason: string }) => req("POST", "/reports", b),
   block: (userId: string) => req("POST", "/blocks", { userId }),
   unblock: (userId: string) => req("DELETE", "/blocks/" + encodeURIComponent(userId)),

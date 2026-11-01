@@ -159,6 +159,21 @@ try {
   globalThis.fetch = realFetch;
   for (const k of ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_PUBLIC_URL"]) delete process.env[k];
 
+  // review account demo: only the review account, and a refill replaces the old one
+  await call("POST", "/api/auth/email/start", { email: "demo.check@example.com" });
+  const dc = logs.filter(l => l.includes("demo.check@example.com")).pop().match(/(\d{6})$/)[1];
+  const stranger = (await call("POST", "/api/auth/email/verify", { email: "demo.check@example.com", code: dc })).body.token;
+  assert.equal((await call("POST", "/api/review-demo", { lang: "uk" }, stranger)).status, 403);
+  for (const lang of ["uk", "uk"]) assert.equal((await call("POST", "/api/review-demo", { lang }, rv.body.token)).status, 200);
+  const demo = (await call("GET", "/api/state", null, rv.body.token)).body;
+  assert.equal(demo.me.name, "Аня");
+  assert.equal(demo.wishes.length, 8);
+  assert.deepEqual(demo.rooms.map(r => r.name).sort(), ["ДР Макса", "Друзі", "Ми вдвох", "Сімʼя"].sort());
+  const bday = demo.rooms.find(r => r.name === "ДР Макса");
+  const bd = (await call("GET", "/api/rooms/" + bday.id, null, rv.body.token)).body;
+  assert.deepEqual(bd.lists[0].wishes.map(w => [w.title, !!w.reservedByMe, !!w.taken]).sort(), [["Навушники", true, false], ["Набір для дайвінгу", false, false], ["Сертифікат на політ", false, true]].sort());
+  assert.equal((await call("GET", "/api/friends", null, rv.body.token)).body.friends.length, 5);
+
   // sign out drops the session
   await call("POST", "/api/sign-out", null, rv.body.token);
   assert.equal((await call("GET", "/api/state", null, rv.body.token)).status, 401);

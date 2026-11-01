@@ -41,10 +41,12 @@ export default function SettingsScreen() {
   const version = Constants.expoConfig?.version || "1.0.0";
   const [scrolled, setScrolled] = useState(false);
   // the demo row (sample content for App Store screenshots): always in dev
-  // builds; in TestFlight/App Store builds a guest unlocks it by tapping the
-  // version line 7 times, and it stays while the demo is loaded
+  // builds; in TestFlight/App Store builds it's unlocked by tapping the version
+  // line 7 times, and stays while a guest demo is loaded. Signed in, it refills
+  // the App Review account on the server (the server refuses anyone else).
   const [versionTaps, setVersionTaps] = useState(0);
-  const showDemo = __DEV__ || prefs.demo || (status !== "signedIn" && versionTaps >= 7);
+  const showDemo = __DEV__ || prefs.demo || versionTaps >= 7;
+  const signedIn = status === "signedIn";
   // how friends add you to rooms (signed in): read from the server, changed in an action sheet
   const [roomAdd, setRoomAdd] = useState<"invite" | "instant" | null>(null);
   useEffect(() => {
@@ -159,8 +161,18 @@ export default function SettingsScreen() {
             <SettingsCell
               icon={Wand2}
               tint="#AF52DE"
-              label={prefs.demo ? "Demo: clear" : "Demo: fill"}
+              label={signedIn ? "Demo: fill this account" : prefs.demo ? "Demo: clear" : "Demo: fill"}
               onPress={async () => {
+                if (signedIn) {
+                  try {
+                    await api.reviewDemo(lang);
+                    await refresh().catch(() => {});
+                    toast.success("Demo loaded");
+                  } catch {
+                    toast.error(t("toastError"));
+                  }
+                  return;
+                }
                 if (prefs.demo) {
                   await clearDemo();
                   setVersionTaps(0);
