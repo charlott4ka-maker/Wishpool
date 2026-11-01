@@ -6,7 +6,7 @@ import { Image } from "expo-image";
 import * as WebBrowser from "expo-web-browser";
 import { Link2 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { Platform, Pressable, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import { linkHost } from "../services/affiliate/urlCleanup";
@@ -36,8 +36,9 @@ export function WishNote({ text, compact }: { text: string; compact?: boolean })
   return (
     // in a list row it sits flush with the title above (no box); in the wish sheet it's a block
     <View className={`flex-row items-start ${compact ? "" : "bg-card2"}`} style={compact ? { gap: 8 } : { borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, gap: 12 }}>
-      {/* centred on the first line's capitals (marginTop 1 sat it ~1pt low) */}
-      <View style={{ marginTop: compact ? 0 : 1 }}><NoteIcon size={compact ? 16 : 18} /></View>
+      {/* centred on the first line of text. iOS puts a line's extra height (lineHeight
+          over the font's own) above the glyphs, so the text sits ~2pt lower there */}
+      <View style={{ marginTop: Platform.OS === "ios" ? 2 : compact ? 0 : 1 }}><NoteIcon size={compact ? 16 : 18} /></View>
       <Txt className="flex-1" style={{ fontSize: compact ? 13 : 14.5, lineHeight: compact ? 18 : 20 }}>{text}</Txt>
     </View>
   );
