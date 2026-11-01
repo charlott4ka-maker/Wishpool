@@ -34,7 +34,8 @@ function NoteIcon({ size }: { size: number }) {
 
 export function WishNote({ text, compact }: { text: string; compact?: boolean }) {
   return (
-    <View className="flex-row items-start bg-card2" style={{ borderRadius: compact ? 12 : 16, paddingVertical: compact ? 8 : 12, paddingHorizontal: compact ? 12 : 16, gap: compact ? 8 : 12 }}>
+    // in a list row it sits flush with the title above (no box); in the wish sheet it's a block
+    <View className={`flex-row items-start ${compact ? "" : "bg-card2"}`} style={compact ? { gap: 8 } : { borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, gap: 12 }}>
       <View style={{ marginTop: 1 }}><NoteIcon size={compact ? 16 : 18} /></View>
       <Txt className="flex-1" style={{ fontSize: compact ? 13 : 14.5, lineHeight: compact ? 18 : 20 }}>{text}</Txt>
     </View>
@@ -62,9 +63,14 @@ export function WishThumb({ w, size = LIST.icon }: { w: Wish; size?: number }) {
 }
 
 export function WishRow({ w, right, onPress, onLongPress }: { w: Wish; right?: React.ReactNode; onPress?: () => void; onLongPress?: () => void }) {
+  // a note (or a link) makes the row tall: the picture and the button then line
+  // up with the title and price instead of floating in the middle of the row
+  const tall = !!(w.note || w.link);
+  const head = w.price ? 44 : 22; // title (22) + gap and price line
+  const side = (node: React.ReactNode) => (tall ? <View style={{ height: head, justifyContent: "center" }}>{node}</View> : node);
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress} disabled={!onPress && !onLongPress} className="flex-row items-center py-4" style={{ gap: LIST.gap, minHeight: 64 }}>
-      <WishThumb w={w} />
+    <Pressable onPress={onPress} onLongPress={onLongPress} disabled={!onPress && !onLongPress} className={`flex-row py-4 ${tall ? "items-start" : "items-center"}`} style={{ gap: LIST.gap, minHeight: 64 }}>
+      {side(<WishThumb w={w} />)}
       <View className="flex-1">
         <Txt numberOfLines={1} className="font-m600 text-base">{w.title}</Txt>
         {w.price ? <Txt className="mt-1 text-[13.5px] text-t2">{w.price}</Txt> : null}
@@ -76,7 +82,7 @@ export function WishRow({ w, right, onPress, onLongPress }: { w: Wish; right?: R
           </Pressable>
         ) : null}
       </View>
-      {right}
+      {right ? side(right) : null}
     </Pressable>
   );
 }

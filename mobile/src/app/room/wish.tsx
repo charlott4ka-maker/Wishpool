@@ -57,7 +57,7 @@ export default function FriendWish() {
         {w.reservedByMe ? (
           <View className="gap-3">
             <View className="h-lg flex-row items-center justify-center gap-2 rounded-full bg-greenSoft">
-              <Check size={18} color={C.greenText} />
+              <Check size={18} color={C.greenText} strokeWidth={1.5} absoluteStrokeWidth />
               <Txt className="font-m700 text-base text-greenText">{t("youGift")}</Txt>
             </View>
             <Pill full kind="ghost" onPress={untake}>{t("cancelGiftYes")}</Pill>

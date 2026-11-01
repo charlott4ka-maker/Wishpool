@@ -5,6 +5,7 @@
 // other gifters, while the wish owner never sees it (the backend hides it).
 
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView } from "expo-symbols";
 import { CalendarDays, Check, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
@@ -31,7 +32,7 @@ import { usePullRefresh } from "../../lib/pullRefresh";
 import { askReport } from "../../lib/report";
 import { openedWish, type RoomWish } from "../../lib/openedWish";
 import { useWishpool } from "../../store/WishpoolContext";
-import { C, H } from "../../theme/tokens";
+import { C, H, hex } from "../../theme/tokens";
 import type { Member, Wish } from "../../types";
 
 type Detail = { lists: { member: Member; wishes: RoomWish[] }[]; mine: Wish[]; members?: (Member & { you?: boolean })[]; owner?: boolean };
@@ -46,6 +47,7 @@ export default function RoomScreen() {
   const me = useMe();
   const room = rooms.find((r) => r.id === id);
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
+  const [scrolled, setScrolled] = useState(false);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(online);
   const [friendIds, setFriendIds] = useState<string[]>([]);
@@ -126,7 +128,7 @@ export default function RoomScreen() {
 
   const reserveRight = (w: RoomWish) =>
     w.reservedByMe ? (
-      <Pill size="sm" kind="green" icon={<Check size={16} color={C.greenText} />} onPress={() => untake(w)}>{t("youGift")}</Pill>
+      <Pill size="sm" kind="green" icon={<Check size={16} color={C.greenText} strokeWidth={1.5} absoluteStrokeWidth />} onPress={() => untake(w)}>{t("youGift")}</Pill>
     ) : w.taken ? (
       <View className="h-sm justify-center px-3">
         <Txt className="font-m600 text-[13px] text-t3">{t("taken")}</Txt>
@@ -228,20 +230,10 @@ export default function RoomScreen() {
       },
     ]);
 
+  // the hero and the tabs stay put; only the lists under the tabs scroll,
+  // fading out under the tabs once something has scrolled there (as in Settings)
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      className="flex-1"
-      style={{ backgroundColor: C.card }}
-      contentContainerStyle={{ flexGrow: 1 }}
-      refreshControl={
-        online ? (
-          <RefreshControl tintColor="#fff" refreshing={pull.refreshing} onRefresh={pull.onRefresh} />
-        ) : undefined
-      }
-    >
-      {/* overscroll at the top shows the hero colour, not black */}
-      <View pointerEvents="none" style={{ position: "absolute", top: -1000, left: 0, right: 0, height: 1000, backgroundColor: heroTop(room.tint) }} />
+    <View className="flex-1" style={{ backgroundColor: heroTop(room.tint) }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>
         <RoomHeroBg tint={room.tint} />
         <View className="flex-row items-center justify-between" style={{ height: H.sm }}>
@@ -290,8 +282,18 @@ export default function RoomScreen() {
       </View>
 
       {/* content sheet slides over the hero with rounded corners */}
-      <View className="flex-1 bg-card px-4 pt-4" style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingBottom: insets.bottom + 16 }}>
-        <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral fill={C.bg} className="mb-4" />
+      <View className="flex-1 bg-card" style={{ marginTop: -28, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: "hidden" }}>
+        <View className="px-4 pt-4">
+          <Segmented options={[["lists", t("segLists")], ["mine", t("segMine")]]} value={seg} onChange={setSeg} neutral fill={C.bg} />
+        </View>
+        <View className="flex-1">
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingTop: 16, paddingBottom: insets.bottom + 16 }}
+          scrollEventThrottle={16}
+          onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 4)}
+          refreshControl={online ? <RefreshControl tintColor={C.t2} refreshing={pull.refreshing} onRefresh={pull.onRefresh} /> : undefined}
+        >
 
         {seg === "lists" ? (
           loading ? (
@@ -381,8 +383,10 @@ export default function RoomScreen() {
             </View>
           </Animated.View>
         )}
-
+        </ScrollView>
+        {scrolled ? <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 32 }} /> : null}
+        </View>
       </View>
-    </ScrollView>
+    </View>
   );
 }
