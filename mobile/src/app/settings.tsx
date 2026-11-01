@@ -79,14 +79,24 @@ export default function SettingsScreen() {
     ]);
   };
 
+  // with the demo loaded, a new language refills it, so names and prices follow
+  const changeLang = (l: Lang) => {
+    setLang(l);
+    if (signedIn && prefs.reviewDemo) {
+      api.reviewDemo(l).then(() => refresh()).catch(() => setPref("reviewDemo", false));
+    } else if (!signedIn && prefs.demo) {
+      fillDemo(l).then(() => refresh()).catch(() => {});
+    }
+  };
+
   const pickLanguage = () => {
     const names = LANGS.map((l) => LANG_NAME[l]);
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions({ options: [...names, t("setCancel")], cancelButtonIndex: names.length, userInterfaceStyle: "dark" }, (i) => {
-        if (i < LANGS.length) setLang(LANGS[i]);
+        if (i < LANGS.length) changeLang(LANGS[i]);
       });
     } else {
-      Alert.alert(t("language"), "", [...LANGS.map((l) => ({ text: LANG_NAME[l], onPress: () => setLang(l) })), { text: t("setCancel"), style: "cancel" as const }]);
+      Alert.alert(t("language"), "", [...LANGS.map((l) => ({ text: LANG_NAME[l], onPress: () => changeLang(l) })), { text: t("setCancel"), style: "cancel" as const }]);
     }
   };
 
@@ -166,6 +176,7 @@ export default function SettingsScreen() {
                 if (signedIn) {
                   try {
                     await api.reviewDemo(lang);
+                    setPref("reviewDemo", true);
                     await refresh().catch(() => {});
                     toast.success("Demo loaded");
                   } catch {

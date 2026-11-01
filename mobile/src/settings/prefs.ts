@@ -20,6 +20,8 @@ export type Prefs = {
   avatar: string | null;
   /** Demo content for screenshots is loaded: no guest prompts. */
   demo: boolean;
+  /** The signed-in (App Review) account was filled with the demo: a language change refills it. */
+  reviewDemo: boolean;
 };
 
 const KEY = "wp_prefs";
@@ -34,6 +36,7 @@ const DEFAULTS: Prefs = {
   displayName: null,
   avatar: null,
   demo: false,
+  reviewDemo: false,
 };
 
 let current: Prefs = DEFAULTS;
