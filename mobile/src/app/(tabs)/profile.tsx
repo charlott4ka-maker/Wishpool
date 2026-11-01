@@ -122,7 +122,7 @@ export default function ProfileScreen() {
               icon={Users}
               tint="#34C759"
               label={t("friendsTitle")}
-              onPress={() => router.push("/friends")}
+              onPress={() => router.push(status === "signedIn" ? "/friends" : "/friends-guest")}
               chevron
               right={
                 inbox ? (

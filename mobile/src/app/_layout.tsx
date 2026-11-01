@@ -70,6 +70,7 @@ function Gate() {
             <Stack.Screen name="settings" />
             <Stack.Screen name="faq" />
             <Stack.Screen name="friends" />
+            <Stack.Screen name="friends-guest" options={FIT_SHEET} />
             {/* the two long forms are full screen, not sheets: dragging the folder sticker
                 (and the photos) used to drag the sheet along */}
             <Stack.Screen name="wish/new" options={FULL_FORM} />
