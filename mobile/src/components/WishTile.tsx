@@ -28,12 +28,13 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
         haptic("light");
         onPress?.(e);
       }}
-      className="flex-1 overflow-hidden rounded-[24px] p-2"
+      className="flex-1 overflow-hidden p-2"
       // no outline: the same fill as the blocks in Settings (raised)
-      style={{ backgroundColor: C.raised }}
+      style={{ backgroundColor: C.raised, borderRadius: 24 }}
     >
-      {/* picture tile: a touch lighter than the card, a cool blue-grey (white on top read brownish) */}
-      <View className="w-full items-center justify-center overflow-hidden rounded-2xl" style={{ aspectRatio: 1, backgroundColor: "#252B36" }}>
+      {/* picture tile: a touch lighter than the card, a cool blue-grey (white on top read brownish);
+          its corners follow the card's: 24 outside minus the 8 padding = 16 */}
+      <View className="w-full items-center justify-center overflow-hidden" style={{ aspectRatio: 1, borderRadius: 24 - 8, backgroundColor: "#252B36" }}>
         {img ? <Image source={{ uri: img }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} /> : <Sticker emoji={w.emoji} size={56} rotate={-6} />}
         <BlurView intensity={30} tint="dark" className="absolute bottom-2 left-2 h-6 flex-row items-center gap-1 overflow-hidden rounded-full bg-black/40 px-2">
           {w.giftedAt ? (
@@ -54,7 +55,8 @@ export function WishTile({ w, onPress, ...rest }: { w: Wish; onPress?: (e?: unkn
           )}
         </BlurView>
       </View>
-      <View className="px-1 pb-1 pt-3">
+      {/* 16 under the price (8 here + the card's 8), a touch more room than before */}
+      <View className="px-1 pb-2 pt-3">
         <Txt numberOfLines={2} className="min-h-[37px] font-m600 text-[14.5px] leading-[19px]">{w.title}</Txt>
         <Txt className={`mt-1 font-m700 text-sm ${w.price ? "text-blueText" : "text-t3"}`}>{w.price || " "}</Txt>
       </View>
