@@ -40,6 +40,11 @@ export default function SettingsScreen() {
   const { refresh } = useWishpool();
   const version = Constants.expoConfig?.version || "1.0.0";
   const [scrolled, setScrolled] = useState(false);
+  // the demo row (sample content for App Store screenshots): always in dev
+  // builds; in TestFlight/App Store builds a guest unlocks it by tapping the
+  // version line 7 times, and it stays while the demo is loaded
+  const [versionTaps, setVersionTaps] = useState(0);
+  const showDemo = __DEV__ || prefs.demo || (status !== "signedIn" && versionTaps >= 7);
   // how friends add you to rooms (signed in): read from the server, changed in an action sheet
   const [roomAdd, setRoomAdd] = useState<"invite" | "instant" | null>(null);
   useEffect(() => {
@@ -149,15 +154,17 @@ export default function SettingsScreen() {
         <SettingsGroup title={t("setAbout")}>
           <SettingsCell icon={CircleHelp} tint="#FF9500" label={t("faq")} onPress={() => router.push("/faq")} />
           {Platform.OS === "ios" ? <SettingsCell icon={Star} tint="#FFCC00" label={t("rateApp")} onPress={openReviewPage} /> : null}
-          {/* dev builds only: sample content for App Store screenshots */}
-          {__DEV__ ? (
+          {/* sample content for App Store screenshots (see showDemo) */}
+          {showDemo ? (
             <SettingsCell
               icon={Wand2}
               tint="#AF52DE"
               label={prefs.demo ? "Demo: clear" : "Demo: fill"}
               onPress={async () => {
-                if (prefs.demo) await clearDemo();
-                else await fillDemo(lang);
+                if (prefs.demo) {
+                  await clearDemo();
+                  setVersionTaps(0);
+                } else await fillDemo(lang);
                 await refresh().catch(() => {});
                 toast.success(prefs.demo ? "Demo cleared" : "Demo loaded");
               }}
@@ -183,7 +190,9 @@ export default function SettingsScreen() {
           )}
         </SettingsGroup>
 
-        <Txt className="text-center text-[12.5px] text-t3">Wishpool · {t("setVersion", { v: version })}</Txt>
+        <Pressable onPress={() => setVersionTaps((n) => n + 1)} hitSlop={8}>
+          <Txt className="text-center text-[12.5px] text-t3">Wishpool · {t("setVersion", { v: version })}</Txt>
+        </Pressable>
       </ScrollView>
       {/* the fade under the header only once something has scrolled under it */}
       {scrolled ? <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 32 }} /> : null}
