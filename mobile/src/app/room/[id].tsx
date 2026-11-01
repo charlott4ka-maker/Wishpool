@@ -178,6 +178,12 @@ export default function RoomScreen() {
         if (r.status === "friends") setFriendIds((cur) => [...cur, m.id]);
       })
       .catch(() => toast.error(t("toastError")));
+  // tap someone's picture: their mini profile with "Add friend" (not for yourself, not offline)
+  const openMember = (m: Member) => {
+    if (!online || m.id === user?.id || m.blocked) return;
+    haptic("light");
+    router.push({ pathname: "/room/member", params: { id: room.id, user: m.id } });
+  };
   const memberMenu = (m: Member) => {
     haptic("select");
     const acts: [string, () => void][] = [];
@@ -267,7 +273,9 @@ export default function RoomScreen() {
             {members.map((m, i) => (
               // overlapping stack; a masked gap (no ring) around the next one
               <View key={m.id} style={{ marginLeft: i ? -10 : 0 }}>
-                <Avatar m={m} size={38} cut={i < members.length - 1 ? 10 : 0} />
+                <Pressable onPress={() => openMember(m)} hitSlop={4}>
+                  <Avatar m={m} size={38} cut={i < members.length - 1 ? 10 : 0} />
+                </Pressable>
               </View>
             ))}
           </View>
@@ -310,8 +318,10 @@ export default function RoomScreen() {
               {lists.map(({ member, wishes: ws }, i) => (
                 <Animated.View key={member.id} entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(18)}>
                   <View className="mb-1 flex-row items-center gap-3">
-                    <Avatar m={member} size={28} />
-                    <Txt numberOfLines={1} className="flex-1 font-m700 text-[15.5px]">{member.name}</Txt>
+                    <Pressable onPress={() => openMember(member)} className="flex-1 flex-row items-center gap-3">
+                      <Avatar m={member} size={28} />
+                      <Txt numberOfLines={1} className="flex-1 font-m700 text-[15.5px]">{member.name}</Txt>
+                    </Pressable>
                     {!online ? null : member.blocked ? (
                       <Pill size="sm" kind="ghost" onPress={() => unblock(member)}>{t("unblockUser")}</Pill>
                     ) : (

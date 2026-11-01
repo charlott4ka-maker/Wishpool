@@ -181,6 +181,9 @@ export const MOBILE_STRINGS = {
   friendLinkSub: { uk: "Ви зможете одразу додавати одне одного в кімнати.", ru: "Вы сможете сразу добавлять друг друга в комнаты.", en: "You'll be able to add each other to rooms." },
   friendLinkSelf: { uk: "Це твоє посилання", ru: "Это твоя ссылка", en: "This is your own link" },
   friendLinkAlready: { uk: "Ви вже друзі", ru: "Вы уже друзья", en: "You're already friends" },
+  // a room member's mini profile (tap their picture in a room)
+  memberInRoom: { uk: "У кімнаті «{room}»", ru: "В комнате «{room}»", en: "In “{room}”" },
+  friendsAlready: { uk: "Ви друзі", ru: "Вы друзья", en: "You're friends" },
   friendLinkGone: { uk: "Посилання не працює", ru: "Ссылка не работает", en: "This link doesn't work" },
   addFriendsToRoom: { uk: "Додати друзів", ru: "Добавить друзей", en: "Add friends" },
   inviteFriendsHere: { uk: "Покликати друзів", ru: "Позвать друзей", en: "Invite friends" },

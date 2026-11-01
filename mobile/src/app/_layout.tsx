@@ -80,6 +80,7 @@ function Gate() {
             <Stack.Screen name="room/wish" options={FIT_SHEET} />
             <Stack.Screen name="room/add" options={FIT_SHEET} />
             <Stack.Screen name="room/draw" options={FIT_SHEET} />
+            <Stack.Screen name="room/member" options={FIT_SHEET} />
             <Stack.Screen name="room/pick" options={FIT_SHEET} />
             <Stack.Screen name="birthday" options={FIT_SHEET} />
             <Stack.Screen name="profile-edit" options={FIT_SHEET} />
