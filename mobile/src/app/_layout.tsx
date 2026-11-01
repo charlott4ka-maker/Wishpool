@@ -18,6 +18,7 @@ import { ToastHost } from "../components/Toast";
 import { joinSheet, takePendingJoin } from "../lib/pendingJoin";
 import { startAdminPreview } from "../lib/adminPreview";
 import { startRemoteConfig } from "../lib/remoteConfig";
+import { quickUpdate } from "../lib/quickUpdate";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
@@ -26,6 +27,8 @@ import { C } from "../theme/tokens";
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// a fresh update applies on this launch (the splash stays up for up to 3s)
+const updateChecked = quickUpdate();
 // texts, banners and stickers from the admin page
 startRemoteConfig();
 startAdminPreview();
@@ -41,7 +44,7 @@ function Gate() {
   const { status, user } = useAuth();
   const ready = status !== "loading";
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => {});
+    if (ready) updateChecked.finally(() => SplashScreen.hideAsync().catch(() => {}));
   }, [ready]);
   const inside = status === "signedIn" || status === "guest";
   // an invite opened before signing in comes back once there's an account
