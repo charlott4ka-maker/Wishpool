@@ -334,7 +334,7 @@ export default function RoomScreen() {
           ) : (
             <View className="gap-6">
               {/* the draw lives in friends rooms (not couple / birthday) */}
-              {online && room.type === "friends" ? <DrawCard roomId={room.id} draw={draw} members={members.length} owner={isOwner} /> : null}
+              {online && room.type === "friends" ? <DrawCard roomId={room.id} draw={draw} members={members.length} owner={isOwner} onChanged={() => load().catch(() => {})} /> : null}
               {lists.map(({ member, wishes: ws }, i) => (
                 <Animated.View key={member.id} entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(18)}>
                   <View className="mb-1 flex-row items-center gap-3">

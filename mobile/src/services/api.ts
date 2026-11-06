@@ -84,7 +84,8 @@ export type FriendsData = {
   roomInvites: { room: { id: string; name: string; emoji: string; tint: string; type: string; memberCount: number }; inviter: Member | null; at: number }[];
   roomAdd: "invite" | "instant";
 };
-export type DrawData = { drawn: boolean; budget?: string | null; target: Member | null; wishes?: Wish[] };
+// waiting / exclusions come only to the room's owner
+export type DrawData = { drawn: boolean; budget?: string | null; target: Member | null; wishes?: Wish[]; waiting?: number; exclusions?: [string, string][] };
 
 export const api = {
   configured: () => !!API_URL,
@@ -133,7 +134,9 @@ export const api = {
   acceptRoomInvite: (roomId: string) => req<{ room: { id: string } }>("POST", "/room-invites/" + roomId + "/accept"),
   declineRoomInvite: (roomId: string) => req("POST", "/room-invites/" + roomId + "/decline"),
   draw: (roomId: string) => req<DrawData>("GET", "/rooms/" + roomId + "/draw"),
-  runDraw: (roomId: string, budget: string) => req("POST", "/rooms/" + roomId + "/draw", { budget }),
+  // redraw false on the first run: a double tap can't reshuffle it (409)
+  runDraw: (roomId: string, budget: string, redraw: boolean, exclusions: [string, string][]) => req("POST", "/rooms/" + roomId + "/draw", { budget, redraw, exclusions }),
+  drawAddLate: (roomId: string) => req<{ ok: boolean; left: number }>("POST", "/rooms/" + roomId + "/draw/add"),
   // App Review account only: refill it with the demo content in this language
   reviewDemo: (lang: string) => req("POST", "/review-demo", { lang }),
   report: (b: { wishId?: string; userId?: string; roomId?: string; reason: string }) => req("POST", "/reports", b),

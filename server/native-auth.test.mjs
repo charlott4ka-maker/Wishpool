@@ -3,6 +3,7 @@ import crypto from "crypto";
 import assert from "assert";
 import { createApp } from "./app.js";
 import { verifyAppleToken } from "./native-auth.js";
+import { makeRing } from "./draw.js";
 
 const logs = [];
 const log0 = console.log;
@@ -15,6 +16,17 @@ const call = async (method, path, body, token) => {
   const r = await fetch(base + path, { method, headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
   return { status: r.status, body: await r.json().catch(() => null) };
 };
+// the ring: a single cycle, nobody gets themselves, "never each other" respected
+for (let i = 0; i < 200; i++) {
+  const ids = ["a", "b", "c", "d", "e"];
+  const ring = makeRing(ids, new Set(["a|b", "c|d"]));
+  assert.ok(ring);
+  let x = "a", seen = 0;
+  do { assert.notEqual(ring[x], x); assert.ok(!["a|b", "c|d"].includes([x, ring[x]].sort().join("|"))); x = ring[x]; seen++; } while (x !== "a" && seen < 10);
+  assert.equal(seen, 5);
+}
+assert.equal(makeRing(["a", "b", "c"], new Set(["a|b"])), null);
+
 try {
   // e-mail code
   assert.equal((await call("POST", "/api/auth/email/start", { email: "bad" })).status, 400);
@@ -110,13 +122,26 @@ try {
   assert.equal((await call("GET", "/api/friends", null, tok)).body.roomInvites[0].room.name, "Party");
   await call("POST", `/api/room-invites/${r2.id}/accept`, null, tok);
   assert.equal((await call("GET", `/api/rooms/${r2.id}`, null, rvt)).body.members.length, 3);
-  // draw: three people, everyone gets someone; only the owner draws again
-  assert.equal((await call("POST", `/api/rooms/${r2.id}/draw`, { budget: " 500 " }, ct)).status, 200);
-  const d = (await call("GET", `/api/rooms/${r2.id}/draw`, null, tok)).body;
-  assert.equal(d.drawn, true); assert.equal(d.budget, "500"); assert.ok(d.target && d.target.id !== anna);
-  assert.equal((await call("POST", `/api/rooms/${r2.id}/draw`, {}, ct)).status, 403);
-  assert.equal((await call("POST", `/api/rooms/${r2.id}/draw`, {}, rvt)).status, 200);
+  // draw: only the owner runs it; three people, everyone gets someone else
+  const dr = `/api/rooms/${r2.id}/draw`;
+  assert.equal((await call("POST", dr, { budget: "500" }, ct)).status, 403, "not the owner");
+  // with three people every pair stands side by side: "never each other" can't be met
+  assert.equal((await call("POST", dr, { exclusions: [[anna, carl]] }, rvt)).status, 422);
+  assert.equal((await call("POST", dr, { budget: " 500 ", redraw: false }, rvt)).status, 200);
+  assert.equal((await call("POST", dr, { redraw: false }, rvt)).status, 409, "a double tap doesn't reshuffle");
+  const tos = {};
+  for (const [who, tk] of [[anna, tok], [carl, ct], [rv.body.user.id, rvt]]) {
+    const d = (await call("GET", dr, null, tk)).body;
+    assert.equal(d.drawn, true); assert.equal(d.budget, "500"); assert.ok(d.target && d.target.id !== who);
+    tos[who] = d.target.id;
+  }
+  assert.equal(new Set(Object.values(tos)).size, 3, "everyone is given to once");
+  assert.equal((await call("GET", dr, null, rvt)).body.waiting, 0);
+  assert.equal((await call("GET", dr, null, tok)).body.waiting, undefined, "only the owner sees the waiting count");
+  // Carl deletes his account: only his giver's pair changes, the other two now give to each other
   await call("DELETE", `/api/me`, null, ct);
+  const da = (await call("GET", dr, null, tok)).body, dv = (await call("GET", dr, null, rvt)).body;
+  assert.equal(da.target.id, rv.body.user.id); assert.equal(dv.target.id, anna);
   // same e-mail again -> same account
   await new Promise(r => setTimeout(r, 0));
   // delete: the room goes to the other member, the session dies

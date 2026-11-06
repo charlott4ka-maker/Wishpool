@@ -156,7 +156,7 @@ export function createMemStore() {
     async getReservation(wishId) { return D.reservations[wishId] || null; },
     async setReservation(wishId, gifterId) { D.reservations[wishId] = gifterId; },
     async clearReservation(wishId, gifterId) { if (D.reservations[wishId] === gifterId) delete D.reservations[wishId]; },
-    async setDraw(roomId, assignments, budget) { D.draws[roomId] = { assignments, budget, at: Date.now() }; },
+    async setDraw(roomId, assignments, budget, exclusions = [], at = Date.now()) { D.draws[roomId] = { assignments, budget, at, exclusions: exclusions || [] }; },
     async getDraw(roomId) { return D.draws[roomId] || null; },
     async removeMember(roomId, userId) { D.members = D.members.filter(m => !(m.roomId === roomId && m.userId === userId)); },
     async removeUserSharesInRoom(roomId, userId) { const own = new Set(Object.values(D.wishes).filter(w => w.ownerId === userId).map(w => w.id)); D.wishRooms = D.wishRooms.filter(x => !(x.roomId === roomId && own.has(x.wishId))); },

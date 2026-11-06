@@ -14,6 +14,7 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS wish_rooms(wish_id text, room_id text, primary key(wish_id,room_id))`);
       await q(`CREATE TABLE IF NOT EXISTS reservations(wish_id text primary key, gifter_id text)`);
       await q(`CREATE TABLE IF NOT EXISTS draws(room_id text primary key, assignments jsonb, budget text, at bigint)`);
+      await q(`ALTER TABLE draws ADD COLUMN IF NOT EXISTS exclusions jsonb`);
       await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lang text`);
       await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday text`);
       await q(`CREATE TABLE IF NOT EXISTS notices(key text primary key, at bigint)`);
@@ -238,8 +239,8 @@ export function createPgStore(q) {
     async getReservation(wishId) { const { rows } = await q(`SELECT gifter_id FROM reservations WHERE wish_id=$1`, [wishId]); return rows[0] ? rows[0].gifter_id : null; },
     async setReservation(wishId, gifterId) { await q(`INSERT INTO reservations(wish_id,gifter_id) VALUES($1,$2) ON CONFLICT(wish_id) DO UPDATE SET gifter_id=EXCLUDED.gifter_id`, [wishId, gifterId]); },
     async clearReservation(wishId, gifterId) { await q(`DELETE FROM reservations WHERE wish_id=$1 AND gifter_id=$2`, [wishId, gifterId]); },
-    async setDraw(roomId, assignments, budget) { await q(`INSERT INTO draws(room_id,assignments,budget,at) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(room_id) DO UPDATE SET assignments=EXCLUDED.assignments, budget=EXCLUDED.budget, at=EXCLUDED.at`, [roomId, JSON.stringify(assignments), budget, Date.now()]); },
-    async getDraw(roomId) { const { rows } = await q(`SELECT assignments,budget,at FROM draws WHERE room_id=$1`, [roomId]); if (!rows[0]) return null; const a = rows[0].assignments; return { assignments: typeof a === "string" ? JSON.parse(a) : a, budget: rows[0].budget, at: Number(rows[0].at) || 0 }; },
+    async setDraw(roomId, assignments, budget, exclusions = [], at = Date.now()) { await q(`INSERT INTO draws(room_id,assignments,budget,at,exclusions) VALUES($1,$2::jsonb,$3,$4,$5::jsonb) ON CONFLICT(room_id) DO UPDATE SET assignments=EXCLUDED.assignments, budget=EXCLUDED.budget, at=EXCLUDED.at, exclusions=EXCLUDED.exclusions`, [roomId, JSON.stringify(assignments), budget, at, JSON.stringify(exclusions || [])]); },
+    async getDraw(roomId) { const { rows } = await q(`SELECT assignments,budget,at,exclusions FROM draws WHERE room_id=$1`, [roomId]); if (!rows[0]) return null; const j = (v) => (typeof v === "string" ? JSON.parse(v) : v); return { assignments: j(rows[0].assignments), budget: rows[0].budget, at: Number(rows[0].at) || 0, exclusions: j(rows[0].exclusions) || [] }; },
     async removeMember(roomId, userId) { await q(`DELETE FROM members WHERE room_id=$1 AND user_id=$2`, [roomId, userId]); },
     async removeUserSharesInRoom(roomId, userId) { await q(`DELETE FROM wish_rooms WHERE room_id=$1 AND wish_id IN (SELECT id FROM wishes WHERE owner_id=$2)`, [roomId, userId]); },
     async deleteRoom(roomId) {

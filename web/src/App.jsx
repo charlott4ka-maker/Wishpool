@@ -2546,7 +2546,14 @@ function DrawFlow({ room, reserved, online, onReserve, onUnreserve, onInvite, on
     const iv = setInterval(() => { shuffle(); haptic("light"); }, 260);
     (async () => {
       if (online) {
-        try { await api.runDraw(room.id, budget); const d = await api.draw(room.id); setTarget(d.target); setTargetWishes(d.wishes || []); }
+        // already drawn: just show your person (re-running it is the owner's call, in the iPhone app);
+        // not yet: only the owner can run it (the server refuses anyone else)
+        try {
+          let d = await api.draw(room.id);
+          if (!d.drawn) { await api.runDraw(room.id, budget); d = await api.draw(room.id); }
+          if (!d.target) throw new Error("no_target");
+          setTarget(d.target); setTargetWishes(d.wishes || []);
+        }
         catch (e) { if (onError) onError(); return; }
       } else {
         const tg = others[Math.floor(Math.random() * others.length)] || room.members[0];

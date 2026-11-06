@@ -11,6 +11,7 @@ import { nativeAuthRoutes, hashToken } from "./native-auth.js";
 import { publicConfigRoute, adminConfigRoutes } from "./app-config.js";
 import { moderationRoutes } from "./moderation.js";
 import { friendRoutes } from "./friends.js";
+import { drawRoutes } from "./draw.js";
 import { reviewDemoRoutes } from "./review-demo.js";
 import { adminLoginRoute, ADMIN_PANEL_ID } from "./admin-auth.js";
 
@@ -590,37 +591,14 @@ export async function createApp() {
     res.json({ ok: true });
   });
 
-  api.post("/rooms/:id/draw", async (req, res) => {
-    const r = await store.getRoom(req.params.id);
-    if (!r || !(await store.isMember(r.id, req.user.id))) return res.status(404).json({ error: "not_found" });
-    const ids = (await store.roomMembers(r.id)).map(u => u.id);
-    if (ids.length < 3) return res.status(400).json({ error: "need_three" });
-    // once drawn, only the room's owner can draw again (everyone's pair changes)
-    if ((await store.getDraw(r.id)) && r.ownerId !== req.user.id) return res.status(403).json({ error: "owner_only" });
-    const shuffled = [...ids].sort(() => Math.random() - 0.5);
-    const map = {};
-    shuffled.forEach((id, i) => { map[id] = shuffled[(i + 1) % shuffled.length]; });
-    const budget = typeof (req.body && req.body.budget) === "string" ? req.body.budget.trim().slice(0, 40) : "";
-    await store.setDraw(r.id, map, budget || null);
-    res.json({ ok: true });
-  });
+  // the gift draw: server/draw.js
+  drawRoutes(api, store, { pubUser, withReservations });
 
   api.get("/gifts", async (req, res) => {
     const rows = await store.giftsByMe(req.user.id);
     res.json({ gifts: rows.map(({ wish, owner }) => ({ ...pubWish(wish), owner: owner ? pubUser(owner) : null })) });
   });
 
-  api.get("/rooms/:id/draw", async (req, res) => {
-    const me = req.user.id;
-    const draw = await store.getDraw(req.params.id);
-    if (!draw) return res.json({ drawn: false, target: null });
-    // drawn before you joined: you're not in it until the owner draws again
-    if (!draw.assignments[me]) return res.json({ drawn: true, budget: draw.budget, target: null });
-    const u = await store.getUser(draw.assignments[me]);
-    if (!u) return res.json({ drawn: true, budget: draw.budget, target: null });
-    const wishes = await withReservations(await store.wishesSharedTo(u.id, req.params.id), me, (await store.roomMembers(req.params.id)).length - 1);
-    res.json({ drawn: true, budget: draw.budget, target: pubUser(u), wishes });
-  });
 
   app.use("/api", api);
 
