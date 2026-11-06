@@ -3,6 +3,10 @@
   "outputDirectory": "web/dist",
   "rewrites": [
     {
+      "source": "/tg/:path*",
+      "destination": "/tg/index.html"
+    },
+    {
       "source": "/about",
       "destination": "/about/index.html"
     },

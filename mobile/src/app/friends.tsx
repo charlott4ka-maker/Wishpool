@@ -22,6 +22,7 @@ import { api, type FriendsData } from "../services/api";
 import { useWishpool } from "../store/WishpoolContext";
 import { C } from "../theme/tokens";
 import type { Member } from "../types";
+import { BOT_APP, IN_TG, tgShare } from "../lib/telegram";
 
 // grouped like Settings: hairline separators that start after the picture
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -94,8 +95,10 @@ export default function FriendsScreen() {
   const shareLink = async () => {
     haptic("light");
     try {
-      const { url } = await api.friendLink();
-      await Share.share({ message: `${t("inviteFriendText")}\n${url}`, url });
+      const { url, code } = await api.friendLink();
+      // in Telegram the link opens the Mini App on the friend screen
+      if (IN_TG) tgShare(`${BOT_APP}?startapp=fr_${code}`, t("inviteFriendText"));
+      else await Share.share({ message: `${t("inviteFriendText")}\n${url}`, url });
     } catch {
       toast.error(t("toastError"));
     }

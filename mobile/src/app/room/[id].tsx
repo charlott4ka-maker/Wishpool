@@ -37,6 +37,7 @@ import { useWishpool } from "../../store/WishpoolContext";
 import { NEW_YEAR_STICKERS } from "../../subscription/featureFlags";
 import { C, H, hex } from "../../theme/tokens";
 import type { Member, Wish } from "../../types";
+import { BOT_APP, IN_TG, tgShare } from "../../lib/telegram";
 
 type Detail = { lists: { member: Member; wishes: RoomWish[] }[]; mine: Wish[]; members?: (Member & { you?: boolean })[]; owner?: boolean };
 
@@ -114,6 +115,8 @@ export default function RoomScreen() {
   const invite = () => {
     const link = online ? `${SITE_URL}/join/${room.id}${user?.id ? "?from=" + encodeURIComponent(user.id) : ""}` : "https://t.me/wishpool_bot/app";
     const text = online ? t("inviteText", { name: room.name }) : t("inviteAppText");
+    // in Telegram: Telegram's picker, and the link opens the Mini App straight into the room
+    if (IN_TG && online) return tgShare(`${BOT_APP}?startapp=${room.id}${user?.id ? "__" + user.id : ""}`, text);
     Share.share({ message: `${text}\n${link}`, url: link }).catch(() => {});
   };
 

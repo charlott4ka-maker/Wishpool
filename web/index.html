@@ -2,14 +2,18 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Wishpool</title>
-    <!-- Telegram Mini App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>html,body,#root{margin:0;height:100%;background:#000;overscroll-behavior:none}</style>
+    <style>html,body{margin:0;height:100%;background:#15181D}</style>
+    <script>
+      // The Telegram Mini App is now the iPhone app's web build at /tg (mobile/scripts/build-tg.mjs).
+      // Opened from Telegram (its launch data rides in the hash): go there, keeping that data;
+      // anyone else gets the landing page.
+      (function () {
+        var tg = /tgWebApp/.test(location.hash + location.search);
+        location.replace(tg ? "/tg/" + location.search + location.hash : "/about" + location.search);
+      })();
+    </script>
   </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <body></body>
 </html>

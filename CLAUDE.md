@@ -5,6 +5,10 @@
 - Don't push to `main` on your own: commit to the work branch and ship to `main`
   only when the user says "в прод" (Vercel Hobby allows 100 deploys a day).
 
+## Telegram Mini App = the iOS app's web build
+- `t.me/wishpool_bot/app` opens the site root, which sends Telegram (launch data in the URL hash) to `/tg` and everyone else to the landing (`/about`, App Store button first). `/tg` is the Expo web build (`npm run tg-build` in mobile/ → `web/public/tg`, committed; run it after app changes, like `admin-preview`). `lib/telegram.ts`: Telegram signs in (X-Init-Data on every request, no sign-in screens), Telegram language, haptics, links via openLink, sharing via t.me/share with `startapp` links (`<room>__<inviter>` → join, `fr_<code>` → friend). Web-only tab bar in `app/(tabs)/_layout.web.tsx`. No notification switches or sign out in Telegram.
+- The old Mini App (`web/src/App.jsx`) is no longer served; its rules below still describe the shared look.
+
 ## UI rules (web/src/App.jsx)
 - Font: Montserrat everywhere. Never use Regular (400); the lightest weight is Medium (500).
 - Buttons and controls come in exactly two heights: `H.lg` (52) and `H.sm` (40).

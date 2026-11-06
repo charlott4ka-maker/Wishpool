@@ -13,6 +13,7 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { api, AuthUser, setAuthToken } from "../services/api";
+import { IN_TG, tgUser } from "../lib/telegram";
 import { secureStorage } from "./secureStorage";
 
 const TOKEN_KEY = "wp_token";
@@ -42,6 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [appleAvailable, setAppleAvailable] = useState(false);
 
   useEffect(() => {
+    // the Telegram Mini App: Telegram is the sign-in (every request carries its initData)
+    if (IN_TG) {
+      const u = tgUser();
+      setUser(u ? { id: u.id, name: u.name, photo: u.photo } : null);
+      setStatus("signedIn");
+      return;
+    }
     (async () => {
       if (Platform.OS === "ios") setAppleAvailable(await AppleAuthentication.isAvailableAsync().catch(() => false));
       const [token, rawUser, guest] = await Promise.all([

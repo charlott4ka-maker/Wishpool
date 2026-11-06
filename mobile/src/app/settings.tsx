@@ -26,6 +26,7 @@ import { api, SITE_URL } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
 import { C, hex } from "../theme/tokens";
+import { IN_TG } from "../lib/telegram";
 
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://wishpool.clickbrickk.com/terms";
 const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || `${SITE_URL}/privacy`;
@@ -144,6 +145,8 @@ export default function SettingsScreen() {
         onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 4)}
       >
 
+        {/* in Telegram the bot sends the reminders; these switches are the phone's own */}
+        {IN_TG ? null : (
         <SettingsGroup title={t("setNotifications")} footer={t("setNotifFooter")}>
           <SettingsCell icon={Bell} tint="#FF3B30" label={t("setAllowNotif")} toggle={{ value: prefs.notifications, onChange: toggleNotifications }} />
           <SettingsCell icon={Cake} tint="#FF9500" label={t("setBirthdays")} toggle={{ value: prefs.notifyBirthdays && !sub, disabled: sub, onChange: (v) => setPref("notifyBirthdays", v) }} />
@@ -151,6 +154,7 @@ export default function SettingsScreen() {
           <SettingsCell icon={UserPlus} tint="#34C759" label={t("setRoomJoins")} toggle={{ value: prefs.notifyRoomJoins && !sub, disabled: sub, onChange: (v) => setPref("notifyRoomJoins", v) }} />
           <SettingsCell icon={Sparkles} tint="#AF52DE" label={t("setGiftReminders")} toggle={{ value: prefs.notifyGiftReminders && !sub, disabled: sub, onChange: (v) => setPref("notifyGiftReminders", v) }} />
         </SettingsGroup>
+        )}
 
         {status === "signedIn" ? (
           <SettingsGroup title={t("privacy")} footer={t("roomAddHint")}>
@@ -202,7 +206,8 @@ export default function SettingsScreen() {
         <SettingsGroup title={t("setAccount")}>
           {status === "signedIn" ? (
             <>
-              <SettingsCell icon={LogOut} tint="#8E8E93" label={t("signOut")} onPress={signOut} chevron={false} />
+              {/* Telegram signs you in: nothing to sign out of */}
+              {IN_TG ? null : <SettingsCell icon={LogOut} tint="#8E8E93" label={t("signOut")} onPress={signOut} chevron={false} />}
               <SettingsCell icon={Trash2} tint="#FF3B30" label={t("setDeleteAccount")} onPress={deleteAccount} destructive />
             </>
           ) : (

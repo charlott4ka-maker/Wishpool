@@ -19,6 +19,7 @@ import { joinSheet, takePendingJoin } from "../lib/pendingJoin";
 import { startAdminPreview } from "../lib/adminPreview";
 import { startRemoteConfig } from "../lib/remoteConfig";
 import { quickUpdate } from "../lib/quickUpdate";
+import { IN_TG, tgStartParam } from "../lib/telegram";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
@@ -29,6 +30,7 @@ const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.Store
 SplashScreen.preventAutoHideAsync().catch(() => {});
 // a fresh update applies on this launch (the splash stays up for up to 3s)
 const updateChecked = quickUpdate();
+const tgStartHandled = { done: false };
 // texts, banners and stickers from the admin page
 startRemoteConfig();
 startAdminPreview();
@@ -57,6 +59,21 @@ function Gate() {
       takePendingJoin().then((p) => {
         if (p && !joinSheet.open) router.push({ pathname: "/join/[id]", params: p.from ? { id: p.id, from: p.from } : { id: p.id } });
       });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [status, router]);
+  // the Telegram Mini App opened from a link: t.me/wishpool_bot/app?startapp=<room>[__<inviter>] or fr_<code>
+  useEffect(() => {
+    if (status !== "signedIn" || !IN_TG || tgStartHandled.done) return;
+    tgStartHandled.done = true;
+    const p = tgStartParam();
+    if (!p) return;
+    const timer = setTimeout(() => {
+      if (p.startsWith("fr_")) router.push({ pathname: "/friend/[code]", params: { code: p.slice(3) } });
+      else {
+        const [id, from] = p.split("__");
+        if (id) router.push({ pathname: "/join/[id]", params: from ? { id, from } : { id } });
+      }
     }, 600);
     return () => clearTimeout(timer);
   }, [status, router]);

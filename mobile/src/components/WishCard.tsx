@@ -12,6 +12,7 @@ import { useWishpool } from "../store/WishpoolContext";
 import type { Wish } from "../types";
 import { toast } from "./Toast";
 import { WishTile } from "./WishTile";
+import { BOT_APP, IN_TG, tgShare } from "../lib/telegram";
 
 export function WishCard({ w }: { w: Wish }) {
   const { t } = useT();
@@ -22,6 +23,7 @@ export function WishCard({ w }: { w: Wish }) {
   const edit = () => router.push({ pathname: "/wish/new", params: { id: w.id } });
   const share = () => {
     const parts = [w.title, w.price, w.link].filter(Boolean);
+    if (IN_TG) return tgShare(w.link || BOT_APP, [w.title, w.price].filter(Boolean).join(" · "));
     Share.share({ message: parts.join("\n"), url: w.link || undefined }).catch(() => {});
   };
   const gifted = () => {

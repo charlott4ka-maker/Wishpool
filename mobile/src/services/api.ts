@@ -8,6 +8,7 @@
 //   POST /api/auth/email/verify    { email, code }                     -> { token, user }
 
 import type { AppState, Member, NewWish, Room, Wish } from "../types";
+import { tgInitData } from "../lib/telegram";
 
 export const SITE_URL = "https://wishpool.clickbrickk.com";
 export const API_URL = (process.env.EXPO_PUBLIC_API_URL || SITE_URL).replace(/\/+$/, "");
@@ -40,7 +41,8 @@ export const relativePhotos = (v: unknown) => mapStrings(v, (s) => (s.startsWith
 async function req<T>(method: string, path: string, body?: unknown, opts: { timeout?: number; auth?: boolean } = {}): Promise<T> {
   if (!API_URL) throw new ApiError("no_api_url", 0, true);
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token && opts.auth !== false) headers.Authorization = "Bearer " + token;
+  if (tgInitData) headers["X-Init-Data"] = tgInitData; // the Telegram Mini App: Telegram signs us in
+  else if (token && opts.auth !== false) headers.Authorization = "Bearer " + token;
   // Without a timeout a request made in airplane mode can hang forever.
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), opts.timeout || (method === "GET" ? 10000 : 30000));

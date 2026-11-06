@@ -1,11 +1,13 @@
 import * as Haptics from "expo-haptics";
 
 import { getPrefs } from "../settings/prefs";
+import { IN_TG, tgHaptic } from "./telegram";
 
 export type HapticKind = "light" | "select" | "success" | "warning" | "error";
 
 export function haptic(kind: HapticKind = "light") {
   if (!getPrefs().haptics) return;
+  if (IN_TG) return tgHaptic(kind);
   const run = () => {
     switch (kind) {
       case "select":

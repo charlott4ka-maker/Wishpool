@@ -5,6 +5,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { getRemoteConfig, useRemoteConfig } from "../lib/remoteConfig";
 import { MOBILE_STRINGS } from "./mobileStrings";
 import { WEB_STRINGS } from "./webStrings";
+import { tgLanguage } from "../lib/telegram";
 
 export const LANGS = ["uk", "ru", "en"] as const;
 export type Lang = (typeof LANGS)[number];
@@ -23,7 +24,8 @@ export function tr(lang: Lang, id: StrKey | string, params?: Record<string, stri
 }
 
 function detectLang(): Lang {
-  const code = (getLocales()[0]?.languageCode || "en").toLowerCase();
+  // in Telegram: the user's Telegram language; elsewhere the device's
+  const code = (tgLanguage() || getLocales()[0]?.languageCode || "en").toLowerCase();
   return (LANGS as readonly string[]).includes(code) ? (code as Lang) : code === "be" || code === "kk" ? "ru" : "en";
 }
 

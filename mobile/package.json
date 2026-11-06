@@ -66,7 +66,8 @@
     "build:ios": "eas build --platform ios --profile production",
     "build:dev": "eas build --platform ios --profile development",
     "admin-data": "node --experimental-strip-types scripts/export-admin-data.mjs",
-    "admin-preview": "node scripts/build-admin-preview.mjs"
+    "admin-preview": "node scripts/build-admin-preview.mjs",
+    "tg-build": "node scripts/build-tg.mjs"
   },
   "private": true
 }
