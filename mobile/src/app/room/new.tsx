@@ -4,7 +4,8 @@
 // screen rather than a sheet: dragging the sticker used to drag the sheet along.
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Check, Plus } from "lucide-react-native";
+import { Image } from "expo-image";
+import { Check, Lock, Plus } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,7 +25,8 @@ import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, ROOM_COLORS } from "../../theme/tokens";
-import { NEW_YEAR_STICKERS } from "../../subscription/featureFlags";
+import { NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
+import { FOLDER_SKINS } from "../../lib/folderSkins";
 import type { RoomType } from "../../types";
 
 // Secret Santa is a friends room (so it has the draw) with its own name,
@@ -70,13 +72,17 @@ export default function CreateRoomScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { rooms, createRoom, updateRoom, online, refresh } = useWishpool();
+  const { rooms, createRoom, updateRoom, online, refresh, admin } = useWishpool();
   const editing = id ? rooms.find((r) => r.id === id) : undefined;
-  const { isStickerLocked } = useSubscription();
+  const { isStickerLocked, isPremium } = useSubscription();
+  // premium folder looks: open to subscribers; before the launch only admins (and dev builds) see them
+  const showSkins = PREMIUM_ENABLED || !!admin || __DEV__ || process.env.EXPO_PUBLIC_SHOW_SKINS === "1";
+  const skinLocked = PREMIUM_ENABLED && !isPremium && !admin;
   const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
   const [scrolled, setScrolled] = useState(false);
   const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
   const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
+  const [skin, setSkin] = useState(editing?.skin || "");
   const [name, setName] = useState(editing?.name || "");
   const [mode, setMode] = useState<"self" | "other">(editing?.bdayMode === "other" ? "other" : "self"); // birthday: mine or someone else's
   const [celName, setCelName] = useState(editing?.celebrantName || "");
@@ -116,13 +122,13 @@ export default function CreateRoomScreen() {
     const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : swapDate && date ? { eventDate: date } : {};
     try {
       if (editing) {
-        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
+        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, skin, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
         haptic("success");
         router.back();
         toast.success(t("toastSaved"), { root: true });
         return;
       }
-      const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, ...extra } as Parameters<typeof createRoom>[0]);
+      const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, skin, ...extra } as Parameters<typeof createRoom>[0]);
       // friends picked below: in at once or invited, as each of them prefers
       const res = picked.length ? await api.addToRoom(id, picked).catch(() => null) : null;
       if (res && res.added.length) await refresh().catch(() => {});
@@ -144,7 +150,7 @@ export default function CreateRoomScreen() {
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto w-1/2">
         <RoomFolder
-          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, members: editing?.members || [], eventDate: (bday || swapDate) && date ? date : undefined }}
+          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, skin, members: editing?.members || [], eventDate: (bday || swapDate) && date ? date : undefined }}
           wishes={[]}
           onPress={() => {}}
           onStickerMove={setStickerPos}
@@ -160,6 +166,41 @@ export default function CreateRoomScreen() {
 
       <Label>{t("roomColor")}</Label>
       <ColorPicker value={tint} onChange={setTint} />
+
+      {/* premium folder looks; the first tile is the plain folder in the room's colour */}
+      {showSkins ? (
+        <>
+          <Label>{t("roomFolderLook")}</Label>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4" style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+            {[{ id: "", front: null as number | null }, ...FOLDER_SKINS].map((k) => {
+              const on = skin === k.id;
+              return (
+                <Pressable
+                  key={k.id || "plain"}
+                  onPress={() => {
+                    if (k.id && skinLocked) return router.push("/paywall");
+                    haptic("select");
+                    setSkin(k.id);
+                  }}
+                  className="items-center justify-center rounded-2xl"
+                  style={{ width: 76, height: 68, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
+                >
+                  {k.front ? (
+                    <Image source={k.front} style={{ width: 56, height: 50 }} contentFit="contain" />
+                  ) : (
+                    <View style={{ width: 44, height: 34, borderRadius: 8, backgroundColor: tint }} />
+                  )}
+                  {k.id && skinLocked ? (
+                    <View className="absolute right-1.5 top-1.5 h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+                      <Lock size={11} color="#fff" strokeWidth={2} />
+                    </View>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </>
+      ) : null}
 
       {/* the type is set when the room is made */}
       {!editing ? (

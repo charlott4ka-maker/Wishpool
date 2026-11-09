@@ -182,6 +182,7 @@ export const MOBILE_STRINGS = {
   friendLinkSub: { uk: "Ви зможете одразу додавати одне одного в кімнати.", ru: "Вы сможете сразу добавлять друг друга в комнаты.", en: "You'll be able to add each other to rooms." },
   friendLinkSelf: { uk: "Це твоє посилання", ru: "Это твоя ссылка", en: "This is your own link" },
   friendLinkAlready: { uk: "Ви вже друзі", ru: "Вы уже друзья", en: "You're already friends" },
+  roomFolderLook: { uk: "Папка", ru: "Папка", en: "Folder" },
   // Secret Santa: a friends room with the draw, its own look and a swap date
   roomSanta: { uk: "Таємний Санта", ru: "Тайный Санта", en: "Secret Santa" },
   santaRoomHint: { uk: "Жеребкування: кожному випаде одна людина, якій він дарує. Вкажи бюджет і дату обміну.", ru: "Жеребьёвка: каждому выпадет один человек, которому он дарит. Укажи бюджет и дату обмена.", en: "A draw: everyone gets one person to give a gift to. Set a budget and the swap date." },

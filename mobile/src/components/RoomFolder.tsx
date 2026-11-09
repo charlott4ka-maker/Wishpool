@@ -23,6 +23,7 @@ import type { Room, Wish } from "../types";
 import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { Avatar, Txt } from "./ui";
+import { folderSkin } from "../lib/folderSkins";
 
 /** The front's top edge (tab + step) and the whole front outline. */
 export function folderPaths(w: number, h: number) {
@@ -185,6 +186,8 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
   const shown = extra ? members.slice(0, MAX_AVATARS - 1) : members;
   const paths = dim ? folderPaths(dim.w, dim.h) : null;
   const web = Platform.OS === "web"; // no MaskedView there: a flat gradient front instead
+  // a premium look: pictures for the back and the front, the photos still tucked in between
+  const skin = folderSkin(room.skin);
 
   return (
     <Press
@@ -196,7 +199,11 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
       className="flex-1 items-center"
     >
       <View className="w-full" style={{ aspectRatio: 1.12 }} onLayout={(e: LayoutChangeEvent) => setDim({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-        <View className="absolute rounded-2xl" style={{ left: "8%", right: "8%", top: "16%", bottom: "10%", backgroundColor: hex(room.tint, 0.32) }} />
+        {skin ? (
+          <Image source={skin.back} style={StyleSheet.absoluteFill} contentFit="fill" />
+        ) : (
+          <View className="absolute rounded-2xl" style={{ left: "8%", right: "8%", top: "16%", bottom: "10%", backgroundColor: hex(room.tint, 0.32) }} />
+        )}
         {dim && paths && photos.length > 0 && !web ? (
           // photos (and the edge shadow) only outside the front: nothing under the frost to smear
           <MaskedView
@@ -224,7 +231,9 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
             ))}
           </View>
         ) : null}
-        {dim && paths ? (
+        {skin ? (
+          <Image source={skin.front} style={[StyleSheet.absoluteFill, { zIndex: 3 }]} contentFit="fill" pointerEvents="none" />
+        ) : dim && paths ? (
           web ? (
             <Svg width={dim.w} height={dim.h} style={{ position: "absolute", zIndex: 3 }}>
               <Defs>

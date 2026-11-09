@@ -43,6 +43,8 @@ export type Room = {
   sharedCount?: number;
   /** The sticker's spot on the folder, "x,y": its top-left as fractions of the folder; empty = the default. */
   stickerPos?: string;
+  /** a premium folder look (lib/folderSkins.ts); empty: the plain tinted folder */
+  skin?: string;
   /** Demo content only (lib/demo.ts): friends' lists shown offline. */
   demoLists?: { member: Member; wishes: (Wish & { reservedByMe?: boolean; taken?: boolean })[] }[];
 };
@@ -52,6 +54,8 @@ export type AppState = {
   rooms: Room[];
   /** Friend requests and room invitations waiting (server), for the dot on the profile. */
   inbox?: number;
+  /** this account can use the admin page (and try premium looks before launch) */
+  admin?: boolean;
 };
 
 export type NewWish = Omit<Wish, "id" | "giftedAt"> & { rooms: string[] };

@@ -63,7 +63,7 @@ async function moveLocalToAccount(): Promise<boolean> {
   const ids: Record<string, string> = {};
   while (left.rooms.length) {
     const r = left.rooms[0];
-    const res = await api.createRoom({ name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle, eventDate: r.eventDate, bdayMode: r.bdayMode, celebrantName: r.celebrantName, stickerPos: r.stickerPos });
+    const res = await api.createRoom({ name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle, eventDate: r.eventDate, bdayMode: r.bdayMode, celebrantName: r.celebrantName, stickerPos: r.stickerPos, skin: r.skin });
     ids[r.id] = res.room.id;
     left.rooms.shift();
     left.wishes = left.wishes.map((w) => ({ ...w, rooms: w.rooms.map((x) => (x === r.id ? res.room.id : x)) }));
@@ -107,7 +107,7 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const s = await api.state();
-    const next = { wishes: s.wishes || [], rooms: s.rooms || [], inbox: (s as { inbox?: number }).inbox || 0 };
+    const next = { wishes: s.wishes || [], rooms: s.rooms || [], inbox: (s as { inbox?: number }).inbox || 0, admin: !!(s as { admin?: boolean }).admin };
     setState(next);
     AsyncStorage.setItem(CACHE_KEY, JSON.stringify(next)).catch(() => {});
   }, [online]);

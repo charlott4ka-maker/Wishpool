@@ -184,6 +184,15 @@ try {
   globalThis.fetch = realFetch;
   for (const k of ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "R2_PUBLIC_URL"]) delete process.env[k];
 
+  // a premium folder look: kept, changed, cleared; unknown ones are dropped
+  const sk = (await call("POST", "/api/rooms", { name: "Skin", type: "friends", skin: "fawn" }, rv.body.token)).body;
+  const skId = (sk.room || sk).id;
+  const skinOf = async () => (await call("GET", "/api/state", null, rv.body.token)).body.rooms.find(r => r.id === skId).skin;
+  assert.equal(await skinOf(), "fawn");
+  await call("PATCH", "/api/rooms/" + skId, { name: "Skin", skin: "web" }, rv.body.token); assert.equal(await skinOf(), "web");
+  await call("PATCH", "/api/rooms/" + skId, { name: "Skin", skin: "nope" }, rv.body.token); assert.equal(await skinOf(), "");
+  await call("PATCH", "/api/rooms/" + skId, { name: "Skin" }, rv.body.token); assert.equal(await skinOf(), "");
+
   // Secret Santa: a friends room keeps its swap date
   const santa = (await call("POST", "/api/rooms", { name: "Santa", type: "friends", emoji: "stk:gift", tint: "#FF4D8D", eventDate: "2030-12-20" }, rv.body.token)).body;
   const santaId = (santa.room || santa).id;
