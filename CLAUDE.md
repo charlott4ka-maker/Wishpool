@@ -60,6 +60,12 @@
 - Releases: OTA (`npx.cmd eas-cli update --channel production` in mobile/, the user runs it in PowerShell from `C:\Users\Dariia\wishpool\mobile`) reaches only builds with the same app version (runtimeVersion = appVersion). `lib/quickUpdate.ts` holds the splash up to 3s and restarts into a fresh update, so it shows on that launch (from the 1.0.1 build on). 1.0.1 (friends, privacy, draw, Secret Santa, rating) was pulled from review to rebuild with everything inside; App Store 1.0.0 users get none of it until 1.0.1 is out. ASC app id 6825104468.
 - Store copy (RU/UA/EN) and Figma screenshot sections ("store img 1.0.1 EN/UA/RU") live in the user's Figma file; RU screens' headline on the wishes slide: "Желание в два клика".
 
+## Premium (agreed 2026-11, launch ~December)
+- Price: $4.99 a month and $24.99 a year (the year is the main offer; 7 free days on it), a lower custom price for Ukraine in App Store Connect. Apple in-app purchases on iPhone (native: needs a new build and review).
+- Free forever: rooms, friends, reservations, chip in, the draw, Secret Santa, birthday reminders, no limits on counts. Premium is about looking special, never about the social loop.
+- Premium v1: folder materials (leather, velvet, denim, kraft, holographic, frosted glass, gift wrap...), your own photo as a folder cover, extra stickers / charms / a name tag on the folder, exclusive 3D stickers, one premium app icon (the glossy star with a bow), app accent colour themes, a home-screen widget (countdown to a birthday, "you're giving ...").
+- After v1 ships, PROPOSE to the user (she asked to be reminded): animated folders (snow, hearts, confetti) and monthly seasonal collections.
+
 ## Later (agreed, not started)
 - Admin-only alternate app icon: a Settings row "Icon" visible only to admins (`admin` from /state) to switch to the glossy star-with-bow icon on her own phone (expo alternate icons; one build for TestFlight and the App Store). Needs a new build, so after App Review approves 1.0.0; she sends the 1024x1024 artwork.
 - Ideas the user liked: anonymous question to a wish owner, "card from everyone" on the birthday, gift hints in the profile (sizes), price-drop alerts, a home-screen widget.
