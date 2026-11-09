@@ -64,6 +64,7 @@
 - Price: $4.99 a month and $24.99 a year (the year is the main offer; 7 free days on it), a lower custom price for Ukraine in App Store Connect. Apple in-app purchases on iPhone (native: needs a new build and review).
 - Free forever: rooms, friends, reservations, chip in, the draw, Secret Santa, birthday reminders, no limits on counts. Premium is about looking special, never about the social loop.
 - Premium v1: folder materials (leather, velvet, denim, kraft, holographic, frosted glass, gift wrap...), your own photo as a folder cover, extra stickers / charms / a name tag on the folder, exclusive 3D stickers, one premium app icon (the glossy star with a bow), app accent colour themes, a home-screen widget (countdown to a birthday, "you're giving ...").
+- Folder materials picked (drafts in `design/folders`, GPT edits of our silhouette `_template`): suede, fawn fur, pink leopard fur, burgundy croc, cable knit, cobalt puffer, cow fur, airmail with stamps, orange with a frog in a party hat, graffiti on metal, red gift with a white bow, pink gummy, red Christmas sweater with deer, red with a black spider web (no Spider-Man or any other licensed character or brand).
 - After v1 ships, PROPOSE to the user (she asked to be reminded): animated folders (snow, hearts, confetti) and monthly seasonal collections.
 
 ## Later (agreed, not started)
