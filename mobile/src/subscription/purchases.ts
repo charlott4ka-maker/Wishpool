@@ -63,8 +63,8 @@ function createMock(fakePurchases: boolean): PurchasesAdapter {
     async packages() {
       if (!fakePurchases) return [];
       return [
-        { id: "mock_annual", kind: "annual", title: "Wishpool Premium", priceString: "19,99 $", price: 19.99, currencyCode: "USD", pricePerMonthString: "1,67 $", trialDays: 7 },
-        { id: "mock_monthly", kind: "monthly", title: "Wishpool Premium", priceString: "2,99 $", price: 2.99, currencyCode: "USD", pricePerMonthString: "2,99 $", trialDays: 0 },
+        { id: "mock_annual", kind: "annual", title: "Wishpool Premium", priceString: "24,99 $", price: 24.99, currencyCode: "USD", pricePerMonthString: "2,08 $", trialDays: 7 },
+        { id: "mock_monthly", kind: "monthly", title: "Wishpool Premium", priceString: "4,99 $", price: 4.99, currencyCode: "USD", pricePerMonthString: "4,99 $", trialDays: 0 },
       ];
     },
     async purchase() {

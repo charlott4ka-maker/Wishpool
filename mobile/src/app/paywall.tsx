@@ -6,12 +6,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Image } from "expo-image";
-import { Check, FolderHeart, ImagePlus, LayoutGrid, Palette, Smartphone, Sparkles, X } from "lucide-react-native";
+import { Check, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Sticker } from "../components/Sticker";
 import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { DAY_FORMS, plural } from "../lib/dates";
@@ -20,7 +19,6 @@ import { PREMIUM_ENABLED } from "../subscription/featureFlags";
 import type { PremiumPackage } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
-import { FOLDER_SKINS, folderSkin } from "../lib/folderSkins";
 import { useWishpool } from "../store/WishpoolContext";
 
 // Our terms (they point to Apple's standard EULA too).
@@ -85,15 +83,6 @@ function Paywall() {
     }
   };
 
-  // what premium v1 brings (CLAUDE.md › Premium)
-  const perks = [
-    { Icon: FolderHeart, text: t("premiumFolders", { n: FOLDER_SKINS.length }) },
-    { Icon: ImagePlus, text: t("premiumCover") },
-    { Icon: Sparkles, text: t("premiumStickers") },
-    { Icon: Palette, text: t("premiumThemes") },
-    { Icon: LayoutGrid, text: t("premiumWidget") },
-    { Icon: Smartphone, text: t("premiumIcons") },
-  ];
 
   return (
     <View className="flex-1 bg-bg">
@@ -108,20 +97,8 @@ function Paywall() {
         </Pressable>
 
         <View className="flex-1 items-center justify-center py-8">
-          {/* three premium folders fanned out */}
-          <View className="mb-6 flex-row items-end" style={{ height: 112 }}>
-            {(["pinkleo", "giftwrap", "puffer"] as const).map((id, i) => {
-              const k = folderSkin(id)!;
-              const big = i === 1;
-              const w = big ? 124 : 96;
-              return (
-                <View key={id} style={{ width: w, height: w / 1.12, marginHorizontal: -8, zIndex: big ? 2 : 1, transform: [{ rotate: `${(i - 1) * 10}deg` }, { translateY: big ? 0 : 8 }] }}>
-                  <Image source={k.back} style={StyleSheet.absoluteFill} contentFit="fill" />
-                  <Image source={k.front} style={StyleSheet.absoluteFill} contentFit="fill" />
-                </View>
-              );
-            })}
-          </View>
+          {/* minimal: our star, the wordmark with the badge, one line */}
+          <Image source={require("../../assets/logo.png")} style={{ width: 88, height: 88, marginBottom: 20 }} contentFit="contain" />
           <View className="flex-row items-start">
             <Txt className="font-m800 text-[44px] leading-[48px]" style={{ letterSpacing: -1.5 }}>Wishpool</Txt>
             <View className="ml-1 mt-1 rounded-md bg-blue px-1.5 py-0.5">
@@ -129,14 +106,6 @@ function Paywall() {
             </View>
           </View>
           <Txt className="mt-3 max-w-[300px] text-center text-[17px] leading-[23px]">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
-          <View className="mt-6 gap-3">
-            {perks.map(({ Icon, text }) => (
-              <View key={text} className="flex-row items-center gap-3">
-                <Icon size={18} color={C.blueText} />
-                <Txt className="font-m600 text-[14.5px] text-t2">{text}</Txt>
-              </View>
-            ))}
-          </View>
         </View>
 
         {isPremium ? (
