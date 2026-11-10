@@ -6,6 +6,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { Image } from "expo-image";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { Check, Lock, Plus, Star } from "lucide-react-native";
 import { useState } from "react";
@@ -189,10 +190,10 @@ export default function CreateRoomScreen() {
             className="mb-4"
           />
           {folderTab === "premium" ? (
-            // not premium yet: just a peek (two rows) with the pitch over it, so the form stays short
-            <View className="mb-4" style={!isPremium ? { height: 330, overflow: "hidden" } : undefined}>
+            // not premium yet: a 3x3 peek, dimmed, with the pitch in the middle of it
+            <View className="mb-4">
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
-              {(isPremium ? FOLDER_SKINS : FOLDER_SKINS.slice(0, 6)).map((k) => {
+              {(isPremium ? FOLDER_SKINS : FOLDER_SKINS.slice(0, 9)).map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (
@@ -219,9 +220,12 @@ export default function CreateRoomScreen() {
                 a line and a button to the paywall over it (the folders still open it too) */}
             {!isPremium ? (
               <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0 }}>
-                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0.1), hex(C.card, 0.8), C.card]} locations={[0, 0.4, 0.62]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
-                <View pointerEvents="box-none" className="flex-1 items-center justify-end px-4 pb-1">
-                  <View className="mb-3 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
+                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0.55), hex(C.card, 0.88), hex(C.card, 0.88), hex(C.card, 0.55)]} locations={[0, 0.3, 0.7, 1]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, borderRadius: 18 }} />
+                <View pointerEvents="box-none" className="flex-1 items-center justify-center px-4">
+                  {/* a frosted round behind the lock */}
+                  <View className="mb-3 h-12 w-12 items-center justify-center overflow-hidden rounded-full">
+                    <BlurView intensity={30} tint="light" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+                    <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(255,255,255,0.08)" }} />
                     <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
                   </View>
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
