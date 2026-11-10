@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateRow } from "../../components/DateRow";
 import { FriendPicker, useFriendList } from "../../components/FriendPicker";
+import { PremiumSwitch } from "../../components/PremiumSwitch";
 import { RoomFolder } from "../../components/RoomFolder";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
@@ -180,18 +181,17 @@ export default function CreateRoomScreen() {
       {showSkins ? (
         <>
           <Label>{t("roomFolderLook")}</Label>
-          <Segmented
-            options={[["plain", t("folderPlain")], ["premium", t("folderPremium")]]}
-            icons={{ premium: (c) => <Star size={15} color={c} fill={c} strokeWidth={1.5} /> }}
-            value={folderTab}
-            onChange={(k) => {
-              setFolderTab(k);
-              if (k === "plain") setSkin("");
-            }}
-            neutral
-            fill={C.bg}
-            className="mb-4"
-          />
+          <View className="mb-4">
+            <PremiumSwitch
+              value={folderTab}
+              onChange={(k) => {
+                setFolderTab(k);
+                if (k === "plain") setSkin("");
+              }}
+              plainLabel={t("folderPlain")}
+              premiumLabel={t("folderPremium")}
+            />
+          </View>
           {folderTab === "premium" ? (
             // not premium yet: a 3x3 peek, dimmed, with the pitch in the middle of it
             <View className="mb-4">
