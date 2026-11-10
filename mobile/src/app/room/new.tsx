@@ -4,6 +4,7 @@
 // screen rather than a sheet: dragging the sticker used to drag the sheet along.
 
 import { useLocalSearchParams, useRouter } from "expo-router";
+import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { Check, Lock, Plus } from "lucide-react-native";
 import { useState } from "react";
@@ -76,7 +77,9 @@ export default function CreateRoomScreen() {
   const editing = id ? rooms.find((r) => r.id === id) : undefined;
   const { isStickerLocked, isPremium } = useSubscription();
   // premium folder looks: open to subscribers; before the launch only admins (and dev builds) see them
-  const showSkins = PREMIUM_ENABLED || !!admin || __DEV__ || process.env.EXPO_PUBLIC_SHOW_SKINS === "1";
+  // the folder picker arrives with the premium build (1.0.2+), not in 1.0.1 even for admins
+  const premiumBuild = (Constants.expoConfig?.version || "0") >= "1.0.2";
+  const showSkins = __DEV__ || process.env.EXPO_PUBLIC_SHOW_SKINS === "1" || (premiumBuild && (PREMIUM_ENABLED || !!admin));
   const skinLocked = PREMIUM_ENABLED && !isPremium && !admin;
   const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
   const [scrolled, setScrolled] = useState(false);
