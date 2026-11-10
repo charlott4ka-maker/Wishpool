@@ -21,6 +21,10 @@ export const FOLDER_SKINS: FolderSkin[] = [
   { id: "xmas", back: require("../../assets/folders/xmas_back.webp"), front: require("../../assets/folders/xmas_front.webp") },
   { id: "violet", back: require("../../assets/folders/violet_back.webp"), front: require("../../assets/folders/violet_front.webp") },
   { id: "web", back: require("../../assets/folders/web_back.webp"), front: require("../../assets/folders/web_front.webp") },
+  { id: "wishful", back: require("../../assets/folders/wishful_back.webp"), front: require("../../assets/folders/wishful_front.webp") },
+  { id: "cyano", back: require("../../assets/folders/cyano_back.webp"), front: require("../../assets/folders/cyano_front.webp") },
+  { id: "stripes", back: require("../../assets/folders/stripes_back.webp"), front: require("../../assets/folders/stripes_front.webp") },
+  { id: "sky", back: require("../../assets/folders/sky_back.webp"), front: require("../../assets/folders/sky_front.webp") },
 ];
 
 export const folderSkin = (id?: string) => (id ? FOLDER_SKINS.find((s) => s.id === id) : undefined);

@@ -22,7 +22,7 @@ export const mapRoom = (r) => r && ({ id: r.id, name: r.name, type: r.type, emoj
   bdayMode: r.bday_mode || "", celebrantName: r.celebrant_name || "", celebrantId: r.celebrant_id || null,
   stickerPos: r.sticker_pos || "", skin: r.skin || "" });
 // premium folder looks (mobile/assets/folders); anything else means the plain tinted folder
-export const FOLDER_SKINS = ["suede", "fawn", "pinkleo", "croc", "knit", "puffer", "cow", "airmail", "frog", "chrome", "giftwrap", "gummy", "xmas", "web", "violet"];
+export const FOLDER_SKINS = ["suede", "fawn", "pinkleo", "croc", "knit", "puffer", "cow", "airmail", "frog", "chrome", "giftwrap", "gummy", "xmas", "web", "violet", "wishful", "cyano", "stripes", "sky"];
 export const cleanSkin = (v) => (FOLDER_SKINS.includes(v) ? v : "");
 // Where the sticker sits on the room folder: "x,y", the sticker's top-left as
 // fractions of the folder (set by dragging it in the app); "" = the default spot.
