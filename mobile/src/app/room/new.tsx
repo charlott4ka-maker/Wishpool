@@ -224,9 +224,11 @@ export default function CreateRoomScreen() {
                 <View pointerEvents="box-none" className="flex-1 items-center justify-center px-4">
                   {/* a frosted round behind the lock */}
                   <View className="mb-3 h-12 w-12 items-center justify-center overflow-hidden rounded-full">
-                    <BlurView intensity={30} tint="light" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+                    <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
                     <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(255,255,255,0.08)" }} />
-                    <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                    <View style={{ zIndex: 2 }}>
+                      <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                    </View>
                   </View>
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
                   <Txt className="mt-1 text-center text-[14px] leading-[20px] text-t2">{t("premiumFoldersSub", { n: FOLDER_SKINS.length })}</Txt>
