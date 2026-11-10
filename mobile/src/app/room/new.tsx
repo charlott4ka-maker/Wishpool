@@ -29,7 +29,8 @@ import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, hex, ROOM_COLORS } from "../../theme/tokens";
 import { NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
-import { FOLDER_SKINS } from "../../lib/folderSkins";
+import { orderedSkins } from "../../lib/folderSkins";
+import { useRemoteConfig } from "../../lib/remoteConfig";
 import type { RoomType } from "../../types";
 
 // Secret Santa is a friends room (so it has the draw) with its own name,
@@ -88,6 +89,8 @@ export default function CreateRoomScreen() {
   const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
   const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
   const [skin, setSkin] = useState(editing?.skin || "");
+  // premium folders in the order set on the admin page
+  const skins = orderedSkins(useRemoteConfig().folders);
   const [folderTab, setFolderTab] = useState<"plain" | "premium">(editing?.skin ? "premium" : "plain");
   const [name, setName] = useState(editing?.name || "");
   const [mode, setMode] = useState<"self" | "other">(editing?.bdayMode === "other" ? "other" : "self"); // birthday: mine or someone else's
@@ -193,7 +196,7 @@ export default function CreateRoomScreen() {
             // not premium yet: a 3x3 peek, dimmed, with the pitch in the middle of it
             <View className="mb-4">
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
-              {(isPremium ? FOLDER_SKINS : FOLDER_SKINS.slice(0, 9)).map((k) => {
+              {(isPremium ? skins : skins.slice(0, 9)).map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (
@@ -231,7 +234,7 @@ export default function CreateRoomScreen() {
                     </View>
                   </View>
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
-                  <Txt className="mt-1 text-center text-[14px] leading-[20px] text-t2">{t("premiumFoldersSub", { n: FOLDER_SKINS.length })}</Txt>
+                  <Txt className="mt-1 text-center text-[14px] leading-[20px] text-t2">{t("premiumFoldersSub", { n: skins.length })}</Txt>
                   <View className="mt-4">
                     <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => router.push("/paywall")}>{t("premiumOpen")}</Pill>
                   </View>

@@ -1,4 +1,5 @@
 import { putObject, storageOn } from "./storage.js";
+import { FOLDER_SKINS } from "./util.js";
 
 // What the admin page (web/public/admin) changes without a new app build:
 //   strings   text overrides by string key: { key: { uk, ru, en } }
@@ -49,8 +50,14 @@ export function cleanStickers(v) {
   return { hidden: names(v?.hidden).slice(0, 200), extra: names(v?.extra).slice(0, 200).map(name => ({ name })) };
 }
 
-const CLEAN = { strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers };
-const EMPTY = { strings: {}, banners: [], stickers: { hidden: [], extra: [] } };
+// premium folders: the order they show in, and any taken out of the picker
+export function cleanFolders(v) {
+  const ids = (a) => [...new Set((Array.isArray(a) ? a : []).filter(id => FOLDER_SKINS.includes(id)))];
+  return { order: ids(v?.order), hidden: ids(v?.hidden) };
+}
+
+const CLEAN = { strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders };
+const EMPTY = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] } };
 
 /** GET /api/config: what the app reads on start (only active banners). */
 export function publicConfigRoute(store) {
@@ -58,7 +65,7 @@ export function publicConfigRoute(store) {
     try {
       const c = { ...EMPTY, ...(await store.getConfig()) };
       res.set("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
-      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active), stickers: c.stickers });
+      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active), stickers: c.stickers, folders: c.folders });
     } catch (e) { next(e); }
   };
 }

@@ -27,4 +27,12 @@ export const FOLDER_SKINS: FolderSkin[] = [
   { id: "sky", back: require("../../assets/folders/sky_back.webp"), front: require("../../assets/folders/sky_front.webp") },
 ];
 
+/** The picker's list: the admin page's order first (the rest after, as listed here), hidden ones left out. */
+export function orderedSkins(cfg?: { order?: string[]; hidden?: string[] }): FolderSkin[] {
+  const order = cfg?.order || [];
+  const hidden = new Set(cfg?.hidden || []);
+  const rank = (id: string) => (order.includes(id) ? order.indexOf(id) : order.length + FOLDER_SKINS.findIndex((s) => s.id === id));
+  return FOLDER_SKINS.filter((s) => !hidden.has(s.id)).sort((a, b) => rank(a.id) - rank(b.id));
+}
+
 export const folderSkin = (id?: string) => (id ? FOLDER_SKINS.find((s) => s.id === id) : undefined);
