@@ -5,9 +5,10 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Check, Images, Smartphone, Sparkles, X } from "lucide-react-native";
+import { Image } from "expo-image";
+import { Check, FolderHeart, ImagePlus, LayoutGrid, Palette, Smartphone, Sparkles, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Sticker } from "../components/Sticker";
@@ -15,10 +16,12 @@ import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { DAY_FORMS, plural } from "../lib/dates";
 import { haptic } from "../lib/haptics";
-import { PLAN_LIMITS, PREMIUM_ENABLED } from "../subscription/featureFlags";
+import { PREMIUM_ENABLED } from "../subscription/featureFlags";
 import type { PremiumPackage } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
+import { FOLDER_SKINS, folderSkin } from "../lib/folderSkins";
+import { useWishpool } from "../store/WishpoolContext";
 
 // Our terms (they point to Apple's standard EULA too).
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://wishpool.clickbrickk.com/terms";
@@ -28,7 +31,9 @@ const ORDER: Record<string, number> = { annual: 0, monthly: 1 };
 
 export default function PaywallRoute() {
   // Hidden while Premium is off, even if something links here.
-  return PREMIUM_ENABLED ? <Paywall /> : <Redirect href="/" />;
+  // admins can see it before the launch (from the locked folders in the room form)
+  const { admin } = useWishpool();
+  return PREMIUM_ENABLED || admin || process.env.EXPO_PUBLIC_SHOW_SKINS === "1" ? <Paywall /> : <Redirect href="/" />;
 }
 
 function Paywall() {
@@ -80,9 +85,13 @@ function Paywall() {
     }
   };
 
+  // what premium v1 brings (CLAUDE.md › Premium)
   const perks = [
-    { Icon: Images, text: t("premiumPhotos", { n: PLAN_LIMITS.premium.photosPerWish }) },
+    { Icon: FolderHeart, text: t("premiumFolders", { n: FOLDER_SKINS.length }) },
+    { Icon: ImagePlus, text: t("premiumCover") },
     { Icon: Sparkles, text: t("premiumStickers") },
+    { Icon: Palette, text: t("premiumThemes") },
+    { Icon: LayoutGrid, text: t("premiumWidget") },
     { Icon: Smartphone, text: t("premiumIcons") },
   ];
 
@@ -99,10 +108,19 @@ function Paywall() {
         </Pressable>
 
         <View className="flex-1 items-center justify-center py-8">
-          <View className="mb-6 flex-row items-end">
-            <Sticker emoji="stk:ring" size={52} rotate={-12} />
-            <Sticker emoji="stk:gift" size={76} style={{ marginHorizontal: -4 }} />
-            <Sticker emoji="stk:gift" size={52} rotate={12} />
+          {/* three premium folders fanned out */}
+          <View className="mb-6 flex-row items-end" style={{ height: 112 }}>
+            {(["pinkleo", "giftwrap", "puffer"] as const).map((id, i) => {
+              const k = folderSkin(id)!;
+              const big = i === 1;
+              const w = big ? 124 : 96;
+              return (
+                <View key={id} style={{ width: w, height: w / 1.12, marginHorizontal: -8, zIndex: big ? 2 : 1, transform: [{ rotate: `${(i - 1) * 10}deg` }, { translateY: big ? 0 : 8 }] }}>
+                  <Image source={k.back} style={StyleSheet.absoluteFill} contentFit="fill" />
+                  <Image source={k.front} style={StyleSheet.absoluteFill} contentFit="fill" />
+                </View>
+              );
+            })}
           </View>
           <View className="flex-row items-start">
             <Txt className="font-m800 text-[44px] leading-[48px]" style={{ letterSpacing: -1.5 }}>Wishpool</Txt>

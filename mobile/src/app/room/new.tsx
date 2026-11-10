@@ -196,11 +196,12 @@ export default function CreateRoomScreen() {
                   <View key={k.id} style={{ width: "33.333%", padding: 4 }}>
                     <Pressable
                       onPress={() => {
-                        // admins can try them before launch; everyone else goes to the paywall
-                        if (locked && !admin) return router.push("/paywall");
+                        if (locked) return router.push("/paywall");
                         haptic("select");
                         setSkin(k.id);
                       }}
+                      // admins can still try a locked one: a long press puts it on
+                      onLongPress={admin ? () => { haptic("select"); setSkin(k.id); } : undefined}
                       className="items-center justify-center overflow-hidden rounded-2xl"
                       style={{ aspectRatio: 1.12, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
                     >
