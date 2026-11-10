@@ -19,6 +19,7 @@ export const FOLDER_SKINS: FolderSkin[] = [
   { id: "giftwrap", back: require("../../assets/folders/giftwrap_back.webp"), front: require("../../assets/folders/giftwrap_front.webp") },
   { id: "gummy", back: require("../../assets/folders/gummy_back.webp"), front: require("../../assets/folders/gummy_front.webp") },
   { id: "xmas", back: require("../../assets/folders/xmas_back.webp"), front: require("../../assets/folders/xmas_front.webp") },
+  { id: "violet", back: require("../../assets/folders/violet_back.webp"), front: require("../../assets/folders/violet_front.webp") },
   { id: "web", back: require("../../assets/folders/web_back.webp"), front: require("../../assets/folders/web_front.webp") },
 ];
 
