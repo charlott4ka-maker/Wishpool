@@ -4,7 +4,19 @@ import numpy as np
 tb=Image.open('t_back.png').split()[3]; tf=Image.open('t_front.png').split()[3]
 def bbox_center(a):
     x0,y0,x1,y1=a.getbbox(); return (x0+x1)/2,(y0+y1)/2
+FITBOX=None  # every folder: the model's own edge trimmed off
+def fitbox(k,part,t):
+    # take the inside of whatever the model drew (its own edge trimmed off) and stretch it over our shape
+    im=Image.open(f'{k}_{part}.png').convert('RGBA')
+    ax0,ay0,ax1,ay1=im.split()[3].point(lambda v:255 if v>200 else 0).getbbox()
+    tr=0.04 if k in ('giftwrap','frog','xmas') else 0.07
+    ix=(ax1-ax0)*tr; iy=(ay1-ay0)*tr
+    crop=im.crop((int(ax0+ix),int(ay0+iy),int(ax1-ix),int(ay1-iy)))
+    x0,y0,x1,y1=t.getbbox()
+    out=crop.resize((x1-x0+8,y1-y0+8),Image.LANCZOS).convert('RGB')
+    bg=Image.new('RGB',(1024,1024),(0,0,0)); bg.paste(out,(x0-4,y0-4)); return bg
 def material(k,part,t,scale,dy=0):
+    return fitbox(k,part,t)
     im=Image.open(f'{k}_{part}.png').convert('RGBA')
     # the model's own edge stays outside our shape: blow the picture up around the shape's centre
     cx,cy=bbox_center(t)
@@ -34,5 +46,5 @@ for k in sys.argv[1:]:
     # the back sits in the shade
     bb=np.asarray(b).astype(np.float32); bb[...,:3]*=0.78; b=Image.fromarray(bb.astype(np.uint8))
     # fronts with a picture on them (a bow, a frog, stamps, deer) are blown up less, so it stays whole
-    f=bevel(material(k,'front',tf,1.14 if k=='airmail' else 1.16 if k=='giftwrap' else 1.13 if k in ('frog','xmas') else 1.18, 120 if k=='giftwrap' else 0),tf)
+    f=bevel(material(k,'front',tf,1.14 if k=='airmail' else 1.16 if k=='giftwrap' else 0.98 if k.startswith('horses_') else 1.13 if k in ('frog','xmas') else 1.18, 120 if k=='giftwrap' else 0),tf)
     b.save(f'{k}_b.png'); f.save(f'{k}_f.png')
