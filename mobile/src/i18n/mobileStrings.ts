@@ -188,6 +188,9 @@ export const MOBILE_STRINGS = {
   friendLinkAlready: { uk: "Ви вже друзі", ru: "Вы уже друзья", en: "You're already friends" },
   roomFolderLook: { uk: "Папка", ru: "Папка", en: "Folder" },
   folderPlain: { uk: "Звичайна", ru: "Обычная", en: "Plain" },
+  premiumFoldersTitle: { uk: "Преміум-папки", ru: "Премиум-папки", en: "Premium folders" },
+  premiumFoldersSub: { uk: "{n} папок, щоб твої кімнати виглядали по-особливому", ru: "{n} папок, чтобы твои комнаты выглядели по-особенному", en: "{n} folders to make your rooms look one of a kind" },
+  premiumOpen: { uk: "Відкрити Premium", ru: "Открыть Premium", en: "Get Premium" },
   folderPremium: { uk: "Преміум", ru: "Премиум", en: "Premium" },
   // Secret Santa: a friends room with the draw, its own look and a swap date
   roomSanta: { uk: "Таємний Санта", ru: "Тайный Санта", en: "Secret Santa" },

@@ -11,7 +11,9 @@ def fitbox(k,part,t):
     ax0,ay0,ax1,ay1=im.split()[3].point(lambda v:255 if v>200 else 0).getbbox()
     tr=0.04 if k in ('giftwrap','frog','xmas') else 0.07
     ix=(ax1-ax0)*tr; iy=(ay1-ay0)*tr
-    crop=im.crop((int(ax0+ix),int(ay0+iy),int(ax1-ix),int(ay1-iy)))
+    # the model draws its own tab step along the top of a front: cut well below it
+    top=(ay1-ay0)*(0.20 if part=='front' else 0.14)
+    crop=im.crop((int(ax0+ix),int(ay0+top),int(ax1-ix),int(ay1-iy)))
     x0,y0,x1,y1=t.getbbox()
     out=crop.resize((x1-x0+8,y1-y0+8),Image.LANCZOS).convert('RGB')
     bg=Image.new('RGB',(1024,1024),(0,0,0)); bg.paste(out,(x0-4,y0-4)); return bg

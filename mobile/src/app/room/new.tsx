@@ -6,6 +6,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Check, Lock, Plus, Star } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -25,7 +26,7 @@ import { haptic } from "../../lib/haptics";
 import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
-import { C, ROOM_COLORS } from "../../theme/tokens";
+import { C, hex, ROOM_COLORS } from "../../theme/tokens";
 import { NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { FOLDER_SKINS } from "../../lib/folderSkins";
 import type { RoomType } from "../../types";
@@ -188,7 +189,8 @@ export default function CreateRoomScreen() {
             className="mb-4"
           />
           {folderTab === "premium" ? (
-            <View className="mb-4 flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
+            <View className="mb-4">
+            <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
               {FOLDER_SKINS.map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
@@ -207,18 +209,28 @@ export default function CreateRoomScreen() {
                     >
                       <Image source={k.back} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
                       <Image source={k.front} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
-                      {locked ? (
-                        <>
-                          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(21,24,29,0.45)" }} />
-                          <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
-                            <Lock size={16} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
-                          </View>
-                        </>
-                      ) : null}
                     </Pressable>
                   </View>
                 );
               })}
+            </View>
+            {/* not premium yet: the grid fades into the dark from the bottom, with one lock, a title,
+                a line and a button to the paywall over it (the folders still open it too) */}
+            {!isPremium ? (
+              <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0 }}>
+                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0), hex(C.card, 0.75), C.card]} locations={[0, 0.45, 0.8]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
+                <View pointerEvents="box-none" className="flex-1 items-center justify-end px-6 pb-6">
+                  <View className="mb-3 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
+                    <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                  </View>
+                  <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
+                  <Txt className="mt-1 text-center text-[14px] leading-[20px] text-t2">{t("premiumFoldersSub", { n: FOLDER_SKINS.length })}</Txt>
+                  <View className="mt-4">
+                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => router.push("/paywall")}>{t("premiumOpen")}</Pill>
+                  </View>
+                </View>
+              </View>
+            ) : null}
             </View>
           ) : null}
         </>
