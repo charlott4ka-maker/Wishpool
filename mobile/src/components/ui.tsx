@@ -107,7 +107,7 @@ export function Chip({ children, active, onPress, color }: { children: React.Rea
 /** The neutral selected segment: a cool slate that fits the blue-grey surfaces. */
 export const SEG_ON = "#353C49";
 
-export function Segmented<K extends string>({ options, value, onChange, neutral, className = "", fill = C.card }: { options: [K, string][]; value: K; onChange: (k: K) => void; neutral?: boolean; className?: string; /** track colour (set it when the screen itself is the block fill) */ fill?: string }) {
+export function Segmented<K extends string>({ options, value, onChange, neutral, className = "", fill = C.card, icons }: { options: [K, string][]; value: K; onChange: (k: K) => void; neutral?: boolean; className?: string; /** track colour (set it when the screen itself is the block fill) */ fill?: string; /** an icon before a label, by key */ icons?: Partial<Record<K, (color: string) => React.ReactNode>> }) {
   const [w, setW] = useState(0);
   const idx = Math.max(0, options.findIndex(([k]) => k === value));
   const x = useSharedValue(0);
@@ -142,8 +142,9 @@ export function Segmented<K extends string>({ options, value, onChange, neutral,
               if (!on) haptic("select");
               onChange(k);
             }}
-            className="flex-1 items-center justify-center rounded-full px-2"
+            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-full px-2"
           >
+            {icons?.[k] ? icons[k]!(on ? "#fff" : C.t2) : null}
             <Txt className={`font-m600 text-sm ${on ? "text-white" : "text-t2"}`}>{l}</Txt>
           </Pressable>
         );

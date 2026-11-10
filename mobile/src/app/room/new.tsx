@@ -6,7 +6,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { Image } from "expo-image";
-import { Check, Lock, Plus } from "lucide-react-native";
+import { Check, Lock, Plus, Star } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -86,6 +86,7 @@ export default function CreateRoomScreen() {
   const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
   const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
   const [skin, setSkin] = useState(editing?.skin || "");
+  const [folderTab, setFolderTab] = useState<"plain" | "premium">(editing?.skin ? "premium" : "plain");
   const [name, setName] = useState(editing?.name || "");
   const [mode, setMode] = useState<"self" | "other">(editing?.bdayMode === "other" ? "other" : "self"); // birthday: mine or someone else's
   const [celName, setCelName] = useState(editing?.celebrantName || "");
@@ -170,38 +171,55 @@ export default function CreateRoomScreen() {
       <Label>{t("roomColor")}</Label>
       <ColorPicker value={tint} onChange={setTint} />
 
-      {/* premium folder looks; the first tile is the plain folder in the room's colour */}
+      {/* premium folder looks in their own tab: muted, with a lock in the middle until you have premium */}
       {showSkins ? (
         <>
           <Label>{t("roomFolderLook")}</Label>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4" style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-            {[{ id: "", front: null as number | null }, ...FOLDER_SKINS].map((k) => {
-              const on = skin === k.id;
-              return (
-                <Pressable
-                  key={k.id || "plain"}
-                  onPress={() => {
-                    if (k.id && skinLocked) return router.push("/paywall");
-                    haptic("select");
-                    setSkin(k.id);
-                  }}
-                  className="items-center justify-center rounded-2xl"
-                  style={{ width: 76, height: 68, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
-                >
-                  {k.front ? (
-                    <Image source={k.front} style={{ width: 56, height: 50 }} contentFit="contain" />
-                  ) : (
-                    <View style={{ width: 44, height: 34, borderRadius: 8, backgroundColor: tint }} />
-                  )}
-                  {k.id && skinLocked ? (
-                    <View className="absolute right-1.5 top-1.5 h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
-                      <Lock size={11} color="#fff" strokeWidth={2} />
-                    </View>
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          <Segmented
+            options={[["plain", t("folderPlain")], ["premium", t("folderPremium")]]}
+            icons={{ premium: (c) => <Star size={15} color={c} fill={c} strokeWidth={1.5} /> }}
+            value={folderTab}
+            onChange={(k) => {
+              setFolderTab(k);
+              if (k === "plain") setSkin("");
+            }}
+            neutral
+            fill={C.bg}
+            className="mb-4"
+          />
+          {folderTab === "premium" ? (
+            <View className="mb-4 flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
+              {FOLDER_SKINS.map((k) => {
+                const on = skin === k.id;
+                const locked = !isPremium;
+                return (
+                  <View key={k.id} style={{ width: "33.333%", padding: 4 }}>
+                    <Pressable
+                      onPress={() => {
+                        // admins can try them before launch; everyone else goes to the paywall
+                        if (locked && !admin) return router.push("/paywall");
+                        haptic("select");
+                        setSkin(k.id);
+                      }}
+                      className="items-center justify-center overflow-hidden rounded-2xl"
+                      style={{ aspectRatio: 1.12, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
+                    >
+                      <Image source={k.back} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
+                      <Image source={k.front} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
+                      {locked ? (
+                        <>
+                          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(21,24,29,0.45)" }} />
+                          <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(0,0,0,0.55)" }}>
+                            <Lock size={16} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                          </View>
+                        </>
+                      ) : null}
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          ) : null}
         </>
       ) : null}
 
