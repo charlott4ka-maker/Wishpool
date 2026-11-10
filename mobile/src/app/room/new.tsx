@@ -189,9 +189,10 @@ export default function CreateRoomScreen() {
             className="mb-4"
           />
           {folderTab === "premium" ? (
-            <View className="mb-4">
+            // not premium yet: just a peek (two rows) with the pitch over it, so the form stays short
+            <View className="mb-4" style={!isPremium ? { height: 330, overflow: "hidden" } : undefined}>
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
-              {FOLDER_SKINS.map((k) => {
+              {(isPremium ? FOLDER_SKINS : FOLDER_SKINS.slice(0, 6)).map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (
@@ -218,8 +219,8 @@ export default function CreateRoomScreen() {
                 a line and a button to the paywall over it (the folders still open it too) */}
             {!isPremium ? (
               <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0 }}>
-                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0), hex(C.card, 0.75), C.card]} locations={[0, 0.45, 0.8]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
-                <View pointerEvents="box-none" className="flex-1 items-center justify-end px-6 pb-6">
+                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0.1), hex(C.card, 0.8), C.card]} locations={[0, 0.4, 0.62]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
+                <View pointerEvents="box-none" className="flex-1 items-center justify-end px-4 pb-1">
                   <View className="mb-3 h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
                     <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
                   </View>
