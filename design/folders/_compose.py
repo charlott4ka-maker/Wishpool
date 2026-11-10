@@ -11,7 +11,11 @@ def material(k,part,t,scale,dy=0):
     W=int(1024*scale); big=im.resize((W,W),Image.LANCZOS)
     out=Image.new('RGBA',(1024,1024),(0,0,0,0)); out.alpha_composite(big,(int(cx-cx*scale),int(cy-cy*scale)+dy))
     # any gaps left inside: fill from a blurred copy so nothing shows through
-    bg=out.filter(ImageFilter.GaussianBlur(30)); bg.putalpha(255); bg.alpha_composite(out); return bg.convert('RGB')
+    # gaps left inside (a picture moved or shrunk): the material's own middle colour, softened in
+    import numpy as _np
+    px=_np.asarray(im)[...,:4].reshape(-1,4); px=px[px[:,3]>200][:,:3]
+    med=tuple(int(v) for v in _np.median(px,axis=0)) if len(px) else (128,128,128)
+    bg=Image.new('RGBA',(1024,1024),med+(255,)); soft=out.filter(ImageFilter.GaussianBlur(6)); bg.alpha_composite(soft); bg.alpha_composite(out); return bg.convert('RGB')
 def bevel(rgb,t):
     a=np.asarray(t).astype(np.float32)/255
     inner=1-np.asarray(t.filter(ImageFilter.GaussianBlur(9))).astype(np.float32)/255
@@ -19,7 +23,9 @@ def bevel(rgb,t):
     shifted=np.asarray(ImageChops.offset(t,0,10).filter(ImageFilter.GaussianBlur(6))).astype(np.float32)/255
     top=np.clip(a-shifted,0,1)                       # the top edges
     c=np.asarray(rgb).astype(np.float32)
-    c=c*(1-0.20*inner[...,None])                     # rounded edges go into shadow
+    # a touch of shade on the sides only, fading out towards the bottom (no dark band under the folder)
+    ys=np.linspace(0,1,1024)[:,None]; x0_,y0_,x1_,y1_=t.getbbox(); g=np.clip((ys*1024-y0_)/(y1_-y0_),0,1)
+    c=c*(1-0.14*inner[...,None]*(1-g)[...,None])
     c=c+(255-c)*(0.22*top[...,None])                 # light from the top
     out=Image.fromarray(np.clip(c,0,255).astype(np.uint8)).convert('RGBA'); out.putalpha(t.filter(ImageFilter.GaussianBlur(0.8)))
     return out
@@ -28,5 +34,5 @@ for k in sys.argv[1:]:
     # the back sits in the shade
     bb=np.asarray(b).astype(np.float32); bb[...,:3]*=0.78; b=Image.fromarray(bb.astype(np.uint8))
     # fronts with a picture on them (a bow, a frog, stamps, deer) are blown up less, so it stays whole
-    f=bevel(material(k,'front',tf,1.12 if k=='airmail' else 1.07 if k in ('giftwrap','frog','xmas') else 1.18, 120 if k=='airmail' else 0),tf)
+    f=bevel(material(k,'front',tf,1.14 if k=='airmail' else 1.16 if k=='giftwrap' else 1.13 if k in ('frog','xmas') else 1.18, 120 if k=='giftwrap' else 0),tf)
     b.save(f'{k}_b.png'); f.save(f'{k}_f.png')

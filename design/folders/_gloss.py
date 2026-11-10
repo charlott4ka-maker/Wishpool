@@ -20,10 +20,5 @@ def glossify(path, tpl):
     band=np.asarray(Image.fromarray((band*fade*255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(12))).astype(np.float32)/255
     c[...,:3]+= (255-c[...,:3])*(0.55*band[...,None])
     out=Image.fromarray(np.clip(c,0,255).astype(np.uint8))
-    # glints
-    gl=Image.new('RGBA',(1024,1024),(0,0,0,0)); d=ImageDraw.Draw(gl)
-    for (gx,gy,col,r) in [(x1-70,y0+90,(120,255,170),26),(x0+55,y1-70,(255,150,220),24)]:
-        d.ellipse((gx-r,gy-r,gx+r,gy+r),fill=col+(230,))
-    gl=gl.filter(ImageFilter.GaussianBlur(14)); gl.putalpha(ImageChops.multiply(gl.split()[3],t))
-    out.alpha_composite(gl); out.putalpha(im.split()[3]); out.save(path)
+    out.putalpha(im.split()[3]); out.save(path)
 glossify(sys.argv[1], sys.argv[2])
