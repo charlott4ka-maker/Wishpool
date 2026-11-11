@@ -23,6 +23,7 @@ import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
 import { ToastHost, toast } from "../../components/Toast";
+import { startUpload } from "../../components/UploadBar";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { priceRangeText, RANGE_RE, withCurrency } from "../../lib/price";
@@ -154,6 +155,19 @@ export default function AddWishScreen() {
     if (!title.trim()) {
       setTried(true);
       return haptic("error");
+    }
+    // a new wish: the form closes at once and the bar at the bottom shows the upload
+    if (!initial) {
+      const thumbs = cover === "photo" ? images.slice(0, photoLimit) : [];
+      const run = async () => {
+        const pics = await Promise.all(thumbs.map((u) => (/^(https?|data):/.test(u) ? u : toDataUrl(u))));
+        const raw = link.trim();
+        const affiliate = raw ? toAffiliateUrl(resolved.current && raw === lastLink.current ? resolved.current : raw).url : null;
+        await addWish({ emoji, images: pics, image: pics[0] || null, link: affiliate, title: title.trim(), price: priceMode === "range" ? priceRangeText(priceA.trim(), priceB.trim(), lang, t) : withCurrency(price, lang), note: note.trim(), rooms: inRooms });
+      };
+      router.back();
+      startUpload({ thumbs, emoji: thumbs.length ? undefined : emoji, run, onDone: () => wishAdded(demo) });
+      return;
     }
     setBusy(true);
     try {

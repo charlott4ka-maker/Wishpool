@@ -42,6 +42,8 @@ export const MOBILE_STRINGS = {
   searchEmptyTitle: { uk: "Нічого не знайшли", ru: "Ничего не нашли", en: "Nothing found" },
   searchEmptySub: { uk: "Спробуй інше слово або додай нове бажання.", ru: "Попробуй другое слово или добавь новое желание.", en: "Try another word or add a new wish." },
   toastWishAdded: { uk: "Бажання додано", ru: "Желание добавлено", en: "Wish added" },
+  wishUploading: { uk: "Додаємо бажання…", ru: "Добавляем желание…", en: "Adding your wish…" },
+  wishUploadFail: { uk: "Не вийшло. Натисни, щоб повторити", ru: "Не получилось. Нажми, чтобы повторить", en: "Didn't work. Tap to try again" },
   toastSaved: { uk: "Зміни збережено", ru: "Изменения сохранены", en: "Changes saved" },
   toastWishDeleted: { uk: "Бажання видалено", ru: "Желание удалено", en: "Wish deleted" },
   toastUndo: { uk: "Повернути", ru: "Вернуть", en: "Undo" },
