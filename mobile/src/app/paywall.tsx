@@ -2,7 +2,6 @@
 // brand in the middle, plan cards at the bottom (the best one outlined, with a
 // "save N%" badge), one big button, and Terms | Privacy | Restore underneath.
 
-import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Image } from "expo-image";
@@ -18,7 +17,8 @@ import { haptic } from "../lib/haptics";
 import { PREMIUM_ENABLED } from "../subscription/featureFlags";
 import type { PremiumPackage } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
-import { C, hex } from "../theme/tokens";
+import { SoftGlow } from "../components/SoftGlow";
+import { C } from "../theme/tokens";
 import { useWishpool } from "../store/WishpoolContext";
 
 // Our terms (they point to Apple's standard EULA too).
@@ -86,26 +86,26 @@ function Paywall() {
 
   return (
     <View className="flex-1 bg-bg">
-      {/* the glow: brand blue from the top left, a pink haze on the right, fading into black */}
-      <LinearGradient colors={[hex(C.blue, 0.75), hex(C.blue, 0.18), "transparent"]} locations={[0, 0.35, 0.65]} start={{ x: 0, y: 0 }} end={{ x: 0.7, y: 1 }} style={{ position: "absolute", left: 0, right: 0, top: 0, height: "75%" }} />
-      <LinearGradient colors={["transparent", hex("#FF4D8D", 0.35), "transparent"]} locations={[0, 0.45, 1]} start={{ x: 0.3, y: 0 }} end={{ x: 1, y: 0.6 }} style={{ position: "absolute", left: 0, right: 0, top: 0, height: "70%" }} />
-      <LinearGradient colors={["transparent", C.bg]} locations={[0.35, 0.75]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
+      {/* smooth glows (no bands): our blue from the top left, a violet haze on the right */}
+      <SoftGlow blobs={[
+        { color: "#0A82F9", cx: "8%", cy: "0%", r: "95%", alpha: 0.6 },
+        { color: "#8B5CF6", cx: "100%", cy: "18%", r: "80%", alpha: 0.38 },
+        { color: "#55A9FC", cx: "60%", cy: "-10%", r: "60%", alpha: 0.25 },
+      ]} />
 
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-white/15" accessibilityLabel={t("back")}>
           <X size={20} color="#fff" />
         </Pressable>
 
-        <View className="flex-1 items-center justify-center py-8">
-          {/* minimal: our star, the wordmark with the badge, one line */}
-          <Image source={require("../../assets/logo.png")} style={{ width: 88, height: 88, marginBottom: 20 }} contentFit="contain" />
-          <View className="flex-row items-start">
-            <Txt className="font-m800 text-[44px] leading-[48px]" style={{ letterSpacing: -1.5 }}>Wishpool</Txt>
-            <View className="ml-1 mt-1 rounded-md bg-blue px-1.5 py-0.5">
-              <Txt className="font-m800 text-[11px] text-white" style={{ letterSpacing: 0.5 }}>PREMIUM</Txt>
-            </View>
+        {/* the title on the left, our glass star beside it on the right */}
+        <View className="flex-1 flex-row items-center justify-between py-8">
+          <View className="flex-1 pr-3">
+            <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
+            <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
+            <Txt className="mt-3 text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
           </View>
-          <Txt className="mt-3 max-w-[300px] text-center text-[17px] leading-[23px]">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
+          <Image source={require("../../assets/premium-star.png")} style={{ width: 120, height: 115 }} contentFit="contain" />
         </View>
 
         {isPremium ? (
