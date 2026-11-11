@@ -293,9 +293,9 @@ export default function CreateRoomScreen() {
             {/* not premium yet: the grid fades into the dark from the bottom, with one lock, a title,
                 a line and a button to the paywall over it (the folders still open it too) */}
             {!isPremium ? (
-              <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0, paddingTop: 70 }}>
+              <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0 }}>
                 <LinearGradient pointerEvents="none" colors={[hex(C.card, 0), hex(C.card, 0.7), C.card]} locations={[0.18, 0.55, 0.92]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
-                <View pointerEvents="box-none" className="flex-1 items-center justify-end px-4 pb-2">
+                <View pointerEvents="box-none" className="flex-1 items-center justify-center px-4">
                   {/* a frosted round behind the lock */}
                   <View className="mb-3 h-12 w-12 items-center justify-center overflow-hidden rounded-full">
                     <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
