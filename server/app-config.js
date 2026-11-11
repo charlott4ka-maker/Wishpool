@@ -39,7 +39,7 @@ export function cleanBanners(v) {
     color2: HEX_RE.test(b?.color2) ? b.color2 : (HEX_RE.test(b?.color1) ? b.color1 : "#2290F6"),
     textColor: HEX_RE.test(b?.textColor) ? b.textColor : "#FFFFFF",
     sticker: typeof b?.sticker === "string" && /^stk:[a-z0-9_-]{1,40}$/.test(b.sticker) ? b.sticker : "",
-    action: ["none", "link", "signin"].includes(b?.action) ? b.action : "none",
+    action: ["none", "link", "signin", "santa"].includes(b?.action) ? b.action : "none",
     url: typeof b?.url === "string" && /^https:\/\/\S{1,500}$/.test(b.url) ? b.url : "",
     dismissible: b?.dismissible !== false,
   }));

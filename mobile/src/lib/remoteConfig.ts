@@ -20,7 +20,7 @@ export type RemoteBanner = {
   color2: string;
   textColor: string;
   sticker: string;
-  action: "none" | "link" | "signin";
+  action: "none" | "link" | "signin" | "santa";
   url: string;
   dismissible: boolean;
 };

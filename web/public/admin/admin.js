@@ -95,7 +95,7 @@
       '<label class="row hint" style="gap:6px"><input type="color" data-b="' + i + '" data-k="textColor" value="' + b.textColor + '"> Текст</label></div>' +
       '<label class="f">Стикер</label><select data-b="' + i + '" data-k="sticker"><option value="">без стикера</option>' + stickers + "</select>" +
       '<label class="f">По нажатию</label><select data-b="' + i + '" data-k="action">' +
-      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
+      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"], ["santa", "Создать комнату Тайного Санты"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       (b.action === "link" ? '<label class="f">Ссылка (https://…)</label><input type="url" data-b="' + i + '" data-k="url" value="' + esc(b.url) + '" placeholder="https://">' : "") +
       '<label class="row hint" style="gap:6px;margin-top:12px"><input type="checkbox" data-b="' + i + '" data-k="dismissible"' + (b.dismissible ? " checked" : "") + "> Можно закрыть крестиком</label>" +
       "</div>";

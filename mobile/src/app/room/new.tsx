@@ -13,7 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import { SymbolView } from "expo-symbols";
 import Svg, { Circle, Rect } from "react-native-svg";
 import { Check, ImagePlus, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import Animated, { SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -87,7 +87,7 @@ export default function CreateRoomScreen() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, preset: presetParam } = useLocalSearchParams<{ id?: string; preset?: string }>();
   const { rooms, createRoom, updateRoom, online, refresh, admin } = useWishpool();
   const editing = id ? rooms.find((r) => r.id === id) : undefined;
   const { isStickerLocked, isPremium } = useSubscription();
@@ -148,6 +148,10 @@ export default function CreateRoomScreen() {
     if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:candle");
     if (p.santa && tint === ROOM_COLORS[0]) setTint("#FF4D8D");
   };
+  // opened from the Secret Santa banner: start as a Santa room
+  useEffect(() => {
+    if (!editing && presetParam === "santa") pickPreset(PRESETS.find((p) => p.santa)!);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
   const title = name.trim() || autoName;
   const [tried, setTried] = useState(false);
