@@ -22,14 +22,15 @@ import { useSubscription } from "../subscription/SubscriptionContext";
 import { purchases } from "../subscription/purchases";
 import { useEffect, useState } from "react";
 
-const LOCALE = { uk: "uk-UA", ru: "ru-RU", en: "en-US" } as const;
+// 12.11.2026
+const fmt = (d: Date) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 import { C } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
 
 export default function PremiumScreen() {
   useAccent(); // re-render in place when the app colour changes
-  const { t, lang } = useT();
+  const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { admin } = useWishpool();
@@ -77,6 +78,12 @@ export default function PremiumScreen() {
           <SettingsGroup>
             <SettingsCell icon={CreditCard} tint="#8E8E93" label={t("premiumManage")} onPress={() => Linking.openURL("https://apps.apple.com/account/subscriptions")} />
           </SettingsGroup>
+          {/* small, at the very bottom: it's on, and the next payment (or, once cancelled, the last day) */}
+          {isPremium ? (
+            <Txt className="-mt-4 px-4 text-center text-[12.5px] leading-[18px] text-t3">
+              {until ? t(until.renews ? "premiumNextPay" : "premiumUntil", { date: fmt(until.date) }) : t("premiumActive")}
+            </Txt>
+          ) : null}
         </View>
       </ScrollView>
       {/* back stays on top while the page scrolls */}

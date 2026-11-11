@@ -40,8 +40,11 @@ const PILL: Record<PillKind, { box: string; text: string }> = {
 };
 
 // soft / green carry a thin border, as in the Mini App's Pill
+// a getter, so the soft border follows the app colour (it was read once, at start)
 const PILL_BORDER: Partial<Record<PillKind, ViewStyle>> = {
-  soft: { borderWidth: 1, borderColor: C.blueLine },
+  get soft() {
+    return { borderWidth: 1, borderColor: C.blueLine };
+  },
   green: { borderWidth: 1, borderColor: "rgba(52,199,89,0.4)" },
 };
 
@@ -396,16 +399,35 @@ export function ScreenTitle({ title, sub, right, compact }: { title: string; sub
 }
 
 /** Small "Premium only" badge for locked options. */
-// the same raised pill as the Folders tab in New room: the app colour as a
-// gradient with a light lip along the top, white crown and text
-export function PremiumBadge({ label }: { label: string }) {
+/** The big Premium button: the Folders tab's raised gradient pill (app colour,
+ *  lighter to the top right, a light lip along the top), crown and white text. */
+export function PremiumButton({ label, onPress }: { label: string; onPress: () => void }) {
   const base = C.blue;
   return (
-    <View className="flex-row items-center gap-1 overflow-hidden rounded-full px-2.5 py-1">
+    <Press onPress={() => { haptic("light"); onPress(); }} className="h-lg flex-row items-center justify-center gap-2 overflow-hidden rounded-full px-6">
+      <LinearGradient colors={[base, mixHex(base, "#ffffff", 0.3)]} start={{ x: 0.2, y: 1 }} end={{ x: 0.8, y: 0 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <LinearGradient colors={[hex(mixHex(base, "#ffffff", 0.2), 0), hex(mixHex(base, "#ffffff", 0.2), 0.52)]} start={{ x: 0.88, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <LinearGradient colors={[hex(mixHex(base, "#ffffff", 0.45), 0.7), hex(mixHex(base, "#ffffff", 0.45), 0)]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.22 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <View style={{ zIndex: 2 }}>
+        <Crown size={18} color="#fff" fill="#fff" strokeWidth={1.5} />
+      </View>
+      <Txt className="font-m700 text-[17px] text-white" style={{ zIndex: 2 }}>{label}</Txt>
+    </Press>
+  );
+}
+
+// the same raised pill as the Folders tab in New room: the app colour as a
+// gradient with a light lip along the top, white crown and text
+export function PremiumBadge({ label }: { label?: string }) {
+  const base = C.blue;
+  return (
+    <View className={`flex-row items-center gap-1 overflow-hidden rounded-full py-1 ${label ? "px-2.5" : "px-1.5"}`}>
       <LinearGradient colors={[base, mixHex(base, "#ffffff", 0.3)]} start={{ x: 0.2, y: 1 }} end={{ x: 0.8, y: 0 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
       <LinearGradient colors={[hex(mixHex(base, "#ffffff", 0.45), 0.7), hex(mixHex(base, "#ffffff", 0.45), 0)]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.3 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-      <Crown size={11} color="#fff" fill="#fff" strokeWidth={1.5} />
-      <Txt className="font-m600 text-[11.5px] text-white">{label}</Txt>
+      <View style={{ zIndex: 2 }}>
+        <Crown size={11} color="#fff" fill="#fff" strokeWidth={1.5} />
+      </View>
+      {label ? <Txt className="font-m600 text-[11.5px] text-white">{label}</Txt> : null}
     </View>
   );
 }

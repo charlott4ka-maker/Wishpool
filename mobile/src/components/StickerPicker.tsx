@@ -2,7 +2,7 @@
 // paywall instead of selecting.
 
 import { useRouter } from "expo-router";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { useT } from "../i18n";
 import { useRemoteConfig } from "../lib/remoteConfig";
@@ -35,7 +35,17 @@ export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked
             {packs.length > 1 ? (
               <View className="mb-2 flex-row items-center gap-2">
                 <Txt className="font-m600 text-[13px] text-t2">{t(pack.titleKey)}</Txt>
-                {pack.isPremiumOnly ? <PremiumBadge label={t("premiumOnly")} /> : null}
+                {pack.isPremiumOnly ? (
+                  locked ? (
+                    // locked: the badge opens the paywall too
+                    <Pressable onPress={() => (onLocked ? onLocked() : router.push("/paywall"))} hitSlop={6}>
+                      <PremiumBadge label={t("premiumOnly")} />
+                    </Pressable>
+                  ) : (
+                    // yours: just the crown
+                    <PremiumBadge />
+                  )
+                ) : null}
               </View>
             ) : null}
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>

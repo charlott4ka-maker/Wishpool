@@ -90,7 +90,7 @@
             "ios": "./assets/icons/glow.png",
             "android": {
               "foregroundImage": "./assets/icons/glow-fg.png",
-              "backgroundColor": "#141B33"
+              "backgroundColor": "#1E2228"
             }
           }
         ]

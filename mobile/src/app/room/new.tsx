@@ -12,7 +12,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { SymbolView } from "expo-symbols";
 import Svg, { Circle, Rect } from "react-native-svg";
-import { Check, ImagePlus, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
+import { Check, ImagePlus, Lock, Paintbrush, Plus } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { SlideInDown } from "react-native-reanimated";
@@ -28,7 +28,7 @@ import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
-import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
+import { Chip, Field, Pill, Segmented, Txt, PremiumButton } from "../../components/ui";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
@@ -436,7 +436,7 @@ export default function CreateRoomScreen() {
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
                   <Txt className="mt-1 text-center text-[14px] leading-[20px] text-white">{t("premiumFoldersSub", { n: skins.length })}</Txt>
                   <View className="mt-4">
-                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => openPaywall()}>{t("premiumOpen")}</Pill>
+                    <PremiumButton label={t("premiumOpen")} onPress={() => openPaywall()} />
                   </View>
                 </View>
               </View>

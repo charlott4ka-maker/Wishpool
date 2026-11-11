@@ -11,6 +11,7 @@
 //   Products: App Store Connect auto-renewable subscriptions, e.g.
 //     app.wishpool.premium.monthly, app.wishpool.premium.annual
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { Platform } from "react-native";
 
@@ -51,6 +52,7 @@ const IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || "";
 const FORCE_MOCK = process.env.EXPO_PUBLIC_REVENUECAT_MOCK === "1";
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
+const MOCK_KEY = "wp_mock_premium";
 function createMock(fakePurchases: boolean): PurchasesAdapter {
   let premium = false;
   let until: Date | null = null;
@@ -58,7 +60,18 @@ function createMock(fakePurchases: boolean): PurchasesAdapter {
   const set = (v: boolean) => {
     premium = v;
     subs.forEach((cb) => cb(v));
+    // test builds keep the pretend purchase across restarts
+    if (fakePurchases) AsyncStorage.setItem(MOCK_KEY, v && until ? until.toISOString() : "").catch(() => {});
   };
+  if (fakePurchases)
+    AsyncStorage.getItem(MOCK_KEY)
+      .then((iso) => {
+        if (iso && new Date(iso) > new Date()) {
+          until = new Date(iso);
+          set(true);
+        }
+      })
+      .catch(() => {});
   return {
     mock: true,
     async init() {},
