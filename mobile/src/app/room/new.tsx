@@ -103,6 +103,12 @@ export default function CreateRoomScreen() {
   // premium folders in the order set on the admin page
   const skins = orderedSkins(useRemoteConfig().folders);
   const [lookOpen, setLookOpen] = useState(false);
+  // the look sheet is an RN Modal: a screen pushed over it (the paywall) left it
+  // stuck on top after closing, so close the sheet first, then open the paywall
+  const openPaywall = () => {
+    setLookOpen(false);
+    setTimeout(() => router.push("/paywall"), 300);
+  };
   // premium decorations: two more stickers
   const [charms, setCharms] = useState<{ e: string; pos: string }[]>(editing?.charms || []);
   const [stickerSlot, setStickerSlot] = useState<"main" | "c0" | "c1">("main");
@@ -297,7 +303,7 @@ export default function CreateRoomScreen() {
                       <Pressable
                         key={slot}
                         onPress={() => {
-                          if (slot !== "main" && !isPremium && !admin) return router.push("/paywall");
+                          if (slot !== "main" && !isPremium && !admin) return openPaywall();
                           haptic("select");
                           setStickerSlot(slot);
                         }}
@@ -317,6 +323,7 @@ export default function CreateRoomScreen() {
                 </View>
               ) : null}
               <StickerPicker
+                onLocked={openPaywall}
                 value={stickerSlot === "main" ? emoji : charms[stickerSlot === "c0" ? 0 : 1]?.e || ""}
                 onChange={(e) => {
                   if (stickerSlot === "main") return setEmoji(e);
@@ -341,7 +348,7 @@ export default function CreateRoomScreen() {
               {/* your own photo on the folder */}
               <View style={{ width: "33.333%", padding: 4 }}>
                 <Pressable
-                  onPress={() => (isPremium ? pickCover() : router.push("/paywall"))}
+                  onPress={() => (isPremium ? pickCover() : openPaywall())}
                   onLongPress={admin ? pickCover : undefined}
                   className="items-center justify-center overflow-hidden rounded-2xl"
                   style={{ aspectRatio: 1.12, backgroundColor: skin === "photo" ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: skin === "photo" ? C.blue : "transparent" }}
@@ -360,7 +367,7 @@ export default function CreateRoomScreen() {
                   <View key={k.id} style={{ width: "33.333%", padding: 4 }}>
                     <Pressable
                       onPress={() => {
-                        if (locked) return router.push("/paywall");
+                        if (locked) return openPaywall();
                         haptic("select");
                         setSkin(k.id);
                       }}
@@ -393,7 +400,7 @@ export default function CreateRoomScreen() {
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
                   <Txt className="mt-1 text-center text-[14px] leading-[20px] text-white">{t("premiumFoldersSub", { n: skins.length })}</Txt>
                   <View className="mt-4">
-                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => router.push("/paywall")}>{t("premiumOpen")}</Pill>
+                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => openPaywall()}>{t("premiumOpen")}</Pill>
                   </View>
                 </View>
               </View>

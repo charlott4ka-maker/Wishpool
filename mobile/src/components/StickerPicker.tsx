@@ -17,7 +17,7 @@ import { PremiumBadge, Txt } from "./ui";
 
 // pack: show just that one pack (the Secret Santa room shows only "newyear");
 // otherwise every pack but that one
-export function StickerPicker({ value, onChange, size = 28, pack: only }: { value: string; onChange: (emoji: string) => void; size?: number; pack?: string }) {
+export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked }: { value: string; onChange: (emoji: string) => void; size?: number; pack?: string; /** how to open the paywall (inside a Modal: close it first) */ onLocked?: () => void }) {
   const { t } = useT();
   const { isPremium } = useSubscription();
   const router = useRouter();
@@ -47,7 +47,7 @@ export function StickerPicker({ value, onChange, size = 28, pack: only }: { valu
                     <Press
                       scaleTo={0.85}
                       onPress={() => {
-                        if (locked) return router.push("/paywall");
+                        if (locked) return onLocked ? onLocked() : router.push("/paywall");
                         haptic("select");
                         onChange(e);
                       }}
