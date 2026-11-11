@@ -36,7 +36,8 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://wishpool.clickbrickk.com",
         "EXPO_PUBLIC_PRIVACY_URL": "https://wishpool.clickbrickk.com/privacy",
-        "EXPO_PUBLIC_REVENUECAT_MOCK": "1"
+        "EXPO_PUBLIC_REVENUECAT_MOCK": "1",
+        "EXPO_PUBLIC_PREMIUM": "1"
       }
     }
   },
