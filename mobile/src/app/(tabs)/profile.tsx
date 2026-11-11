@@ -19,6 +19,8 @@ import { usePrefs } from "../../settings/prefs";
 import { useWishpool } from "../../store/WishpoolContext";
 import { PREVIEW_PREMIUM, showPremium } from "../../lib/premiumGate";
 import { PremiumCard } from "../../components/PremiumCard";
+import { IN_TG } from "../../lib/telegram";
+import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C } from "../../theme/tokens";
 
@@ -70,8 +72,9 @@ export default function ProfileScreen() {
           <BirthdayCard />
         </View>
 
-        {/* Premium: the offer under the birthday until you have it */}
-        {showPremium(admin) && !isPremium ? (
+        {/* Premium: the offer under the birthday until you have it; in Telegram a
+            pointer to the iPhone app, shown once Premium is on sale (admins see it now) */}
+        {(IN_TG ? PREMIUM_ENABLED || admin || PREVIEW_PREMIUM : showPremium(admin)) && !isPremium ? (
           <View className="mt-3">
             <PremiumCard />
           </View>

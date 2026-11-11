@@ -113,6 +113,8 @@ export const MOBILE_STRINGS = {
   premiumActive: { uk: "Premium активний", ru: "Premium активен", en: "Premium is on" },
   premiumCardSub: { uk: "Преміум-папки, своє фото на папці, кольори й іконка застосунку.", ru: "Премиум-папки, своё фото на папке, цвета и иконка приложения.", en: "Premium folders, your own photo on a folder, app colours and icon." },
   premiumTry: { uk: "Спробувати безкоштовно", ru: "Попробовать бесплатно", en: "Try for free" },
+  premiumTgSub: { uk: "Поки є лише в застосунку для iPhone: преміум-папки, своє фото на папці, кольори й іконка.", ru: "Пока есть только в приложении для iPhone: премиум-папки, своё фото на папке, цвета и иконка.", en: "For now it's only in the iPhone app: premium folders, your own photo on a folder, colours and an icon." },
+  premiumGetApp: { uk: "Завантажити в App Store", ru: "Скачать в App Store", en: "Get it on the App Store" },
   premiumManage: { uk: "Керувати підпискою", ru: "Управлять подпиской", en: "Manage subscription" },
   premiumThanksSub: { uk: "Дякуємо, що ти з нами. Тут твої кольори й іконка.", ru: "Спасибо, что ты с нами. Здесь твои цвета и иконка.", en: "Thanks for being with us. Your colours and icon live here." },
   premiumPhotos: { uk: "До {n} фото до кожного бажання", ru: "До {n} фото к каждому желанию", en: "Up to {n} photos per wish" },

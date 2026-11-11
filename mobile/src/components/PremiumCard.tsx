@@ -5,10 +5,15 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Crown } from "lucide-react-native";
-import { View } from "react-native";
+import { Linking, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
+import { IN_TG } from "../lib/telegram";
+
+// in Telegram Premium can't be bought (it's an Apple purchase): the card says
+// it lives in the iPhone app and links to the App Store
+const APP_STORE = "https://apps.apple.com/app/id6825104468";
 import { Press } from "./Press";
 import { C } from "../theme/tokens";
 import { Txt } from "./ui";
@@ -18,7 +23,8 @@ export function PremiumCard() {
   const router = useRouter();
   const open = () => {
     haptic("select");
-    router.push("/paywall");
+    if (IN_TG) Linking.openURL(APP_STORE);
+    else router.push("/paywall");
   };
   return (
     <View className="overflow-hidden rounded-card p-6" style={{ backgroundColor: C.raised }}>
@@ -34,10 +40,10 @@ export function PremiumCard() {
         </View>
         <Txt className="font-m800 text-[17px] text-white">{t("premium")}</Txt>
       </View>
-      <Txt className="mt-2 text-[14px] leading-[20px]" style={{ color: "rgba(255,255,255,0.85)" }}>{t("premiumCardSub")}</Txt>
+      <Txt className="mt-2 text-[14px] leading-[20px]" style={{ color: "rgba(255,255,255,0.85)" }}>{t(IN_TG ? "premiumTgSub" : "premiumCardSub")}</Txt>
       <View className="mt-4 flex-row">
         <Press onPress={open} className="h-sm items-center justify-center rounded-full bg-white px-5">
-          <Txt className="font-m700 text-[15px]" style={{ color: "#15181D" }}>{t("premiumTry")}</Txt>
+          <Txt className="font-m700 text-[15px]" style={{ color: "#15181D" }}>{t(IN_TG ? "premiumGetApp" : "premiumTry")}</Txt>
         </Press>
       </View>
     </View>
