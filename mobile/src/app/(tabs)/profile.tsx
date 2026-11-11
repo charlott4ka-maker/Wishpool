@@ -52,13 +52,6 @@ export default function ProfileScreen() {
           <Txt className="mt-1 text-[14.5px] text-t2">{t("statsLine", { w: wishes.length, r: rooms.length })}</Txt>
         </View>
 
-        {/* Premium: the offer under your name until you have it */}
-        {showPremium(admin) && !isPremium ? (
-          <View className="mt-6">
-            <PremiumCard />
-          </View>
-        ) : null}
-
         <View className="mt-6 flex-row gap-3">
           <Card className="flex-1 items-center bg-raised p-5">
             <Gift size={22} color={C.blue} />
@@ -76,6 +69,13 @@ export default function ProfileScreen() {
         <View className="mt-3">
           <BirthdayCard />
         </View>
+
+        {/* Premium: the offer under the birthday until you have it */}
+        {showPremium(admin) && !isPremium ? (
+          <View className="mt-3">
+            <PremiumCard />
+          </View>
+        ) : null}
 
 
         <View className="mt-8">
