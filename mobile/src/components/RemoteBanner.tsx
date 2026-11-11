@@ -46,7 +46,7 @@ export const SANTA_BANNER: Banner = {
 
 /** The banner to show now, if any: active, for this kind of user, with text in this language, not closed. */
 export function useRemoteBanner(): { banner: Banner | null; close: (id: string) => void } {
-  const { banners, previewBanner } = useRemoteConfig();
+  const { banners, previewBanner, season } = useRemoteConfig();
   const { status } = useAuth();
   const { lang } = useT();
   const demo = usePrefs().demo;
@@ -69,7 +69,7 @@ export function useRemoteBanner(): { banner: Banner | null; close: (id: string) 
   const banner =
     banners.find((b) => (b.audience === "all" || b.audience === who) && !closed.includes(b.id) && (b.text[lang] || b.text.en || b.text.uk || b.text.ru)) ||
     // our own seasonal one when the admin page has none: Secret Santa till Christmas
-    (who === "signedIn" && Date.now() < SANTA_UNTIL && !closed.includes(SANTA_BANNER.id) ? SANTA_BANNER : null);
+    (season.newYear && who === "signedIn" && Date.now() < SANTA_UNTIL && !closed.includes(SANTA_BANNER.id) ? SANTA_BANNER : null);
   return { banner, close };
 }
 

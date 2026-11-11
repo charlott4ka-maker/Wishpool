@@ -30,13 +30,15 @@ export type RemoteConfig = {
   stickers: { hidden: string[]; extra: { name: string }[] };
   /** premium folders: order and hidden ones, set on the admin page */
   folders: { order: string[]; hidden: string[] };
+  /** seasonal things, switched on the admin page (Banners › Season) */
+  season: { newYear: boolean };
   /** Admin preview only: show this banner whatever its audience. */
   previewBanner?: string | null;
 };
 
 const KEY = "wp_remote_config";
 const EVERY = 5 * 60 * 1000;
-const EMPTY: RemoteConfig = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] } };
+const EMPTY: RemoteConfig = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true } };
 
 let current: RemoteConfig = EMPTY;
 let fetchedAt = 0;

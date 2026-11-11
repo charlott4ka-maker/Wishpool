@@ -56,8 +56,13 @@ export function cleanFolders(v) {
   return { order: ids(v?.order), hidden: ids(v?.hidden) };
 }
 
-const CLEAN = { strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders };
-const EMPTY = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] } };
+// seasonal things in the app, switched on and off on the admin page
+export function cleanSeason(v) {
+  return { newYear: v?.newYear !== false };
+}
+
+const CLEAN = { strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders, season: cleanSeason };
+const EMPTY = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true } };
 
 /** GET /api/config: what the app reads on start (only active banners). */
 export function publicConfigRoute(store) {
@@ -65,7 +70,7 @@ export function publicConfigRoute(store) {
     try {
       const c = { ...EMPTY, ...(await store.getConfig()) };
       res.set("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
-      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active), stickers: c.stickers, folders: c.folders });
+      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active), stickers: c.stickers, folders: c.folders, season: cleanSeason(c.season) });
     } catch (e) { next(e); }
   };
 }

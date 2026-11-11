@@ -9,6 +9,7 @@ import { Pressable, View } from "react-native";
 import { useT } from "../i18n";
 import { DAY_FORMS, plural } from "../lib/dates";
 import { haptic } from "../lib/haptics";
+import { useRemoteConfig } from "../lib/remoteConfig";
 import { NEW_YEAR_STICKERS } from "../subscription/featureFlags";
 import { C } from "../theme/tokens";
 import type { Room } from "../types";
@@ -25,6 +26,7 @@ export function daysToNewYear(now = new Date()) {
 export function NewYearCountdown({ rooms }: { rooms: Room[] }) {
   const { t, lang } = useT();
   const router = useRouter();
+  const { season: { newYear } } = useRemoteConfig();
   const [closed, setClosed] = useState<boolean | null>(null);
   useEffect(() => {
     AsyncStorage.getItem(KEY).then((v) => setClosed(!!v)).catch(() => setClosed(false));
@@ -33,7 +35,7 @@ export function NewYearCountdown({ rooms }: { rooms: Room[] }) {
   // from mid-November to the end of December
   const season = (now.getMonth() === 10 && now.getDate() >= 10) || now.getMonth() === 11;
   const hasSanta = rooms.some((r) => NEW_YEAR_STICKERS.includes(r.emoji));
-  if (closed !== false || !season || hasSanta) return null;
+  if (!newYear || closed !== false || !season || hasSanta) return null;
   const n = daysToNewYear(now);
   const days = lang === "en" ? `${n} ${n === 1 ? "day" : "days"}` : `${n} ${plural(lang, n, DAY_FORMS[lang])}`;
   return (

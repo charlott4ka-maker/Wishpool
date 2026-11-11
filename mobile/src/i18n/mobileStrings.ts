@@ -125,6 +125,8 @@ export const MOBILE_STRINGS = {
   storyHeadNy: { uk: "Мій вішліст на Новий рік", ru: "Мой вишлист на Новый год", en: "My New Year wishlist" },
   storyHint: { uk: "Поділись у сторіс, щоб друзі знали, що тобі подарувати", ru: "Поделись в сторис, чтобы друзья знали, что тебе подарить", en: "Share it in your stories so friends know what to give you" },
   storyShare: { uk: "Поділитися", ru: "Поделиться", en: "Share" },
+  setSeasonal: { uk: "Сезонне", ru: "Сезонное", en: "Seasonal" },
+  setSeasonalHint: { uk: "Зникне після свят.", ru: "Пропадёт после праздников.", en: "Goes away after the holidays." },
   setSnow: { uk: "Сніг у грудні", ru: "Снег в декабре", en: "Snow in December" },
   customColor: { uk: "Свій колір", ru: "Свой цвет", en: "Your own colour" },
   perkFolders: { uk: "Кастомні папки", ru: "Кастомные папки", en: "Custom folders" },

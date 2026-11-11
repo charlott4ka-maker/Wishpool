@@ -25,6 +25,10 @@ import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
 import { api, SITE_URL } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
+import { useRemoteConfig } from "../lib/remoteConfig";
+
+// the New Year season: mid-November to 7 January
+const nySeason = (d = new Date()) => (d.getMonth() === 10 && d.getDate() >= 10) || d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 7);
 import { purchases } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
@@ -43,6 +47,7 @@ export default function SettingsScreen() {
   const prefs = usePrefs();
   const { status, signOut } = useAuth();
   const { refresh } = useWishpool();
+  const { season: { newYear } } = useRemoteConfig();
   const { isPremium } = useSubscription();
   const version = Constants.expoConfig?.version || "1.0.0";
   const [scrolled, setScrolled] = useState(false);
@@ -174,10 +179,16 @@ export default function SettingsScreen() {
           </SettingsGroup>
         ) : null}
 
+        {/* seasonal: only while the New Year season is on (the admin page can switch it off) */}
+        {newYear && nySeason() ? (
+          <SettingsGroup title={t("setSeasonal")} footer={t("setSeasonalHint")}>
+            <SettingsCell icon={Snowflake} tint="#5AC8FA" label={t("setSnow")} toggle={{ value: prefs.snow, onChange: (v) => setPref("snow", v) }} />
+          </SettingsGroup>
+        ) : null}
+
         <SettingsGroup title={t("setGeneral")}>
           <SettingsCell icon={Globe} tint="#5856D6" label={t("language")} value={LANG_SHORT[lang]} onPress={pickLanguage} />
           <SettingsCell icon={Vibrate} tint="#FF2D55" label={t("setHaptics")} toggle={{ value: prefs.haptics, onChange: (v) => setPref("haptics", v) }} />
-          <SettingsCell icon={Snowflake} tint="#5AC8FA" label={t("setSnow")} toggle={{ value: prefs.snow, onChange: (v) => setPref("snow", v) }} />
         </SettingsGroup>
 
         <SettingsGroup title={t("setAbout")}>

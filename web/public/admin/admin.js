@@ -38,7 +38,7 @@
     show("login", false);
     if (!token) { show("login", true); return; }
     Promise.all([api("GET", "/admin/config"), fetch("/admin/app-data.json").then(function (r) { return r.json(); })]).then(function (res) {
-      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [] }, folders: res[0].folders || { order: [], hidden: [] } };
+      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [] }, folders: res[0].folders || { order: [], hidden: [] }, season: res[0].season || { newYear: true } };
       draft = clone(saved);
       data = res[1];
       show("noStorage", !res[0].storage);
@@ -65,17 +65,24 @@
     };
   });
   function dirty(key) { return JSON.stringify(saved[key]) !== JSON.stringify(draft[key]); }
-  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders"].some(dirty)); pv.push(); }
+  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders", "season"].some(dirty)); pv.push(); }
   $("discard").onclick = function () { draft = clone(saved); renderAll(); };
   $("save").onclick = function () {
-    var keys = ["banners", "strings", "stickers", "folders"].filter(dirty);
+    var keys = ["banners", "strings", "stickers", "folders", "season"].filter(dirty);
     Promise.all(keys.map(function (k) { return api("PUT", "/admin/config/" + k, { value: draft[k] }).then(function (r) { saved[k] = r.value; }); }))
       .then(function () { draft = clone(saved); renderAll(); toast("Сохранено"); })
       .catch(function (e) { toast("Ошибка: " + e.message); });
   };
-  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
+  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders", "season"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
 
-  function renderAll() { renderBanners(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
+  function renderAll() { renderBanners(); renderSeason(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
+
+  // ---------- the season (New Year) ----------
+  function renderSeason() {
+    var on = draft.season.newYear !== false;
+    $("seasonNY").checked = on;
+  }
+  $("seasonNY").onchange = function () { draft.season = { newYear: $("seasonNY").checked }; updateBar(); };
 
   // ---------- banners ----------
   function stickerUrl(name) { return "/stickers/" + name + ".webp"; }
