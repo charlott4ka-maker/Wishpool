@@ -34,8 +34,9 @@ export const SANTA_BANNER: Banner = {
     ru: "Тайный Санта уже здесь! Создай комнату и проведи жеребьёвку",
     en: "Secret Santa is here! Make a room and run the draw",
   },
-  color1: "#D81E36",
-  color2: "#FF5A6E",
+  // a deep, calm Christmas red (the bright red was too loud)
+  color1: "#7A1426",
+  color2: "#A8293C",
   textColor: "#FFFFFF",
   sticker: "stk:santa",
   action: "santa",
