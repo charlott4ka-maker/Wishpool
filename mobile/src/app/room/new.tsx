@@ -22,6 +22,7 @@ import { DateRow } from "../../components/DateRow";
 import { FriendPicker, useFriendList } from "../../components/FriendPicker";
 import { LookTabs } from "../../components/LookTabs";
 import { RoomFolder } from "../../components/RoomFolder";
+import { CustomColor } from "../../components/CustomColor";
 import { SantaChip } from "../../components/SantaChip";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
@@ -345,7 +346,20 @@ export default function CreateRoomScreen() {
             </View>
           ) : lookTab === "color" ? (
             // a colour means the plain folder again
-            <ColorPicker value={skin ? "" : tint} onChange={(c) => { setTint(c); setSkin(""); }} />
+            <View>
+              <ColorPicker value={skin ? "" : tint} onChange={(c) => { setTint(c); setSkin(""); }} />
+              {/* any colour at all (Premium): the iPhone's own picker */}
+              {showSkins ? (
+                <CustomColor
+                  value={tint}
+                  picked={!skin && !ROOM_COLORS.includes(tint)}
+                  label={t("customColor")}
+                  unlocked={isPremium || !!admin}
+                  onChange={(c) => { setTint(c); setSkin(""); }}
+                  onLocked={openPaywall}
+                />
+              ) : null}
+            </View>
           ) : (
             <View>
             <View className="mb-4">

@@ -116,6 +116,7 @@ export const MOBILE_STRINGS = {
   premiumTgSub: { uk: "Поки є лише в застосунку для iPhone: кастомні папки, своє фото на папці, кольори й іконка.", ru: "Пока есть только в приложении для iPhone: кастомные папки, своё фото на папке, цвета и иконка.", en: "For now it's only in the iPhone app: custom folders, your own photo on a folder, colours and an icon." },
   premiumGetApp: { uk: "Завантажити в App Store", ru: "Скачать в App Store", en: "Get it on the App Store" },
   premiumPerks: { uk: "Переваги підписки", ru: "Преимущества подписки", en: "What you get" },
+  customColor: { uk: "Свій колір", ru: "Свой цвет", en: "Your own colour" },
   perkFolders: { uk: "Кастомні папки", ru: "Кастомные папки", en: "Custom folders" },
   perkFoldersSub: { uk: "{n} матеріалів: хутро, пуховик, шкіра, гумка, светр та інші.", ru: "{n} материалов: мех, пуховик, кожа, мармелад, свитер и другие.", en: "{n} materials: fur, puffer, leather, gummy, knit and more." },
   perkCover: { uk: "Своє фото на папці", ru: "Своё фото на папке", en: "Your photo on a folder" },
