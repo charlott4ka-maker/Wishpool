@@ -6,7 +6,7 @@
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Lock, Plus, X } from "lucide-react-native";
+import { Crown, Plus, X } from "lucide-react-native";
 import React, { useEffect, useId, useRef, useState } from "react";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TextProps, View, ViewStyle } from "react-native";
@@ -16,7 +16,7 @@ import Svg, { Circle, Defs, G, Image as SvgImage, Mask, Rect } from "react-nativ
 import { haptic } from "../lib/haptics";
 import { initial } from "../lib/initial";
 import { LiquidGlass } from "../lib/liquidGlass";
-import { C, H } from "../theme/tokens";
+import { C, H, hex, mixHex } from "../theme/tokens";
 import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 
@@ -396,11 +396,16 @@ export function ScreenTitle({ title, sub, right, compact }: { title: string; sub
 }
 
 /** Small "Premium only" badge for locked options. */
+// the same raised pill as the Folders tab in New room: the app colour as a
+// gradient with a light lip along the top, white crown and text
 export function PremiumBadge({ label }: { label: string }) {
+  const base = C.blue;
   return (
-    <View className="flex-row items-center gap-1 rounded-full bg-gold/20 px-2 py-1">
-      <Lock size={11} color={C.gold} />
-      <Txt className="font-m600 text-[11.5px] text-gold">{label}</Txt>
+    <View className="flex-row items-center gap-1 overflow-hidden rounded-full px-2.5 py-1">
+      <LinearGradient colors={[base, mixHex(base, "#ffffff", 0.3)]} start={{ x: 0.2, y: 1 }} end={{ x: 0.8, y: 0 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <LinearGradient colors={[hex(mixHex(base, "#ffffff", 0.45), 0.7), hex(mixHex(base, "#ffffff", 0.45), 0)]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.3 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <Crown size={11} color="#fff" fill="#fff" strokeWidth={1.5} />
+      <Txt className="font-m600 text-[11.5px] text-white">{label}</Txt>
     </View>
   );
 }
