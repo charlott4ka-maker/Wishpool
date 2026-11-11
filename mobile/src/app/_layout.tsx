@@ -111,6 +111,7 @@ function Gate() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="room/[id]" />
             <Stack.Screen name="settings" />
+            <Stack.Screen name="premium" />
             <Stack.Screen name="faq" />
             <Stack.Screen name="friends" />
             <Stack.Screen name="friends-guest" options={FIT_SHEET} />

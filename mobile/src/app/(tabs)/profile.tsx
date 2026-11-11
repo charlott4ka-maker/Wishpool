@@ -1,7 +1,7 @@
 // "Профіль": who you are, stats, Premium, language, sign out.
 
 import { useRouter } from "expo-router";
-import { ChevronRight, Crown, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
+import { Crown, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,7 +17,8 @@ import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { usePrefs } from "../../settings/prefs";
 import { useWishpool } from "../../store/WishpoolContext";
-import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
+import { PREVIEW_PREMIUM, showPremium } from "../../lib/premiumGate";
+import { PremiumCard } from "../../components/PremiumCard";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C } from "../../theme/tokens";
 
@@ -26,7 +27,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, status } = useAuth();
-  const { wishes, rooms, inbox } = useWishpool();
+  const { wishes, rooms, inbox, admin } = useWishpool();
   const { isPremium } = useSubscription();
   const prefs = usePrefs();
   // your own name / photo from the profile editor win over the account's
@@ -51,6 +52,13 @@ export default function ProfileScreen() {
           <Txt className="mt-1 text-[14.5px] text-t2">{t("statsLine", { w: wishes.length, r: rooms.length })}</Txt>
         </View>
 
+        {/* Premium: the offer under your name until you have it */}
+        {showPremium(admin) && !isPremium ? (
+          <View className="mt-6">
+            <PremiumCard />
+          </View>
+        ) : null}
+
         <View className="mt-6 flex-row gap-3">
           <Card className="flex-1 items-center bg-raised p-5">
             <Gift size={22} color={C.blue} />
@@ -69,18 +77,6 @@ export default function ProfileScreen() {
           <BirthdayCard />
         </View>
 
-        {PREMIUM_ENABLED ? (
-        <Card className="mt-3 flex-row items-center gap-4 bg-raised p-4" onPress={() => router.push("/paywall")}>
-          <View className="h-sm w-sm items-center justify-center rounded-full bg-gold/20">
-            <Crown size={20} color={C.gold} />
-          </View>
-          <View className="flex-1">
-            <Txt className="font-m700 text-base">{t("premium")}</Txt>
-            <Txt className="mt-0.5 text-[12.5px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
-          </View>
-          <ChevronRight size={20} color={C.t3} />
-        </Card>
-        ) : null}
 
         <View className="mt-8">
           <SettingsGroup>
@@ -99,6 +95,8 @@ export default function ProfileScreen() {
                 ) : null
               }
             />
+            {/* once you have Premium: its own page (colour, icon, subscription) */}
+            {showPremium(admin) && (isPremium || admin || PREVIEW_PREMIUM) ? <SettingsCell icon={Crown} tint={C.blue} label="Premium" onPress={() => router.push("/premium")} /> : null}
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
           </SettingsGroup>
         </View>
