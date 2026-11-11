@@ -104,6 +104,7 @@ export default function CreateRoomScreen() {
   // premium folders in the order set on the admin page
   const skins = orderedSkins(useRemoteConfig().folders);
   const [lookOpen, setLookOpen] = useState(false);
+  const [lookScrolled, setLookScrolled] = useState(false);
   // the look sheet is an RN Modal: a screen pushed over it (the paywall) left it
   // stuck on top after closing, so close the sheet first, then open the paywall
   const { width: screenW } = useWindowDimensions();
@@ -300,11 +301,12 @@ export default function CreateRoomScreen() {
           <LookTabs
             options={showSkins ? [["sticker", t("lookSticker")], ["color", t("lookColor")], ["folders", t("lookFolders")]] : [["sticker", t("lookSticker")], ["color", t("lookColor")]]}
             value={lookTab}
-            onChange={setLookTab}
+            onChange={(k) => { setLookTab(k); setLookScrolled(false); }}
             premium="folders"
           />
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} scrollEnabled={!(lookTab === "folders" && foldersLocked)} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
+        <View style={{ flex: 1 }}>
+        <ScrollView showsVerticalScrollIndicator={false} scrollEnabled={!(lookTab === "folders" && foldersLocked)} scrollEventThrottle={16} onScroll={(e) => setLookScrolled(e.nativeEvent.contentOffset.y > 4)} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
           {lookTab === "sticker" ? (
             <View>
               {/* which sticker the picker sets: the main one, or (premium) one of two more */}
@@ -443,6 +445,9 @@ export default function CreateRoomScreen() {
             </View>
           )}
         </ScrollView>
+        {/* a soft fade under the tabs once the list scrolls under them, like everywhere else */}
+        {lookScrolled ? <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 28 }} /> : null}
+        </View>
       </Animated.View>
     </Modal>
     <ToastHost />
