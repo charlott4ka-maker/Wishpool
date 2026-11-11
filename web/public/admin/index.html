@@ -121,6 +121,7 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
           <button data-tab="strings">Тексты</button>
           <button data-tab="stickers">Стикеры</button>
           <button data-tab="folders">Папки</button>
+          <button data-tab="news">Уведомления</button>
           <button data-tab="reports">Жалобы</button>
         </div>
         <p class="hint" style="margin-top:12px">Справа живой предпросмотр: изменения видны в нём сразу, а в приложение попадают после «Сохранить», примерно за минуту.</p>
@@ -168,6 +169,13 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
         <h2 style="margin-top:0">Премиум-папки</h2>
         <p class="hint">Перетащи папку, чтобы поменять порядок в приложении (первые девять видны в превью без премиума). Нажми на папку, чтобы скрыть её из выбора или вернуть. Комнаты со скрытой папкой продолжат её показывать.</p>
         <div class="fld" id="folderGrid" style="margin-top:12px"></div>
+      </div>
+
+      <div class="block hidden" data-pane="news">
+        <h2 style="margin-top:0">Уведомления</h2>
+        <p class="hint">Колокольчик в профиле справа сверху: список как в банковском приложении и страница уведомления. Пустой язык не показывается в этом языке. В тексте <b>**так**</b> пишется жирным, <b>{name}</b> заменится на имя человека; в списке каждый пункт с новой строки; абзацы разделяй пустой строкой. Нажми на уведомление, чтобы открыть его в телефоне справа.</p>
+        <div id="newsList"></div>
+        <div class="btns"><button class="btn2 ghost" id="addNews">+ Новое уведомление</button></div>
       </div>
 
       <div class="block hidden" data-pane="reports">

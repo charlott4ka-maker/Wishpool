@@ -306,25 +306,31 @@ export default function CreateRoomScreen() {
               {/* which sticker the picker sets: the main one, or (premium) one of two more */}
               {showSkins ? (
                 <View className="mb-4 flex-row items-center gap-2">
-                  {(["main", "c0", "c1"] as const).map((slot, i) => {
+                  {(isPremium || admin ? (["main", "c0", "c1"] as const) : (["main"] as const)).map((slot, i) => {
                     const e = slot === "main" ? emoji : charms[i - 1]?.e;
                     const on = stickerSlot === slot;
                     return (
                       <Pressable
                         key={slot}
                         onPress={() => {
-                          if (slot !== "main" && !isPremium && !admin) return openPaywall();
                           haptic("select");
                           setStickerSlot(slot);
                         }}
                         className="h-sm flex-row items-center gap-1.5 rounded-full px-3.5"
                         style={{ backgroundColor: on ? SEG_ON_BG : C.bg }}
                       >
-                        {e ? <Sticker emoji={e} size={20} /> : slot !== "main" && !isPremium ? <Lock size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
+                        {e ? <Sticker emoji={e} size={20} /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
                         <Txt className={`font-m600 text-[13px] ${on ? "text-white" : "text-t2"}`}>{slot === "main" ? t("stickerMain") : t("stickerMore")}</Txt>
                       </Pressable>
                     );
                   })}
+                  {/* without Premium: one locked chip instead of the two extra slots */}
+                  {!isPremium && !admin ? (
+                    <Pressable onPress={openPaywall} className="h-sm flex-row items-center gap-1.5 rounded-full px-3.5" style={{ backgroundColor: C.bg }}>
+                      <Lock size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />
+                      <Txt className="font-m600 text-[13px] text-t2">Premium</Txt>
+                    </Pressable>
+                  ) : null}
                   {stickerSlot !== "main" && charms[stickerSlot === "c0" ? 0 : 1] ? (
                     <Pressable onPress={() => { haptic("select"); setCharms((cur) => cur.filter((_, j) => j !== (stickerSlot === "c0" ? 0 : 1))); setStickerSlot("main"); }} hitSlop={8}>
                       <Txt className="font-m600 text-[13px] text-t2">{t("setDelete")}</Txt>

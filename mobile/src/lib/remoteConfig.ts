@@ -24,6 +24,18 @@ export type RemoteBanner = {
   url: string;
   dismissible: boolean;
 };
+export type NewsItem = {
+  id: string;
+  audience: "all" | "signedIn" | "guest";
+  date: string;
+  icon: string;
+  color: string;
+  title: L;
+  sub: L;
+  image: string;
+  blocks: { type: "text" | "list" | "info"; text: L }[];
+  button: { label: L; action: "none" | "link" | "santa" | "newRoom" | "newWish" | "signin" | "premium"; url: string };
+};
 export type RemoteConfig = {
   strings: Record<string, L>;
   banners: RemoteBanner[];
@@ -32,13 +44,15 @@ export type RemoteConfig = {
   folders: { order: string[]; hidden: string[] };
   /** seasonal things, switched on the admin page (Banners › Season) */
   season: { newYear: boolean };
+  /** in-app notifications (Profile › bell), made on the admin page */
+  news: NewsItem[];
   /** Admin preview only: show this banner whatever its audience. */
   previewBanner?: string | null;
 };
 
 const KEY = "wp_remote_config";
 const EVERY = 5 * 60 * 1000;
-const EMPTY: RemoteConfig = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true } };
+const EMPTY: RemoteConfig = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true }, news: [] };
 
 let current: RemoteConfig = EMPTY;
 let fetchedAt = 0;

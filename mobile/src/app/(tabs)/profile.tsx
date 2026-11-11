@@ -1,25 +1,25 @@
 // "Профіль": who you are, stats, Premium, language, sign out.
 
 import { useRouter } from "expo-router";
-import { Crown, Share2, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
+import { Bell, Crown, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useMe } from "../../lib/me";
+import { useNews } from "../../lib/news";
 import { useAuth } from "../../auth/AuthContext";
 import { BirthdayCard } from "../../components/BirthdayCard";
 import { Press } from "../../components/Press";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
 import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
-import { Avatar, AvatarBadge, Card, Pill, Txt } from "../../components/ui";
+import { Avatar, AvatarBadge, Card, Pill, Txt, GlassCircle } from "../../components/ui";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { usePrefs } from "../../settings/prefs";
 import { useWishpool } from "../../store/WishpoolContext";
 import { PREVIEW_PREMIUM, showPremium } from "../../lib/premiumGate";
 import { PremiumCard } from "../../components/PremiumCard";
-import { storyAvailable } from "../../lib/story";
 import { IN_TG } from "../../lib/telegram";
 import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
@@ -38,6 +38,7 @@ export default function ProfileScreen() {
   // your own name / photo from the profile editor win over the account's
   // the same name, photo and colour your avatar has in rooms
   const me = useMe();
+  const { unread } = useNews();
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
   const gifting = rooms.reduce((n, r) => n + (r.demoLists || []).reduce((k, l) => k + l.wishes.filter((x) => x.reservedByMe).length, 0), 0);
 
@@ -46,6 +47,17 @@ export default function ProfileScreen() {
     <View className="flex-1 bg-card">
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
         <View className="items-center">
+          {/* notifications from us (the admin page): a bell with a red count of unread */}
+          <View style={{ position: "absolute", right: 0, top: 0, zIndex: 2 }}>
+            <GlassCircle onPress={() => router.push("/news")} label={t("newsTitle")}>
+              <Bell size={20} color={C.t1} strokeWidth={1.5} absoluteStrokeWidth />
+            </GlassCircle>
+            {unread ? (
+              <View pointerEvents="none" style={{ position: "absolute", top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: "#FF3B30", alignItems: "center", justifyContent: "center" }}>
+                <Txt className="font-m700 text-[11px] text-white">{unread}</Txt>
+              </View>
+            ) : null}
+          </View>
           {/* tap: edit name and photo */}
           <Press scaleTo={0.95} onPress={() => router.push("/profile-edit")} accessibilityLabel={t("editProfile")}>
             <Avatar m={me} size={92} />
@@ -104,8 +116,6 @@ export default function ProfileScreen() {
             />
             {/* once you have Premium: its own page (colour, icon, subscription) */}
             {showPremium(admin) && (isPremium || admin || PREVIEW_PREMIUM) ? <SettingsCell icon={Crown} tint={C.blue} label="Premium" onPress={() => router.push("/premium")} /> : null}
-            {/* your wishlist as a picture for stories (iPhone builds with the share pieces) */}
-            {storyAvailable ? <SettingsCell icon={Share2} tint="#FF2D55" label={t("storyTitle")} onPress={() => router.push("/story")} /> : null}
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
           </SettingsGroup>
         </View>
