@@ -61,7 +61,10 @@ export default function NewsList() {
           })}
         </ScrollView>
       ) : (
-        <Empty fill emoji="stk:bulb" tilt={0} title={t("newsEmpty")} sub={t("newsEmptySub")} />
+        // centred on the whole screen (not just under the title), lifted a little
+        <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, paddingBottom: insets.bottom + 80 }}>
+          <Empty fill emoji="stk:bulb" tilt={0} title={t("newsEmpty")} sub={t("newsEmptySub")} />
+        </View>
       )}
     </View>
   );

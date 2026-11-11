@@ -28,8 +28,8 @@ import { folderSkin } from "../lib/folderSkins";
 /** The front's top edge (tab + step) and the whole front outline. */
 // stacked inner strokes (clipped to the shape, so only the inside half shows):
 // a shade that fades in from the edge, like the bevel on the made folders
-// many thin layers, each faint, so the shade melts in with no visible line
-const BEVEL: [number, number][] = [[40, 0.025], [32, 0.03], [25, 0.035], [19, 0.04], [14, 0.045], [10, 0.05], [6, 0.05], [3, 0.05]];
+// she preferred the earlier, clearer edge (with the back sheet blurred)
+const BEVEL: [number, number][] = [[22, 0.05], [14, 0.07], [8, 0.09], [4, 0.12]];
 
 export function folderPaths(w: number, h: number) {
   const R0 = Math.round;
@@ -212,19 +212,11 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
     >
       <View className="w-full" style={{ aspectRatio: 1.12 }} onLayout={(e: LayoutChangeEvent) => setDim({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
         {cover && dim && paths ? (
-          <Svg width={dim.w} height={dim.h} style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Defs>
-              <ClipPath id={`cb-${room.id}`}>
-                <Rect x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} />
-              </ClipPath>
-            </Defs>
-            <SvgImage href={{ uri: cover }} x={0} y={0} width={dim.w} height={dim.h} preserveAspectRatio="xMidYMid slice" clipPath={`url(#cb-${room.id})`} />
-            <Rect x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} fill="#000" fillOpacity={0.38} />
-            <G clipPath={`url(#cb-${room.id})`}>
-              {BEVEL.map(([w, o]) => <Rect key={w} x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} fill="none" stroke="#000" strokeOpacity={o} strokeWidth={w} />)}
-              <Rect x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} fill="none" stroke="#fff" strokeOpacity={0.18} strokeWidth={2} />
-            </G>
-          </Svg>
+          // the back sheet: the photo slightly blurred (so the front reads first) and dimmed
+          <View pointerEvents="none" style={{ position: "absolute", left: dim.w * 0.08, top: dim.h * 0.16, width: dim.w * 0.84, height: dim.h * 0.74, borderRadius: 16, overflow: "hidden" }}>
+            <Image source={{ uri: cover }} blurRadius={3} contentFit="cover" style={{ position: "absolute", left: -dim.w * 0.08, top: -dim.h * 0.16, width: dim.w, height: dim.h }} />
+            <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.38)" }} />
+          </View>
         ) : skin ? (
           <Image source={skin.back} style={StyleSheet.absoluteFill} contentFit="fill" />
         ) : (
@@ -273,7 +265,7 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
             {/* a soft bevel like the made folders: shade fading in from the edge, a thin light rim */}
             <G clipPath={`url(#cf-${room.id})`}>
               {BEVEL.map(([w, o]) => <Path key={w} d={paths.full} fill="none" stroke="#000" strokeOpacity={o} strokeWidth={w} />)}
-              <Path d={paths.full} fill="none" stroke="#fff" strokeOpacity={0.14} strokeWidth={1.5} />
+              <Path d={paths.full} fill="none" stroke="#fff" strokeOpacity={0.28} strokeWidth={2.5} />
             </G>
           </Svg>
         ) : skin ? (
