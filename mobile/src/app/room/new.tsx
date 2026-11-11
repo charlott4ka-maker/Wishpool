@@ -8,17 +8,18 @@ import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { Check, Lock, Plus, Star } from "lucide-react-native";
+import { Check, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
+import Animated, { SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateRow } from "../../components/DateRow";
 import { FriendPicker, useFriendList } from "../../components/FriendPicker";
-import { PremiumSwitch } from "../../components/PremiumSwitch";
+import { LookTabs } from "../../components/LookTabs";
 import { RoomFolder } from "../../components/RoomFolder";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
-import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
+import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
@@ -92,7 +93,8 @@ export default function CreateRoomScreen() {
   const [skin, setSkin] = useState(editing?.skin || "");
   // premium folders in the order set on the admin page
   const skins = orderedSkins(useRemoteConfig().folders);
-  const [folderTab, setFolderTab] = useState<"plain" | "premium">(editing?.skin ? "premium" : "plain");
+  const [lookOpen, setLookOpen] = useState(false);
+  const [lookTab, setLookTab] = useState<"sticker" | "color" | "folders">("sticker");
   const [name, setName] = useState(editing?.name || "");
   const [mode, setMode] = useState<"self" | "other">(editing?.bdayMode === "other" ? "other" : "self"); // birthday: mine or someone else's
   const [celName, setCelName] = useState(editing?.celebrantName || "");
@@ -167,84 +169,13 @@ export default function CreateRoomScreen() {
           onStickerDrag={setDragging}
         />
       </View>
-      <Txt className="mb-6 mt-2 text-center text-[12.5px] text-t3">{t("stickerDragHint")}</Txt>
-
-      <Label>{t("roomSticker")}</Label>
-      <View className="mb-4">
-        <StickerPicker value={emoji} onChange={setEmoji} pack={santa ? "newyear" : undefined} />
+      <Txt className="mt-2 text-center text-[12.5px] text-t3">{t("stickerDragHint")}</Txt>
+      {/* sticker, colour and premium folders live in a sheet: the form stays about the room */}
+      <View className="mb-6 mt-3 items-center">
+        <Pill size="sm" kind="ghost" px={16} icon={<Paintbrush size={16} color={C.t1} strokeWidth={1.5} absoluteStrokeWidth />} onPress={() => { haptic("light"); setLookOpen(true); }}>
+          {t("changeLook")}
+        </Pill>
       </View>
-
-      <Label>{t("roomColor")}</Label>
-      <ColorPicker value={tint} onChange={setTint} />
-
-      {/* premium folder looks in their own tab: muted, with a lock in the middle until you have premium */}
-      {showSkins ? (
-        <>
-          <Label>{t("roomFolderLook")}</Label>
-          <View className="mb-4">
-            <PremiumSwitch
-              value={folderTab}
-              onChange={(k) => {
-                setFolderTab(k);
-                if (k === "plain") setSkin("");
-              }}
-              plainLabel={t("folderPlain")}
-              premiumLabel={t("folderPremium")}
-            />
-          </View>
-          {folderTab === "premium" ? (
-            // not premium yet: a 3x3 peek, dimmed, with the pitch in the middle of it
-            <View className="mb-4">
-            <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
-              {(isPremium ? skins : skins.slice(0, 9)).map((k) => {
-                const on = skin === k.id;
-                const locked = !isPremium;
-                return (
-                  <View key={k.id} style={{ width: "33.333%", padding: 4 }}>
-                    <Pressable
-                      onPress={() => {
-                        if (locked) return router.push("/paywall");
-                        haptic("select");
-                        setSkin(k.id);
-                      }}
-                      // admins can still try a locked one: a long press puts it on
-                      onLongPress={admin ? () => { haptic("select"); setSkin(k.id); } : undefined}
-                      className="items-center justify-center overflow-hidden rounded-2xl"
-                      style={{ aspectRatio: 1.12, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
-                    >
-                      <Image source={k.back} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
-                      <Image source={k.front} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
-                    </Pressable>
-                  </View>
-                );
-              })}
-            </View>
-            {/* not premium yet: the grid fades into the dark from the bottom, with one lock, a title,
-                a line and a button to the paywall over it (the folders still open it too) */}
-            {!isPremium ? (
-              <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0 }}>
-                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0.55), hex(C.card, 0.88), hex(C.card, 0.88), hex(C.card, 0.55)]} locations={[0, 0.3, 0.7, 1]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, borderRadius: 18 }} />
-                <View pointerEvents="box-none" className="flex-1 items-center justify-center px-4">
-                  {/* a frosted round behind the lock */}
-                  <View className="mb-3 h-12 w-12 items-center justify-center overflow-hidden rounded-full">
-                    <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-                    <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(255,255,255,0.08)" }} />
-                    <View style={{ zIndex: 2 }}>
-                      <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
-                    </View>
-                  </View>
-                  <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
-                  <Txt className="mt-1 text-center text-[14px] leading-[20px] text-t2">{t("premiumFoldersSub", { n: skins.length })}</Txt>
-                  <View className="mt-4">
-                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => router.push("/paywall")}>{t("premiumOpen")}</Pill>
-                  </View>
-                </View>
-              </View>
-            ) : null}
-            </View>
-          ) : null}
-        </>
-      ) : null}
 
       {/* the type is set when the room is made */}
       {!editing ? (
@@ -302,6 +233,91 @@ export default function CreateRoomScreen() {
     </SheetFooter>
     {/* full screen: the title and close stay pinned while the form scrolls under them */}
     <FormHeader title={t(editing ? "editRoom" : "newRoom")} scrolled={scrolled} />
+    {/* the look sheet: Sticker / Colour / Folders over the form, the preview still visible above */}
+    <Modal visible={lookOpen} transparent animationType="fade" onRequestClose={() => setLookOpen(false)}>
+      <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }} onPress={() => setLookOpen(false)} />
+      <Animated.View entering={SlideInDown.duration(260)} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "62%", backgroundColor: C.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingTop: 8 }}>
+        <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.18)", marginBottom: 12 }} />
+        <View className="px-4">
+          <SheetHeader title={t("roomLook")} onClose={() => setLookOpen(false)} />
+          <LookTabs
+            options={showSkins ? [["sticker", t("lookSticker")], ["color", t("lookColor")], ["folders", t("lookFolders")]] : [["sticker", t("lookSticker")], ["color", t("lookColor")]]}
+            value={lookTab}
+            onChange={setLookTab}
+            premium="folders"
+          />
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
+          {lookTab === "sticker" ? (
+            <StickerPicker value={emoji} onChange={setEmoji} pack={santa ? "newyear" : undefined} />
+          ) : lookTab === "color" ? (
+            // a colour means the plain folder again
+            <ColorPicker value={tint} onChange={(c) => { setTint(c); setSkin(""); }} />
+          ) : (
+            <View>
+            <View className="mb-4">
+            <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
+              <View style={{ width: "33.333%", padding: 4 }}>
+                <Pressable
+                  onPress={() => { haptic("select"); setSkin(""); }}
+                  className="items-center justify-center overflow-hidden rounded-2xl"
+                  style={{ aspectRatio: 1.12, backgroundColor: !skin ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: !skin ? C.blue : "transparent" }}
+                >
+                  <View style={{ position: "absolute", width: "72%", height: "56%", top: "18%", borderRadius: 8, backgroundColor: hex(tint, 0.45) }} />
+                  <View style={{ position: "absolute", width: "86%", height: "56%", top: "30%", borderRadius: 10, backgroundColor: tint }} />
+                </Pressable>
+              </View>
+              {(isPremium ? skins : skins.slice(0, 8)).map((k) => {
+                const on = skin === k.id;
+                const locked = !isPremium;
+                return (
+                  <View key={k.id} style={{ width: "33.333%", padding: 4 }}>
+                    <Pressable
+                      onPress={() => {
+                        if (locked) return router.push("/paywall");
+                        haptic("select");
+                        setSkin(k.id);
+                      }}
+                      // admins can still try a locked one: a long press puts it on
+                      onLongPress={admin ? () => { haptic("select"); setSkin(k.id); } : undefined}
+                      className="items-center justify-center overflow-hidden rounded-2xl"
+                      style={{ aspectRatio: 1.12, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
+                    >
+                      <Image source={k.back} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
+                      <Image source={k.front} style={{ position: "absolute", width: "86%", height: "77%" }} contentFit="fill" />
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+            {/* not premium yet: the grid fades into the dark from the bottom, with one lock, a title,
+                a line and a button to the paywall over it (the folders still open it too) */}
+            {!isPremium ? (
+              <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0, paddingTop: 70 }}>
+                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0), hex(C.card, 0.7), C.card]} locations={[0.18, 0.55, 0.92]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
+                <View pointerEvents="box-none" className="flex-1 items-center justify-end px-4 pb-2">
+                  {/* a frosted round behind the lock */}
+                  <View className="mb-3 h-12 w-12 items-center justify-center overflow-hidden rounded-full">
+                    <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+                    <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(255,255,255,0.08)" }} />
+                    <View style={{ zIndex: 2 }}>
+                      <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                    </View>
+                  </View>
+                  <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
+                  <Txt className="mt-1 text-center text-[14px] leading-[20px] text-t2">{t("premiumFoldersSub", { n: skins.length })}</Txt>
+                  <View className="mt-4">
+                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => router.push("/paywall")}>{t("premiumOpen")}</Pill>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+            </View>
+            </View>
+          )}
+        </ScrollView>
+      </Animated.View>
+    </Modal>
     <ToastHost />
     </>
   );
