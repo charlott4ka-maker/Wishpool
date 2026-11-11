@@ -1,7 +1,7 @@
 // "Профіль": who you are, stats, Premium, language, sign out.
 
 import { useRouter } from "expo-router";
-import { Crown, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
+import { Crown, Share2, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,6 +19,7 @@ import { usePrefs } from "../../settings/prefs";
 import { useWishpool } from "../../store/WishpoolContext";
 import { PREVIEW_PREMIUM, showPremium } from "../../lib/premiumGate";
 import { PremiumCard } from "../../components/PremiumCard";
+import { storyAvailable } from "../../lib/story";
 import { IN_TG } from "../../lib/telegram";
 import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
@@ -103,6 +104,8 @@ export default function ProfileScreen() {
             />
             {/* once you have Premium: its own page (colour, icon, subscription) */}
             {showPremium(admin) && (isPremium || admin || PREVIEW_PREMIUM) ? <SettingsCell icon={Crown} tint={C.blue} label="Premium" onPress={() => router.push("/premium")} /> : null}
+            {/* your wishlist as a picture for stories (iPhone builds with the share pieces) */}
+            {storyAvailable ? <SettingsCell icon={Share2} tint="#FF2D55" label={t("storyTitle")} onPress={() => router.push("/story")} /> : null}
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
           </SettingsGroup>
         </View>

@@ -7,7 +7,7 @@ import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, Crown, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Users, Vibrate, Wand2 } from "lucide-react-native";
+import { Bell, Cake, Crown, Snowflake, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Users, Vibrate, Wand2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -177,6 +177,7 @@ export default function SettingsScreen() {
         <SettingsGroup title={t("setGeneral")}>
           <SettingsCell icon={Globe} tint="#5856D6" label={t("language")} value={LANG_SHORT[lang]} onPress={pickLanguage} />
           <SettingsCell icon={Vibrate} tint="#FF2D55" label={t("setHaptics")} toggle={{ value: prefs.haptics, onChange: (v) => setPref("haptics", v) }} />
+          <SettingsCell icon={Snowflake} tint="#5AC8FA" label={t("setSnow")} toggle={{ value: prefs.snow, onChange: (v) => setPref("snow", v) }} />
         </SettingsGroup>
 
         <SettingsGroup title={t("setAbout")}>

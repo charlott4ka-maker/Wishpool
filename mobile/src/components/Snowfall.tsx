@@ -12,19 +12,21 @@ const FLAKES = 36;
 const DURATION = 4200; // one fall
 const TOTAL = 6000; // the last flakes start by ~1.6s
 
-function Flake({ x, size, delay, drift, W, H }: { x: number; size: number; delay: number; drift: number; W: number; H: number }) {
+function Flake({ x, size, delay, drift, W, H, loop, dim }: { x: number; size: number; delay: number; drift: number; W: number; H: number; loop?: boolean; dim?: number }) {
   const y = useSharedValue(-40);
   const sway = useSharedValue(0);
   const turn = useSharedValue(0);
   useEffect(() => {
-    y.value = withDelay(delay, withTiming(H + 40, { duration: DURATION + size * 60, easing: Easing.linear }));
+    const fall = withTiming(H + 40, { duration: (DURATION + size * 60) * (loop ? 2.2 : 1), easing: Easing.linear });
+    // the holiday snow keeps falling: back to the top after each fall
+    y.value = withDelay(delay, loop ? withRepeat(withSequence(fall, withTiming(-40, { duration: 0 })), -1, false) : fall);
     sway.value = withDelay(delay, withRepeat(withSequence(withTiming(drift, { duration: 900, easing: Easing.inOut(Easing.sin) }), withTiming(-drift, { duration: 900, easing: Easing.inOut(Easing.sin) })), -1, true));
-    turn.value = withDelay(delay, withTiming(360, { duration: DURATION, easing: Easing.linear }));
-  }, [y, sway, turn, delay, drift, size, H]);
+    turn.value = withDelay(delay, loop ? withRepeat(withTiming(360, { duration: DURATION * 2, easing: Easing.linear }), -1, false) : withTiming(360, { duration: DURATION, easing: Easing.linear }));
+  }, [y, sway, turn, delay, drift, size, H, loop]);
   const style = useAnimatedStyle(() => ({
     transform: [{ translateX: x + sway.value }, { translateY: y.value }, { rotate: `${turn.value}deg` }],
     // fades in at the top and out near the bottom
-    opacity: y.value < 0 ? 0 : y.value > H * 0.8 ? Math.max(0, 1 - (y.value - H * 0.8) / (H * 0.2)) : 0.9,
+    opacity: (y.value < 0 ? 0 : y.value > H * 0.8 ? Math.max(0, 1 - (y.value - H * 0.8) / (H * 0.2)) : 0.9) * (dim ?? 1),
   }));
   return (
     <Animated.View style={[{ position: "absolute", left: 0, top: 0 }, style]}>
@@ -47,6 +49,25 @@ export function Snowfall({ onDone }: { onDone: () => void }) {
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {flakes.map((f) => (
         <Flake key={f.id} {...f} W={W} H={H} />
+      ))}
+    </View>
+  );
+}
+
+// The holiday season (1 December to 7 January): a light snow that keeps
+// falling over the Wishes tab (Settings › Snow turns it off).
+export const snowSeason = (d = new Date()) => d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 7);
+
+export function HolidaySnow() {
+  const { width: W, height: H } = useWindowDimensions();
+  const flakes = useMemo(
+    () => Array.from({ length: 16 }, (_, i) => ({ id: i, x: Math.random() * (W - 16), size: 8 + Math.round(Math.random() * 8), delay: Math.random() * 9000, drift: 6 + Math.random() * 12 })),
+    [W],
+  );
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {flakes.map((f) => (
+        <Flake key={f.id} {...f} W={W} H={H} loop dim={0.55} />
       ))}
     </View>
   );

@@ -9,6 +9,7 @@ import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated"
 import { useGridColumns } from "../../../lib/gridColumns";
 import { usePullRefresh } from "../../../lib/pullRefresh";
 import { RoomFolder } from "../../../components/RoomFolder";
+import { NewYearCountdown } from "../../../components/NewYearCountdown";
 import { RoomGridSkeleton } from "../../../components/Skeleton";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
@@ -65,6 +66,8 @@ export default function RoomsScreen() {
           />
         ) : (
           <View className="gap-6">
+            {/* till New Year: the countdown and a quick Secret Santa */}
+            <NewYearCountdown rooms={rooms} />
             {rows.map((row, i) => (
               <View key={i} className="flex-row gap-3">
                 {row.map((r, j) => (
