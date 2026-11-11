@@ -1,5 +1,5 @@
 // The "adding your wish" bar at the bottom, like Threads' "Posting…": the
-// form closes at once, an outlined star shimmers through colours while the
+// form closes at once, a grey star outline with a white stretch running round it while the
 // wish uploads, then a check and "Wish added". On the right the photos, held
 // by a paperclip (one photo or a little stack), or the sticker.
 import { BlurView } from "expo-blur";
@@ -7,9 +7,9 @@ import { Image } from "expo-image";
 import { Check, Paperclip, RotateCw, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Platform, Pressable, View } from "react-native";
-import Animated, { type SharedValue, cancelAnimation, Easing, runOnJS, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import Animated, { cancelAnimation, Easing, runOnJS, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Defs, LinearGradient, Path, Stop } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
@@ -28,50 +28,23 @@ export function startUpload(job: Job) {
 
 // lucide's star, drawn here so its outline can take a gradient
 const STAR = "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z";
-// the colours it shimmers through: four copies with the gradient turned, cross-faded in turn
-const SHIMMER: [string, string, string][] = [
-  ["#0A82F9", "#AF52DE", "#FF4D8D"],
-  ["#AF52DE", "#FF4D8D", "#FF9F45"],
-  ["#FF4D8D", "#FF9F45", "#38BDF8"],
-  ["#FF9F45", "#38BDF8", "#0A82F9"],
-];
-const ANGLES = [[0, 0, 1, 1], [1, 0, 0, 1], [1, 1, 0, 0], [0, 1, 1, 0]];
-
-function StarLayer({ i, t }: { i: number; t: SharedValue<number> }) {
-  const n = SHIMMER.length;
-  const style = useAnimatedStyle(() => {
-    // each copy fades in and out over its quarter of the loop
-    const d = Math.abs(((t.value * n - i + n + n / 2) % n) - n / 2);
-    return { opacity: Math.max(0, 1 - d) };
-  });
-  const [a, b, c] = SHIMMER[i];
-  const [x1, y1, x2, y2] = ANGLES[i];
-  return (
-    <Animated.View style={[{ position: "absolute", top: 0, left: 0 }, style]}>
-      <Svg width={24} height={24} viewBox="0 0 24 24">
-        <Defs>
-          <LinearGradient id={`us${i}`} x1={x1} y1={y1} x2={x2} y2={y2}>
-            <Stop offset="0" stopColor={a} />
-            <Stop offset="0.5" stopColor={b} />
-            <Stop offset="1" stopColor={c} />
-          </LinearGradient>
-        </Defs>
-        <Path d={STAR} fill="none" stroke={`url(#us${i})`} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
-      </Svg>
-    </Animated.View>
-  );
-}
+// Threads' "Posting…" mark: the star outline in grey with a short white
+// stretch of it running round and round
+const STAR_LEN = 68.34; // the path's length, measured
+const APath = Animated.createAnimatedComponent(Path);
 
 function ShimmerStar() {
   const t = useSharedValue(0);
   useEffect(() => {
-    t.value = withRepeat(withTiming(1, { duration: 2400, easing: Easing.linear }), -1, false);
+    t.value = withRepeat(withTiming(1, { duration: 1300, easing: Easing.linear }), -1, false);
     return () => cancelAnimation(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const run = useAnimatedProps(() => ({ strokeDashoffset: -t.value * STAR_LEN }));
   return (
-    <View style={{ width: 24, height: 24 }}>
-      {SHIMMER.map((_, i) => <StarLayer key={i} i={i} t={t} />)}
-    </View>
+    <Svg width={24} height={24} viewBox="0 0 24 24">
+      <Path d={STAR} fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
+      <APath animatedProps={run} d={STAR} fill="none" stroke="#fff" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={[16, STAR_LEN - 16]} />
+    </Svg>
   );
 }
 
