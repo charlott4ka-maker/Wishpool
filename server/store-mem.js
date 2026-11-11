@@ -110,6 +110,7 @@ export function createMemStore() {
     async setCelebrant(roomId, userId) { if (D.rooms[roomId]) D.rooms[roomId].celebrantId = userId || null; },
     async setCelebrantName(roomId, name) { if (D.rooms[roomId]) D.rooms[roomId].celebrantName = name || ""; },
     async roomIdeas(roomId) { return Object.values(D.wishes).filter(w => w.roomOnly === roomId).sort((a, b) => b.createdAt - a.createdAt); },
+    async setRoomDecor(id, charms, tag) { if (D.rooms[id]) { D.rooms[id].charms = charms || []; D.rooms[id].tag = tag || ""; } },
     async setRoomCover(id, cover) { if (D.rooms[id]) D.rooms[id].cover = cover || ""; },
     async updateRoom(id, { name, emoji, tint, eventTitle, eventDate, stickerPos, skin }) {
       const r = D.rooms[id]; if (!r) return;

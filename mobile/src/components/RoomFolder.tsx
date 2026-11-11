@@ -77,6 +77,9 @@ function PhotoCard({ src, spot }: { src: string; spot: (typeof SPOTS)[number] })
   );
 }
 
+// where extra stickers start before being dragged
+const CHARM_SPOTS = ["0.58,0.42", "0.72,0.3"];
+
 const MAX_AVATARS = 5;
 const AV = 24, OV = 8;
 
@@ -169,11 +172,13 @@ function FolderSticker({ emoji, pos, dim, avatars, onMove, onDrag }: { emoji: st
   );
 }
 
-export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag }: {
+export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag, onCharmMove }: {
   room: Room; wishes: Wish[]; onPress: () => void;
   /** Preview in the new / edit room sheet: the sticker can be dragged to a new spot. */
   onStickerMove?: (pos: string) => void;
   onStickerDrag?: (dragging: boolean) => void;
+  /** the same for the extra (premium) stickers */
+  onCharmMove?: (i: number, pos: string) => void;
 }) {
   const { lang, t } = useT();
   const [dim, setDim] = useState<{ w: number; h: number } | null>(null);
@@ -287,6 +292,15 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
           )
         ) : null}
         <FolderSticker emoji={room.emoji} pos={room.stickerPos} dim={dim} avatars={shown.length + (extra > 0 ? 1 : 0)} onMove={onStickerMove} onDrag={onStickerDrag} />
+        {/* premium: up to two more stickers, and a name tag on the front */}
+        {(room.charms || []).map((c, i) => (
+          <FolderSticker key={i} emoji={c.e} pos={c.pos || CHARM_SPOTS[i]} dim={dim} avatars={shown.length + (extra > 0 ? 1 : 0)} onMove={onCharmMove ? (p) => onCharmMove(i, p) : undefined} onDrag={onStickerDrag} />
+        ))}
+        {room.tag ? (
+          <View pointerEvents="none" style={{ position: "absolute", left: "8%", top: "31%", zIndex: 4, transform: [{ rotate: "-3deg" }], backgroundColor: "rgba(255,255,255,0.94)", borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, maxWidth: "40%" }}>
+            <Txt numberOfLines={1} className="font-m700 text-[11px]" style={{ color: "#15181D" }}>{room.tag}</Txt>
+          </View>
+        ) : null}
         <View className="absolute flex-row" style={{ right: "11%", bottom: "12%", zIndex: 4 }}>
           {shown.map((m, i) => (
             <View key={m.id} style={{ marginLeft: i ? -OV : 0 }}>

@@ -26,6 +26,8 @@ export function createPgStore(q) {
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS sticker_pos text`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS skin text`);
       await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS cover text`);
+      await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS charms text`);
+      await q(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS tag text`);
       await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS room_only text`);
       await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS note text`);
       await q(`ALTER TABLE wishes ADD COLUMN IF NOT EXISTS gifted_at bigint`);
@@ -196,6 +198,7 @@ export function createPgStore(q) {
     async userRoomIds(userId) { const { rows } = await q(`SELECT room_id FROM members WHERE user_id=$1`, [userId]); return rows.map(r => r.room_id); },
     async getRoom(id) { const { rows } = await q(`SELECT * FROM rooms WHERE id=$1`, [id]); return mapRoom(rows[0]); },
     async createRoom(r) { await q(`INSERT INTO rooms(id,name,type,emoji,tint,owner_id,created_at,event_title,event_date,bday_mode,celebrant_name,celebrant_id,sticker_pos,skin) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, [r.id, r.name, r.type, r.emoji, r.tint, r.ownerId, r.createdAt, r.eventTitle || "", r.eventDate || "", r.bdayMode || "", r.celebrantName || "", r.celebrantId || null, r.stickerPos || "", r.skin || ""]); },
+    async setRoomDecor(id, charms, tag) { await q(`UPDATE rooms SET charms=$2, tag=$3 WHERE id=$1`, [id, JSON.stringify(charms || []), tag || ""]); },
     async setRoomCover(id, cover) { await q(`UPDATE rooms SET cover=$2 WHERE id=$1`, [id, cover || null]); },
     async setCelebrant(roomId, userId) { await q(`UPDATE rooms SET celebrant_id=$2 WHERE id=$1`, [roomId, userId || null]); },
     async setCelebrantName(roomId, name) { await q(`UPDATE rooms SET celebrant_name=$2 WHERE id=$1`, [roomId, name || ""]); },

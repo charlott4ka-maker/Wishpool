@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
-import { uid, cleanImages, pubUser, cleanEvent, cleanNote, cleanStickerPos, cleanSkin } from "./util.js";
+import { uid, cleanImages, pubUser, cleanEvent, cleanNote, cleanStickerPos, cleanSkin, cleanCharms, cleanTag } from "./util.js";
 import { botRoute, ensureWebhook, ensureBotMenu, remindRoute, telegramBirthdate, notifyWishShared, notifyGiftPicked } from "./bot.js";
 import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
@@ -49,7 +49,7 @@ export async function createApp() {
   }));
   const roomOut = (r, me) => ({
     id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle || "", eventDate: r.eventDate || "",
-    bdayMode: r.bdayMode || "", celebrantName: r.celebrantName || "", stickerPos: r.stickerPos || "", skin: r.skin || "", cover: r.cover ? toPublic(r.cover) : "",
+    bdayMode: r.bdayMode || "", celebrantName: r.celebrantName || "", stickerPos: r.stickerPos || "", skin: r.skin || "", cover: r.cover ? toPublic(r.cover) : "", charms: Array.isArray(r.charms) ? r.charms : [], tag: r.tag || "",
     // who the birthday person is, as far as this viewer needs to know
     iAmCelebrant: !!me && r.celebrantId === me, hasCelebrant: !!r.celebrantId, celebrantId: r.celebrantId || null,
   });
@@ -398,6 +398,8 @@ export async function createApp() {
       skin: cleanSkin(skin),
     };
     await store.createRoom(r);
+    const body0 = req.body || {};
+    if (body0.charms || body0.tag) await store.setRoomDecor(r.id, cleanCharms(body0.charms), cleanTag(body0.tag));
     await store.addMember(r.id, req.user.id);
     track(req, "s_room_" + t);
     res.json({ room: { id: r.id } });
@@ -435,6 +437,7 @@ export async function createApp() {
     const ev = (r.type === "birthday" || r.type === "friends") && ("eventTitle" in body || "eventDate" in body) ? cleanEvent(body.eventTitle, body.eventDate) : {};
     await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint, ...ev, ...("stickerPos" in body ? { stickerPos: cleanStickerPos(body.stickerPos) } : {}), ...("skin" in body ? { skin: cleanSkin(body.skin) } : {}) });
     if (r.type === "birthday" && r.bdayMode === "other" && "celebrantName" in body) await store.setCelebrantName(r.id, cleanName(body.celebrantName));
+    if ("charms" in body || "tag" in body) await store.setRoomDecor(r.id, "charms" in body ? cleanCharms(body.charms) : r.charms, "tag" in body ? cleanTag(body.tag) : r.tag);
     res.json({ ok: true });
   });
 
