@@ -7,7 +7,7 @@ import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, Crown, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Users, Vibrate, Wand2 } from "lucide-react-native";
+import { Bell, Cake, Crown, Snowflake, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Users, Vibrate, Wand2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,6 +25,10 @@ import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
 import { api, SITE_URL } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
+import { useRemoteConfig } from "../lib/remoteConfig";
+
+// the New Year season: mid-November to 7 January
+const nySeason = (d = new Date()) => (d.getMonth() === 10 && d.getDate() >= 10) || d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 7);
 import { purchases } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
@@ -43,6 +47,7 @@ export default function SettingsScreen() {
   const prefs = usePrefs();
   const { status, signOut } = useAuth();
   const { refresh } = useWishpool();
+  const { season: { newYear } } = useRemoteConfig();
   const { isPremium } = useSubscription();
   const version = Constants.expoConfig?.version || "1.0.0";
   const [scrolled, setScrolled] = useState(false);
@@ -171,6 +176,13 @@ export default function SettingsScreen() {
         {purchases.mock && isPremium ? (
           <SettingsGroup title="Test">
             <SettingsCell icon={Crown} tint="#FF3B30" label="Убрать Premium (тест)" onPress={() => purchases.resetMock?.()} />
+          </SettingsGroup>
+        ) : null}
+
+        {/* seasonal: only while the New Year season is on (the admin page can switch it off) */}
+        {newYear && nySeason() ? (
+          <SettingsGroup title={t("setSeasonal")} footer={t("setSeasonalHint")}>
+            <SettingsCell icon={Snowflake} tint="#5AC8FA" label={t("setSnow")} toggle={{ value: prefs.snow, onChange: (v) => setPref("snow", v) }} />
           </SettingsGroup>
         ) : null}
 

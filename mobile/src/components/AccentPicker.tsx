@@ -42,7 +42,6 @@ export function AccentPicker({ unlocked }: { unlocked: boolean }) {
           );
         })}
       </View>
-      <Txt className="mt-3 px-4 text-[12.5px] leading-[18px] text-t3">{t(unlocked ? "accentFooterOn" : "accentFooter")}</Txt>
     </View>
   );
 }

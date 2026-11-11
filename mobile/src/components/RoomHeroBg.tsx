@@ -42,7 +42,7 @@ const hueOf = (c: string) => {
 function BlurredLook({ source }: { source: ImageSource | number | string }) {
   return (
     <View pointerEvents="none" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, overflow: "hidden", backgroundColor: "#0d0d10" }}>
-      <Image source={source} blurRadius={12} contentFit="cover" style={{ position: "absolute", left: "-8%", top: "-8%", width: "116%", height: "116%" }} />
+      <Image source={source} blurRadius={6} contentFit="cover" style={{ position: "absolute", left: "-4%", top: "-4%", width: "108%", height: "108%" }} />
       <View style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.28)" }} />
     </View>
   );

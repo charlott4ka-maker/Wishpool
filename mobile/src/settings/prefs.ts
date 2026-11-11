@@ -13,6 +13,8 @@ export type Prefs = {
   notifyRoomJoins: boolean;
   notifyGiftReminders: boolean;
   haptics: boolean;
+  /** Light snow over Wishes in the holiday season (December to 7 January). */
+  snow: boolean;
   /** "YYYY-MM-DD"; friends get reminded (once the account is connected). */
   birthday: string | null;
   /** Your own name and photo (a small JPEG data URL), set on the profile; they win over the account's. */
@@ -32,6 +34,7 @@ const DEFAULTS: Prefs = {
   notifyRoomJoins: true,
   notifyGiftReminders: true,
   haptics: true,
+  snow: true,
   birthday: null,
   displayName: null,
   avatar: null,

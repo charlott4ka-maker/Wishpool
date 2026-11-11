@@ -24,6 +24,8 @@ import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
 import { ToastHost, toast } from "../../components/Toast";
 import { startUpload } from "../../components/UploadBar";
+import { EdgeGlow } from "../../components/EdgeGlow";
+import { Spin } from "../../components/Spin";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { priceRangeText, RANGE_RE, withCurrency } from "../../lib/price";
@@ -272,9 +274,11 @@ export default function AddWishScreen() {
                   </Press>
                 </Animated.View>
               ) : PREMIUM_ENABLED && !isPremium ? (
-                <Press onPress={() => router.push("/paywall")} className="aspect-square items-center justify-center gap-1 rounded-tile bg-gold/10" style={{ width: tile }}>
-                  <Lock size={18} color={C.gold} />
-                  <Txt className="font-m600 text-[11.5px] text-gold">Premium</Txt>
+                // the Profile Premium card's look: our block with a blue glow from the bottom
+                <Press onPress={() => router.push("/paywall")} className="aspect-square items-center justify-center gap-1 overflow-hidden rounded-tile" style={{ width: tile, backgroundColor: C.raised }}>
+                  <EdgeGlow side="bottom" />
+                  <Lock size={18} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                  <Txt className="font-m600 text-[11.5px] text-white">Premium</Txt>
                 </Press>
               ) : null}
             </View>
@@ -325,7 +329,7 @@ export default function AddWishScreen() {
       ) : null}
       <Field label={t("linkLabel")} value={link} onChangeText={setLink} placeholder="https://…" keyboardType="url" autoCapitalize="none" />
       <View className="-mt-2 mb-4 flex-row items-center gap-2">
-        {linkState === "loading" ? <RefreshCw size={13} color={hintColor} /> : linkState === "done" ? <Check size={13} color={hintColor} /> : null}
+        {linkState === "loading" ? <Spin><RefreshCw size={13} color={hintColor} /></Spin> : linkState === "done" ? <Check size={13} color={hintColor} /> : null}
         <Txt className="flex-1 text-[12.5px]" style={{ color: hintColor }}>{hint}</Txt>
       </View>
       <Field label={t("whatYouWant")} value={title} onChangeText={setTitle} placeholder={t("whatYouWantPh")} error={tried && !title.trim() && t("requiredField")} />

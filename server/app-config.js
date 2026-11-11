@@ -39,7 +39,7 @@ export function cleanBanners(v) {
     color2: HEX_RE.test(b?.color2) ? b.color2 : (HEX_RE.test(b?.color1) ? b.color1 : "#2290F6"),
     textColor: HEX_RE.test(b?.textColor) ? b.textColor : "#FFFFFF",
     sticker: typeof b?.sticker === "string" && /^stk:[a-z0-9_-]{1,40}$/.test(b.sticker) ? b.sticker : "",
-    action: ["none", "link", "signin"].includes(b?.action) ? b.action : "none",
+    action: ["none", "link", "signin", "santa"].includes(b?.action) ? b.action : "none",
     url: typeof b?.url === "string" && /^https:\/\/\S{1,500}$/.test(b.url) ? b.url : "",
     dismissible: b?.dismissible !== false,
   }));
@@ -56,8 +56,43 @@ export function cleanFolders(v) {
   return { order: ids(v?.order), hidden: ids(v?.hidden) };
 }
 
-const CLEAN = { strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders };
-const EMPTY = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] } };
+// seasonal things in the app, switched on and off on the admin page
+export function cleanSeason(v) {
+  return { newYear: v?.newYear !== false };
+}
+
+// in-app notifications (Profile › bell), made on the admin page: a list row
+// (icon, title, a line) and a page (an optional banner picture, text, bullet
+// lists, info plates, a button)
+export const NEWS_ICONS = ["bell", "gift", "sparkles", "snowflake", "star", "heart", "info", "megaphone", "crown", "calendar", "palette", "users"];
+export const NEWS_ACTIONS = ["none", "link", "santa", "newRoom", "newWish", "signin", "premium"];
+const L3 = (v, max) => Object.fromEntries(["uk", "ru", "en"].map((l) => [l, typeof v?.[l] === "string" ? v[l].slice(0, max) : ""]));
+export function cleanNews(v) {
+  if (!Array.isArray(v)) throw new Error("bad_news");
+  return v.slice(0, 60).map((n) => ({
+    id: typeof n?.id === "string" && /^[a-z0-9_-]{1,40}$/i.test(n.id) ? n.id : "n" + Math.random().toString(36).slice(2, 10),
+    active: !!n?.active,
+    audience: ["all", "signedIn", "guest"].includes(n?.audience) ? n.audience : "all",
+    date: typeof n?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(n.date) ? n.date : new Date().toISOString().slice(0, 10),
+    icon: NEWS_ICONS.includes(n?.icon) ? n.icon : "bell",
+    color: typeof n?.color === "string" && /^#[0-9a-fA-F]{6}$/.test(n.color) ? n.color : "#0A82F9",
+    title: L3(n?.title, 80),
+    sub: L3(n?.sub, 140),
+    image: typeof n?.image === "string" && /^https:\/\//.test(n.image) ? n.image.slice(0, 400) : "",
+    blocks: (Array.isArray(n?.blocks) ? n.blocks : []).slice(0, 12).map((b) => ({
+      type: ["text", "list", "info"].includes(b?.type) ? b.type : "text",
+      text: L3(b?.text, 1500),
+    })),
+    button: {
+      label: L3(n?.button?.label, 40),
+      action: NEWS_ACTIONS.includes(n?.button?.action) ? n.button.action : "none",
+      url: typeof n?.button?.url === "string" && /^https?:\/\//.test(n.button.url) ? n.button.url.slice(0, 400) : "",
+    },
+  }));
+}
+
+const CLEAN = { strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders, season: cleanSeason, news: cleanNews };
+const EMPTY = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true }, news: [] };
 
 /** GET /api/config: what the app reads on start (only active banners). */
 export function publicConfigRoute(store) {
@@ -65,7 +100,7 @@ export function publicConfigRoute(store) {
     try {
       const c = { ...EMPTY, ...(await store.getConfig()) };
       res.set("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
-      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active), stickers: c.stickers, folders: c.folders });
+      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active), stickers: c.stickers, folders: c.folders, season: cleanSeason(c.season), news: (c.news || []).filter(n => n.active) });
     } catch (e) { next(e); }
   };
 }
@@ -83,6 +118,18 @@ export function adminConfigRoutes(api, store, isAdmin) {
     try { value = clean(req.body && req.body.value); } catch (e) { return res.status(400).json({ error: e.message }); }
     await store.setConfig(req.params.key, value);
     res.json({ value });
+  });
+  // a banner picture for a notification: a WebP made on the admin page, at news/<random>.webp
+  api.post("/admin/news-image", guard, async (req, res, next) => {
+    try {
+      const m = typeof req.body?.image === "string" && req.body.image.match(/^data:image\/webp;base64,(.+)$/s);
+      if (!m) return res.status(400).json({ error: "webp_only" });
+      const buf = Buffer.from(m[1], "base64");
+      if (buf.length > 900 * 1024) return res.status(400).json({ error: "too_big" });
+      if (!storageOn()) return res.status(400).json({ error: "storage_off" });
+      const url = await putObject(`news/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.webp`, buf, "image/webp");
+      res.json({ url });
+    } catch (e) { next(e); }
   });
   // a new sticker: a WebP (the admin page converts and resizes it) at stickers/<name>.webp
   api.post("/admin/sticker", guard, async (req, res, next) => {

@@ -38,7 +38,7 @@
     show("login", false);
     if (!token) { show("login", true); return; }
     Promise.all([api("GET", "/admin/config"), fetch("/admin/app-data.json").then(function (r) { return r.json(); })]).then(function (res) {
-      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [] }, folders: res[0].folders || { order: [], hidden: [] } };
+      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [] }, folders: res[0].folders || { order: [], hidden: [] }, season: res[0].season || { newYear: true }, news: res[0].news || [] };
       draft = clone(saved);
       data = res[1];
       show("noStorage", !res[0].storage);
@@ -62,20 +62,28 @@
       if (tab === "banners") { pv.go("/"); pv.push(); }
       if (tab === "stickers") pv.go("/wish/new");
       if (tab === "folders") pv.go("/room/new");
+      if (tab === "news") { pv.go(focusNews ? "/news/" + focusNews : "/news"); pv.push(); }
     };
   });
   function dirty(key) { return JSON.stringify(saved[key]) !== JSON.stringify(draft[key]); }
-  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders"].some(dirty)); pv.push(); }
+  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders", "season", "news"].some(dirty)); pv.push(); }
   $("discard").onclick = function () { draft = clone(saved); renderAll(); };
   $("save").onclick = function () {
-    var keys = ["banners", "strings", "stickers", "folders"].filter(dirty);
+    var keys = ["banners", "strings", "stickers", "folders", "season", "news"].filter(dirty);
     Promise.all(keys.map(function (k) { return api("PUT", "/admin/config/" + k, { value: draft[k] }).then(function (r) { saved[k] = r.value; }); }))
       .then(function () { draft = clone(saved); renderAll(); toast("Сохранено"); })
       .catch(function (e) { toast("Ошибка: " + e.message); });
   };
-  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
+  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders", "season", "news"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
 
-  function renderAll() { renderBanners(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
+  function renderAll() { renderBanners(); renderNews(); renderSeason(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
+
+  // ---------- the season (New Year) ----------
+  function renderSeason() {
+    var on = draft.season.newYear !== false;
+    $("seasonNY").checked = on;
+  }
+  $("seasonNY").onchange = function () { draft.season = { newYear: $("seasonNY").checked }; updateBar(); };
 
   // ---------- banners ----------
   function stickerUrl(name) { return "/stickers/" + name + ".webp"; }
@@ -95,7 +103,7 @@
       '<label class="row hint" style="gap:6px"><input type="color" data-b="' + i + '" data-k="textColor" value="' + b.textColor + '"> Текст</label></div>' +
       '<label class="f">Стикер</label><select data-b="' + i + '" data-k="sticker"><option value="">без стикера</option>' + stickers + "</select>" +
       '<label class="f">По нажатию</label><select data-b="' + i + '" data-k="action">' +
-      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
+      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"], ["santa", "Создать комнату Тайного Санты"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       (b.action === "link" ? '<label class="f">Ссылка (https://…)</label><input type="url" data-b="' + i + '" data-k="url" value="' + esc(b.url) + '" placeholder="https://">' : "") +
       '<label class="row hint" style="gap:6px;margin-top:12px"><input type="checkbox" data-b="' + i + '" data-k="dismissible"' + (b.dismissible ? " checked" : "") + "> Можно закрыть крестиком</label>" +
       "</div>";
@@ -278,6 +286,106 @@
     img.src = URL.createObjectURL(file);
   };
 
+  // ---------- notifications: a constructor ----------
+  var focusNews = null;
+  var NEWS_ICONS = [["bell", "Колокольчик"], ["gift", "Подарок"], ["sparkles", "Искры"], ["snowflake", "Снежинка"], ["star", "Звезда"], ["heart", "Сердце"], ["info", "Инфо"], ["megaphone", "Рупор"], ["crown", "Корона"], ["calendar", "Календарь"], ["palette", "Палитра"], ["users", "Друзья"]];
+  var NEWS_ACTIONS = [["none", "Без кнопки"], ["link", "Открыть ссылку"], ["santa", "Создать комнату Тайного Санты"], ["newRoom", "Создать комнату"], ["newWish", "Добавить желание"], ["signin", "Вход в аккаунт"], ["premium", "Открыть Premium"]];
+  var BLOCK_NAME = { text: "Текст", list: "Список", info: "Инфо-плашка" };
+  function opts(list, cur) { return list.map(function (o) { return '<option value="' + o[0] + '"' + (cur === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join(""); }
+  function l3(i, key, val, label, area, max) {
+    return '<div class="grid3">' + LANGS.map(function (l) {
+      var v = esc((val || {})[l]);
+      return "<div><label class=\"f\">" + label + " " + LNAME[l] + "</label>" + (area ? '<textarea data-n="' + i + '" data-k="' + key + "." + l + '" maxlength="' + max + '">' + v + "</textarea>" : '<input data-n="' + i + '" data-k="' + key + "." + l + '" maxlength="' + max + '" value="' + v + '">') + "</div>";
+    }).join("") + "</div>";
+  }
+  function newsHtml(n, i) {
+    var blocks = n.blocks.map(function (b, k) {
+      return '<div class="item" style="margin-top:10px;background:rgba(255,255,255,.03)"><div class="row"><b>' + BLOCK_NAME[b.type] + '</b>' +
+        '<span style="margin-left:auto" class="row"><button class="btn2 ghost sm" data-bup="' + i + ":" + k + '">↑</button><button class="btn2 ghost sm" data-bdown="' + i + ":" + k + '">↓</button><button class="btn2 danger sm" data-bdel="' + i + ":" + k + '">Убрать</button></span></div>' +
+        l3(i, "blocks." + k + ".text", b.text, b.type === "list" ? "Пункты" : "Текст", true, 1500) + "</div>";
+    }).join("");
+    return '<div class="item' + (n.id === focusNews ? " focus" : "") + '" data-nid="' + esc(n.id) + '">' +
+      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-n="' + i + '" data-k="active"' + (n.active ? " checked" : "") + "> Опубликовано</label>" +
+      '<button class="btn2 danger sm" data-ndel="' + i + '" style="margin-left:auto">Удалить</button></div>' +
+      '<div class="row" style="gap:16px;margin-top:8px;flex-wrap:wrap">' +
+      '<label class="hint">Кому <select data-n="' + i + '" data-k="audience">' + opts([["all", "Всем"], ["signedIn", "Только вошедшим"], ["guest", "Только гостям"]], n.audience) + "</select></label>" +
+      '<label class="hint">Дата <input type="date" data-n="' + i + '" data-k="date" value="' + esc(n.date) + '"></label>' +
+      '<label class="hint">Иконка <select data-n="' + i + '" data-k="icon">' + opts(NEWS_ICONS, n.icon) + "</select></label>" +
+      '<label class="row hint" style="gap:6px"><input type="color" data-n="' + i + '" data-k="color" value="' + n.color + '"> Цвет кружка</label></div>' +
+      l3(i, "title", n.title, "Заголовок", false, 80) +
+      l3(i, "sub", n.sub, "Строка в списке", false, 140) +
+      '<label class="f">Картинка-баннер сверху (необязательно)</label>' +
+      (n.image ? '<div class="row" style="gap:10px"><img src="' + esc(n.image) + '" style="width:160px;border-radius:10px"><button class="btn2 danger sm" data-nimgdel="' + i + '">Убрать картинку</button></div>' :
+        '<div class="row" style="gap:8px"><input type="file" accept="image/*" data-nimg="' + i + '"><span class="hint">широкая, примерно 3:2</span></div>') +
+      '<label class="f" style="margin-top:14px">Содержимое</label>' + blocks +
+      '<div class="row" style="gap:8px;margin-top:10px"><button class="btn2 ghost sm" data-badd="' + i + ':text">+ Текст</button><button class="btn2 ghost sm" data-badd="' + i + ':list">+ Список</button><button class="btn2 ghost sm" data-badd="' + i + ':info">+ Инфо-плашка</button></div>' +
+      '<label class="f" style="margin-top:14px">Кнопка снизу</label><select data-n="' + i + '" data-k="button.action">' + opts(NEWS_ACTIONS, n.button.action) + "</select>" +
+      (n.button.action === "link" ? '<label class="f">Ссылка (https://…)</label><input type="url" data-n="' + i + '" data-k="button.url" value="' + esc(n.button.url) + '" placeholder="https://">' : "") +
+      (n.button.action !== "none" ? l3(i, "button.label", n.button.label, "Текст кнопки", false, 40) : "") +
+      "</div>";
+  }
+  function renderNews() {
+    $("newsList").innerHTML = draft.news.length ? draft.news.map(newsHtml).join("") : '<p class="hint" style="margin-top:12px">Уведомлений пока нет.</p>';
+  }
+  function emptyL() { return { uk: "", ru: "", en: "" }; }
+  $("addNews").onclick = function () {
+    var id = "n" + Date.now().toString(36);
+    focusNews = id;
+    draft.news.unshift({ id: id, active: false, audience: "all", date: new Date().toISOString().slice(0, 10), icon: "bell", color: "#0A82F9", title: emptyL(), sub: emptyL(), image: "", blocks: [{ type: "text", text: emptyL() }], button: { label: emptyL(), action: "none", url: "" } });
+    renderNews(); updateBar(); pv.go("/news/" + id);
+  };
+  function setPath(o, path, v) { var ks = path.split("."); for (var j = 0; j < ks.length - 1; j++) o = o[ks[j]]; o[ks[ks.length - 1]] = v; }
+  function onNewsEdit(e) {
+    var el = e.target, i = el.dataset.n, k = el.dataset.k;
+    if (i == null || !k) return;
+    setPath(draft.news[+i], k, el.type === "checkbox" ? el.checked : el.value);
+    if (el.tagName === "SELECT" && e.type === "change") renderNews();
+    updateBar();
+  }
+  $("newsList").addEventListener("input", onNewsEdit);
+  $("newsList").addEventListener("change", function (e) {
+    var f = e.target.dataset && e.target.dataset.nimg;
+    if (f != null) return uploadNewsImage(+f, e.target.files[0]);
+    onNewsEdit(e);
+  });
+  $("newsList").addEventListener("click", function (e) {
+    var item = e.target.closest(".item[data-nid]");
+    if (item && item.dataset.nid !== focusNews) {
+      focusNews = item.dataset.nid;
+      document.querySelectorAll("#newsList > .item").forEach(function (x) { x.classList.toggle("focus", x === item); });
+      pv.go("/news/" + focusNews); pv.push();
+    }
+    var d = e.target.dataset || {};
+    if (d.ndel != null) { if (confirm("Удалить это уведомление?")) { draft.news.splice(+d.ndel, 1); renderNews(); updateBar(); } return; }
+    if (d.nimgdel != null) { draft.news[+d.nimgdel].image = ""; renderNews(); updateBar(); return; }
+    if (d.badd) { var p = d.badd.split(":"); draft.news[+p[0]].blocks.push({ type: p[1], text: emptyL() }); renderNews(); updateBar(); return; }
+    var mv = d.bup || d.bdown || d.bdel;
+    if (mv) {
+      var q = mv.split(":"), bl = draft.news[+q[0]].blocks, k2 = +q[1];
+      if (d.bdel) bl.splice(k2, 1);
+      else { var to = d.bup ? k2 - 1 : k2 + 1; if (to < 0 || to >= bl.length) return; var t = bl[k2]; bl[k2] = bl[to]; bl[to] = t; }
+      renderNews(); updateBar();
+    }
+  });
+  // the picture becomes a WebP of at most 1200px wide in the browser, then goes up
+  function uploadNewsImage(i, file) {
+    if (!file) return;
+    var img = new Image();
+    img.onload = function () {
+      var w = Math.min(1200, img.width), h = Math.round(img.height * (w / img.width));
+      var c = document.createElement("canvas"); c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      var url = c.toDataURL("image/webp", 0.85);
+      if (url.indexOf("data:image/webp") !== 0) return toast("Этот браузер не умеет WebP, загрузи из Chrome");
+      toast("Загружаю…");
+      api("POST", "/admin/news-image", { image: url }).then(function (r) {
+        draft.news[i].image = r.url; renderNews(); updateBar(); toast("Картинка загружена");
+      }).catch(function (e2) { toast(e2.message === "too_big" ? "Картинка слишком большая" : e2.message === "storage_off" ? "Хранилище не настроено" : "Ошибка: " + e2.message); });
+    };
+    img.onerror = function () { toast("Не получилось открыть картинку"); };
+    img.src = URL.createObjectURL(file);
+  }
+
   // ---------- reports ----------
   var REASON = { spam: "Спам", offensive: "Оскорбления", inappropriate: "Недопустимый контент", other: "Другое" };
   function loadReports() {
@@ -357,7 +465,7 @@
     function cfg() {
       var banners = draft ? draft.banners : [];
       var forced = tab === "banners" ? (banners.some(function (b) { return b.id === focusBanner; }) ? focusBanner : banners[0] && banners[0].id) : null;
-      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, folders: draft.folders, previewBanner: forced || null } : null;
+      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, folders: draft.folders, season: draft.season, news: draft.news, previewBanner: forced || null } : null;
     }
     function push() { clearTimeout(pushT); pushT = setTimeout(function () { var a = api(), c = cfg(); if (a && c) a.setConfig(c); }, 120); }
     function go(path) {

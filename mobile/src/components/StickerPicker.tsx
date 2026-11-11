@@ -15,9 +15,9 @@ import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { PremiumBadge, Txt } from "./ui";
 
-// pack: show just that one pack (the Secret Santa room shows only "newyear");
-// otherwise every pack but that one
-export function StickerPicker({ value, onChange, size = 28, pack: only }: { value: string; onChange: (emoji: string) => void; size?: number; pack?: string }) {
+// every pack, each under its title; `pack` puts that one first (the Secret
+// Santa room opens on the New Year stickers, the rest still below)
+export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked }: { value: string; onChange: (emoji: string) => void; size?: number; pack?: string; /** how to open the paywall (inside a Modal: close it first) */ onLocked?: () => void }) {
   const { t } = useT();
   const { isPremium } = useSubscription();
   const router = useRouter();
@@ -27,9 +27,9 @@ export function StickerPicker({ value, onChange, size = 28, pack: only }: { valu
   const extra = stickers.extra.map((s) => s.name);
   return (
     <View className="gap-4">
-      {STICKER_PACKS.filter((p) => (only ? p.id === only : p.id !== "newyear") && (PREMIUM_ENABLED || !p.isPremiumOnly)).map((pack, i, packs) => {
+      {[...STICKER_PACKS].sort((a, b) => Number(b.id === only) - Number(a.id === only)).filter((p) => PREMIUM_ENABLED || !p.isPremiumOnly).map((pack, i, packs) => {
         const locked = pack.isPremiumOnly && !isPremium;
-        const names = [...(pack.stickers as string[]), ...(i === 0 && !only ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k);
+        const names = [...(pack.stickers as string[]), ...(pack.id === "classic" ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k);
         return (
           <View key={pack.id}>
             {packs.length > 1 ? (
@@ -47,7 +47,7 @@ export function StickerPicker({ value, onChange, size = 28, pack: only }: { valu
                     <Press
                       scaleTo={0.85}
                       onPress={() => {
-                        if (locked) return router.push("/paywall");
+                        if (locked) return onLocked ? onLocked() : router.push("/paywall");
                         haptic("select");
                         onChange(e);
                       }}

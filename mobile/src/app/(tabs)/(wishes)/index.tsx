@@ -15,6 +15,9 @@ import { Chip, Empty, HeaderAdd, Pill, Txt } from "../../../components/ui";
 import { WishGridSkeleton } from "../../../components/Skeleton";
 import { WishCard } from "../../../components/WishCard";
 import { TabBarFade } from "../../../components/TabBarFade";
+import { HolidaySnow, snowSeason } from "../../../components/Snowfall";
+import { usePrefs } from "../../../settings/prefs";
+import { useRemoteConfig } from "../../../lib/remoteConfig";
 import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHeader";
 import { useT } from "../../../i18n";
 import { useGridColumns } from "../../../lib/gridColumns";
@@ -27,6 +30,9 @@ import { useAccent } from "../../../theme/accent";
 
 export default function PoolScreen() {
   useAccent(); // re-render in place when the app colour changes
+  const snowPref = usePrefs().snow;
+  const { season } = useRemoteConfig();
+  const snowOn = snowPref && season.newYear;
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -177,6 +183,8 @@ export default function PoolScreen() {
         ) : null}
       </View>
       <TabBarFade />
+      {/* the holiday season: light snow over the list (Settings › Snow) */}
+      {snowOn && snowSeason() ? <HolidaySnow /> : null}
     </View>
   );
 }

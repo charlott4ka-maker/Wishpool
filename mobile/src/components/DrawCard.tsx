@@ -11,6 +11,7 @@ import { haptic } from "../lib/haptics";
 import { api, type DrawData } from "../services/api";
 import { toast } from "./Toast";
 import { C } from "../theme/tokens";
+import { DrawReveal } from "./DrawReveal";
 import { Sticker } from "./Sticker";
 import { Avatar, Pill, Txt } from "./ui";
 
@@ -53,6 +54,8 @@ export function DrawCard({ roomId, draw, members, owner, onChanged }: { roomId: 
   if (draw?.drawn && draw.target) {
     return (
       <View className="rounded-card bg-raised p-4">
+        {/* the first time: the gift opens and shows who it is */}
+        <DrawReveal roomId={roomId} target={draw.target} />
         <View className="flex-row items-center gap-3">
           <Avatar m={draw.target} size={48} />
           <View className="flex-1">

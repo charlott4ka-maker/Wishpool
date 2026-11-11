@@ -23,9 +23,30 @@ import { Txt } from "./ui";
 
 const KEY = "wp_banners_closed";
 
+// the built-in Secret Santa banner (signed-in people: the draw needs friends in
+// a room); opens New room as a Santa room. Closed for good with its ×.
+const SANTA_UNTIL = new Date(2026, 11, 26).getTime();
+export const SANTA_BANNER: Banner = {
+  id: "santa-2026",
+  audience: "signedIn",
+  text: {
+    uk: "Таємний Санта вже тут! Створи кімнату й проведи жеребкування",
+    ru: "Тайный Санта уже здесь! Создай комнату и проведи жеребьёвку",
+    en: "Secret Santa is here! Make a room and run the draw",
+  },
+  // a deep burgundy (she picked it over a brighter red)
+  color1: "#5E1B2A",
+  color2: "#8F2F3F",
+  textColor: "#FFFFFF",
+  sticker: "stk:santa",
+  action: "santa",
+  url: "",
+  dismissible: true,
+};
+
 /** The banner to show now, if any: active, for this kind of user, with text in this language, not closed. */
 export function useRemoteBanner(): { banner: Banner | null; close: (id: string) => void } {
-  const { banners, previewBanner } = useRemoteConfig();
+  const { banners, previewBanner, season } = useRemoteConfig();
   const { status } = useAuth();
   const { lang } = useT();
   const demo = usePrefs().demo;
@@ -46,7 +67,9 @@ export function useRemoteBanner(): { banner: Banner | null; close: (id: string) 
   if (!closed || demo) return { banner: null, close };
   const who = status === "signedIn" ? "signedIn" : "guest";
   const banner =
-    banners.find((b) => (b.audience === "all" || b.audience === who) && !closed.includes(b.id) && (b.text[lang] || b.text.en || b.text.uk || b.text.ru)) || null;
+    banners.find((b) => (b.audience === "all" || b.audience === who) && !closed.includes(b.id) && (b.text[lang] || b.text.en || b.text.uk || b.text.ru)) ||
+    // our own seasonal one when the admin page has none: Secret Santa till Christmas
+    (season.newYear && who === "signedIn" && Date.now() < SANTA_UNTIL && !closed.includes(SANTA_BANNER.id) ? SANTA_BANNER : null);
   return { banner, close };
 }
 
@@ -58,6 +81,7 @@ export function RemoteBanner({ banner, onClose }: { banner: Banner; onClose: () 
     if (banner.action === "none") return;
     haptic("light");
     if (banner.action === "signin") router.push("/sign-in-options");
+    else if (banner.action === "santa") router.push({ pathname: "/room/new", params: { preset: "santa" } });
     else if (banner.url) WebBrowser.openBrowserAsync(banner.url).catch(() => {});
   };
   return (

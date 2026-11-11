@@ -26,6 +26,10 @@ import { Avatar, Txt } from "./ui";
 import { folderSkin } from "../lib/folderSkins";
 
 /** The front's top edge (tab + step) and the whole front outline. */
+// stacked inner strokes (clipped to the shape, so only the inside half shows):
+// a shade that fades in from the edge, like the bevel on the made folders
+const BEVEL: [number, number][] = [[22, 0.05], [14, 0.07], [8, 0.09], [4, 0.12]];
+
 export function folderPaths(w: number, h: number) {
   const R0 = Math.round;
   const x0 = R0(w * 0.04), x1 = R0(w * 0.96), yT = R0(h * 0.28), yB = R0(h * 0.37), y1 = R0(h * 0.96), xt = R0(w * 0.5), r = 18, rt = 14;
@@ -215,6 +219,10 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
             </Defs>
             <SvgImage href={{ uri: cover }} x={0} y={0} width={dim.w} height={dim.h} preserveAspectRatio="xMidYMid slice" clipPath={`url(#cb-${room.id})`} />
             <Rect x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} fill="#000" fillOpacity={0.38} />
+            <G clipPath={`url(#cb-${room.id})`}>
+              {BEVEL.map(([w, o]) => <Rect key={w} x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} fill="none" stroke="#000" strokeOpacity={o} strokeWidth={w} />)}
+              <Rect x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} fill="none" stroke="#fff" strokeOpacity={0.18} strokeWidth={2} />
+            </G>
           </Svg>
         ) : skin ? (
           <Image source={skin.back} style={StyleSheet.absoluteFill} contentFit="fill" />
@@ -261,6 +269,11 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
             </Defs>
             <SvgImage href={{ uri: cover }} x={0} y={0} width={dim.w} height={dim.h} preserveAspectRatio="xMidYMid slice" clipPath={`url(#cf-${room.id})`} />
             <Path d={paths.full} fill={`url(#cl-${room.id})`} />
+            {/* a soft bevel like the made folders: shade fading in from the edge, a thin light rim */}
+            <G clipPath={`url(#cf-${room.id})`}>
+              {BEVEL.map(([w, o]) => <Path key={w} d={paths.full} fill="none" stroke="#000" strokeOpacity={o} strokeWidth={w} />)}
+              <Path d={paths.full} fill="none" stroke="#fff" strokeOpacity={0.28} strokeWidth={2.5} />
+            </G>
           </Svg>
         ) : skin ? (
           <Image source={skin.front} style={[StyleSheet.absoluteFill, { zIndex: 3 }]} contentFit="fill" pointerEvents="none" />

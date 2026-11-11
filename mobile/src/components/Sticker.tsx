@@ -31,7 +31,8 @@ export function Sticker({ emoji, size, rotate = 0, style }: { emoji: string; siz
   // blurred text shadow reads as a glow; a ring of hard white drop-shadows
   // follows the emoji's own outline instead, then a soft shadow under it
   if (Platform.OS === "web") {
-    const w = Math.max(1.5, size * 0.06);
+    // thin: the eight shadows stack on each other, so each one is half the rim we want
+    const w = Math.max(1, size * 0.03);
     const rim = [0, 45, 90, 135, 180, 225, 270, 315]
       .map((a) => `drop-shadow(${(Math.cos((a * Math.PI) / 180) * w).toFixed(1)}px ${(Math.sin((a * Math.PI) / 180) * w).toFixed(1)}px 0 #fff)`)
       .join(" ");

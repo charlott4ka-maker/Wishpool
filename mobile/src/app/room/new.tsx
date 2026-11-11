@@ -13,7 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import { SymbolView } from "expo-symbols";
 import Svg, { Circle, Rect } from "react-native-svg";
 import { Check, ImagePlus, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import Animated, { SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,6 +22,7 @@ import { DateRow } from "../../components/DateRow";
 import { FriendPicker, useFriendList } from "../../components/FriendPicker";
 import { LookTabs } from "../../components/LookTabs";
 import { RoomFolder } from "../../components/RoomFolder";
+import { CustomColor } from "../../components/CustomColor";
 import { SantaChip } from "../../components/SantaChip";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
@@ -86,7 +87,7 @@ export default function CreateRoomScreen() {
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, preset: presetParam } = useLocalSearchParams<{ id?: string; preset?: string }>();
   const { rooms, createRoom, updateRoom, online, refresh, admin } = useWishpool();
   const editing = id ? rooms.find((r) => r.id === id) : undefined;
   const { isStickerLocked, isPremium } = useSubscription();
@@ -103,6 +104,12 @@ export default function CreateRoomScreen() {
   // premium folders in the order set on the admin page
   const skins = orderedSkins(useRemoteConfig().folders);
   const [lookOpen, setLookOpen] = useState(false);
+  // the look sheet is an RN Modal: a screen pushed over it (the paywall) left it
+  // stuck on top after closing, so close the sheet first, then open the paywall
+  const openPaywall = () => {
+    setLookOpen(false);
+    setTimeout(() => router.push("/paywall"), 300);
+  };
   // premium decorations: two more stickers
   const [charms, setCharms] = useState<{ e: string; pos: string }[]>(editing?.charms || []);
   const [stickerSlot, setStickerSlot] = useState<"main" | "c0" | "c1">("main");
@@ -141,6 +148,10 @@ export default function CreateRoomScreen() {
     if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:candle");
     if (p.santa && tint === ROOM_COLORS[0]) setTint("#FF4D8D");
   };
+  // opened from the Secret Santa banner: start as a Santa room
+  useEffect(() => {
+    if (!editing && presetParam === "santa") pickPreset(PRESETS.find((p) => p.santa)!);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const autoName = bday ? (mode === "self" ? t("bdayRoomNameMine") : celName.trim() ? t("bdayRoomNameOf", { name: celName.trim() }) : t("roomBirthday")) : t(preset.key);
   const title = name.trim() || autoName;
   const [tried, setTried] = useState(false);
@@ -204,6 +215,9 @@ export default function CreateRoomScreen() {
         </Pill>
       </View>
 
+      {/* the name first, then the type */}
+      <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
+
       {/* the type is set when the room is made */}
       {!editing ? (
         <>
@@ -221,8 +235,12 @@ export default function CreateRoomScreen() {
           </View>
           {/* what this type is for: an info plate */}
           <View className="mb-4 mt-1 flex-row items-start gap-3 rounded-tile bg-raised px-4 py-3">
-            <View style={{ marginTop: 1 }}>
-              <SymbolView name="info.circle.fill" size={20} tintColor={C.blue} fallback={<View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.blue, alignItems: "center", justifyContent: "center" }}><Svg width={20} height={20} viewBox="0 0 28 28"><Circle cx={14} cy={8.6} r={1.9} fill="#fff" /><Rect x={12.3} y={12} width={3.4} height={9.5} rx={1.7} fill="#fff" /></Svg></View>} />
+            {/* a filled blue circle, the "i" cut out in the plate's own colour (her example) */}
+            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.blue, alignItems: "center", justifyContent: "center", marginTop: -0.5 }}>
+              <Svg width={20} height={20} viewBox="0 0 20 20">
+                <Circle cx={10} cy={5.9} r={1.45} fill={C.raised} />
+                <Rect x={8.9} y={8.4} width={2.2} height={7} rx={1.1} fill={C.raised} />
+              </Svg>
             </View>
             <Txt className="flex-1 text-[13.5px] leading-[19px] text-t1">{t(preset.hint)}</Txt>
           </View>
@@ -244,8 +262,6 @@ export default function CreateRoomScreen() {
           <DateRow label={t("bdayDateLabel")} value={date} onChange={setDate} hint={t("evHint")} minimumDate={new Date()} error={tried && !date && t("requiredDate")} />
         </View>
       ) : null}
-
-      <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
 
       {/* bring friends in right away (signed in, new room) */}
       {!editing && online && friends && friends.length ? (
@@ -290,25 +306,31 @@ export default function CreateRoomScreen() {
               {/* which sticker the picker sets: the main one, or (premium) one of two more */}
               {showSkins ? (
                 <View className="mb-4 flex-row items-center gap-2">
-                  {(["main", "c0", "c1"] as const).map((slot, i) => {
+                  {(isPremium || admin ? (["main", "c0", "c1"] as const) : (["main"] as const)).map((slot, i) => {
                     const e = slot === "main" ? emoji : charms[i - 1]?.e;
                     const on = stickerSlot === slot;
                     return (
                       <Pressable
                         key={slot}
                         onPress={() => {
-                          if (slot !== "main" && !isPremium && !admin) return router.push("/paywall");
                           haptic("select");
                           setStickerSlot(slot);
                         }}
                         className="h-sm flex-row items-center gap-1.5 rounded-full px-3.5"
                         style={{ backgroundColor: on ? SEG_ON_BG : C.bg }}
                       >
-                        {e ? <Sticker emoji={e} size={20} /> : slot !== "main" && !isPremium ? <Lock size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
+                        {e ? <Sticker emoji={e} size={20} /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
                         <Txt className={`font-m600 text-[13px] ${on ? "text-white" : "text-t2"}`}>{slot === "main" ? t("stickerMain") : t("stickerMore")}</Txt>
                       </Pressable>
                     );
                   })}
+                  {/* without Premium: one locked chip instead of the two extra slots */}
+                  {!isPremium && !admin ? (
+                    <Pressable onPress={openPaywall} className="h-sm flex-row items-center gap-1.5 rounded-full px-3.5" style={{ backgroundColor: C.bg }}>
+                      <Lock size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />
+                      <Txt className="font-m600 text-[13px] text-t2">Premium</Txt>
+                    </Pressable>
+                  ) : null}
                   {stickerSlot !== "main" && charms[stickerSlot === "c0" ? 0 : 1] ? (
                     <Pressable onPress={() => { haptic("select"); setCharms((cur) => cur.filter((_, j) => j !== (stickerSlot === "c0" ? 0 : 1))); setStickerSlot("main"); }} hitSlop={8}>
                       <Txt className="font-m600 text-[13px] text-t2">{t("setDelete")}</Txt>
@@ -317,6 +339,7 @@ export default function CreateRoomScreen() {
                 </View>
               ) : null}
               <StickerPicker
+                onLocked={openPaywall}
                 value={stickerSlot === "main" ? emoji : charms[stickerSlot === "c0" ? 0 : 1]?.e || ""}
                 onChange={(e) => {
                   if (stickerSlot === "main") return setEmoji(e);
@@ -333,7 +356,20 @@ export default function CreateRoomScreen() {
             </View>
           ) : lookTab === "color" ? (
             // a colour means the plain folder again
-            <ColorPicker value={skin ? "" : tint} onChange={(c) => { setTint(c); setSkin(""); }} />
+            <View>
+              <ColorPicker value={skin ? "" : tint} onChange={(c) => { setTint(c); setSkin(""); }} />
+              {/* any colour at all (Premium): the iPhone's own picker */}
+              {showSkins ? (
+                <CustomColor
+                  value={tint}
+                  picked={!skin && !ROOM_COLORS.includes(tint)}
+                  label={t("customColor")}
+                  unlocked={isPremium || !!admin}
+                  onChange={(c) => { setTint(c); setSkin(""); }}
+                  onLocked={openPaywall}
+                />
+              ) : null}
+            </View>
           ) : (
             <View>
             <View className="mb-4">
@@ -341,7 +377,7 @@ export default function CreateRoomScreen() {
               {/* your own photo on the folder */}
               <View style={{ width: "33.333%", padding: 4 }}>
                 <Pressable
-                  onPress={() => (isPremium ? pickCover() : router.push("/paywall"))}
+                  onPress={() => (isPremium ? pickCover() : openPaywall())}
                   onLongPress={admin ? pickCover : undefined}
                   className="items-center justify-center overflow-hidden rounded-2xl"
                   style={{ aspectRatio: 1.12, backgroundColor: skin === "photo" ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: skin === "photo" ? C.blue : "transparent" }}
@@ -360,7 +396,7 @@ export default function CreateRoomScreen() {
                   <View key={k.id} style={{ width: "33.333%", padding: 4 }}>
                     <Pressable
                       onPress={() => {
-                        if (locked) return router.push("/paywall");
+                        if (locked) return openPaywall();
                         haptic("select");
                         setSkin(k.id);
                       }}
@@ -393,7 +429,7 @@ export default function CreateRoomScreen() {
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
                   <Txt className="mt-1 text-center text-[14px] leading-[20px] text-white">{t("premiumFoldersSub", { n: skins.length })}</Txt>
                   <View className="mt-4">
-                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => router.push("/paywall")}>{t("premiumOpen")}</Pill>
+                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => openPaywall()}>{t("premiumOpen")}</Pill>
                   </View>
                 </View>
               </View>
