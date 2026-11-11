@@ -8,7 +8,9 @@ import Constants from "expo-constants";
 import { Image } from "expo-image";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { Check, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as ImagePicker from "expo-image-picker";
+import { Check, ImagePlus, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import Animated, { SlideInDown } from "react-native-reanimated";
@@ -94,6 +96,17 @@ export default function CreateRoomScreen() {
   // premium folders in the order set on the admin page
   const skins = orderedSkins(useRemoteConfig().folders);
   const [lookOpen, setLookOpen] = useState(false);
+  // your own photo on the folder (premium): a fresh pick waits here until the room is saved
+  const [coverDraft, setCoverDraft] = useState<string | null>(null);
+  const coverShown = coverDraft || editing?.cover || null;
+  const pickCover = async () => {
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 1 });
+    if (res.canceled || !res.assets[0]) return;
+    const r = await ImageManipulator.manipulateAsync(res.assets[0].uri, [{ resize: { width: 900 } }], { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG, base64: true });
+    haptic("success");
+    setCoverDraft(`data:image/jpeg;base64,${r.base64}`);
+    setSkin("photo");
+  };
   const [lookTab, setLookTab] = useState<"sticker" | "color" | "folders">("sticker");
   const [name, setName] = useState(editing?.name || "");
   const [mode, setMode] = useState<"self" | "other">(editing?.bdayMode === "other" ? "other" : "self"); // birthday: mine or someone else's
@@ -134,13 +147,16 @@ export default function CreateRoomScreen() {
     const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : swapDate && date ? { eventDate: date } : {};
     try {
       if (editing) {
-        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, skin, ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
+        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, skin, ...(online ? {} : { cover: coverDraft || editing.cover }), ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
+        if (online && coverDraft) await api.setRoomCover(editing.id, coverDraft).then(() => refresh()).catch(() => toast.error(t("toastError")));
         haptic("success");
         router.back();
         toast.success(t("toastSaved"), { root: true });
         return;
       }
-      const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, skin, ...extra } as Parameters<typeof createRoom>[0]);
+      const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, skin, ...(online ? {} : { cover: coverDraft || undefined }), ...extra } as Parameters<typeof createRoom>[0]);
+      // the own photo goes up once the room exists
+      if (online && coverDraft) await api.setRoomCover(id, coverDraft).then(() => refresh()).catch(() => toast.error(t("toastError")));
       // friends picked below: in at once or invited, as each of them prefers
       const res = picked.length ? await api.addToRoom(id, picked).catch(() => null) : null;
       if (res && res.added.length) await refresh().catch(() => {});
@@ -162,7 +178,7 @@ export default function CreateRoomScreen() {
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto w-1/2">
         <RoomFolder
-          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, skin, members: editing?.members || [], eventDate: (bday || swapDate) && date ? date : undefined }}
+          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, skin, cover: coverShown || undefined, members: editing?.members || [], eventDate: (bday || swapDate) && date ? date : undefined }}
           wishes={[]}
           onPress={() => {}}
           onStickerMove={setStickerPos}
@@ -257,7 +273,22 @@ export default function CreateRoomScreen() {
             <View>
             <View className="mb-4">
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
-              {(isPremium ? skins : skins.slice(0, 9)).map((k) => {
+              {/* your own photo on the folder */}
+              <View style={{ width: "33.333%", padding: 4 }}>
+                <Pressable
+                  onPress={() => (isPremium ? pickCover() : router.push("/paywall"))}
+                  onLongPress={admin ? pickCover : undefined}
+                  className="items-center justify-center overflow-hidden rounded-2xl"
+                  style={{ aspectRatio: 1.12, backgroundColor: skin === "photo" ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: skin === "photo" ? C.blue : "transparent" }}
+                >
+                  {coverShown ? <Image source={{ uri: coverShown }} style={{ position: "absolute", width: "86%", height: "77%", borderRadius: 12 }} contentFit="cover" /> : null}
+                  <View className="items-center justify-center rounded-full" style={{ width: 34, height: 34, backgroundColor: "rgba(0,0,0,0.45)" }}>
+                    <ImagePlus size={18} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                  </View>
+                  {!coverShown ? <Txt className="mt-1 font-m600 text-[11.5px] text-t2">{t("ownPhoto")}</Txt> : null}
+                </Pressable>
+              </View>
+              {(isPremium ? skins : skins.slice(0, 8)).map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (

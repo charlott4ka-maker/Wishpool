@@ -12,7 +12,7 @@ import { LinearGradient as ExpoGradient } from "expo-linear-gradient";
 import { CalendarDays } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, LayoutChangeEvent, PanResponder, Platform, StyleSheet, View } from "react-native";
-import Svg, { ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
+import Svg, { ClipPath, Defs, G, Image as SvgImage, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { useT } from "../i18n";
 import { countdownLabel } from "../lib/dates";
@@ -188,6 +188,8 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
   const web = Platform.OS === "web"; // no MaskedView there: a flat gradient front instead
   // a premium look: pictures for the back and the front, the photos still tucked in between
   const skin = folderSkin(room.skin);
+  // the room's own photo: the same picture on the back (dimmed) and the front, cut to the folder shape
+  const cover = room.skin === "photo" && room.cover ? room.cover : null;
 
   return (
     <Press
@@ -199,7 +201,17 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
       className="flex-1 items-center"
     >
       <View className="w-full" style={{ aspectRatio: 1.12 }} onLayout={(e: LayoutChangeEvent) => setDim({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-        {skin ? (
+        {cover && dim && paths ? (
+          <Svg width={dim.w} height={dim.h} style={StyleSheet.absoluteFill} pointerEvents="none">
+            <Defs>
+              <ClipPath id={`cb-${room.id}`}>
+                <Rect x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} />
+              </ClipPath>
+            </Defs>
+            <SvgImage href={{ uri: cover }} x={0} y={0} width={dim.w} height={dim.h} preserveAspectRatio="xMidYMid slice" clipPath={`url(#cb-${room.id})`} />
+            <Rect x={dim.w * 0.08} y={dim.h * 0.16} width={dim.w * 0.84} height={dim.h * 0.74} rx={16} fill="#000" fillOpacity={0.38} />
+          </Svg>
+        ) : skin ? (
           <Image source={skin.back} style={StyleSheet.absoluteFill} contentFit="fill" />
         ) : (
           <View className="absolute rounded-2xl" style={{ left: "8%", right: "8%", top: "16%", bottom: "10%", backgroundColor: hex(room.tint, 0.32) }} />
@@ -231,7 +243,21 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
             ))}
           </View>
         ) : null}
-        {skin ? (
+        {cover && dim && paths ? (
+          <Svg width={dim.w} height={dim.h} style={[StyleSheet.absoluteFill, { zIndex: 3 }]} pointerEvents="none">
+            <Defs>
+              <ClipPath id={`cf-${room.id}`}>
+                <Path d={paths.full} />
+              </ClipPath>
+              <LinearGradient id={`cl-${room.id}`} x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor="#fff" stopOpacity={0.18} />
+                <Stop offset="0.3" stopColor="#fff" stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
+            <SvgImage href={{ uri: cover }} x={0} y={0} width={dim.w} height={dim.h} preserveAspectRatio="xMidYMid slice" clipPath={`url(#cf-${room.id})`} />
+            <Path d={paths.full} fill={`url(#cl-${room.id})`} />
+          </Svg>
+        ) : skin ? (
           <Image source={skin.front} style={[StyleSheet.absoluteFill, { zIndex: 3 }]} contentFit="fill" pointerEvents="none" />
         ) : dim && paths ? (
           web ? (

@@ -49,7 +49,7 @@ export async function createApp() {
   }));
   const roomOut = (r, me) => ({
     id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, eventTitle: r.eventTitle || "", eventDate: r.eventDate || "",
-    bdayMode: r.bdayMode || "", celebrantName: r.celebrantName || "", stickerPos: r.stickerPos || "", skin: r.skin || "",
+    bdayMode: r.bdayMode || "", celebrantName: r.celebrantName || "", stickerPos: r.stickerPos || "", skin: r.skin || "", cover: r.cover ? toPublic(r.cover) : "",
     // who the birthday person is, as far as this viewer needs to know
     iAmCelebrant: !!me && r.celebrantId === me, hasCelebrant: !!r.celebrantId, celebrantId: r.celebrantId || null,
   });
@@ -401,6 +401,26 @@ export async function createApp() {
     await store.addMember(r.id, req.user.id);
     track(req, "s_room_" + t);
     res.json({ room: { id: r.id } });
+  });
+
+  // the owner's own photo on the folder (premium): a data URL goes to the bucket, null takes it off
+  api.post("/rooms/:id/cover", async (req, res, next) => {
+    try {
+      const r = await store.getRoom(req.params.id);
+      if (!r) return res.status(404).json({ error: "not_found" });
+      if (r.ownerId !== req.user.id) return res.status(403).json({ error: "not_owner" });
+      const p = req.body && req.body.photo;
+      let cover = null;
+      if (typeof p === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(p)) {
+        if (!storageOn() || p.length > 1.5e6) return res.status(400).json({ error: "photo_not_saved" });
+        cover = await storeImage(p, `c/${r.id}`);
+      } else if (p !== null) return res.status(400).json({ error: "bad_photo" });
+      if (r.cover && r.cover !== cover) await dropImages([r.cover]);
+      await store.setRoomCover(r.id, cover);
+      if (cover) await store.updateRoom(r.id, { skin: "photo" });
+      else if (r.skin === "photo") await store.updateRoom(r.id, { skin: "" });
+      res.json({ cover: cover ? toPublic(cover) : "" });
+    } catch (e) { next(e); }
   });
 
   api.patch("/rooms/:id", async (req, res) => {

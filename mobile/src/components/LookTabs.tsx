@@ -33,11 +33,13 @@ export function LookTabs<K extends string>({ options, value, onChange, premium }
               <>
                 <LinearGradient colors={["#0A82F9", "#55A9FC"]} start={{ x: 0.2, y: 1 }} end={{ x: 0.8, y: 0 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
                 <LinearGradient colors={["rgba(69,159,248,0)", "rgba(69,159,248,0.52)"]} start={{ x: 0.88, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-                <View style={{ position: "absolute", top: 1, left: 16, right: 16, height: 1, backgroundColor: "#459FF8" }} />
+                {/* the lip along the top: a soft inner shadow, fading down */}
+                <LinearGradient colors={["rgba(120,190,255,0.7)", "rgba(120,190,255,0)"]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.22 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
               </>
             ) : null}
             <View className="flex-1 flex-row items-center justify-center gap-1.5">
-              {prem ? <Crown size={15} color={on ? "#fff" : C.blueText} fill={on ? "#fff" : "transparent"} strokeWidth={1.5} absoluteStrokeWidth /> : null}
+              {/* the crown sits a touch low so its middle lines up with the letters' */}
+              {prem ? <View style={{ marginTop: 1 }}><Crown size={15} color={on ? "#fff" : C.blueText} fill={on ? "#fff" : "transparent"} strokeWidth={1.5} absoluteStrokeWidth /></View> : null}
               <Txt className={`font-m600 text-sm ${on ? "text-white" : prem ? "text-blueText" : "text-t2"}`}>{label}</Txt>
             </View>
           </Pressable>

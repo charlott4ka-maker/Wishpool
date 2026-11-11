@@ -192,6 +192,11 @@ try {
   await call("PATCH", "/api/rooms/" + skId, { name: "Skin", skin: "web" }, rv.body.token); assert.equal(await skinOf(), "web");
   await call("PATCH", "/api/rooms/" + skId, { name: "Skin", skin: "nope" }, rv.body.token); assert.equal(await skinOf(), "");
   await call("PATCH", "/api/rooms/" + skId, { name: "Skin" }, rv.body.token); assert.equal(await skinOf(), "");
+  // own photo: without the bucket a data URL can't be kept; taking it off resets a photo look
+  assert.equal((await call("POST", `/api/rooms/${skId}/cover`, { photo: "data:image/jpeg;base64,AAAA" }, rv.body.token)).status, 400);
+  await call("PATCH", "/api/rooms/" + skId, { name: "Skin", skin: "photo" }, rv.body.token); assert.equal(await skinOf(), "photo");
+  assert.equal((await call("POST", `/api/rooms/${skId}/cover`, { photo: null }, rv.body.token)).status, 200);
+  assert.equal(await skinOf(), "");
 
   // Secret Santa: a friends room keeps its swap date
   const santa = (await call("POST", "/api/rooms", { name: "Santa", type: "friends", emoji: "stk:gift", tint: "#FF4D8D", eventDate: "2030-12-20" }, rv.body.token)).body;

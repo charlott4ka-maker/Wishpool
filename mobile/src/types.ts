@@ -45,6 +45,8 @@ export type Room = {
   stickerPos?: string;
   /** a premium folder look (lib/folderSkins.ts); empty: the plain tinted folder */
   skin?: string;
+  /** the room's own photo on the folder (skin "photo") */
+  cover?: string;
   /** Demo content only (lib/demo.ts): friends' lists shown offline. */
   demoLists?: { member: Member; wishes: (Wish & { reservedByMe?: boolean; taken?: boolean })[] }[];
 };

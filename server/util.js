@@ -20,10 +20,11 @@ export const cleanImages = (list) => (Array.isArray(list) ? list : [])
 export const mapRoom = (r) => r && ({ id: r.id, name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, ownerId: r.owner_id, createdAt: Number(r.created_at), eventTitle: r.event_title || "", eventDate: r.event_date || "",
   // birthday rooms: whose birthday ("self" = the creator, "other" = a surprise for someone else)
   bdayMode: r.bday_mode || "", celebrantName: r.celebrant_name || "", celebrantId: r.celebrant_id || null,
-  stickerPos: r.sticker_pos || "", skin: r.skin || "" });
+  stickerPos: r.sticker_pos || "", skin: r.skin || "", cover: r.cover || "" });
 // premium folder looks (mobile/assets/folders); anything else means the plain tinted folder
 export const FOLDER_SKINS = ["suede", "fawn", "pinkleo", "croc", "knit", "puffer", "cow", "airmail", "frog", "chrome", "giftwrap", "gummy", "xmas", "web", "violet", "wishful", "cyano", "stripes", "sky"];
-export const cleanSkin = (v) => (FOLDER_SKINS.includes(v) ? v : "");
+// "photo": the room's own picture (room.cover) on the folder
+export const cleanSkin = (v) => (FOLDER_SKINS.includes(v) || v === "photo" ? v : "");
 // Where the sticker sits on the room folder: "x,y", the sticker's top-left as
 // fractions of the folder (set by dragging it in the app); "" = the default spot.
 export const cleanStickerPos = (v) => {

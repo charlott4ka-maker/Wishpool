@@ -187,6 +187,7 @@ export const MOBILE_STRINGS = {
   friendLinkSelf: { uk: "Це твоє посилання", ru: "Это твоя ссылка", en: "This is your own link" },
   friendLinkAlready: { uk: "Ви вже друзі", ru: "Вы уже друзья", en: "You're already friends" },
   roomFolderLook: { uk: "Папка", ru: "Папка", en: "Folder" },
+  ownPhoto: { uk: "Своє фото", ru: "Своё фото", en: "Your photo" },
   changeLook: { uk: "Змінити вигляд", ru: "Изменить вид", en: "Change look" },
   roomLook: { uk: "Вигляд папки", ru: "Вид папки", en: "Folder look" },
   lookSticker: { uk: "Стікер", ru: "Стикер", en: "Sticker" },

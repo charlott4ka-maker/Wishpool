@@ -103,6 +103,8 @@ export const api = {
   toggleWishRoom: (id: string, roomId: string) => req("POST", "/wishes/" + id + "/room", { roomId }),
   createRoom: (r: Partial<Room>) => req<{ room: { id: string } }>("POST", "/rooms", r),
   updateRoom: (id: string, r: Partial<Room>) => req("PATCH", "/rooms/" + id, r),
+  // the room's own photo on the folder: a data URL, or null to take it off
+  setRoomCover: (id: string, photo: string | null) => req<{ cover: string }>("POST", "/rooms/" + id + "/cover", { photo }, { timeout: 60000 }),
   leaveRoom: (id: string) => req("POST", "/rooms/" + id + "/leave"),
   deleteRoom: (id: string) => req("DELETE", "/rooms/" + id),
   joinRoom: (id: string, b: { inviterId?: string; asCelebrant?: boolean } = {}) => req<{ room: { id: string } }>("POST", "/rooms/" + id + "/join", b),
