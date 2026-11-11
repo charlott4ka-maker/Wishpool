@@ -191,7 +191,7 @@ export const MOBILE_STRINGS = {
   roomLook: { uk: "Вигляд папки", ru: "Вид папки", en: "Folder look" },
   lookSticker: { uk: "Стікер", ru: "Стикер", en: "Sticker" },
   lookColor: { uk: "Колір", ru: "Цвет", en: "Colour" },
-  lookFolders: { uk: "Кастомні", ru: "Кастомные", en: "Custom" },
+  lookFolders: { uk: "Папки", ru: "Папки", en: "Folders" },
   folderPlain: { uk: "Звичайна", ru: "Обычная", en: "Plain" },
   premiumFoldersTitle: { uk: "Преміум-папки", ru: "Премиум-папки", en: "Premium folders" },
   premiumFoldersSub: { uk: "{n} папок, щоб твої кімнати виглядали по-особливому", ru: "{n} папок, чтобы твои комнаты выглядели по-особенному", en: "{n} folders to make your rooms look one of a kind" },
