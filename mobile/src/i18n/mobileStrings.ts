@@ -147,6 +147,8 @@ export const MOBILE_STRINGS = {
   perkAccentSub: { uk: "Шість кольорів для кнопок, вкладок і позначок.", ru: "Шесть цветов для кнопок, вкладок и отметок.", en: "Six colours for buttons, tabs and highlights." },
   perkIcon: { uk: "Іконка «Сяйво»", ru: "Иконка «Сияние»", en: "The Glow icon" },
   perkIconSub: { uk: "Скляна зірка на темному тлі на екрані «Додому».", ru: "Стеклянная звезда на тёмном фоне на экране «Домой».", en: "A glass star on dark blue on your Home Screen." },
+  premiumNextPay: { uk: "Наступний платіж {date}", ru: "Следующий платёж {date}", en: "Next payment {date}" },
+  premiumUntil: { uk: "Підписка активна до {date}", ru: "Подписка активна до {date}", en: "Subscription active until {date}" },
   premiumManage: { uk: "Керувати підпискою", ru: "Управлять подпиской", en: "Manage subscription" },
   premiumThanksSub: { uk: "Дякуємо, що ти з нами. Тут твої кольори й іконка.", ru: "Спасибо, что ты с нами. Здесь твои цвета и иконка.", en: "Thanks for being with us. Your colours and icon live here." },
   premiumPhotos: { uk: "До {n} фото до кожного бажання", ru: "До {n} фото к каждому желанию", en: "Up to {n} photos per wish" },
@@ -176,7 +178,7 @@ export const MOBILE_STRINGS = {
   iconGlow: { uk: "Сяйво", ru: "Сияние", en: "Glow" },
   packClassic: { uk: "Класичні", ru: "Классические", en: "Classic" },
   packNewYear: { uk: "Новий рік", ru: "Новый год", en: "New Year" },
-  packParty: { uk: "Вечірка", ru: "Вечеринка", en: "Party" },
+  packParty: { uk: "Premium", ru: "Premium", en: "Premium" },
 
   planYearly: { uk: "Рік", ru: "Год", en: "Yearly" },
   planMonthly: { uk: "Місяць", ru: "Месяц", en: "Monthly" },

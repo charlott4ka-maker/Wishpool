@@ -53,12 +53,13 @@ export const STICKER_PACKS: StickerPack[] = [
     stickers: ["santa", "tree", "snowman", "gingerbread", "bauble", "reindeer"],
   },
   {
-    // Placeholder contents until the exclusive 3D pack is drawn: drop new WebPs
-    // into assets/stickers, re-run the asset list, and list them here.
+    // the exclusive Premium pack (from her references, 2026-11): an evil eye, a
+    // burgundy bow, a glass heart, an 8 ball, a CD with pixel stars, a disco ball
+    // and a brown camera (the last three cut straight from her pictures)
     id: "party",
     titleKey: "packParty",
     isPremiumOnly: true,
-    stickers: ["basket", "bulb", "envelope", "eyes", "note"],
+    stickers: ["disc", "disco", "camera", "evileye", "bow", "glassheart", "ball8"],
   },
 ];
 

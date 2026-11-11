@@ -41,6 +41,8 @@ export interface PurchasesAdapter {
   purchase(pkg: PremiumPackage): Promise<boolean>;
   restore(): Promise<boolean>;
   onChange(cb: (isPremium: boolean) => void): () => void;
+  /** when the current period ends: the next payment if it renews, null if unknown */
+  expiresAt(): Promise<{ date: Date; renews: boolean } | null>;
   /** test builds only (mock store): take Premium away again */
   resetMock?(): void;
 }
@@ -51,6 +53,7 @@ const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.Store
 
 function createMock(fakePurchases: boolean): PurchasesAdapter {
   let premium = false;
+  let until: Date | null = null;
   const subs = new Set<(v: boolean) => void>();
   const set = (v: boolean) => {
     premium = v;
@@ -69,8 +72,14 @@ function createMock(fakePurchases: boolean): PurchasesAdapter {
         { id: "mock_monthly", kind: "monthly", title: "Wishpool Premium", priceString: "4,99 $", price: 4.99, currencyCode: "USD", pricePerMonthString: "4,99 $", trialDays: 0 },
       ];
     },
-    async purchase() {
+    async purchase(pkg) {
       if (!fakePurchases) throw new Error("purchases_unavailable");
+      // a pretend period: a year (with the trial: 7 days first) or a month
+      const d = new Date();
+      if (pkg.kind === "monthly") d.setMonth(d.getMonth() + 1);
+      else if (pkg.trialDays) d.setDate(d.getDate() + pkg.trialDays);
+      else d.setFullYear(d.getFullYear() + 1);
+      until = d;
       set(true);
       return true;
     },
@@ -81,7 +90,11 @@ function createMock(fakePurchases: boolean): PurchasesAdapter {
       subs.add(cb);
       return () => subs.delete(cb);
     },
+    async expiresAt() {
+      return premium && until ? { date: until, renews: true } : null;
+    },
     resetMock() {
+      until = null;
       set(false);
     },
   };
@@ -134,6 +147,10 @@ function createRevenueCat(): PurchasesAdapter {
     },
     async restore() {
       return active(await Purchases.restorePurchases());
+    },
+    async expiresAt() {
+      const e = (await Purchases.getCustomerInfo()).entitlements.active[ENTITLEMENT_ID] as { expirationDate?: string | null; willRenew?: boolean } | undefined;
+      return e?.expirationDate ? { date: new Date(e.expirationDate), renews: !!e.willRenew } : null;
     },
     onChange(cb) {
       const listener = (info: any) => cb(active(info));

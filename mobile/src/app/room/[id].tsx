@@ -8,7 +8,6 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView } from "expo-symbols";
 import { CalendarDays, Check, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Platform, Pressable, RefreshControl, ScrollView, Share, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -84,20 +83,11 @@ export default function RoomScreen() {
   // opened from an invite link there may be nothing underneath: then home
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
 
-  // a Secret Santa room (it wears a New Year sticker): snow the first time you
-  // open it on this phone, whether you made it or were invited
+  // a Secret Santa room (it wears a New Year sticker): snow every time it's opened
   const santa = !!room && NEW_YEAR_STICKERS.includes(room.emoji);
   const [snow, setSnow] = useState(false);
   useEffect(() => {
-    if (!santa || !room) return;
-    const key = "wp_snow_" + room.id;
-    AsyncStorage.getItem(key)
-      .then((seen) => {
-        if (seen) return;
-        setSnow(true);
-        return AsyncStorage.setItem(key, "1");
-      })
-      .catch(() => {});
+    if (santa && room) setSnow(true);
   }, [santa, room?.id]);
   const snowDone = useCallback(() => setSnow(false), []);
 

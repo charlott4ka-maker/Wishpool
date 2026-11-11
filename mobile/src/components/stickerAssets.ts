@@ -3,6 +3,13 @@
 // The white rim and soft shadow are baked into each WebP.
 
 export const STICKER_ASSETS = {
+  "disco": require("../../assets/stickers/disco.webp"),
+  "camera": require("../../assets/stickers/camera.webp"),
+  "disc": require("../../assets/stickers/disc.webp"),
+  "ball8": require("../../assets/stickers/ball8.webp"),
+  "glassheart": require("../../assets/stickers/glassheart.webp"),
+  "bow": require("../../assets/stickers/bow.webp"),
+  "evileye": require("../../assets/stickers/evileye.webp"),
   "bag": require("../../assets/stickers/bag.webp"),
   "basket": require("../../assets/stickers/basket.webp"),
   "bear": require("../../assets/stickers/bear.webp"),

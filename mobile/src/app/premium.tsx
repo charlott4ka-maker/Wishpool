@@ -19,17 +19,25 @@ import { PREVIEW_PREMIUM } from "../lib/premiumGate";
 import { useWishpool } from "../store/WishpoolContext";
 import { appIconsSupported } from "../subscription/appIcon";
 import { useSubscription } from "../subscription/SubscriptionContext";
+import { purchases } from "../subscription/purchases";
+import { useEffect, useState } from "react";
+
+const LOCALE = { uk: "uk-UA", ru: "ru-RU", en: "en-US" } as const;
 import { C } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
 
 export default function PremiumScreen() {
   useAccent(); // re-render in place when the app colour changes
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { admin } = useWishpool();
   const { isPremium } = useSubscription();
+  const [until, setUntil] = useState<{ date: Date; renews: boolean } | null>(null);
+  useEffect(() => {
+    purchases.expiresAt().then(setUntil).catch(() => setUntil(null));
+  }, [isPremium]);
   const unlocked = isPremium || !!admin || PREVIEW_PREMIUM;
   return (
     <View className="flex-1 bg-card">
@@ -39,7 +47,7 @@ export default function PremiumScreen() {
           <View className="items-center px-4">
             <Image source={require("../../assets/premium-star.png")} style={{ width: 100, height: 96, marginTop: 40 }} contentFit="contain" />
             <Txt className="mt-6 font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("premiumActive")}</Txt>
-            <Txt className="mt-2 px-6 text-center text-[15px] leading-[21px] text-t2">{t("premiumThanksSub")}</Txt>
+            <Txt className="mt-2 px-6 text-center text-[15px] leading-[21px]" style={{ color: "rgba(255,255,255,0.82)" }}>{t("premiumThanksSub")}</Txt>
           </View>
         </View>
 

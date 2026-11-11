@@ -40,7 +40,7 @@ function Paywall() {
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isPremium, packages, purchase, restore, mock, loading } = useSubscription();
+  const { isPremium, packages, purchase, restore, loading } = useSubscription();
   const plans = [...packages].sort((a, b) => (ORDER[a.kind] ?? 9) - (ORDER[b.kind] ?? 9));
   const [selId, setSelId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -101,7 +101,7 @@ function Paywall() {
           <Image source={require("../../assets/premium-star.png")} style={{ width: 96, height: 92, marginBottom: 16 }} contentFit="contain" />
           <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
           <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
-          <Txt className="mt-3 max-w-[300px] text-center text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumCardSub")}</Txt>
+          <Txt className="mt-3 max-w-[300px] text-center text-[16px] leading-[22px]" style={{ color: "rgba(255,255,255,0.82)" }}>{isPremium ? t("premiumActive") : t("premiumCardSub")}</Txt>
         </View>
 
         {isPremium ? (
@@ -156,7 +156,6 @@ function Paywall() {
                     : t(sel.kind === "monthly" ? "planNoteMonth" : "planNoteYear", { price: sel.priceString })}
                 </Txt>
               ) : null}
-              {mock && plans.length ? <Txt className="mt-1 text-center text-[12.5px] leading-[18px] text-t3">{t("premiumMock")}</Txt> : null}
             </View>
           </>
         )}

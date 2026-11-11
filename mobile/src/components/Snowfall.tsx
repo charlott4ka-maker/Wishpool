@@ -54,9 +54,9 @@ export function Snowfall({ onDone }: { onDone: () => void }) {
   );
 }
 
-// The holiday season (1 December to 7 January): a light snow that keeps
+// The holiday season (mid-November to 7 January): a light snow that keeps
 // falling over the Wishes tab (Settings › Snow turns it off).
-export const snowSeason = (d = new Date()) => d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 7);
+export const snowSeason = (d = new Date()) => (d.getMonth() === 10 && d.getDate() >= 10) || d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 7);
 
 export function HolidaySnow() {
   const { width: W, height: H } = useWindowDimensions();
