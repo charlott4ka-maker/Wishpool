@@ -4,7 +4,7 @@
 // by a paperclip (one photo or a little stack), or the sticker.
 import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
-import { Check, Paperclip, RotateCw, X } from "lucide-react-native";
+import { Check, RotateCw, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Platform, Pressable, View } from "react-native";
 import Animated, { cancelAnimation, Easing, runOnJS, useAnimatedProps, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
@@ -48,6 +48,22 @@ function ShimmerStar() {
   );
 }
 
+// a paperclip clipped over the top edge of the photo, like Threads': the
+// whole wire sits behind the photo (only its top shows above the edge), and the
+// inner leg is drawn again in front, lying on the photo
+const CLIP = "M10 30 V13 a2.5 2.5 0 0 1 5 0 V36 a5 5 0 0 1 -10 0 V9 a7 7 0 0 1 14 0 V32";
+const CLIP_FRONT = "M10 30 V13 a2.5 2.5 0 0 1 5 0 V30";
+const CLIP_W = 19.8, CLIP_H = 39.6; // viewBox 22x44 at 0.9
+function Clip({ front }: { front?: boolean }) {
+  return (
+    <Svg width={CLIP_W} height={CLIP_H} viewBox="0 0 22 44" style={{ position: "absolute", top: -10, right: 4 }} pointerEvents="none">
+      {/* a dark hairline under the wire so it reads on light photos */}
+      <Path d={front ? CLIP_FRONT : CLIP} fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d={front ? CLIP_FRONT : CLIP} fill="none" stroke="#E8ECF2" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 // the photos on the right: a little stack (up to three), the top one held by a paperclip
 function Thumbs({ thumbs, emoji }: { thumbs: string[]; emoji?: string }) {
   if (!thumbs.length) return emoji ? <Sticker emoji={emoji} size={36} /> : null;
@@ -55,14 +71,13 @@ function Thumbs({ thumbs, emoji }: { thumbs: string[]; emoji?: string }) {
   const tilt = [[-7, -6], [6, 5], [0, 0]].slice(3 - pics.length);
   return (
     <View style={{ width: 52, height: 48, alignItems: "center", justifyContent: "center" }}>
+      <Clip />
       {pics.map((u, i) => (
         <View key={u + i} style={{ position: "absolute", width: 42, height: 42, borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.35)", backgroundColor: C.raised, transform: [{ translateX: tilt[i][0] * 0.6 }, { rotate: `${tilt[i][1]}deg` }] }}>
           <Image source={{ uri: u }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
         </View>
       ))}
-      <View style={{ position: "absolute", top: -8, right: 6, transform: [{ rotate: "28deg" }] }}>
-        <Paperclip size={22} color="#E8ECF2" strokeWidth={1.75} absoluteStrokeWidth />
-      </View>
+      <Clip front />
     </View>
   );
 }
