@@ -101,7 +101,7 @@ function Paywall() {
           <Image source={require("../../assets/premium-star.png")} style={{ width: 96, height: 92, marginBottom: 16 }} contentFit="contain" />
           <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
           <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
-          <Txt className="mt-3 max-w-[300px] text-center text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumCardSub")}</Txt>
+          <Txt className="mt-3 max-w-[300px] text-center text-[16px] leading-[22px]" style={{ color: "rgba(255,255,255,0.82)" }}>{isPremium ? t("premiumActive") : t("premiumCardSub")}</Txt>
         </View>
 
         {isPremium ? (

@@ -39,7 +39,7 @@ export default function PremiumScreen() {
           <View className="items-center px-4">
             <Image source={require("../../assets/premium-star.png")} style={{ width: 100, height: 96, marginTop: 40 }} contentFit="contain" />
             <Txt className="mt-6 font-m800 text-[26px]" style={{ letterSpacing: -0.5 }}>{t("premiumActive")}</Txt>
-            <Txt className="mt-2 px-6 text-center text-[15px] leading-[21px] text-t2">{t("premiumThanksSub")}</Txt>
+            <Txt className="mt-2 px-6 text-center text-[15px] leading-[21px]" style={{ color: "rgba(255,255,255,0.82)" }}>{t("premiumThanksSub")}</Txt>
           </View>
         </View>
 
