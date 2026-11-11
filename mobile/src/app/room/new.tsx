@@ -252,22 +252,12 @@ export default function CreateRoomScreen() {
             <StickerPicker value={emoji} onChange={setEmoji} pack={santa ? "newyear" : undefined} />
           ) : lookTab === "color" ? (
             // a colour means the plain folder again
-            <ColorPicker value={tint} onChange={(c) => { setTint(c); setSkin(""); }} />
+            <ColorPicker value={skin ? "" : tint} onChange={(c) => { setTint(c); setSkin(""); }} />
           ) : (
             <View>
             <View className="mb-4">
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
-              <View style={{ width: "33.333%", padding: 4 }}>
-                <Pressable
-                  onPress={() => { haptic("select"); setSkin(""); }}
-                  className="items-center justify-center overflow-hidden rounded-2xl"
-                  style={{ aspectRatio: 1.12, backgroundColor: !skin ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: !skin ? C.blue : "transparent" }}
-                >
-                  <View style={{ position: "absolute", width: "72%", height: "56%", top: "18%", borderRadius: 8, backgroundColor: hex(tint, 0.45) }} />
-                  <View style={{ position: "absolute", width: "86%", height: "56%", top: "30%", borderRadius: 10, backgroundColor: tint }} />
-                </Pressable>
-              </View>
-              {(isPremium ? skins : skins.slice(0, 8)).map((k) => {
+              {(isPremium ? skins : skins.slice(0, 9)).map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (
@@ -305,7 +295,7 @@ export default function CreateRoomScreen() {
                     </View>
                   </View>
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
-                  <Txt className="mt-1 text-center text-[14px] leading-[20px] text-t2">{t("premiumFoldersSub", { n: skins.length })}</Txt>
+                  <Txt className="mt-1 text-center text-[14px] leading-[20px] text-white">{t("premiumFoldersSub", { n: skins.length })}</Txt>
                   <View className="mt-4">
                     <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => router.push("/paywall")}>{t("premiumOpen")}</Pill>
                   </View>
