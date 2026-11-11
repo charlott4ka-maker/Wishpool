@@ -3,6 +3,7 @@
 // deeper one from the bottom right, over the room tint. Drawn with SVG
 // radial gradients so it matches the web CSS.
 
+import { Image, type ImageSource } from "expo-image";
 import { useState } from "react";
 import { LayoutChangeEvent, View } from "react-native";
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from "react-native-svg";
@@ -35,7 +36,24 @@ const hueOf = (c: string) => {
   return ((Math.atan2(Math.sqrt(3) * (g - b), 2 * r - g - b) * 180) / Math.PI + 360) % 360;
 };
 
-export function RoomHeroBg({ tint }: { tint: string }) {
+// A room dressed in a premium folder (or your own photo) gets that picture
+// behind the hero instead, blown up and blurred like an iPhone wallpaper,
+// with a little shade so the white name and buttons stay readable.
+function BlurredLook({ source }: { source: ImageSource | number | string }) {
+  return (
+    <View pointerEvents="none" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, overflow: "hidden", backgroundColor: "#0d0d10" }}>
+      <Image source={source} blurRadius={40} contentFit="cover" style={{ position: "absolute", left: "-20%", top: "-20%", width: "140%", height: "140%" }} />
+      <View style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.28)" }} />
+    </View>
+  );
+}
+
+export function RoomHeroBg({ tint, look }: { tint: string; /** the folder's material or cover photo */ look?: ImageSource | number | string | null }) {
+  if (look) return <BlurredLook source={look} />;
+  return <MeshBg tint={tint} />;
+}
+
+function MeshBg({ tint }: { tint: string }) {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const cool = hueOf(tint) >= 180;
   const a = mixHex(hueShift(tint, cool ? -10 : 10), "#ffffff", 0.22);

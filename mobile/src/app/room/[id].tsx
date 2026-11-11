@@ -19,6 +19,7 @@ import { Snowfall } from "../../components/Snowfall";
 import { RoomListSkeleton } from "../../components/Skeleton";
 import { SwipeRow } from "../../components/SwipeRow";
 import { heroTop, RoomHeroBg } from "../../components/RoomHeroBg";
+import { folderSkin } from "../../lib/folderSkins";
 import { Sticker } from "../../components/Sticker";
 import { Avatar, Empty, GlassCircle, Pill, Segmented, Txt } from "../../components/ui";
 import { WishList, WishRow } from "../../components/WishRow";
@@ -262,9 +263,9 @@ export default function RoomScreen() {
   // the hero and the tabs stay put; only the lists under the tabs scroll,
   // fading out under the tabs once something has scrolled there (as in Settings)
   return (
-    <View className="flex-1" style={{ backgroundColor: heroTop(room.tint) }}>
+    <View className="flex-1" style={{ backgroundColor: room.skin ? "#0d0d10" : heroTop(room.tint) }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>
-        <RoomHeroBg tint={room.tint} />
+        <RoomHeroBg tint={room.tint} look={room.skin === "photo" ? room.cover || null : folderSkin(room.skin)?.front || null} />
         <View className="flex-row items-center justify-between" style={{ height: H.sm }}>
           <GlassCircle onPress={goBack} label={t("back")}>
             <SymbolView name="chevron.left" size={19} weight="semibold" tintColor="#fff" fallback={<ChevronLeft size={20} color="#fff" />} />

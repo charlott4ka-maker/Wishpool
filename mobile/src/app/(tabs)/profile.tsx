@@ -56,7 +56,8 @@ export default function ProfileScreen() {
 
         <View className="mt-6 flex-row gap-3">
           <Card className="flex-1 items-center bg-raised p-5">
-            <Gift size={22} color={C.blue} />
+            {/* always the logo blue, whatever the accent */}
+            <Gift size={22} color="#0A82F9" />
             <Txt className="mt-2 font-m800 text-[22px]">{shared}</Txt>
             <Txt className="text-[12.5px] text-t2">{t("sharedStat")}</Txt>
           </Card>
