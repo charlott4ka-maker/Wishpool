@@ -2,10 +2,10 @@
 // have it): our block colour with a blue glow rising from the bottom, a line
 // on what it gives, and "Try for free" (the 7-day trial
 // on the yearly plan) to the paywall.
-import { LinearGradient } from "expo-linear-gradient";
+import { EdgeGlow } from "./EdgeGlow";
 import { useRouter } from "expo-router";
 import { Crown } from "lucide-react-native";
-import { Linking, View } from "react-native";
+import { Linking, Platform, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
@@ -30,12 +30,10 @@ export function PremiumCard() {
     <View className="overflow-hidden rounded-card p-6" style={{ backgroundColor: C.raised }}>
       {/* our block colour with a glow rising from the bottom edge, in layers
           like stacked inner shadows: deep blue, then lighter, then a thin light lip */}
-      <LinearGradient colors={["rgba(20,76,205,0)", "rgba(20,76,205,0.55)", "rgba(20,76,205,0.95)"]} locations={[0.35, 0.8, 1]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-      <LinearGradient colors={["rgba(102,148,255,0)", "rgba(102,148,255,0.55)"]} locations={[0.72, 1]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-      <LinearGradient colors={["rgba(255,255,255,0)", "rgba(200,220,255,0.45)"]} locations={[0.93, 1]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <EdgeGlow side="bottom" />
       <View className="flex-row items-center gap-2">
-        {/* lifted 1.5pt: measured, its middle then meets the letters' cap middle */}
-        <View style={{ marginTop: -3 }}>
+        {/* centred on the capitals: measured on an iPhone (it sat 1.7pt high at -3) and on the web */}
+        <View style={{ marginTop: Platform.OS === "web" ? -3 : 0 }}>
           <Crown size={18} color="#fff" fill="#fff" strokeWidth={1.5} />
         </View>
         <Txt className="font-m800 text-[17px] text-white">{t("premium")}</Txt>

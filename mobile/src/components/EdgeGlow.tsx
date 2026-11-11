@@ -1,27 +1,54 @@
-// The glow from the Profile Premium card, for the paywall: our dark page with
-// a blue light rising from one edge in layers (deep blue, lighter blue, a
-// thin light lip). Three sides to choose from.
-import { LinearGradient } from "expo-linear-gradient";
-import { View } from "react-native";
+// The Premium glow (Profile card, paywall, the locked photo tile): our dark
+// block with a blue light rising from one edge: deep blue, then lighter blue,
+// then a soft light right at the edge. Drawn as one SVG gradient with many
+// eased stops so it melts in with no visible lines (three stacked native
+// gradients showed bands).
+import { useState } from "react";
+import { type LayoutChangeEvent, View } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 export type GlowSide = "bottom" | "top" | "corner";
 
-const DIR: Record<GlowSide, { start: { x: number; y: number }; end: { x: number; y: number } }> = {
-  // colours run from the far side (transparent) to the lit edge
-  bottom: { start: { x: 0.5, y: 0 }, end: { x: 0.5, y: 1 } },
-  top: { start: { x: 0.5, y: 1 }, end: { x: 0.5, y: 0 } },
-  corner: { start: { x: 1, y: 1 }, end: { x: 0, y: 0 } },
+// from the far side (t = 0) to the lit edge (t = 1)
+const DIR: Record<GlowSide, { x1: number; y1: number; x2: number; y2: number }> = {
+  bottom: { x1: 0, y1: 0, x2: 0, y2: 1 },
+  top: { x1: 0, y1: 1, x2: 0, y2: 0 },
+  corner: { x1: 1, y1: 1, x2: 0, y2: 0 },
 };
-const fill = { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0 };
+
+const DEEP = [20, 76, 205], LIGHT = [102, 148, 255], EDGE = [200, 220, 255];
+const smooth = (a: number, b: number, t: number) => {
+  const x = Math.min(1, Math.max(0, (t - a) / (b - a)));
+  return x * x * (3 - 2 * x);
+};
+// the colour and opacity at t: the three layers blended, each eased in
+function at(t: number): [string, number] {
+  const deep = 0.95 * smooth(0.3, 1, t);
+  const light = 0.4 * smooth(0.55, 1, t);
+  const edge = 0.25 * smooth(0.8, 1, t);
+  const a = 1 - (1 - deep) * (1 - light) * (1 - edge);
+  if (a <= 0.001) return ["#144CCD", 0];
+  const mix = (i: number) => Math.round((DEEP[i] * deep + LIGHT[i] * light + EDGE[i] * edge) / (deep + light + edge || 1));
+  const hex = "#" + [0, 1, 2].map((i) => mix(i).toString(16).padStart(2, "0")).join("");
+  return [hex, a];
+}
+const STOPS = Array.from({ length: 25 }, (_, i) => i / 24).map((t) => [t, ...at(t)] as const);
 
 export function EdgeGlow({ side }: { side: GlowSide }) {
+  const [size, setSize] = useState({ w: 0, h: 0 });
   const d = DIR[side];
   return (
-    <View pointerEvents="none" style={fill}>
-      <LinearGradient {...d} colors={["rgba(20,76,205,0)", "rgba(20,76,205,0.1)", "rgba(20,76,205,0.35)", "rgba(20,76,205,0.7)", "rgba(20,76,205,0.95)"]} locations={[0.35, 0.55, 0.72, 0.88, 1]} style={fill} />
-      {/* the lighter blue and the light at the very edge, spread wide so they melt in */}
-      <LinearGradient {...d} colors={["rgba(102,148,255,0)", "rgba(102,148,255,0.08)", "rgba(102,148,255,0.22)", "rgba(102,148,255,0.4)"]} locations={[0.55, 0.75, 0.9, 1]} style={fill} />
-      <LinearGradient {...d} colors={["rgba(200,220,255,0)", "rgba(200,220,255,0.08)", "rgba(200,220,255,0.22)"]} locations={[0.8, 0.93, 1]} style={fill} />
+    <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} onLayout={(e: LayoutChangeEvent) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      {size.w ? (
+        <Svg width={size.w} height={size.h}>
+          <Defs>
+            <LinearGradient id={`edge-${side}`} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2}>
+              {STOPS.map(([t, c, a]) => <Stop key={t} offset={t} stopColor={c} stopOpacity={a} />)}
+            </LinearGradient>
+          </Defs>
+          <Rect width={size.w} height={size.h} fill={`url(#edge-${side})`} />
+        </Svg>
+      ) : null}
     </View>
   );
 }

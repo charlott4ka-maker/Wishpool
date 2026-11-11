@@ -210,6 +210,9 @@ export default function CreateRoomScreen() {
         </Pill>
       </View>
 
+      {/* the name first, then the type */}
+      <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
+
       {/* the type is set when the room is made */}
       {!editing ? (
         <>
@@ -227,8 +230,12 @@ export default function CreateRoomScreen() {
           </View>
           {/* what this type is for: an info plate */}
           <View className="mb-4 mt-1 flex-row items-start gap-3 rounded-tile bg-raised px-4 py-3">
-            <View style={{ marginTop: 1 }}>
-              <SymbolView name="info.circle.fill" size={20} tintColor={C.blue} fallback={<View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.blue, alignItems: "center", justifyContent: "center" }}><Svg width={20} height={20} viewBox="0 0 28 28"><Circle cx={14} cy={8.6} r={1.9} fill="#fff" /><Rect x={12.3} y={12} width={3.4} height={9.5} rx={1.7} fill="#fff" /></Svg></View>} />
+            {/* a filled blue circle with a white "i" (her example), the same everywhere */}
+            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.blue, alignItems: "center", justifyContent: "center", marginTop: -0.5 }}>
+              <Svg width={20} height={20} viewBox="0 0 20 20">
+                <Circle cx={10} cy={5.9} r={1.45} fill="#fff" />
+                <Rect x={8.9} y={8.4} width={2.2} height={7} rx={1.1} fill="#fff" />
+              </Svg>
             </View>
             <Txt className="flex-1 text-[13.5px] leading-[19px] text-t1">{t(preset.hint)}</Txt>
           </View>
@@ -250,8 +257,6 @@ export default function CreateRoomScreen() {
           <DateRow label={t("bdayDateLabel")} value={date} onChange={setDate} hint={t("evHint")} minimumDate={new Date()} error={tried && !date && t("requiredDate")} />
         </View>
       ) : null}
-
-      <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
 
       {/* bring friends in right away (signed in, new room) */}
       {!editing && online && friends && friends.length ? (
