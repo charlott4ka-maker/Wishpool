@@ -38,8 +38,8 @@ export function LookTabs<K extends string>({ options, value, onChange, premium }
               </>
             ) : null}
             <View className="flex-1 flex-row items-center justify-center gap-1.5">
-              {/* the crown sits a touch low so its middle lines up with the letters' */}
-              {prem ? <View style={{ marginTop: 1 }}><Crown size={15} color={on ? "#fff" : C.blueText} fill={on ? "#fff" : "transparent"} strokeWidth={1.5} absoluteStrokeWidth /></View> : null}
+              {/* lifted a touch: the crown box centre sits 2pt below the letters, measured */}
+              {prem ? <View style={{ marginTop: -1.5 }}><Crown size={15} color={on ? "#fff" : C.blueText} fill={on ? "#fff" : "transparent"} strokeWidth={1.5} absoluteStrokeWidth /></View> : null}
               <Txt className={`font-m600 text-sm ${on ? "text-white" : prem ? "text-blueText" : "text-t2"}`}>{label}</Txt>
             </View>
           </Pressable>

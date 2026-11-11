@@ -218,7 +218,7 @@ export default function CreateRoomScreen() {
             )}
           </View>
           {/* what this type is for: an info plate */}
-          <View className="mb-4 mt-1 flex-row items-start gap-3 rounded-tile bg-card2 px-4 py-3">
+          <View className="mb-4 mt-1 flex-row items-start gap-3 rounded-tile bg-raised px-4 py-3">
             <View style={{ marginTop: 1 }}>
               <SymbolView name="info.circle.fill" size={20} tintColor={C.blue} fallback={<View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.blue, alignItems: "center", justifyContent: "center" }}><Svg width={20} height={20} viewBox="0 0 28 28"><Circle cx={14} cy={8.6} r={1.9} fill="#fff" /><Rect x={12.3} y={12} width={3.4} height={9.5} rx={1.7} fill="#fff" /></Svg></View>} />
             </View>
