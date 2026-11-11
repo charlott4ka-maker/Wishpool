@@ -5,7 +5,9 @@ import type { StickerName } from "../components/stickerAssets";
 
 // Premium is hidden for now: no paywall, no Premium card, no locked packs or
 // icons, no upsell hints. Everything stays in the code; flip to true to bring it back.
-export const PREMIUM_ENABLED = false;
+// The TestFlight test build turns it on with EXPO_PUBLIC_PREMIUM=1 (eas.json
+// profile "testflight", and in `eas update --channel testflight`).
+export const PREMIUM_ENABLED = process.env.EXPO_PUBLIC_PREMIUM === "1";
 
 export type PremiumFeature = "stickerPacks" | "extraPhotos" | "appIcons";
 

@@ -28,13 +28,15 @@ export type RemoteConfig = {
   strings: Record<string, L>;
   banners: RemoteBanner[];
   stickers: { hidden: string[]; extra: { name: string }[] };
+  /** premium folders: order and hidden ones, set on the admin page */
+  folders: { order: string[]; hidden: string[] };
   /** Admin preview only: show this banner whatever its audience. */
   previewBanner?: string | null;
 };
 
 const KEY = "wp_remote_config";
 const EVERY = 5 * 60 * 1000;
-const EMPTY: RemoteConfig = { strings: {}, banners: [], stickers: { hidden: [], extra: [] } };
+const EMPTY: RemoteConfig = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] } };
 
 let current: RemoteConfig = EMPTY;
 let fetchedAt = 0;

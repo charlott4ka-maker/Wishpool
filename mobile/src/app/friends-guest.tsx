@@ -9,8 +9,10 @@ import { SheetHeader } from "../components/SheetHeader";
 import { Sticker } from "../components/Sticker";
 import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
+import { useAccent } from "../theme/accent";
 
 export default function FriendsGuest() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

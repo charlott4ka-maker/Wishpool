@@ -13,6 +13,7 @@ import { useT, type Lang } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { SUPPORT_EMAIL, writeSupport } from "../lib/support";
 import { C } from "../theme/tokens";
+import { useAccent } from "../theme/accent";
 
 type L = Record<Lang, string>;
 
@@ -108,6 +109,7 @@ function Item({ q, a, open, onToggle, last }: { q: string; a: string; open: bool
 }
 
 export default function FaqScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

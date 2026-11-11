@@ -16,10 +16,12 @@ import { haptic } from "../../lib/haptics";
 import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
 type State = "loading" | "none" | "sent" | "friends";
 
 export default function RoomMember() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const { id, user } = useLocalSearchParams<{ id: string; user: string }>();

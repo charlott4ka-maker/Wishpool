@@ -38,7 +38,7 @@
     show("login", false);
     if (!token) { show("login", true); return; }
     Promise.all([api("GET", "/admin/config"), fetch("/admin/app-data.json").then(function (r) { return r.json(); })]).then(function (res) {
-      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [] } };
+      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [] }, folders: res[0].folders || { order: [], hidden: [] } };
       draft = clone(saved);
       data = res[1];
       show("noStorage", !res[0].storage);
@@ -61,20 +61,21 @@
       if (tab === "stats") loadStats();
       if (tab === "banners") { pv.go("/"); pv.push(); }
       if (tab === "stickers") pv.go("/wish/new");
+      if (tab === "folders") pv.go("/room/new");
     };
   });
   function dirty(key) { return JSON.stringify(saved[key]) !== JSON.stringify(draft[key]); }
-  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers"].some(dirty)); pv.push(); }
+  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders"].some(dirty)); pv.push(); }
   $("discard").onclick = function () { draft = clone(saved); renderAll(); };
   $("save").onclick = function () {
-    var keys = ["banners", "strings", "stickers"].filter(dirty);
+    var keys = ["banners", "strings", "stickers", "folders"].filter(dirty);
     Promise.all(keys.map(function (k) { return api("PUT", "/admin/config/" + k, { value: draft[k] }).then(function (r) { saved[k] = r.value; }); }))
       .then(function () { draft = clone(saved); renderAll(); toast("Сохранено"); })
       .catch(function (e) { toast("Ошибка: " + e.message); });
   };
-  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
+  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
 
-  function renderAll() { renderBanners(); renderStrings(); renderStickers(); updateBar(); }
+  function renderAll() { renderBanners(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
 
   // ---------- banners ----------
   function stickerUrl(name) { return "/stickers/" + name + ".webp"; }
@@ -192,6 +193,35 @@
     var l = pv.lang(), own = draft.strings[k] || {}, def = data.strings[k] || {};
     pv.mark(own[l] || def[l] || def.en || "");
   }
+
+  // ---------- premium folders: drag to reorder, tap to hide ----------
+  function folderOrder() {
+    var all = data.folders || [], o = draft.folders.order.filter(function (id) { return all.indexOf(id) >= 0; });
+    return o.concat(all.filter(function (id) { return o.indexOf(id) < 0; }));
+  }
+  function renderFolders() {
+    var hidden = draft.folders.hidden;
+    $("folderGrid").innerHTML = folderOrder().map(function (id, i) {
+      var off = hidden.indexOf(id) >= 0;
+      return '<div class="f' + (off ? " off" : "") + '" draggable="true" data-id="' + id + '"><span class="n">' + (i + 1) + '</span><div class="pic"><img src="/admin/folders/' + id + '_back.webp" alt=""><img src="/admin/folders/' + id + '_front.webp" alt=""></div>' + esc(id) + (off ? "<br>скрыта" : "") + "</div>";
+    }).join("");
+  }
+  var dragId = null;
+  $("folderGrid").addEventListener("dragstart", function (e) { var t = e.target.closest(".f"); if (!t) return; dragId = t.dataset.id; t.classList.add("drag"); e.dataTransfer.effectAllowed = "move"; });
+  $("folderGrid").addEventListener("dragend", function () { dragId = null; renderFolders(); });
+  $("folderGrid").addEventListener("dragover", function (e) { var t = e.target.closest(".f"); if (!t || !dragId) return; e.preventDefault(); document.querySelectorAll(".fld .f.over").forEach(function (x) { x.classList.remove("over"); }); t.classList.add("over"); });
+  $("folderGrid").addEventListener("drop", function (e) {
+    var t = e.target.closest(".f"); if (!t || !dragId) return; e.preventDefault();
+    var o = folderOrder().filter(function (id) { return id !== dragId; });
+    o.splice(o.indexOf(t.dataset.id) + (folderOrder().indexOf(dragId) < folderOrder().indexOf(t.dataset.id) ? 1 : 0), 0, dragId);
+    draft.folders.order = o; dragId = null; renderFolders(); updateBar();
+  });
+  $("folderGrid").addEventListener("click", function (e) {
+    var t = e.target.closest(".f"); if (!t) return;
+    var id = t.dataset.id, h = draft.folders.hidden;
+    draft.folders.hidden = h.indexOf(id) >= 0 ? h.filter(function (x) { return x !== id; }) : h.concat([id]);
+    renderFolders(); updateBar();
+  });
 
   // ---------- stickers ----------
   function renderStickers() {
@@ -327,7 +357,7 @@
     function cfg() {
       var banners = draft ? draft.banners : [];
       var forced = tab === "banners" ? (banners.some(function (b) { return b.id === focusBanner; }) ? focusBanner : banners[0] && banners[0].id) : null;
-      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, previewBanner: forced || null } : null;
+      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, folders: draft.folders, previewBanner: forced || null } : null;
     }
     function push() { clearTimeout(pushT); pushT = setTimeout(function () { var a = api(), c = cfg(); if (a && c) a.setConfig(c); }, 120); }
     function go(path) {

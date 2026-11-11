@@ -8,8 +8,10 @@ import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { useT } from "../../i18n";
 import { useSearchMode } from "../../lib/searchMode";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
 export default function TabsLayout() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   // hidden while the Wishes search is open; closing it brings the bar back
   const searching = useSearchMode();

@@ -49,8 +49,13 @@ ROUTES.forEach(([file, url], order) => {
   }
 });
 const screens = Object.fromEntries(Object.entries(best).map(([k, v]) => [k, v[1]]));
-const out = { strings, stickers: { bundled, inPicker }, screens };
+// premium folders, in the app's own order, plus a front picture each for the admin page
+const skinIds = [...fs.readFileSync(path.join(here, "..", "src/lib/folderSkins.ts"), "utf8").matchAll(/\{ id: "([a-z0-9_-]+)"/g)].map((m) => m[1]);
+const fdir = path.join(here, "..", "..", "web/public/admin/folders");
+fs.mkdirSync(fdir, { recursive: true });
+for (const id of skinIds) for (const part of ["back", "front"]) fs.copyFileSync(path.join(here, "..", "assets/folders", `${id}_${part}.webp`), path.join(fdir, `${id}_${part}.webp`));
+const out = { strings, stickers: { bundled, inPicker }, folders: skinIds, screens };
 const file = path.join(here, "..", "..", "web/public/admin/app-data.json");
 fs.mkdirSync(path.dirname(file), { recursive: true });
 fs.writeFileSync(file, JSON.stringify(out));
-console.log(`app-data.json: ${Object.keys(out.strings).length} texts (${Object.keys(screens).length} on a screen), ${bundled.length} stickers (${inPicker.length} in the picker)`);
+console.log(`app-data.json: ${Object.keys(out.strings).length} texts (${Object.keys(screens).length} on a screen), ${bundled.length} stickers (${inPicker.length} in the picker), ${skinIds.length} folders`);

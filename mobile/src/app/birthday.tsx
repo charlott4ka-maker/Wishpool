@@ -18,10 +18,12 @@ import { api } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
 import { C } from "../theme/tokens";
+import { useAccent } from "../theme/accent";
 
 const LOCALE = { uk: "uk-UA", ru: "ru-RU", en: "en-US" } as const;
 
 export default function BirthdaySheet() {
+  useAccent(); // re-render in place when the app colour changes
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

@@ -7,14 +7,18 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { ShareIntentProvider } from "expo-share-intent";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
+import { vars } from "nativewind";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "../auth/AuthContext";
+import { AccentGuard } from "../components/AccentPicker";
 import { ShareIntentHandler } from "../components/ShareIntentHandler";
 import { LangProvider } from "../i18n";
 import { ReminderSync } from "../settings/ReminderSync";
 import { ToastHost } from "../components/Toast";
+import { UploadBarHost } from "../components/UploadBar";
 import { joinSheet, takePendingJoin } from "../lib/pendingJoin";
 import { startAdminPreview } from "../lib/adminPreview";
 import { startRemoteConfig } from "../lib/remoteConfig";
@@ -23,6 +27,7 @@ import { IN_TG, tgStartParam } from "../lib/telegram";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
+import { accentVars, loadAccent, useAccent } from "../theme/accent";
 
 // The share extension's native module isn't in Expo Go.
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -40,11 +45,20 @@ const SHEET = { presentation: "formSheet", sheetGrabberVisible: true, sheetCorne
 const FULL_FORM = { presentation: "fullScreenModal", contentStyle: { backgroundColor: C.card } } as const;
 const FIT_SHEET = { ...SHEET, sheetAllowedDetents: "fitToContents" } as const;
 
-const theme = { ...DarkTheme, colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, primary: C.blue, text: C.t1, border: "transparent" } };
+const navTheme = () => ({ ...DarkTheme, colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, primary: C.blue, text: C.t1, border: "transparent" } });
+// the saved accent, read before the first screen shows
+const accentLoaded = loadAccent();
+
+
 
 function Gate() {
   const { status, user } = useAuth();
-  const ready = status !== "loading";
+  const acc = useAccent();
+  const [accReady, setAccReady] = useState(false);
+  useEffect(() => {
+    accentLoaded.finally(() => setAccReady(true));
+  }, []);
+  const ready = status !== "loading" && accReady;
   useEffect(() => {
     if (ready) updateChecked.finally(() => SplashScreen.hideAsync().catch(() => {}));
   }, [ready]);
@@ -82,12 +96,16 @@ function Gate() {
     <SubscriptionProvider userId={user?.id || null}>
       <WishpoolProvider>
         <ShareIntentHandler ready={inside} />
+        <AccentGuard />
         {inside ? <ReminderSync /> : null}
+        {/* the accent: CSS variables for the classes (screens refresh their raw colours themselves) */}
+        <View style={[{ flex: 1 }, vars(accentVars(acc))]}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
           <Stack.Protected guard={inside}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="room/[id]" />
             <Stack.Screen name="settings" />
+            <Stack.Screen name="premium" />
             <Stack.Screen name="faq" />
             <Stack.Screen name="friends" />
             <Stack.Screen name="friends-guest" options={FIT_SHEET} />
@@ -118,20 +136,23 @@ function Gate() {
           <Stack.Screen name="friend/[code]" options={{ presentation: "fullScreenModal" }} />
           <Stack.Screen name="onboarding" options={{ presentation: "fullScreenModal" }} />
         </Stack>
+        </View>
       </WishpoolProvider>
     </SubscriptionProvider>
   );
 }
 
 export default function RootLayout() {
+  const acc = useAccent();
   return (
     <ShareIntentProvider options={{ disabled: IN_EXPO_GO, resetOnBackground: true }}>
     <SafeAreaProvider>
-      <ThemeProvider value={theme}>
+      <ThemeProvider value={navTheme()}>
         <LangProvider>
           <AuthProvider>
             <StatusBar style="light" />
             <Gate />
+            <UploadBarHost />
             <ToastHost />
           </AuthProvider>
         </LangProvider>

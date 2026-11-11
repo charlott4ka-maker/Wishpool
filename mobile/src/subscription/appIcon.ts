@@ -3,21 +3,19 @@
 
 import { requireOptionalNativeModule } from "expo";
 
-import type { StickerName } from "../components/stickerAssets";
+import type { ImageSourcePropType } from "react-native";
 
 export type AppIconOption = {
   /** null = the default icon. */
-  name: "Ocean" | "Blush" | "Matcha" | null;
+  name: "Glow" | null;
   titleKey: string;
-  sticker: StickerName;
-  tint: string;
+  image: ImageSourcePropType;
 };
 
+// the default star, and the Premium one: a glass star glowing on our dark blue
 export const APP_ICONS: AppIconOption[] = [
-  { name: null, titleKey: "iconClassic", sticker: "gift", tint: "#161618" },
-  { name: "Ocean", titleKey: "iconOcean", sticker: "gift", tint: "#0A82F9" },
-  { name: "Blush", titleKey: "iconBlush", sticker: "flower", tint: "#FF4D8D" },
-  { name: "Matcha", titleKey: "iconMatcha", sticker: "matcha", tint: "#34C759" },
+  { name: null, titleKey: "iconClassic", image: require("../../assets/icon.png") },
+  { name: "Glow", titleKey: "iconGlow", image: require("../../assets/icons/glow.png") },
 ];
 
 // The native module isn't in Expo Go or on web. Importing the package there

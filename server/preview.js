@@ -145,12 +145,26 @@ async function viaJina(url) {
   return { ...info, base: url };
 }
 // Shop CDNs sometimes refuse our server too: then ask a public image proxy.
+// what an image file really is, from its first bytes (null: not one the phone can show)
+export function sniffImage(b) {
+  if (!b || b.length < 12) return null;
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b.toString("latin1", 0, 4) === "GIF8") return "image/gif";
+  if (b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") return "image/webp";
+  return null;
+}
+
 async function fetchImage(href, trace = []) {
   for (const src of [href, "https://wsrv.nl/?url=" + encodeURIComponent(href) + "&w=1200&output=jpg"]) {
     try {
-      const img = await get(src, "image/*", 4_000_000, 5000);
-      const type = (img.type.split(";")[0] || "").trim();
-      if (/^image\/(jpeg|png|webp|gif)$/.test(type)) return `data:${type};base64,${img.buf.toString("base64")}`;
+      const img = await get(src, "image/jpeg,image/png,image/webp,image/*;q=0.8", 4_000_000, 5000);
+      // trust the bytes, not the header: some shop CDNs send AVIF or HEIC as
+      // "image/webp", or a 1px placeholder, and the phone then shows an empty
+      // tile. Anything else goes through the converter (wsrv) as a JPEG.
+      const type = sniffImage(img.buf);
+      if (type && img.buf.length > 1500) return `data:${type};base64,${img.buf.toString("base64")}`;
+      trace.push("image skipped: " + new URL(src).hostname + " " + (type || "unknown format") + " " + img.buf.length + "b");
     } catch (e) { console.error("preview image failed", new URL(src).hostname, e.message); trace.push("image failed: " + new URL(src).hostname + " " + e.message); }
   }
   return null;

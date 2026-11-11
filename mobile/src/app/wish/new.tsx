@@ -23,6 +23,7 @@ import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
 import { ToastHost, toast } from "../../components/Toast";
+import { startUpload } from "../../components/UploadBar";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { priceRangeText, RANGE_RE, withCurrency } from "../../lib/price";
@@ -34,8 +35,9 @@ import { wishAdded } from "../../lib/review";
 import { usePrefs } from "../../settings/prefs";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
-type LinkState = null | "loading" | "done" | "guess" | "fail";
+type LinkState = null | "loading" | "done" | "guess" | "fail" | "nophoto";
 
 // price fields take numbers only (a decimal point or comma for cents); the
 // currency sign is added on save
@@ -48,6 +50,7 @@ async function toDataUrl(uri: string): Promise<string> {
 }
 
 export default function AddWishScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -121,8 +124,9 @@ export default function AddWishScreen() {
           return p.image && rest.length < photoLimit ? [p.image, ...rest] : rest;
         });
         if (p.image) setCover("photo");
-        setLinkState(p.guess ? "guess" : "done");
-        haptic(p.guess ? "warning" : "success");
+        // found the item but no picture: say so, never leave an empty tile
+        setLinkState(p.guess ? "guess" : p.image ? "done" : "nophoto");
+        haptic(p.guess || !p.image ? "warning" : "success");
       } catch {
         if (lastLink.current === url) setLinkState("fail");
       }
@@ -155,6 +159,19 @@ export default function AddWishScreen() {
       setTried(true);
       return haptic("error");
     }
+    // a new wish: the form closes at once and the bar at the bottom shows the upload
+    if (!initial) {
+      const thumbs = cover === "photo" ? images.slice(0, photoLimit) : [];
+      const run = async () => {
+        const pics = await Promise.all(thumbs.map((u) => (/^(https?|data):/.test(u) ? u : toDataUrl(u))));
+        const raw = link.trim();
+        const affiliate = raw ? toAffiliateUrl(resolved.current && raw === lastLink.current ? resolved.current : raw).url : null;
+        await addWish({ emoji, images: pics, image: pics[0] || null, link: affiliate, title: title.trim(), price: priceMode === "range" ? priceRangeText(priceA.trim(), priceB.trim(), lang, t) : withCurrency(price, lang), note: note.trim(), rooms: inRooms });
+      };
+      router.back();
+      startUpload({ thumbs, emoji: thumbs.length ? undefined : emoji, run, onDone: () => wishAdded(demo) });
+      return;
+    }
     setBusy(true);
     try {
       const pics = cover === "photo" ? await Promise.all(images.slice(0, photoLimit).map((u) => (/^(https?|data):/.test(u) ? u : toDataUrl(u)))) : [];
@@ -175,8 +192,8 @@ export default function AddWishScreen() {
     }
   };
 
-  const hintColor = linkState === "fail" ? "#FF8A80" : linkState === "guess" ? "#FFB27A" : linkState === "done" ? C.greenText : C.t3;
-  const hint = linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : linkState === "guess" ? t("linkGuess") : t("linkHint");
+  const hintColor = linkState === "fail" ? "#FF8A80" : linkState === "guess" || linkState === "nophoto" ? "#FFB27A" : linkState === "done" ? C.greenText : C.t3;
+  const hint = linkState === "loading" ? t("linkLoading") : linkState === "done" ? t("linkDone") : linkState === "fail" ? t("linkFail") : linkState === "guess" ? t("linkGuess") : linkState === "nophoto" ? t("linkNoPhoto") : t("linkHint");
   const shareable = rooms.filter((r) => r.type !== "birthday" || r.iAmCelebrant);
 
   return (
@@ -218,7 +235,21 @@ export default function AddWishScreen() {
                     }}
                   >
                     <View style={{ flex: 1, overflow: "hidden", borderRadius: 18, backgroundColor: C.card2 }}>
-                      <Image source={{ uri: src }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} />
+                      <Image
+                        source={{ uri: src }}
+                        style={{ width: "100%", height: "100%" }}
+                        contentFit="cover"
+                        transition={200}
+                        // a picture the phone can't open (an odd format from a shop): drop the
+                        // tile and ask for a photo instead of showing an empty square
+                        onError={() => {
+                          setImages((xs) => xs.filter((x) => x !== src));
+                          if (src === auto.current.image) {
+                            auto.current.image = null;
+                            setLinkState("nophoto");
+                          }
+                        }}
+                      />
                       <Press
                         scaleTo={0.85}
                         onPress={() => {

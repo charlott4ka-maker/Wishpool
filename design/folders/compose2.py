@@ -4,18 +4,23 @@ import numpy as np
 tb=Image.open('t_back.png').split()[3]; tf=Image.open('t_front.png').split()[3]
 def bbox_center(a):
     x0,y0,x1,y1=a.getbbox(); return (x0+x1)/2,(y0+y1)/2
-FITBOX=('cyano','stripes2','bliss','horses_Wishful')
+FITBOX=None  # every folder: the model's own edge trimmed off
 def fitbox(k,part,t):
     # take the inside of whatever the model drew (its own edge trimmed off) and stretch it over our shape
     im=Image.open(f'{k}_{part}.png').convert('RGBA')
     ax0,ay0,ax1,ay1=im.split()[3].point(lambda v:255 if v>200 else 0).getbbox()
-    ix=(ax1-ax0)*0.07; iy=(ay1-ay0)*0.07
-    crop=im.crop((int(ax0+ix),int(ay0+iy),int(ax1-ix),int(ay1-iy)))
+    tr=0.04 if k in ('giftwrap','frog','xmas') else 0.07
+    ix=(ax1-ax0)*tr; iy=(ay1-ay0)*tr
+    # the model draws its own tab step along the top of a front: cut well below it
+    top=(ay1-ay0)*(0.20 if part=='front' else 0.14)
+    crop=im.crop((int(ax0+ix),int(ay0+top),int(ax1-ix),int(ay1-iy)))
     x0,y0,x1,y1=t.getbbox()
     out=crop.resize((x1-x0+8,y1-y0+8),Image.LANCZOS).convert('RGB')
     bg=Image.new('RGB',(1024,1024),(0,0,0)); bg.paste(out,(x0-4,y0-4)); return bg
 def material(k,part,t,scale,dy=0):
-    if k in FITBOX: return fitbox(k,part,t)
+    if k=='giftwrap' and part=='front':
+        im=Image.open('giftwrap_front_built.png').convert('RGBA'); bg=Image.new('RGBA',(1024,1024),(150,10,10,255)); bg.alpha_composite(im); return bg.convert('RGB')  # 'giftwrap_hand'
+    return fitbox(k,part,t)
     im=Image.open(f'{k}_{part}.png').convert('RGBA')
     # the model's own edge stays outside our shape: blow the picture up around the shape's centre
     cx,cy=bbox_center(t)

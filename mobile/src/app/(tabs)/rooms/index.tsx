@@ -16,8 +16,10 @@ import { Block, BLOCK_GAP, BLOCK_R, TabHeader } from "../../../components/TabHea
 import { useT } from "../../../i18n";
 import { useWishpool } from "../../../store/WishpoolContext";
 import { C } from "../../../theme/tokens";
+import { useAccent } from "../../../theme/accent";
 
 export default function RoomsScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

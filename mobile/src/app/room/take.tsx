@@ -16,8 +16,10 @@ import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { api } from "../../services/api";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
 export default function TakeGift() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

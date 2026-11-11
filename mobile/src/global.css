@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* the default accent (logo blue); the root view overrides these for Premium themes */
+:root {
+  --accent: #0A82F9;
+  --accent-soft: rgba(10, 130, 249, 0.16);
+  --accent-line: rgba(10, 130, 249, 0.45);
+  --accent-text: #7FB0FF;
+}

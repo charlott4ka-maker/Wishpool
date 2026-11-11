@@ -21,8 +21,10 @@ import { api } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
 import { C } from "../theme/tokens";
+import { useAccent } from "../theme/accent";
 
 export default function ProfileEdit() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

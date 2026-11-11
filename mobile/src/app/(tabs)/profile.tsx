@@ -1,9 +1,7 @@
-// "Профіль": who you are, stats, Premium, app icon, language, sign out.
+// "Профіль": who you are, stats, Premium, language, sign out.
 
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ChevronRight, Crown, Gift, Heart, Pencil, Settings, Smartphone, Users } from "lucide-react-native";
-import { useState } from "react";
+import { Crown, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -14,25 +12,27 @@ import { Press } from "../../components/Press";
 import { SettingsCell, SettingsGroup } from "../../components/SettingsList";
 import { StatusBarBackdrop } from "../../components/StatusBarBackdrop";
 import { TabBarFade } from "../../components/TabBarFade";
-import { Avatar, AvatarBadge, Card, Pill, PremiumBadge, Txt } from "../../components/ui";
+import { Avatar, AvatarBadge, Card, Pill, Txt } from "../../components/ui";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { usePrefs } from "../../settings/prefs";
 import { useWishpool } from "../../store/WishpoolContext";
-import { APP_ICONS, appIconsSupported, changeAppIcon, currentAppIcon } from "../../subscription/appIcon";
+import { PREVIEW_PREMIUM, showPremium } from "../../lib/premiumGate";
+import { PremiumCard } from "../../components/PremiumCard";
+import { IN_TG } from "../../lib/telegram";
 import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
-import { STICKER_ASSETS } from "../../components/stickerAssets";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
 export default function ProfileScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, status } = useAuth();
-  const { wishes, rooms, inbox } = useWishpool();
+  const { wishes, rooms, inbox, admin } = useWishpool();
   const { isPremium } = useSubscription();
-  const [icon, setIcon] = useState(currentAppIcon);
   const prefs = usePrefs();
   // your own name / photo from the profile editor win over the account's
   // the same name, photo and colour your avatar has in rooms
@@ -40,11 +40,6 @@ export default function ProfileScreen() {
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
   const gifting = rooms.reduce((n, r) => n + (r.demoLists || []).reduce((k, l) => k + l.wishes.filter((x) => x.reservedByMe).length, 0), 0);
 
-  const pickIcon = async (name: (typeof APP_ICONS)[number]["name"]) => {
-    if (name && !isPremium) return router.push("/paywall");
-    haptic("select");
-    if (await changeAppIcon(name, isPremium).catch(() => false)) setIcon(name);
-  };
 
   return (
     <View className="flex-1 bg-card">
@@ -63,7 +58,8 @@ export default function ProfileScreen() {
 
         <View className="mt-6 flex-row gap-3">
           <Card className="flex-1 items-center bg-raised p-5">
-            <Gift size={22} color={C.blue} />
+            {/* always the logo blue, whatever the accent */}
+            <Gift size={22} color="#0A82F9" />
             <Txt className="mt-2 font-m800 text-[22px]">{shared}</Txt>
             <Txt className="text-[12.5px] text-t2">{t("sharedStat")}</Txt>
           </Card>
@@ -79,41 +75,14 @@ export default function ProfileScreen() {
           <BirthdayCard />
         </View>
 
-        {PREMIUM_ENABLED ? (
-        <Card className="mt-3 flex-row items-center gap-4 bg-raised p-4" onPress={() => router.push("/paywall")}>
-          <View className="h-sm w-sm items-center justify-center rounded-full bg-gold/20">
-            <Crown size={20} color={C.gold} />
+        {/* Premium: the offer under the birthday until you have it; in Telegram a
+            pointer to the iPhone app, shown once Premium is on sale (admins see it now) */}
+        {(IN_TG ? PREMIUM_ENABLED || admin || PREVIEW_PREMIUM : showPremium(admin)) && !isPremium ? (
+          <View className="mt-3">
+            <PremiumCard />
           </View>
-          <View className="flex-1">
-            <Txt className="font-m700 text-base">{t("premium")}</Txt>
-            <Txt className="mt-0.5 text-[12.5px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
-          </View>
-          <ChevronRight size={20} color={C.t3} />
-        </Card>
         ) : null}
 
-        {PREMIUM_ENABLED && appIconsSupported() ? (
-          <View className="mt-6">
-            <View className="mb-2 flex-row items-center gap-2">
-              <Smartphone size={15} color={C.t2} />
-              <Txt className="font-m600 text-[13px] text-t2">{t("appIcon")}</Txt>
-              {!isPremium ? <PremiumBadge label={t("premiumOnly")} /> : null}
-            </View>
-            <View className="flex-row gap-3">
-              {APP_ICONS.map((o) => {
-                const on = icon === o.name;
-                return (
-                  <Pressable key={o.name || "default"} onPress={() => pickIcon(o.name)} className="flex-1 items-center">
-                    <View className="aspect-square w-full items-center justify-center overflow-hidden rounded-tile" style={{ backgroundColor: o.tint, borderWidth: 2, borderColor: on ? C.blue : "transparent", opacity: o.name && !isPremium ? 0.5 : 1 }}>
-                      <Image source={STICKER_ASSETS[o.sticker]} style={{ width: "80%", height: "80%" }} contentFit="contain" />
-                    </View>
-                    <Txt className={`mt-2 font-m600 text-[12px] ${on ? "text-blueText" : "text-t2"}`}>{t(o.titleKey)}</Txt>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        ) : null}
 
         <View className="mt-8">
           <SettingsGroup>
@@ -132,6 +101,8 @@ export default function ProfileScreen() {
                 ) : null
               }
             />
+            {/* once you have Premium: its own page (colour, icon, subscription) */}
+            {showPremium(admin) && (isPremium || admin || PREVIEW_PREMIUM) ? <SettingsCell icon={Crown} tint={C.blue} label="Premium" onPress={() => router.push("/premium")} /> : null}
             <SettingsCell icon={Settings} tint="#8E8E93" label={t("settings")} onPress={() => router.push("/settings")} />
           </SettingsGroup>
         </View>

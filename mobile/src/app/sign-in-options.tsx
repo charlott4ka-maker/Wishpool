@@ -17,8 +17,10 @@ import { Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { api, SITE_URL } from "../services/api";
 import { C, H } from "../theme/tokens";
+import { useAccent } from "../theme/accent";
 
 export default function SignInOptions() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
