@@ -98,14 +98,12 @@ function Paywall() {
           <X size={20} color="#fff" />
         </Pressable>
 
-        {/* the title on the left, our glass star beside it on the right */}
-        <View className="flex-1 flex-row items-center justify-between py-8">
-          <View className="flex-1 pr-3">
-            <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
-            <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
-            <Txt className="mt-3 text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
-          </View>
-          <Image source={require("../../assets/premium-star.png")} style={{ width: 120, height: 115 }} contentFit="contain" />
+        {/* our glass star on top, the title and line under it, all on the left */}
+        <View className="flex-1 justify-center py-8">
+          <Image source={require("../../assets/premium-star.png")} style={{ width: 96, height: 92, marginBottom: 16 }} contentFit="contain" />
+          <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
+          <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
+          <Txt className="mt-3 text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
         </View>
 
         {isPremium ? (
