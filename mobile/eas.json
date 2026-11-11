@@ -29,10 +29,25 @@
         "EXPO_PUBLIC_API_URL": "https://wishpool.clickbrickk.com",
         "EXPO_PUBLIC_PRIVACY_URL": "https://wishpool.clickbrickk.com/privacy"
       }
+    },
+    "testflight": {
+      "extends": "production",
+      "channel": "testflight",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://wishpool.clickbrickk.com",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://wishpool.clickbrickk.com/privacy",
+        "EXPO_PUBLIC_REVENUECAT_MOCK": "1"
+      }
     }
   },
   "submit": {
     "production": {
+      "ios": {
+        "ascAppId": "6825104468",
+        "appleTeamId": "5LA5WMXQUM"
+      }
+    },
+    "testflight": {
       "ios": {
         "ascAppId": "6825104468",
         "appleTeamId": "5LA5WMXQUM"
