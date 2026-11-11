@@ -20,6 +20,9 @@ import { clearDemo, fillDemo } from "../lib/demo";
 import { openReviewPage } from "../lib/review";
 import { SUPPORT_EMAIL, writeSupport } from "../lib/support";
 import { SettingsCell, SettingsGroup } from "../components/SettingsList";
+import { AccentPicker } from "../components/AccentPicker";
+import { PREVIEW_PREMIUM, showPremium } from "../lib/premiumGate";
+import { useSubscription } from "../subscription/SubscriptionContext";
 import { GlassCircle, Txt } from "../components/ui";
 import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
 import { api, SITE_URL } from "../services/api";
@@ -38,7 +41,8 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const prefs = usePrefs();
   const { status, signOut } = useAuth();
-  const { refresh } = useWishpool();
+  const { refresh, admin } = useWishpool();
+  const { isPremium } = useSubscription();
   const version = Constants.expoConfig?.version || "1.0.0";
   const [scrolled, setScrolled] = useState(false);
   // the demo row (sample content for App Store screenshots): always in dev
@@ -161,6 +165,9 @@ export default function SettingsScreen() {
             <SettingsCell icon={Users} tint="#34C759" label={t("roomAddShort")} value={roomAdd ? t(roomAdd === "instant" ? "roomAddInstant" : "roomAddAsk") : ""} onPress={pickRoomAdd} />
           </SettingsGroup>
         ) : null}
+
+        {/* the app accent (Premium) */}
+        {showPremium(admin) ? <AccentPicker unlocked={isPremium || !!admin || PREVIEW_PREMIUM} /> : null}
 
         <SettingsGroup title={t("setGeneral")}>
           <SettingsCell icon={Globe} tint="#5856D6" label={t("language")} value={LANG_SHORT[lang]} onPress={pickLanguage} />

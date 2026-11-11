@@ -46,7 +46,12 @@ const PILL_BORDER: Partial<Record<PillKind, ViewStyle>> = {
 };
 
 // spinner colour per kind, matching the label
-const PILL_SPIN: Record<PillKind, string> = { primary: "#fff", ghost: C.t1, glass: "#fff", soft: C.blueText, green: C.greenText, gold: "#000" };
+const PILL_SPIN: Record<PillKind, string> = {
+  primary: "#fff", ghost: C.t1, glass: "#fff", green: C.greenText, gold: "#000",
+  get soft() {
+    return C.blueText;
+  },
+};
 
 export function Pill({
   children, onPress, kind = "primary", icon, disabled, full, size = "lg", px, loading,

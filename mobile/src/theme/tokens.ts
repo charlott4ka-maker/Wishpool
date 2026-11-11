@@ -1,3 +1,5 @@
+import { accent } from "./accent";
+
 // Tokens for the iOS app (tailwind.config.js has the same colours). Surfaces
 // follow the block layout: blocks (card) on a lighter page (bg) with 4pt gaps.
 // Use Tailwind classes for layout; these are for props that take raw values
@@ -14,10 +16,19 @@ export const C = {
   t3: "#626B7D",
   /** placeholder (and the search glass) in inputs: a cool grey that sits on the blue-grey fill */
   hint: "#6B7487",
-  blue: "#0A82F9",
-  blueSoft: "rgba(10,130,249,0.16)",
-  blueLine: "rgba(10,130,249,0.45)",
-  blueText: "#7FB0FF",
+  // the accent (logo blue by default; Premium themes change it, see theme/accent.ts)
+  get blue(): string {
+    return accent().base;
+  },
+  get blueSoft(): string {
+    return accent().soft;
+  },
+  get blueLine(): string {
+    return accent().line;
+  },
+  get blueText(): string {
+    return accent().text;
+  },
   green: "#34C759",
   greenText: "#7EE29A",
   danger: "#FF5A5A",
@@ -25,7 +36,7 @@ export const C = {
   // the blue strip that peeks out from behind a block (sign-in prompt)
   brand: "#047DFB",
   brand2: "#2290F6",
-} as const;
+};
 
 // Exactly two control heights.
 export const H = { lg: 52, sm: 40 } as const;
