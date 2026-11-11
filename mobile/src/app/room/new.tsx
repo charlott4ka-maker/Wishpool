@@ -14,7 +14,7 @@ import { SymbolView } from "expo-symbols";
 import Svg, { Circle, Rect } from "react-native-svg";
 import { Check, ImagePlus, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -106,6 +106,10 @@ export default function CreateRoomScreen() {
   const [lookOpen, setLookOpen] = useState(false);
   // the look sheet is an RN Modal: a screen pushed over it (the paywall) left it
   // stuck on top after closing, so close the sheet first, then open the paywall
+  const { width: screenW } = useWindowDimensions();
+  const foldersLocked = !isPremium;
+  // the locked Folders grid: three and a half rows of tiles (1.12 wide per tall, 8pt gaps)
+  const lockedGridH = Math.round((((screenW - 32 + 8) / 3 - 8) / 1.12 + 8) * 3.5);
   const openPaywall = () => {
     setLookOpen(false);
     setTimeout(() => router.push("/paywall"), 300);
@@ -300,7 +304,7 @@ export default function CreateRoomScreen() {
             premium="folders"
           />
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
+        <ScrollView showsVerticalScrollIndicator={false} scrollEnabled={!(lookTab === "folders" && foldersLocked)} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
           {lookTab === "sticker" ? (
             <View>
               {/* which sticker the picker sets: the main one, or (premium) one of two more */}
@@ -372,7 +376,8 @@ export default function CreateRoomScreen() {
             </View>
           ) : (
             <View>
-            <View className="mb-4">
+            {/* locked: three and a half rows, so the next row peeks out (there are more than nine) */}
+            <View className="mb-4" style={foldersLocked ? { height: lockedGridH, overflow: "hidden" } : undefined}>
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
               {/* your own photo on the folder */}
               <View style={{ width: "33.333%", padding: 4 }}>
@@ -389,7 +394,7 @@ export default function CreateRoomScreen() {
                   {!coverShown ? <Txt className="mt-1 font-m600 text-[11.5px] text-t2">{t("ownPhoto")}</Txt> : null}
                 </Pressable>
               </View>
-              {(isPremium ? skins : skins.slice(0, 8)).map((k) => {
+              {(isPremium ? skins : skins.slice(0, 14)).map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (

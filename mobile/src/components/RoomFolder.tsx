@@ -28,7 +28,8 @@ import { folderSkin } from "../lib/folderSkins";
 /** The front's top edge (tab + step) and the whole front outline. */
 // stacked inner strokes (clipped to the shape, so only the inside half shows):
 // a shade that fades in from the edge, like the bevel on the made folders
-const BEVEL: [number, number][] = [[22, 0.05], [14, 0.07], [8, 0.09], [4, 0.12]];
+// many thin layers, each faint, so the shade melts in with no visible line
+const BEVEL: [number, number][] = [[40, 0.025], [32, 0.03], [25, 0.035], [19, 0.04], [14, 0.045], [10, 0.05], [6, 0.05], [3, 0.05]];
 
 export function folderPaths(w: number, h: number) {
   const R0 = Math.round;
@@ -272,7 +273,7 @@ export function RoomFolder({ room, wishes, onPress, onStickerMove, onStickerDrag
             {/* a soft bevel like the made folders: shade fading in from the edge, a thin light rim */}
             <G clipPath={`url(#cf-${room.id})`}>
               {BEVEL.map(([w, o]) => <Path key={w} d={paths.full} fill="none" stroke="#000" strokeOpacity={o} strokeWidth={w} />)}
-              <Path d={paths.full} fill="none" stroke="#fff" strokeOpacity={0.28} strokeWidth={2.5} />
+              <Path d={paths.full} fill="none" stroke="#fff" strokeOpacity={0.14} strokeWidth={1.5} />
             </G>
           </Svg>
         ) : skin ? (
