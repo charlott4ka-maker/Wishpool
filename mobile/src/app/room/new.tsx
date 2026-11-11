@@ -10,6 +10,8 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
+import { SymbolView } from "expo-symbols";
+import Svg, { Circle, Rect } from "react-native-svg";
 import { Check, ImagePlus, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
@@ -20,6 +22,7 @@ import { DateRow } from "../../components/DateRow";
 import { FriendPicker, useFriendList } from "../../components/FriendPicker";
 import { LookTabs } from "../../components/LookTabs";
 import { RoomFolder } from "../../components/RoomFolder";
+import { SantaChip } from "../../components/SantaChip";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
@@ -43,9 +46,9 @@ const SEG_ON_BG = "#353C49";
 
 const PRESETS: { type: RoomType; key: string; hint: string; santa?: boolean }[] = [
   { type: "friends", key: "roomFriends", hint: "friendsRoomHint" },
-  { type: "friends", key: "roomSanta", hint: "santaRoomHint", santa: true },
-  { type: "couple", key: "roomCouple", hint: "coupleRoomHint" },
   { type: "birthday", key: "roomBirthday", hint: "birthdayRoomHint" },
+  { type: "couple", key: "roomCouple", hint: "coupleRoomHint" },
+  { type: "friends", key: "roomSanta", hint: "santaRoomHint", santa: true },
 ];
 
 const Label = ({ children }: { children: string }) => <Txt className="mb-2 font-m600 text-[13px] text-t2">{children}</Txt>;
@@ -98,9 +101,8 @@ export default function CreateRoomScreen() {
   // premium folders in the order set on the admin page
   const skins = orderedSkins(useRemoteConfig().folders);
   const [lookOpen, setLookOpen] = useState(false);
-  // premium decorations: two more stickers and a name tag
+  // premium decorations: two more stickers
   const [charms, setCharms] = useState<{ e: string; pos: string }[]>(editing?.charms || []);
-  const [tag, setTag] = useState(editing?.tag || "");
   const [stickerSlot, setStickerSlot] = useState<"main" | "c0" | "c1">("main");
   // your own photo on the folder (premium): a fresh pick waits here until the room is saved
   const [coverDraft, setCoverDraft] = useState<string | null>(null);
@@ -153,14 +155,14 @@ export default function CreateRoomScreen() {
     const extra = bday ? { eventDate: date || undefined, eventTitle: "", bdayMode: mode, celebrantName: mode === "other" ? celName.trim() : "" } : swapDate && date ? { eventDate: date } : {};
     try {
       if (editing) {
-        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, skin, charms, tag: tag.trim(), ...(online ? {} : { cover: coverDraft || editing.cover }), ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
+        await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, skin, charms, ...(online ? {} : { cover: coverDraft || editing.cover }), ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
         if (online && coverDraft) await api.setRoomCover(editing.id, coverDraft).then(() => refresh()).catch(() => toast.error(t("toastError")));
         haptic("success");
         router.back();
         toast.success(t("toastSaved"), { root: true });
         return;
       }
-      const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, skin, charms, tag: tag.trim(), ...(online ? {} : { cover: coverDraft || undefined }), ...extra } as Parameters<typeof createRoom>[0]);
+      const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, skin, charms, ...(online ? {} : { cover: coverDraft || undefined }), ...extra } as Parameters<typeof createRoom>[0]);
       // the own photo goes up once the room exists
       if (online && coverDraft) await api.setRoomCover(id, coverDraft).then(() => refresh()).catch(() => toast.error(t("toastError")));
       // friends picked below: in at once or invited, as each of them prefers
@@ -184,7 +186,7 @@ export default function CreateRoomScreen() {
       {/* live preview: the room as a folder, like on the Rooms tab */}
       <View className="mx-auto w-1/2">
         <RoomFolder
-          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, skin, cover: coverShown || undefined, charms, tag: tag.trim(), members: editing?.members || [], eventDate: (bday || swapDate) && date ? date : undefined }}
+          room={{ id: "preview", name: title, type: preset.type, emoji, tint, stickerPos, skin, cover: coverShown || undefined, charms, members: editing?.members || [], eventDate: (bday || swapDate) && date ? date : undefined }}
           wishes={[]}
           onPress={() => {}}
           onStickerMove={setStickerPos}
@@ -205,13 +207,23 @@ export default function CreateRoomScreen() {
         <>
           <Label>{t("roomType")}</Label>
           <View className="mb-2 flex-row flex-wrap gap-2">
-            {PRESETS.map((p) => (
-              <Chip key={p.key} active={preset.key === p.key} onPress={() => pickPreset(p)}>
-                {t(p.key)}
-              </Chip>
-            ))}
+            {PRESETS.map((p) =>
+              p.santa ? (
+                <SantaChip key={p.key} active={preset.key === p.key} label={t(p.key)} onPress={() => pickPreset(p)} />
+              ) : (
+                <Chip key={p.key} active={preset.key === p.key} onPress={() => pickPreset(p)}>
+                  {t(p.key)}
+                </Chip>
+              ),
+            )}
           </View>
-          <Txt className="mb-4 text-[13px] leading-[19px] text-t2">{t(preset.hint)}</Txt>
+          {/* what this type is for: an info plate */}
+          <View className="mb-4 mt-1 flex-row items-start gap-3 rounded-tile bg-card2 px-4 py-3">
+            <View style={{ marginTop: 1 }}>
+              <SymbolView name="info.circle.fill" size={20} tintColor={C.blue} fallback={<View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.blue, alignItems: "center", justifyContent: "center" }}><Svg width={20} height={20} viewBox="0 0 28 28"><Circle cx={14} cy={8.6} r={1.9} fill="#fff" /><Rect x={12.3} y={12} width={3.4} height={9.5} rx={1.7} fill="#fff" /></Svg></View>} />
+            </View>
+            <Txt className="flex-1 text-[13.5px] leading-[19px] text-t1">{t(preset.hint)}</Txt>
+          </View>
         </>
       ) : null}
 
@@ -287,12 +299,12 @@ export default function CreateRoomScreen() {
                           haptic("select");
                           setStickerSlot(slot);
                         }}
-                        className="h-sm flex-row items-center gap-1.5 rounded-full px-3"
+                        className="h-sm flex-row items-center gap-1.5 rounded-full pl-3 pr-3.5"
                         style={{ backgroundColor: on ? SEG_ON_BG : C.bg }}
                       >
                         {e ? <Sticker emoji={e} size={20} /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
                         <Txt className={`font-m600 text-[13px] ${on ? "text-white" : "text-t2"}`}>{slot === "main" ? t("stickerMain") : t("stickerMore")}</Txt>
-                        {slot !== "main" && !isPremium ? <Lock size={12} color={C.t3} strokeWidth={1.5} absoluteStrokeWidth /> : null}
+                        {slot !== "main" && !isPremium ? <SymbolView name="lock.fill" size={12} tintColor={C.t3} fallback={<Lock size={12} color={C.t3} fill={C.t3} strokeWidth={1.5} />} /> : null}
                       </Pressable>
                     );
                   })}
@@ -317,13 +329,6 @@ export default function CreateRoomScreen() {
                 }}
                 pack={santa ? "newyear" : undefined}
               />
-              {/* the name tag on the folder (premium) */}
-              {showSkins ? (
-                <View className="mt-4">
-                  <Field label={t("folderTag")} value={tag} onChangeText={(v) => setTag(v.slice(0, 16))} placeholder={t("folderTagPh")} />
-                  {!isPremium && !admin ? <Pressable onPress={() => router.push("/paywall")} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} /> : null}
-                </View>
-              ) : null}
             </View>
           ) : lookTab === "color" ? (
             // a colour means the plain folder again
@@ -381,7 +386,7 @@ export default function CreateRoomScreen() {
                     <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
                     <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(255,255,255,0.08)" }} />
                     <View style={{ zIndex: 2 }}>
-                      <Lock size={22} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                      <SymbolView name="lock.fill" size={20} tintColor="#fff" fallback={<Lock size={20} color="#fff" fill="#fff" strokeWidth={1.5} />} />
                     </View>
                   </View>
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
