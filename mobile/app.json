@@ -86,27 +86,11 @@
         "expo-alternate-app-icons",
         [
           {
-            "name": "Ocean",
-            "ios": "./assets/icons/ocean.png",
+            "name": "Glow",
+            "ios": "./assets/icons/glow.png",
             "android": {
-              "foregroundImage": "./assets/icons/ocean-fg.png",
-              "backgroundColor": "#1B4FA8"
-            }
-          },
-          {
-            "name": "Blush",
-            "ios": "./assets/icons/blush.png",
-            "android": {
-              "foregroundImage": "./assets/icons/blush-fg.png",
-              "backgroundColor": "#B0306A"
-            }
-          },
-          {
-            "name": "Matcha",
-            "ios": "./assets/icons/matcha.png",
-            "android": {
-              "foregroundImage": "./assets/icons/matcha-fg.png",
-              "backgroundColor": "#1F7A3E"
+              "foregroundImage": "./assets/icons/glow-fg.png",
+              "backgroundColor": "#141B33"
             }
           }
         ]

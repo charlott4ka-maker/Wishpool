@@ -21,6 +21,8 @@ import { openReviewPage } from "../lib/review";
 import { SUPPORT_EMAIL, writeSupport } from "../lib/support";
 import { SettingsCell, SettingsGroup } from "../components/SettingsList";
 import { AccentPicker } from "../components/AccentPicker";
+import { IconPicker } from "../components/IconPicker";
+import { appIconsSupported } from "../subscription/appIcon";
 import { PREVIEW_PREMIUM, showPremium } from "../lib/premiumGate";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { GlassCircle, Txt } from "../components/ui";
@@ -168,6 +170,7 @@ export default function SettingsScreen() {
 
         {/* the app accent (Premium) */}
         {showPremium(admin) ? <AccentPicker unlocked={isPremium || !!admin || PREVIEW_PREMIUM} /> : null}
+        {showPremium(admin) && (appIconsSupported() || PREVIEW_PREMIUM) ? <IconPicker unlocked={isPremium || !!admin || PREVIEW_PREMIUM} /> : null}
 
         <SettingsGroup title={t("setGeneral")}>
           <SettingsCell icon={Globe} tint="#5856D6" label={t("language")} value={LANG_SHORT[lang]} onPress={pickLanguage} />

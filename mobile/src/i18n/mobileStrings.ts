@@ -135,9 +135,7 @@ export const MOBILE_STRINGS = {
 
   appIcon: { uk: "Іконка застосунку", ru: "Иконка приложения", en: "App icon" },
   iconClassic: { uk: "Класика", ru: "Классика", en: "Classic" },
-  iconOcean: { uk: "Океан", ru: "Океан", en: "Ocean" },
-  iconBlush: { uk: "Рум'янець", ru: "Румянец", en: "Blush" },
-  iconMatcha: { uk: "Матча", ru: "Матча", en: "Matcha" },
+  iconGlow: { uk: "Сяйво", ru: "Сияние", en: "Glow" },
   packClassic: { uk: "Класичні", ru: "Классические", en: "Classic" },
   packNewYear: { uk: "Новий рік", ru: "Новый год", en: "New Year" },
   packParty: { uk: "Вечірка", ru: "Вечеринка", en: "Party" },
