@@ -25,8 +25,9 @@ export function LookTabs<K extends string>({ options, value, onChange, premium }
               if (!on) haptic("select");
               onChange(k);
             }}
-            className="flex-1 overflow-hidden rounded-full"
-            style={{ backgroundColor: on && !prem ? SEG_ON : "transparent" }}
+            // sized by their labels (the longer "Custom" with its crown gets more room), all filling the row
+            className="overflow-hidden rounded-full px-4"
+            style={{ flexGrow: 1, flexBasis: "auto", backgroundColor: on && !prem ? SEG_ON : "transparent" }}
           >
             {on && prem ? (
               <>

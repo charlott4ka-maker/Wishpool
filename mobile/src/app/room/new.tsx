@@ -294,7 +294,7 @@ export default function CreateRoomScreen() {
                 a line and a button to the paywall over it (the folders still open it too) */}
             {!isPremium ? (
               <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0 }}>
-                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0), hex(C.card, 0.7), C.card]} locations={[0.18, 0.55, 0.92]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
+                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0.2), hex(C.card, 0.88), C.card]} locations={[0, 0.3, 0.7]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
                 <View pointerEvents="box-none" className="flex-1 items-center justify-center px-4">
                   {/* a frosted round behind the lock */}
                   <View className="mb-3 h-12 w-12 items-center justify-center overflow-hidden rounded-full">
