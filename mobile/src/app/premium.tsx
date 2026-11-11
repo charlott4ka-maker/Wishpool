@@ -19,17 +19,25 @@ import { PREVIEW_PREMIUM } from "../lib/premiumGate";
 import { useWishpool } from "../store/WishpoolContext";
 import { appIconsSupported } from "../subscription/appIcon";
 import { useSubscription } from "../subscription/SubscriptionContext";
+import { purchases } from "../subscription/purchases";
+import { useEffect, useState } from "react";
+
+const LOCALE = { uk: "uk-UA", ru: "ru-RU", en: "en-US" } as const;
 import { C } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
 
 export default function PremiumScreen() {
   useAccent(); // re-render in place when the app colour changes
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { admin } = useWishpool();
   const { isPremium } = useSubscription();
+  const [until, setUntil] = useState<{ date: Date; renews: boolean } | null>(null);
+  useEffect(() => {
+    purchases.expiresAt().then(setUntil).catch(() => setUntil(null));
+  }, [isPremium]);
   const unlocked = isPremium || !!admin || PREVIEW_PREMIUM;
   return (
     <View className="flex-1 bg-card">
