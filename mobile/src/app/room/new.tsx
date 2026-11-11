@@ -231,11 +231,11 @@ export default function CreateRoomScreen() {
           </View>
           {/* what this type is for: an info plate */}
           <View className="mb-4 mt-1 flex-row items-start gap-3 rounded-tile bg-raised px-4 py-3">
-            {/* a filled blue circle with a white "i" (her example), the same everywhere */}
+            {/* a filled blue circle, the "i" cut out in the plate's own colour (her example) */}
             <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.blue, alignItems: "center", justifyContent: "center", marginTop: -0.5 }}>
               <Svg width={20} height={20} viewBox="0 0 20 20">
-                <Circle cx={10} cy={5.9} r={1.45} fill="#fff" />
-                <Rect x={8.9} y={8.4} width={2.2} height={7} rx={1.1} fill="#fff" />
+                <Circle cx={10} cy={5.9} r={1.45} fill={C.raised} />
+                <Rect x={8.9} y={8.4} width={2.2} height={7} rx={1.1} fill={C.raised} />
               </Svg>
             </View>
             <Txt className="flex-1 text-[13.5px] leading-[19px] text-t1">{t(preset.hint)}</Txt>
