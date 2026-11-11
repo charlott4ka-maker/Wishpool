@@ -299,12 +299,11 @@ export default function CreateRoomScreen() {
                           haptic("select");
                           setStickerSlot(slot);
                         }}
-                        className="h-sm flex-row items-center gap-1.5 rounded-full pl-3 pr-3.5"
+                        className="h-sm flex-row items-center gap-1.5 rounded-full px-3.5"
                         style={{ backgroundColor: on ? SEG_ON_BG : C.bg }}
                       >
-                        {e ? <Sticker emoji={e} size={20} /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
+                        {e ? <Sticker emoji={e} size={20} /> : slot !== "main" && !isPremium ? <Lock size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
                         <Txt className={`font-m600 text-[13px] ${on ? "text-white" : "text-t2"}`}>{slot === "main" ? t("stickerMain") : t("stickerMore")}</Txt>
-                        {slot !== "main" && !isPremium ? <SymbolView name="lock.fill" size={12} tintColor={C.t3} fallback={<Lock size={12} color={C.t3} fill={C.t3} strokeWidth={1.5} />} /> : null}
                       </Pressable>
                     );
                   })}
@@ -386,7 +385,7 @@ export default function CreateRoomScreen() {
                     <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
                     <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(255,255,255,0.08)" }} />
                     <View style={{ zIndex: 2 }}>
-                      <SymbolView name="lock.fill" size={20} tintColor="#fff" fallback={<Lock size={20} color="#fff" fill="#fff" strokeWidth={1.5} />} />
+                      <SymbolView name="lock.fill" size={20} tintColor="#fff" fallback={<Lock size={20} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />} />
                     </View>
                   </View>
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
