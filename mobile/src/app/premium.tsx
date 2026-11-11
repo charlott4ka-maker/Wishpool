@@ -19,6 +19,7 @@ import { useWishpool } from "../store/WishpoolContext";
 import { appIconsSupported } from "../subscription/appIcon";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
+import { useAccent } from "../theme/accent";
 
 const PERKS: [LucideIcon, string, string, string][] = [
   [Folder, "#0A82F9", "perkFolders", "perkFoldersSub"],
@@ -30,6 +31,7 @@ const PERKS: [LucideIcon, string, string, string][] = [
 ];
 
 export default function PremiumScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

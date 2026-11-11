@@ -11,8 +11,10 @@ import { toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
+import { useAccent } from "../../theme/accent";
 
 export default function WishScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();

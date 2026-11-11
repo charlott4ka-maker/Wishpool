@@ -18,8 +18,10 @@ import { haptic } from "../../lib/haptics";
 import { api } from "../../services/api";
 import { C } from "../../theme/tokens";
 import type { Member } from "../../types";
+import { useAccent } from "../../theme/accent";
 
 export default function FriendLink() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

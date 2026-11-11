@@ -17,9 +17,10 @@ import { haptic } from "../lib/haptics";
 import { PREMIUM_ENABLED } from "../subscription/featureFlags";
 import type { PremiumPackage } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
-import { SoftGlow } from "../components/SoftGlow";
+import { EdgeGlow } from "../components/EdgeGlow";
 import { C } from "../theme/tokens";
 import { useWishpool } from "../store/WishpoolContext";
+import { useAccent } from "../theme/accent";
 
 // Our terms (they point to Apple's standard EULA too).
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://wishpool.clickbrickk.com/terms";
@@ -28,6 +29,7 @@ const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || "https://wishpool.cli
 const ORDER: Record<string, number> = { annual: 0, monthly: 1 };
 
 export default function PaywallRoute() {
+  useAccent(); // re-render in place when the app colour changes
   // Hidden while Premium is off, even if something links here.
   // admins can see it before the launch (from the locked folders in the room form)
   const { admin } = useWishpool();
@@ -86,12 +88,8 @@ function Paywall() {
 
   return (
     <View className="flex-1 bg-bg">
-      {/* smooth glows (no bands): our blue from the top left, a violet haze on the right */}
-      <SoftGlow blobs={[
-        { color: "#0A82F9", cx: "8%", cy: "0%", r: "95%", alpha: 0.6 },
-        { color: "#8B5CF6", cx: "100%", cy: "18%", r: "80%", alpha: 0.38 },
-        { color: "#55A9FC", cx: "60%", cy: "-10%", r: "60%", alpha: 0.25 },
-      ]} />
+      {/* the Profile card's glow, coming down from the top edge */}
+      <EdgeGlow side="top" />
 
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-white/15" accessibilityLabel={t("back")}>
@@ -149,10 +147,17 @@ function Paywall() {
                 {!sel ? t("premiumUnavailable") : sel.trialDays ? t("trialCta", { days: days(sel.trialDays) }) : t("premiumBuy", { price: sel.priceString })}
               </Pill>
             </View>
-            {sel?.trialDays ? (
-              <Txt className="mt-3 text-center text-[12.5px] text-t3">{t(sel.kind === "monthly" ? "trialThenMonth" : "trialThenYear", { price: sel.priceString })}</Txt>
-            ) : null}
-            {mock && plans.length ? <Txt className="mt-2 text-center text-[12.5px] text-t3">{t("premiumMock")}</Txt> : null}
+            {/* one line under the button for every plan, in a box of fixed height, so nothing jumps */}
+            <View style={{ minHeight: 40, marginTop: 12 }}>
+              {sel ? (
+                <Txt className="text-center text-[12.5px] leading-[18px] text-t3">
+                  {sel.trialDays
+                    ? t(sel.kind === "monthly" ? "trialThenMonth" : "trialThenYear", { price: sel.priceString })
+                    : t(sel.kind === "monthly" ? "planNoteMonth" : "planNoteYear", { price: sel.priceString })}
+                </Txt>
+              ) : null}
+              {mock && plans.length ? <Txt className="mt-1 text-center text-[12.5px] leading-[18px] text-t3">{t("premiumMock")}</Txt> : null}
+            </View>
           </>
         )}
 

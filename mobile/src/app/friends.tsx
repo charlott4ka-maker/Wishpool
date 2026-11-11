@@ -23,6 +23,7 @@ import { useWishpool } from "../store/WishpoolContext";
 import { C } from "../theme/tokens";
 import type { Member } from "../types";
 import { BOT_APP, IN_TG, tgShare } from "../lib/telegram";
+import { useAccent } from "../theme/accent";
 
 // grouped like Settings: hairline separators that start after the picture
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -56,6 +57,7 @@ function Row({ m, sub, right }: { m: Member; sub?: string; right?: React.ReactNo
 }
 
 export default function FriendsScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

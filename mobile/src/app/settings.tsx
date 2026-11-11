@@ -29,12 +29,14 @@ import { purchases } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
 import { IN_TG } from "../lib/telegram";
+import { useAccent } from "../theme/accent";
 
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://wishpool.clickbrickk.com/terms";
 const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || `${SITE_URL}/privacy`;
 const LANG_NAME: Record<Lang, string> = { uk: "Українська", ru: "Русский", en: "English" };
 
 export default function SettingsScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t, lang, setLang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

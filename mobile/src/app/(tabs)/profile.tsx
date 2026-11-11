@@ -23,8 +23,10 @@ import { IN_TG } from "../../lib/telegram";
 import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
 export default function ProfileScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();

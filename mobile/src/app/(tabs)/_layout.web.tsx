@@ -8,8 +8,10 @@ import { CircleUserRound, Gift, Users } from "lucide-react-native";
 import { useT } from "../../i18n";
 import { useSearchMode } from "../../lib/searchMode";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
 export default function TabsLayout() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const searching = useSearchMode();
   const icon = (I: typeof Gift) => ({ color }: { color: unknown }) => <I size={24} color={String(color)} strokeWidth={1.75} absoluteStrokeWidth />;

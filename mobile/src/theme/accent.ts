@@ -2,8 +2,10 @@
 // links follow the chosen accent. Blue (the logo blue) is the default and the
 // free one. Classes (bg-blue, text-blueText, ...) read CSS variables set on the
 // root view; raw values (icon colours) read C.blue & co, which are getters over
-// the current accent, so the root remounts when it changes.
+// the current accent: every screen calls useAccent(), so it re-renders in place
+// when the accent changes (no remount, nothing moves).
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 
 export type AccentId = "blue" | "violet" | "pink" | "coral" | "green" | "teal";
 
@@ -54,4 +56,11 @@ export function onAccent(cb: (a: Accent) => void) {
   return () => {
     subs.delete(cb);
   };
+}
+
+/** The current accent; re-renders the caller when it changes. */
+export function useAccent(): Accent {
+  const [a, setA] = useState(current);
+  useEffect(() => onAccent(setA), []);
+  return a;
 }

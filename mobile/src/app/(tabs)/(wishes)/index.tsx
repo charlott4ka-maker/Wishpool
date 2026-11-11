@@ -23,8 +23,10 @@ import { setSearchMode } from "../../../lib/searchMode";
 import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
 import { C } from "../../../theme/tokens";
+import { useAccent } from "../../../theme/accent";
 
 export default function PoolScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

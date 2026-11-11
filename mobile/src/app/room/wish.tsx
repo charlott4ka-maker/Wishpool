@@ -20,8 +20,10 @@ import { openedWish } from "../../lib/openedWish";
 import { askReport } from "../../lib/report";
 import { api } from "../../services/api";
 import { C } from "../../theme/tokens";
+import { useAccent } from "../../theme/accent";
 
 export default function FriendWish() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

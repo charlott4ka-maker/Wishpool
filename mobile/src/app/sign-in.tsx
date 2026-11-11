@@ -13,11 +13,13 @@ import { useAuth } from "../auth/AuthContext";
 import { Onboarding } from "../components/onboarding/Onboarding";
 import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
+import { useAccent } from "../theme/accent";
 
 const ONBOARDED_KEY = "wp_onboarded";
 const LOGO = 112;
 
 export default function SignIn() {
+  useAccent(); // re-render in place when the app colour changes
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   useEffect(() => {
     AsyncStorage.getItem(ONBOARDED_KEY)

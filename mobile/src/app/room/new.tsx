@@ -39,6 +39,7 @@ import { NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFl
 import { orderedSkins } from "../../lib/folderSkins";
 import { useRemoteConfig } from "../../lib/remoteConfig";
 import type { RoomType } from "../../types";
+import { useAccent } from "../../theme/accent";
 
 // Secret Santa is a friends room (so it has the draw) with its own name,
 // sticker and colour, and an optional gift swap date with a countdown
@@ -81,6 +82,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
 }
 
 export default function CreateRoomScreen() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

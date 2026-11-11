@@ -27,7 +27,7 @@ import { IN_TG, tgStartParam } from "../lib/telegram";
 import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
-import { accent, accentVars, loadAccent, onAccent } from "../theme/accent";
+import { accentVars, loadAccent, useAccent } from "../theme/accent";
 
 // The share extension's native module isn't in Expo Go.
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -49,12 +49,7 @@ const navTheme = () => ({ ...DarkTheme, colors: { ...DarkTheme.colors, backgroun
 // the saved accent, read before the first screen shows
 const accentLoaded = loadAccent();
 
-// The accent (Premium themes): re-renders on a change
-function useAccent() {
-  const [a, setA] = useState(accent());
-  useEffect(() => onAccent(setA), []);
-  return a;
-}
+
 
 function Gate() {
   const { status, user } = useAuth();
@@ -103,9 +98,8 @@ function Gate() {
         <ShareIntentHandler ready={inside} />
         <AccentGuard />
         {inside ? <ReminderSync /> : null}
-        {/* the accent: CSS variables for the classes; the key remounts the screens so
-            raw colours (C.blue) are read again */}
-        <View key={acc.id} style={[{ flex: 1 }, vars(accentVars(acc))]}>
+        {/* the accent: CSS variables for the classes (screens refresh their raw colours themselves) */}
+        <View style={[{ flex: 1 }, vars(accentVars(acc))]}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
           <Stack.Protected guard={inside}>
             <Stack.Screen name="(tabs)" />
@@ -153,7 +147,7 @@ export default function RootLayout() {
   return (
     <ShareIntentProvider options={{ disabled: IN_EXPO_GO, resetOnBackground: true }}>
     <SafeAreaProvider>
-      <ThemeProvider value={navTheme()} key={acc.id}>
+      <ThemeProvider value={navTheme()}>
         <LangProvider>
           <AuthProvider>
             <StatusBar style="light" />

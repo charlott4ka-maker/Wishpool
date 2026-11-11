@@ -20,10 +20,12 @@ import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { C } from "../../theme/tokens";
 import type { Room } from "../../types";
+import { useAccent } from "../../theme/accent";
 
 type Peek = Room & { member: boolean; memberCount: number; hasCelebrant: boolean };
 
 export default function JoinRoom() {
+  useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

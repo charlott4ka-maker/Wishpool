@@ -1,7 +1,7 @@
 // Settings › App colour (Premium): six accents in a row. Blue is free; the
 // others open the paywall unless Premium is on (admins can try them).
 import { Check, Lock } from "lucide-react-native";
-import { router as nav, usePathname, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, View } from "react-native";
 
@@ -11,14 +11,13 @@ import { useSubscription } from "../subscription/SubscriptionContext";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
-import { ACCENTS, accent, setAccent } from "../theme/accent";
+import { ACCENTS, accent, setAccent, useAccent } from "../theme/accent";
 import { Txt } from "./ui";
 
 export function AccentPicker({ unlocked }: { unlocked: boolean }) {
   const { t } = useT();
   const router = useRouter();
-  const path = usePathname();
-  const cur = accent().id;
+  const cur = useAccent().id;
   return (
     <View className="mb-8">
       <Txt className="mb-3 px-4 font-m600 text-[13px] uppercase text-t2" style={{ letterSpacing: 0.4 }}>{t("accentTitle")}</Txt>
@@ -35,9 +34,6 @@ export function AccentPicker({ unlocked }: { unlocked: boolean }) {
                 if (on) return;
                 haptic("select");
                 setAccent(a.id);
-                // the screens remount with the new colour (back on the first tab):
-                // reopen the page this was picked on (Premium)
-                setTimeout(() => nav.push(path as never), 60);
               }}
               style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: a.base, alignItems: "center", justifyContent: "center", opacity: locked ? 0.55 : 1 }}
             >
