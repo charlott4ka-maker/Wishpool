@@ -98,12 +98,12 @@ function Paywall() {
           <X size={20} color="#fff" />
         </Pressable>
 
-        {/* our glass star on top, the title and line under it, all on the left */}
-        <View className="flex-1 justify-center py-8">
+        {/* our glass star on top, the title and line under it, centred */}
+        <View className="flex-1 items-center justify-center py-8">
           <Image source={require("../../assets/premium-star.png")} style={{ width: 96, height: 92, marginBottom: 16 }} contentFit="contain" />
-          <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
-          <Txt className="font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
-          <Txt className="mt-3 text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
+          <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
+          <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
+          <Txt className="mt-3 max-w-[300px] text-center text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
         </View>
 
         {isPremium ? (
