@@ -7,7 +7,7 @@ import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
-import { Bell, Cake, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Users, Vibrate, Wand2 } from "lucide-react-native";
+import { Bell, Cake, Crown, ChevronLeft, CircleHelp, FileText, Gift, Globe, LifeBuoy, LogIn, LogOut, Send, Shield, Sparkles, Star, Trash2, UserPlus, Users, Vibrate, Wand2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Linking, Platform, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,6 +25,8 @@ import { LANG_SHORT, LANGS, useT, type Lang } from "../i18n";
 import { api, SITE_URL } from "../services/api";
 import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
+import { purchases } from "../subscription/purchases";
+import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
 import { IN_TG } from "../lib/telegram";
 
@@ -39,6 +41,7 @@ export default function SettingsScreen() {
   const prefs = usePrefs();
   const { status, signOut } = useAuth();
   const { refresh } = useWishpool();
+  const { isPremium } = useSubscription();
   const version = Constants.expoConfig?.version || "1.0.0";
   const [scrolled, setScrolled] = useState(false);
   // the demo row (sample content for App Store screenshots): always in dev
@@ -159,6 +162,13 @@ export default function SettingsScreen() {
         {status === "signedIn" ? (
           <SettingsGroup title={t("privacy")} footer={t("roomAddHint")}>
             <SettingsCell icon={Users} tint="#34C759" label={t("roomAddShort")} value={roomAdd ? t(roomAdd === "instant" ? "roomAddInstant" : "roomAddAsk") : ""} onPress={pickRoomAdd} />
+          </SettingsGroup>
+        ) : null}
+
+        {/* TEST BUILDS ONLY (mock purchases): take Premium away to try it again. Remove for the release. */}
+        {purchases.mock && isPremium ? (
+          <SettingsGroup title="Test">
+            <SettingsCell icon={Crown} tint="#FF3B30" label="Убрать Premium (тест)" onPress={() => purchases.resetMock?.()} />
           </SettingsGroup>
         ) : null}
 

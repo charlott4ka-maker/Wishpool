@@ -41,6 +41,8 @@ export interface PurchasesAdapter {
   purchase(pkg: PremiumPackage): Promise<boolean>;
   restore(): Promise<boolean>;
   onChange(cb: (isPremium: boolean) => void): () => void;
+  /** test builds only (mock store): take Premium away again */
+  resetMock?(): void;
 }
 
 const IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || "";
@@ -78,6 +80,9 @@ function createMock(fakePurchases: boolean): PurchasesAdapter {
     onChange(cb) {
       subs.add(cb);
       return () => subs.delete(cb);
+    },
+    resetMock() {
+      set(false);
     },
   };
 }
