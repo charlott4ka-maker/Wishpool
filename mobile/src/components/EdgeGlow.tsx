@@ -25,14 +25,15 @@ const smooth = (a: number, b: number, t: number) => {
 function at(t: number): [string, number] {
   const deep = 0.95 * smooth(0.3, 1, t);
   const light = 0.4 * smooth(0.55, 1, t);
-  const edge = 0.25 * smooth(0.8, 1, t);
+  // the light right at the edge: narrow and clear, like the first version
+  const edge = 0.6 * smooth(0.9, 1, t);
   const a = 1 - (1 - deep) * (1 - light) * (1 - edge);
   if (a <= 0.001) return ["#144CCD", 0];
   const mix = (i: number) => Math.round((DEEP[i] * deep + LIGHT[i] * light + EDGE[i] * edge) / (deep + light + edge || 1));
   const hex = "#" + [0, 1, 2].map((i) => mix(i).toString(16).padStart(2, "0")).join("");
   return [hex, a];
 }
-const STOPS = Array.from({ length: 25 }, (_, i) => i / 24).map((t) => [t, ...at(t)] as const);
+const STOPS = Array.from({ length: 41 }, (_, i) => i / 40).map((t) => [t, ...at(t)] as const);
 
 export function EdgeGlow({ side }: { side: GlowSide }) {
   const [size, setSize] = useState({ w: 0, h: 0 });
