@@ -18,6 +18,7 @@ import { PREMIUM_ENABLED } from "../subscription/featureFlags";
 import type { PremiumPackage } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { EdgeGlow } from "../components/EdgeGlow";
+import { PERKS } from "../lib/perks";
 import { C } from "../theme/tokens";
 import { useWishpool } from "../store/WishpoolContext";
 import { useAccent } from "../theme/accent";
@@ -97,11 +98,25 @@ function Paywall() {
         </Pressable>
 
         {/* our glass star on top, the title and line under it, centred */}
-        <View className="flex-1 items-center justify-center py-8">
-          <Image source={require("../../assets/premium-star.png")} style={{ width: 96, height: 92, marginBottom: 16 }} contentFit="contain" />
+        <View className="items-center pt-6">
+          <Image source={require("../../assets/premium-star.png")} style={{ width: 80, height: 77, marginBottom: 12 }} contentFit="contain" />
           <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2 }}>Wishpool</Txt>
           <Txt className="text-center font-m800 text-[40px] leading-[44px]" style={{ letterSpacing: -1.2, color: "#8FC4FF" }}>Premium</Txt>
           <Txt className="mt-3 max-w-[300px] text-center text-[16px] leading-[22px] text-t2">{isPremium ? t("premiumActive") : t("premiumSub")}</Txt>
+        </View>
+
+        {/* what you get, short: one row per perk (the full list with lines is on the Premium page) */}
+        <View className="flex-1 justify-center py-6">
+          <View className="gap-3 self-center">
+            {PERKS.map(({ icon: Icon, tint, title }) => (
+              <View key={title} className="flex-row items-center gap-3">
+                <View className="items-center justify-center" style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: tint }}>
+                  <Icon size={16} color="#fff" strokeWidth={2.2} />
+                </View>
+                <Txt className="font-m600 text-[15px]">{t(title)}</Txt>
+              </View>
+            ))}
+          </View>
         </View>
 
         {isPremium ? (

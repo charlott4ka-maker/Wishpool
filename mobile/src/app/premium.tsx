@@ -4,7 +4,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { ChevronLeft, CreditCard, Folder, ImagePlus, type LucideIcon, Palette, Smartphone, Sticker as StickerIcon, Wallpaper } from "lucide-react-native";
+import { ChevronLeft, CreditCard } from "lucide-react-native";
 import { Linking, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -14,6 +14,7 @@ import { SettingsCell, SettingsGroup } from "../components/SettingsList";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { FOLDER_SKINS } from "../lib/folderSkins";
+import { PERKS } from "../lib/perks";
 import { PREVIEW_PREMIUM } from "../lib/premiumGate";
 import { useWishpool } from "../store/WishpoolContext";
 import { appIconsSupported } from "../subscription/appIcon";
@@ -21,14 +22,6 @@ import { useSubscription } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
-const PERKS: [LucideIcon, string, string, string][] = [
-  [Folder, "#0A82F9", "perkFolders", "perkFoldersSub"],
-  [ImagePlus, "#FF4D8D", "perkCover", "perkCoverSub"],
-  [StickerIcon, "#FF9500", "perkStickers", "perkStickersSub"],
-  [Wallpaper, "#5856D6", "perkRoomBg", "perkRoomBgSub"],
-  [Palette, "#AF52DE", "perkAccent", "perkAccentSub"],
-  [Smartphone, "#34C759", "perkIcon", "perkIconSub"],
-];
 
 export default function PremiumScreen() {
   useAccent(); // re-render in place when the app colour changes
@@ -57,7 +50,7 @@ export default function PremiumScreen() {
           {/* everything Premium gives, like Telegram's list */}
           <Txt className="mb-3 px-4 font-m600 text-[13px] uppercase text-t2" style={{ letterSpacing: 0.4 }}>{t("premiumPerks")}</Txt>
           <View className="mb-8 overflow-hidden rounded-card bg-raised">
-            {PERKS.map(([Icon, tint, title, sub], i) => (
+            {PERKS.map(({ icon: Icon, tint, title, sub }, i) => (
               <View key={title}>
                 <View className="flex-row gap-4 px-4 py-4">
                   <View className="items-center justify-center" style={{ width: 32, height: 32, borderRadius: 9, backgroundColor: tint }}>
