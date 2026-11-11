@@ -40,7 +40,7 @@ function Paywall() {
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isPremium, packages, purchase, restore, mock, loading } = useSubscription();
+  const { isPremium, packages, purchase, restore, loading } = useSubscription();
   const plans = [...packages].sort((a, b) => (ORDER[a.kind] ?? 9) - (ORDER[b.kind] ?? 9));
   const [selId, setSelId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -156,7 +156,6 @@ function Paywall() {
                     : t(sel.kind === "monthly" ? "planNoteMonth" : "planNoteYear", { price: sel.priceString })}
                 </Txt>
               ) : null}
-              {mock && plans.length ? <Txt className="mt-1 text-center text-[12.5px] leading-[18px] text-t3">{t("premiumMock")}</Txt> : null}
             </View>
           </>
         )}
