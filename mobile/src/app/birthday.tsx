@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Platform, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { fromISODate, toISODate } from "../components/DateRow";
+import { fromISODate, toISODate, DatePill } from "../components/DateRow";
 import { SheetHeader } from "../components/SheetHeader";
 import { Pill, Txt } from "../components/ui";
 import { toast } from "../components/Toast";
@@ -53,7 +53,12 @@ export default function BirthdaySheet() {
           // the iOS wheels keep their own width; centred, not hugging the left edge
           style={{ alignSelf: "center" }}
         />
-      ) : null}
+      ) : (
+        // web (Telegram): the browser's date field, so the birthday is actually picked
+        <View className="mb-2 items-center">
+          <DatePill value={toISODate(date)} onChange={(iso) => setDate(fromISODate(iso) || date)} maximumDate={new Date()} />
+        </View>
+      )}
       <Txt className="mb-6 mt-2 text-center text-[12.5px] leading-[17px] text-t3">{t("myBdayHint")}</Txt>
       <Pill full onPress={() => save(toISODate(date))}>{t("saveChanges")}</Pill>
       {birthday ? (

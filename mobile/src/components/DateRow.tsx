@@ -2,6 +2,7 @@
 // Dates are stored as "YYYY-MM-DD", like eventDate on the backend.
 
 import DateTimePicker from "@react-native-community/datetimepicker";
+import React from "react";
 import { Platform, View } from "react-native";
 
 import { useT } from "../i18n";
@@ -19,7 +20,18 @@ export function fromISODate(s?: string | null): Date | null {
 /** Just the picker, for use inside a row or a settings cell. */
 export function DatePill({ value, onChange, minimumDate, maximumDate }: { value: string | null; onChange: (iso: string) => void; minimumDate?: Date; maximumDate?: Date }) {
   const { lang } = useT();
-  if (Platform.OS === "web") return null; // no native picker on web previews
+  // web (Telegram): the browser's own date field, styled like our pill
+  if (Platform.OS === "web") {
+    const iso = (d?: Date) => (d ? toISODate(d) : undefined);
+    return React.createElement("input", {
+      type: "date",
+      value: value || "",
+      min: iso(minimumDate),
+      max: iso(maximumDate),
+      onChange: (e: { target: { value: string } }) => e.target.value && onChange(e.target.value),
+      style: { background: C.raised, color: value ? "#fff" : C.t2, border: "none", borderRadius: 999, height: 36, padding: "0 12px", fontSize: 15, fontFamily: "inherit", colorScheme: "dark", outline: "none" },
+    });
+  }
   return (
     <DateTimePicker
       value={fromISODate(value) || new Date()}

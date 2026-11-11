@@ -41,6 +41,7 @@
 - Swipes: onboarding pages flip with a swipe. Tabs switch only from the tab bar (a mid-screen swipe between tabs was tried and dropped).
 - Search (Wishes): while it's active the title row folds away, the field moves up, and the sign-in strip hides. No "Cancel" text: the × inside the field clears it and closes the search.
 - Never push a screen (the paywall) from inside an RN `Modal` while it stays open: it stays stuck on top after the screen closes and the page underneath freezes. Close the modal first, then push (`openPaywall` in app/room/new.tsx, `StickerPicker onLocked`).
+- Dates on web (Telegram): `DatePill` renders the browser's `<input type="date">` (the native picker only exists on iPhone; without it birthday rooms couldn't be made in Telegram and the profile birthday saved 2000-01-01).
 - Never put `className` on Reanimated views (`Animated.View`, `createAnimatedComponent`): NativeWind doesn't style them on device. Animated views get plain `style`; for press springs use `Press` (styled Pressable inside a transform-only Animated.View).
 
 ## Admin (web/public/admin)
