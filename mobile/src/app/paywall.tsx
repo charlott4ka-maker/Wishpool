@@ -21,6 +21,7 @@ import { EdgeGlow } from "../components/EdgeGlow";
 import { C } from "../theme/tokens";
 import { useWishpool } from "../store/WishpoolContext";
 import { useAccent } from "../theme/accent";
+import { track } from "../lib/track";
 
 // Our terms (they point to Apple's standard EULA too).
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || "https://wishpool.clickbrickk.com/terms";
@@ -37,6 +38,7 @@ export default function PaywallRoute() {
 }
 
 function Paywall() {
+  useEffect(() => track("paywall_open"), []);
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -61,6 +63,7 @@ function Paywall() {
     if (!sel || busy) return;
     setBusy(true);
     try {
+      track("paywall_buy_" + (sel.kind || "plan"));
       if (await purchase(sel)) {
         haptic("success");
         Alert.alert(t("premiumThanks"));

@@ -14,7 +14,7 @@ import { Pressable, View } from "react-native";
 import { useAuth } from "../auth/AuthContext";
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
-import { RemoteBanner as Banner, useRemoteConfig } from "../lib/remoteConfig";
+import { onToday, RemoteBanner as Banner, useRemoteConfig } from "../lib/remoteConfig";
 import { usePrefs } from "../settings/prefs";
 import { GUEST_OVERLAP } from "./GuestBanner";
 import { Sticker } from "./Sticker";
@@ -67,7 +67,7 @@ export function useRemoteBanner(): { banner: Banner | null; close: (id: string) 
   if (!closed || demo) return { banner: null, close };
   const who = status === "signedIn" ? "signedIn" : "guest";
   const banner =
-    banners.find((b) => (b.audience === "all" || b.audience === who) && !closed.includes(b.id) && (b.text[lang] || b.text.en || b.text.uk || b.text.ru)) ||
+    banners.find((b) => (b.audience === "all" || b.audience === who) && onToday(b.from, b.until) && !closed.includes(b.id) && (b.text[lang] || b.text.en || b.text.uk || b.text.ru)) ||
     // our own seasonal one when the admin page has none: Secret Santa till Christmas
     (season.newYear && who === "signedIn" && Date.now() < SANTA_UNTIL && !closed.includes(SANTA_BANNER.id) ? SANTA_BANNER : null);
   return { banner, close };

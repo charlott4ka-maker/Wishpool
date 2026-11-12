@@ -2,12 +2,12 @@
 // paywall instead of selecting.
 
 import { useRouter } from "expo-router";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { useT } from "../i18n";
 import { useRemoteConfig } from "../lib/remoteConfig";
 import { haptic } from "../lib/haptics";
-import { PREMIUM_ENABLED, STICKER_PACKS, stickerId } from "../subscription/featureFlags";
+import { orderedNames, orderedPacks, PREMIUM_ENABLED, stickerId } from "../subscription/featureFlags";
 import type { StickerName } from "./stickerAssets";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
@@ -27,15 +27,25 @@ export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked
   const extra = stickers.extra.map((s) => s.name);
   return (
     <View className="gap-4">
-      {[...STICKER_PACKS].sort((a, b) => Number(b.id === only) - Number(a.id === only)).filter((p) => PREMIUM_ENABLED || !p.isPremiumOnly).map((pack, i, packs) => {
+      {orderedPacks(stickers.packOrder).sort((a, b) => Number(b.id === only) - Number(a.id === only)).filter((p) => PREMIUM_ENABLED || !p.isPremiumOnly).map((pack, i, packs) => {
         const locked = pack.isPremiumOnly && !isPremium;
-        const names = [...(pack.stickers as string[]), ...(pack.id === "classic" ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k);
+        const names = orderedNames([...(pack.stickers as string[]), ...(pack.id === "classic" ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k), stickers.order?.[pack.id]);
         return (
           <View key={pack.id}>
             {packs.length > 1 ? (
               <View className="mb-2 flex-row items-center gap-2">
                 <Txt className="font-m600 text-[13px] text-t2">{t(pack.titleKey)}</Txt>
-                {pack.isPremiumOnly ? <PremiumBadge label={t("premiumOnly")} /> : null}
+                {pack.isPremiumOnly ? (
+                  locked ? (
+                    // locked: the badge opens the paywall too
+                    <Pressable onPress={() => (onLocked ? onLocked() : router.push("/paywall"))} hitSlop={6}>
+                      <PremiumBadge label={t("premiumOnly")} />
+                    </Pressable>
+                  ) : (
+                    // yours: just the crown
+                    <PremiumBadge />
+                  )
+                ) : null}
               </View>
             ) : null}
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>

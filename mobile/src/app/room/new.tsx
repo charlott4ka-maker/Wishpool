@@ -12,7 +12,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { SymbolView } from "expo-symbols";
 import Svg, { Circle, Rect } from "react-native-svg";
-import { Check, ImagePlus, Lock, Paintbrush, Plus, Star } from "lucide-react-native";
+import { Check, ImagePlus, Lock, Paintbrush, Plus } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { SlideInDown } from "react-native-reanimated";
@@ -28,7 +28,7 @@ import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker } from "../../components/StickerPicker";
-import { Chip, Field, Pill, Segmented, Txt } from "../../components/ui";
+import { Chip, Field, Pill, Segmented, Txt, PremiumButton } from "../../components/ui";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
@@ -36,7 +36,7 @@ import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, hex, ROOM_COLORS } from "../../theme/tokens";
-import { NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
+import { defaultSticker, NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { orderedSkins } from "../../lib/folderSkins";
 import { useRemoteConfig } from "../../lib/remoteConfig";
 import type { RoomType } from "../../types";
@@ -98,7 +98,8 @@ export default function CreateRoomScreen() {
   const skinLocked = PREMIUM_ENABLED && !isPremium && !admin;
   const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
   const [scrolled, setScrolled] = useState(false);
-  const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
+  const stickerCfg = useRemoteConfig().stickers;
+  const [emoji, setEmoji] = useState(editing?.emoji || defaultSticker(stickerCfg));
   const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
   const [skin, setSkin] = useState(editing?.skin || "");
   // premium folders in the order set on the admin page
@@ -150,7 +151,7 @@ export default function CreateRoomScreen() {
     // Secret Santa gets its own look unless a sticker or colour was already chosen
     // and only New Year stickers; leaving it puts back an ordinary one
     if (p.santa && !NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:santa");
-    if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:candle");
+    if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji(defaultSticker(stickerCfg));
     if (p.santa && tint === ROOM_COLORS[0]) setTint("#FF4D8D");
   };
   // opened from the Secret Santa banner: start as a Santa room
@@ -436,7 +437,7 @@ export default function CreateRoomScreen() {
                   <Txt className="text-center font-m800 text-[20px]">{t("premiumFoldersTitle")}</Txt>
                   <Txt className="mt-1 text-center text-[14px] leading-[20px] text-white">{t("premiumFoldersSub", { n: skins.length })}</Txt>
                   <View className="mt-4">
-                    <Pill px={24} icon={<Star size={17} color="#fff" fill="#fff" strokeWidth={1.5} />} onPress={() => openPaywall()}>{t("premiumOpen")}</Pill>
+                    <PremiumButton label={t("premiumOpen")} onPress={() => openPaywall()} />
                   </View>
                 </View>
               </View>

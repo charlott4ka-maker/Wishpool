@@ -39,6 +39,7 @@ import { C, H, hex } from "../../theme/tokens";
 import type { Member, Wish } from "../../types";
 import { BOT_APP, IN_TG, tgShare } from "../../lib/telegram";
 import { useAccent } from "../../theme/accent";
+import { useFlag } from "../../lib/flags";
 
 type Detail = { lists: { member: Member; wishes: RoomWish[] }[]; mine: Wish[]; members?: (Member & { you?: boolean })[]; owner?: boolean };
 
@@ -84,11 +85,12 @@ export default function RoomScreen() {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
 
   // a Secret Santa room (it wears a New Year sticker): snow every time it's opened
+  const santaSnow = useFlag("santaSnow");
   const santa = !!room && NEW_YEAR_STICKERS.includes(room.emoji);
   const [snow, setSnow] = useState(false);
   useEffect(() => {
-    if (santa && room) setSnow(true);
-  }, [santa, room?.id]);
+    if (santa && room && santaSnow) setSnow(true);
+  }, [santa, room?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const snowDone = useCallback(() => setSnow(false), []);
 
   if (!room) return <Empty emoji="stk:ghost" title={t("roomGone")} action={<Pill onPress={goBack}>{t("back")}</Pill>} />;

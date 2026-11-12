@@ -11,6 +11,7 @@ import { haptic } from "../lib/haptics";
 import { APP_ICONS, changeAppIcon, currentAppIcon, type AppIconOption } from "../subscription/appIcon";
 import { C } from "../theme/tokens";
 import { Txt } from "./ui";
+import { track } from "../lib/track";
 
 export function IconPicker({ unlocked }: { unlocked: boolean }) {
   const { t } = useT();
@@ -20,7 +21,10 @@ export function IconPicker({ unlocked }: { unlocked: boolean }) {
     if (name === icon) return;
     if (name && !unlocked) return router.push("/paywall");
     haptic("select");
-    if (await changeAppIcon(name, true).catch(() => false)) setIcon(name);
+    if (await changeAppIcon(name, true).catch(() => false)) {
+      setIcon(name);
+      track("icon_" + String(name).toLowerCase());
+    }
   };
   return (
     <View className="mb-8">

@@ -14,6 +14,9 @@ import { friendRoutes } from "./friends.js";
 import { drawRoutes } from "./draw.js";
 import { reviewDemoRoutes } from "./review-demo.js";
 import { adminLoginRoute, ADMIN_PANEL_ID } from "./admin-auth.js";
+import { premiumAdminRoutes, premiumGift, revenueCatWebhook } from "./premium.js";
+import { supportRoutes } from "./support.js";
+import { insightsRoutes } from "./insights.js";
 
 export async function createApp() {
   const BOT_TOKEN = process.env.BOT_TOKEN || "";
@@ -206,6 +209,8 @@ export async function createApp() {
   app.use("/api/admin-login", adminLoginRoute(store));
   // Texts, banners and stickers from the admin page (public, cached a minute).
   app.get("/api/config", publicConfigRoute(store));
+  // RevenueCat's webhook: purchases, renewals, cancellations (server/premium.js)
+  app.post("/api/revenuecat", revenueCatWebhook(store));
 
   const api = express.Router();
   // API responses must never be conditionally cached (304) — each call needs a fresh body.
@@ -232,6 +237,9 @@ export async function createApp() {
     return emails.length > 0 && (await store.userEmails(String(id))).some(e => emails.includes(e));
   };
   adminConfigRoutes(api, store, (req) => isAdmin(req.user.id));
+  premiumAdminRoutes(api, store, (req) => isAdmin(req.user.id));
+  supportRoutes(api, store, (req) => isAdmin(req.user.id));
+  insightsRoutes(api, store, (req) => isAdmin(req.user.id));
   friendRoutes(api, store);
   reviewDemoRoutes(api, store);
   moderationRoutes(api, store, {
@@ -314,8 +322,8 @@ export async function createApp() {
       })),
     ]);
     // friend requests and room invitations waiting for you (a dot on the profile)
-    const [reqs, invs] = await Promise.all([store.incomingRequests(me), store.roomInvitesFor(me)]);
-    res.json({ me: meUser, admin: await isAdmin(me), wishes, rooms: rooms.filter(Boolean), inbox: reqs.length + invs.length });
+    const [reqs, invs, gift, supportUnread] = await Promise.all([store.incomingRequests(me), store.roomInvitesFor(me), premiumGift(store, me), store.supportUnread(me)]);
+    res.json({ me: meUser, admin: await isAdmin(me), wishes, rooms: rooms.filter(Boolean), inbox: reqs.length + invs.length, premiumGift: gift, supportUnread });
   });
 
   api.post("/wishes", async (req, res) => {

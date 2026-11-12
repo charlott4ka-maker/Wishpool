@@ -46,7 +46,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const prefs = usePrefs();
   const { status, signOut } = useAuth();
-  const { refresh } = useWishpool();
+  const { refresh, supportUnread } = useWishpool();
   const { season: { newYear } } = useRemoteConfig();
   const { isPremium } = useSubscription();
   const version = Constants.expoConfig?.version || "1.0.0";
@@ -224,7 +224,21 @@ export default function SettingsScreen() {
           <SettingsCell icon={Send} tint="#2AABEE" label={t("channel")} onPress={() => WebBrowser.openBrowserAsync("https://t.me/charlot4k_ui")} />
           <SettingsCell icon={FileText} tint="#8E8E93" label={t("legalTerms")} onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)} />
           <SettingsCell icon={Shield} tint="#8E8E93" label={t("legalPrivacy")} onPress={() => WebBrowser.openBrowserAsync(`${PRIVACY_URL}?lang=${lang}`)} />
-          <SettingsCell icon={LifeBuoy} tint="#34C759" label={t("support")} onPress={() => writeSupport(t("supportCopied", { email: SUPPORT_EMAIL }))} />
+          {/* signed in: the chat (a red count while an answer waits); guests: an e-mail */}
+          <SettingsCell
+            icon={LifeBuoy}
+            tint="#34C759"
+            label={t("support")}
+            onPress={() => (status === "signedIn" ? router.push("/support") : writeSupport(t("supportCopied", { email: SUPPORT_EMAIL })))}
+            chevron
+            right={
+              supportUnread ? (
+                <View className="ml-2 h-6 min-w-6 items-center justify-center rounded-full px-2" style={{ backgroundColor: "#FF3B30" }}>
+                  <Txt className="font-m700 text-[13px] text-white">{supportUnread}</Txt>
+                </View>
+              ) : null
+            }
+          />
         </SettingsGroup>
 
         <SettingsGroup title={t("setAccount")}>

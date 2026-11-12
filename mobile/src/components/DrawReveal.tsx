@@ -62,7 +62,7 @@ export function DrawReveal({ roomId, target }: { roomId: string; target: Member 
           <Txt className="text-[15px] text-t2">{t("youGot")}</Txt>
           <Txt className="mt-1 text-center font-m800 text-[30px]">{target.name}</Txt>
           <Txt className="mt-2 text-center text-[14px] leading-[20px] text-t2">{t("revealSecret")}</Txt>
-          <View className="mt-8 w-full" style={{ minWidth: 240 }}>
+          <View className="mt-8" style={{ width: 260 }}>
             <Pill full onPress={close}>{t("revealOk")}</Pill>
           </View>
         </Animated.View>

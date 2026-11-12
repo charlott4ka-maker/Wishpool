@@ -14,11 +14,13 @@ import { C } from "../theme/tokens";
 import { DrawReveal } from "./DrawReveal";
 import { Sticker } from "./Sticker";
 import { Avatar, Pill, Txt } from "./ui";
+import { useFlag } from "../lib/flags";
 
 export function DrawCard({ roomId, draw, members, owner, onChanged }: { roomId: string; draw: DrawData | null; members: number; owner: boolean; onChanged?: () => void }) {
   const { t } = useT();
   const router = useRouter();
   const [adding, setAdding] = useState(false);
+  const reveal = useFlag("drawReveal");
   const open = () =>
     router.push({ pathname: "/room/draw", params: { id: roomId, budget: draw?.budget || "", again: draw?.drawn ? "1" : "", no: JSON.stringify(draw?.exclusions || []) } });
   // people who joined after the draw: the owner slots them in (one pair changes each)
@@ -55,7 +57,7 @@ export function DrawCard({ roomId, draw, members, owner, onChanged }: { roomId: 
     return (
       <View className="rounded-card bg-raised p-4">
         {/* the first time: the gift opens and shows who it is */}
-        <DrawReveal roomId={roomId} target={draw.target} />
+        {reveal ? <DrawReveal roomId={roomId} target={draw.target} /> : null}
         <View className="flex-row items-center gap-3">
           <Avatar m={draw.target} size={48} />
           <View className="flex-1">

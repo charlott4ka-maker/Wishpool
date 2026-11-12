@@ -54,7 +54,16 @@ const skinIds = [...fs.readFileSync(path.join(here, "..", "src/lib/folderSkins.t
 const fdir = path.join(here, "..", "..", "web/public/admin/folders");
 fs.mkdirSync(fdir, { recursive: true });
 for (const id of skinIds) for (const part of ["back", "front"]) fs.copyFileSync(path.join(here, "..", "assets/folders", `${id}_${part}.webp`), path.join(fdir, `${id}_${part}.webp`));
-const out = { strings, stickers: { bundled, inPicker }, folders: skinIds, screens };
+// the sticker packs in the app's own order: id, Russian title, stickers
+const packs = [...flags.matchAll(/id:\s*"([a-z0-9_-]+)",[\s\S]*?titleKey:\s*"([A-Za-z0-9_]+)",[\s\S]*?stickers:\s*\[([\s\S]*?)\]/g)].map((m) => ({
+  id: m[1],
+  title: (strings[m[2]] && strings[m[2]].ru) || m[1],
+  stickers: [...m[3].replace(/\/\/.*$/gm, "").matchAll(/"([a-z0-9_-]+)"/g)].map((x) => x[1]),
+}));
+// feature switches for the Флаги tab (lib/flags.ts FLAGS)
+const flagSrc = fs.readFileSync(path.join(src, "lib/flags.ts"), "utf8");
+const featureFlags = [...flagSrc.matchAll(/\{ id: "([a-zA-Z0-9_]+)", title: "([^"]*)", about: "([^"]*)", on: (true|false) \}/g)].map((m) => ({ id: m[1], title: m[2], about: m[3], on: m[4] === "true" }));
+const out = { strings, stickers: { bundled, inPicker, packs }, folders: skinIds, screens, flags: featureFlags };
 const file = path.join(here, "..", "..", "web/public/admin/app-data.json");
 fs.mkdirSync(path.dirname(file), { recursive: true });
 fs.writeFileSync(file, JSON.stringify(out));

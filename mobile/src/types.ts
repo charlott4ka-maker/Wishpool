@@ -61,6 +61,10 @@ export type AppState = {
   inbox?: number;
   /** this account can use the admin page (and try premium looks before launch) */
   admin?: boolean;
+  /** Premium given on the admin page: until when (ms), or forever */
+  premiumGift?: { until: number; forever: boolean } | null;
+  /** answers from support not read yet (a red count on Settings › Support) */
+  supportUnread?: number;
 };
 
 export type NewWish = Omit<Wish, "id" | "giftedAt"> & { rooms: string[] };

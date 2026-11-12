@@ -18,6 +18,8 @@ export function setAuthToken(t: string | null) {
   token = t;
 }
 
+export type SupportMsg = { id: string; author: "user" | "admin"; text: string; at: number };
+
 export class ApiError extends Error {
   constructor(message: string, public status = 0, public net = false) {
     super(message);
@@ -145,6 +147,11 @@ export const api = {
   reviewDemo: (lang: string) => req("POST", "/review-demo", { lang }),
   report: (b: { wishId?: string; userId?: string; roomId?: string; reason: string }) => req("POST", "/reports", b),
   block: (userId: string) => req("POST", "/blocks", { userId }),
+  // support chat (server/support.js)
+  support: () => req<{ messages: SupportMsg[] }>("GET", "/support"),
+  sendSupport: (text: string, meta: string) => req<{ message: SupportMsg }>("POST", "/support", { text, meta }),
+  // a few picks for the admin page's «Популярное» (app colour, icon, paywall)
+  ev: (names: string[]) => req("POST", "/ev", { names }),
   unblock: (userId: string) => req("DELETE", "/blocks/" + encodeURIComponent(userId)),
   /** Name / photo from the profile editor (photo: a JPEG data URL, an unchanged https URL, or null). */
   updateMe: (b: { name?: string; photo?: string | null }) => req<{ user: AuthUser }>("PATCH", "/me", b),

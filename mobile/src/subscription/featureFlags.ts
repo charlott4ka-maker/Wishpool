@@ -82,3 +82,25 @@ export function canUse(feature: PremiumFeature, isPremium: boolean): boolean {
       return isPremium;
   }
 }
+
+/** The packs in the admin page's order (any it doesn't list keep the app's order, after). */
+export function orderedPacks(order?: string[]): StickerPack[] {
+  const o = order || [];
+  const rank = (id: string) => (o.includes(id) ? o.indexOf(id) : o.length + STICKER_PACKS.findIndex((p) => p.id === id));
+  return [...STICKER_PACKS].sort((a, b) => rank(a.id) - rank(b.id));
+}
+
+/** A pack's stickers in the admin page's order (new ones it doesn't list keep their place, after). */
+export function orderedNames(names: string[], order?: string[]): string[] {
+  const o = (order || []).filter((n) => names.includes(n));
+  return [...o, ...names.filter((n) => !o.includes(n))];
+}
+
+/** The sticker a new room or wish starts with: the first classic sticker in the
+ *  admin page's order (not hidden), else the candle. */
+export function defaultSticker(cfg?: { order?: Record<string, string[]>; hidden?: string[] }): string {
+  const classic = STICKER_PACKS.find((p) => p.id === "classic");
+  const hidden = new Set(cfg?.hidden || []);
+  const first = classic ? orderedNames(classic.stickers as string[], cfg?.order?.classic).find((n) => !hidden.has(n)) : undefined;
+  return first ? `stk:${first}` : "stk:candle";
+}

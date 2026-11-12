@@ -168,6 +168,8 @@ try {
   await call("PUT", "/api/admin/config/banners", { value: [
     { id: "save", active: true, audience: "signedIn", text: { ru: "Привет" }, color1: "#ff0000", textColor: "#000000", action: "link", url: "https://example.com" },
     { id: "off", active: false, text: { ru: "Нет" } },
+    { id: "later", active: true, text: { ru: "Потом" }, from: "2099-01-01" },
+    { id: "gone", active: true, text: { ru: "Было" }, until: "2001-01-01" },
   ] }, rv.body.token);
   const up = await call("POST", "/api/admin/sticker", { name: "star-new", image: "data:image/webp;base64,UklGRg==" }, rv.body.token);
   assert.equal(up.status, 200);
@@ -178,7 +180,57 @@ try {
   assert.deepEqual(pub.body.strings, { poolTitle: { ru: "Хотелки" } });
   assert.equal(pub.body.banners.length, 1);
   assert.equal(pub.body.banners[0].color2, "#ff0000");
-  assert.deepEqual(pub.body.stickers, { hidden: ["uno"], extra: [{ name: "star-new" }] });
+  assert.deepEqual(pub.body.stickers, { hidden: ["uno"], extra: [{ name: "star-new" }], packOrder: [], order: {} });
+  // Premium gifts: found by e-mail, given for a month (added on top), shown in /state, taken back
+  const me0 = (await call("GET", "/api/state", null, rv.body.token)).body;
+  assert.equal(me0.premiumGift, null);
+  const found = await call("GET", "/api/admin/premium/users?q=review@wishpool", null, rv.body.token);
+  assert.equal(found.body.users[0].id, me0.me.id);
+  assert.equal((await call("POST", "/api/admin/premium/grant", { userId: "nobody", days: 30 }, rv.body.token)).status, 404);
+  const g1 = await call("POST", "/api/admin/premium/grant", { userId: me0.me.id, days: 30, note: "test" }, rv.body.token);
+  const g2 = await call("POST", "/api/admin/premium/grant", { userId: me0.me.id, days: 30 }, rv.body.token);
+  assert.ok(Math.abs(g2.body.until - g1.body.until - 30 * 86400000) < 5000);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.premiumGift.until, g2.body.until);
+  await call("POST", "/api/admin/premium/grant", { userId: me0.me.id, days: 0 }, rv.body.token);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.premiumGift.forever, true);
+  // RevenueCat webhook: needs the shared header; a trial that converted, a sandbox one ignored
+  const hook = (event, auth = "rc-secret") => fetch(base + "/api/revenuecat", { method: "POST", headers: { "Content-Type": "application/json", Authorization: auth }, body: JSON.stringify({ event }) }).then(r => r.status);
+  assert.equal(await hook({ type: "TEST" }), 401);
+  process.env.REVENUECAT_WEBHOOK_AUTH = "rc-secret";
+  assert.equal(await hook({ type: "TEST" }, "wrong"), 401);
+  const now = Date.now(), D = 86400000;
+  await hook({ id: "e1", type: "INITIAL_PURCHASE", app_user_id: me0.me.id, product_id: "app.wishpool.premium.annual", period_type: "TRIAL", price: 0, environment: "PRODUCTION", event_timestamp_ms: now - 10 * D, expiration_at_ms: now - 3 * D });
+  await hook({ id: "e2", type: "RENEWAL", app_user_id: me0.me.id, product_id: "app.wishpool.premium.annual", period_type: "NORMAL", price: 24.99, is_trial_conversion: true, environment: "PRODUCTION", event_timestamp_ms: now - 3 * D, expiration_at_ms: now + 360 * D });
+  await hook({ id: "e2", type: "RENEWAL", app_user_id: me0.me.id, price: 24.99, environment: "PRODUCTION", event_timestamp_ms: now - 3 * D });
+  await hook({ id: "e3", type: "INITIAL_PURCHASE", app_user_id: "x", period_type: "NORMAL", price: 4.99, environment: "SANDBOX", event_timestamp_ms: now, expiration_at_ms: now + 30 * D });
+  const prem = (await call("GET", "/api/admin/premium", null, rv.body.token)).body;
+  assert.equal(prem.stats.subs, 1); assert.equal(prem.stats.annual, 1); assert.equal(prem.stats.converted30, 1); assert.equal(prem.stats.trialsEnded30, 1);
+  assert.equal(prem.stats.revenue30, 24.99); assert.equal(prem.stats.sandbox, 1);
+  assert.equal(prem.recent[0].name, "Rev"); assert.equal(prem.grants[0].forever, true);
+  delete process.env.REVENUECAT_WEBHOOK_AUTH;
+  // feature switches: cleaned and public
+  await call("PUT", "/api/admin/config/flags", { value: { holidaySnow: { on: false, percent: 140 }, "bad key": { on: true } } }, rv.body.token);
+  assert.deepEqual((await call("GET", "/api/config")).body.flags, { holidaySnow: { on: false, percent: 100 } });
+  // analytics: funnel and picks
+  const ins = (await call("GET", "/api/admin/insights?days=30", null, rv.body.token)).body;
+  assert.equal(ins.days, 30); assert.ok(ins.funnel.n >= 1); assert.ok(Array.isArray(ins.popular.wishStickers));
+  await call("POST", "/api/ev", { names: ["accent_pink"] }, rv.body.token);
+  assert.ok((await call("GET", "/api/admin/insights", null, rv.body.token)).body.popular.picks.some(p => p.id === "accent_pink"));
+  // support chat: a message, the admin answers, the person sees one unread until they open it
+  assert.equal((await call("POST", "/api/support", { text: "  " }, rv.body.token)).status, 400);
+  await call("POST", "/api/support", { text: "Не грузится фото", meta: "1.0.2 ios" }, rv.body.token);
+  const th = (await call("GET", "/api/admin/support", null, rv.body.token)).body.threads;
+  assert.equal(th[0].unread, 1); assert.equal(th[0].status, "open");
+  const one = (await call("GET", "/api/admin/support/" + me0.me.id, null, rv.body.token)).body;
+  assert.equal(one.messages[0].text, "Не грузится фото"); assert.equal(one.thread.meta, "1.0.2 ios");
+  const rep = await call("POST", "/api/admin/support/" + me0.me.id, { text: "Уже чиним" }, rv.body.token);
+  assert.equal(rep.body.mailed, true);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.supportUnread, 1);
+  assert.equal((await call("GET", "/api/support", null, rv.body.token)).body.messages.length, 2);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.supportUnread, 0);
+  assert.equal((await call("GET", "/api/admin/support", null, rv.body.token)).body.threads[0].status, "done");
+  await call("DELETE", "/api/admin/premium/grant/" + me0.me.id, null, rv.body.token);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.premiumGift, null);
   delete process.env.ADMIN_EMAILS;
 
   globalThis.fetch = realFetch;

@@ -38,12 +38,12 @@
     show("login", false);
     if (!token) { show("login", true); return; }
     Promise.all([api("GET", "/admin/config"), fetch("/admin/app-data.json").then(function (r) { return r.json(); })]).then(function (res) {
-      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [] }, folders: res[0].folders || { order: [], hidden: [] }, season: res[0].season || { newYear: true }, news: res[0].news || [] };
+      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [], packOrder: [] }, folders: res[0].folders || { order: [], hidden: [] }, season: res[0].season || { newYear: true }, flags: res[0].flags || {}, news: res[0].news || [] };
       draft = clone(saved);
       data = res[1];
       show("noStorage", !res[0].storage);
       show("app", true); show("logout", true);
-      renderAll(); loadStats(); startPreview();
+      renderAll(); loadStats(); startPreview(); supportCount();
     }).catch(function () {
       localStorage.removeItem("wp_admin_token"); token = ""; show("login", true);
     });
@@ -59,6 +59,9 @@
       pv.clearMark(); pv.note("");
       if (tab === "reports") loadReports();
       if (tab === "stats") loadStats();
+      if (tab === "premium") loadPremium();
+      if (tab === "insights") loadInsights();
+      if (tab === "support") loadSupport();
       if (tab === "banners") { pv.go("/"); pv.push(); }
       if (tab === "stickers") pv.go("/wish/new");
       if (tab === "folders") pv.go("/room/new");
@@ -66,17 +69,17 @@
     };
   });
   function dirty(key) { return JSON.stringify(saved[key]) !== JSON.stringify(draft[key]); }
-  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders", "season", "news"].some(dirty)); pv.push(); }
+  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders", "season", "news", "flags"].some(dirty)); pv.push(); }
   $("discard").onclick = function () { draft = clone(saved); renderAll(); };
   $("save").onclick = function () {
-    var keys = ["banners", "strings", "stickers", "folders", "season", "news"].filter(dirty);
+    var keys = ["banners", "strings", "stickers", "folders", "season", "news", "flags"].filter(dirty);
     Promise.all(keys.map(function (k) { return api("PUT", "/admin/config/" + k, { value: draft[k] }).then(function (r) { saved[k] = r.value; }); }))
       .then(function () { draft = clone(saved); renderAll(); toast("Сохранено"); })
       .catch(function (e) { toast("Ошибка: " + e.message); });
   };
-  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders", "season", "news"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
+  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders", "season", "news", "flags"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
 
-  function renderAll() { renderBanners(); renderNews(); renderSeason(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
+  function renderAll() { renderFlags(); renderBanners(); renderNews(); renderSeason(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
 
   // ---------- the season (New Year) ----------
   function renderSeason() {
@@ -85,6 +88,18 @@
   }
   $("seasonNY").onchange = function () { draft.season = { newYear: $("seasonNY").checked }; updateBar(); };
 
+  // ---------- schedules (banners, notifications) ----------
+  function today() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function ddmm(iso) { var p = String(iso).split("-"); return p[2] + "." + p[1]; }
+  // a chip next to "on": waits for its first day, runs, or is over
+  function schedChip(active, from, until) {
+    if (!active) return "";
+    var t = today();
+    if (from && from > t) return '<span class="sch wait">Запланировано с ' + ddmm(from) + "</span>";
+    if (until && until < t) return '<span class="sch over">Закончилось ' + ddmm(until) + "</span>";
+    return '<span class="sch live">Показывается' + (until ? " до " + ddmm(until) : "") + "</span>";
+  }
+
   // ---------- banners ----------
   function stickerUrl(name) { return "/stickers/" + name + ".webp"; }
   function allStickerNames() { return data.stickers.inPicker.concat(draft.stickers.extra.map(function (s) { return s.name; })); }
@@ -92,8 +107,12 @@
     var stickers = allStickerNames().map(function (n) { return '<option value="stk:' + n + '"' + (b.sticker === "stk:" + n ? " selected" : "") + ">" + n + "</option>"; }).join("");
     var texts = LANGS.map(function (l) { return '<div><label class="f">Текст ' + LNAME[l] + '</label><textarea data-b="' + i + '" data-k="text.' + l + '" maxlength="200">' + esc(b.text[l]) + "</textarea></div>"; }).join("");
     return '<div class="item' + (b.id === focusBanner ? " focus" : "") + '" data-bid="' + esc(b.id) + '">' +
-      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-b="' + i + '" data-k="active"' + (b.active ? " checked" : "") + "> Включён</label>" +
+      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-b="' + i + '" data-k="active"' + (b.active ? " checked" : "") + "> Включён</label>" + schedChip(b.active, b.from, b.until) +
       '<button class="btn2 danger sm" data-del="' + i + '" style="margin-left:auto">Удалить</button></div>' +
+      '<div class="row" style="gap:16px;margin-top:10px">' +
+      '<label class="hint">Показывать с <input type="date" data-b="' + i + '" data-k="from" value="' + esc(b.from || "") + '"></label>' +
+      '<label class="hint">по <input type="date" data-b="' + i + '" data-k="until" value="' + esc(b.until || "") + '"></label>' +
+      '<span class="hint">пусто = без ограничения, включается и выключается сам</span></div>' +
       '<label class="f">Кому показывать</label><select data-b="' + i + '" data-k="audience">' +
       [["signedIn", "Только вошедшим в аккаунт"], ["guest", "Только гостям (вместо плашки «Войти»)"], ["all", "Всем"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.audience === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       '<div class="grid3">' + texts + "</div>" +
@@ -103,7 +122,7 @@
       '<label class="row hint" style="gap:6px"><input type="color" data-b="' + i + '" data-k="textColor" value="' + b.textColor + '"> Текст</label></div>' +
       '<label class="f">Стикер</label><select data-b="' + i + '" data-k="sticker"><option value="">без стикера</option>' + stickers + "</select>" +
       '<label class="f">По нажатию</label><select data-b="' + i + '" data-k="action">' +
-      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"], ["santa", "Создать комнату Тайного Санты"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
+      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"], ["santa", "Создать комнату Тайного Санты (с 1.0.2)"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       (b.action === "link" ? '<label class="f">Ссылка (https://…)</label><input type="url" data-b="' + i + '" data-k="url" value="' + esc(b.url) + '" placeholder="https://">' : "") +
       '<label class="row hint" style="gap:6px;margin-top:12px"><input type="checkbox" data-b="' + i + '" data-k="dismissible"' + (b.dismissible ? " checked" : "") + "> Можно закрыть крестиком</label>" +
       "</div>";
@@ -114,7 +133,7 @@
   $("addBanner").onclick = function () {
     var id = "b" + Date.now().toString(36);
     focusBanner = id;
-    draft.banners.push({ id: id, active: false, audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true });
+    draft.banners.push({ id: id, active: false, audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true, from: "", until: "" });
     renderBanners(); updateBar();
   };
   $("bannerList").addEventListener("input", onBannerEdit);
@@ -128,7 +147,7 @@
     // redraw the preview (and the link field) without losing the caret in a text field
     // only selects, checkboxes and colours redraw the card: a text field's "change"
     // fires when it loses focus, and a redraw then would swallow the next click
-    if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "color") { if (e.type === "change" || el.type === "color") renderBanners(); }
+    if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "color" || el.type === "date") { if (e.type === "change" || el.type === "color") renderBanners(); }
     updateBar();
   }
   $("bannerList").addEventListener("click", function (e) {
@@ -232,16 +251,61 @@
   });
 
   // ---------- stickers ----------
+  // the packs in the order the app shows them (the admin's order first)
+  function packOrder() {
+    var all = (data.stickers.packs || []).map(function (p) { return p.id; });
+    var o = (draft.stickers.packOrder || []).filter(function (id) { return all.indexOf(id) >= 0; });
+    return o.concat(all.filter(function (id) { return o.indexOf(id) < 0; }));
+  }
+  function isExtra(n) { return draft.stickers.extra.some(function (s) { return s.name === n; }); }
+  // a pack's stickers in the admin's order (uploaded ones join the classic pack)
+  function packNames(id) {
+    var p = (data.stickers.packs || []).filter(function (x) { return x.id === id; })[0];
+    var all = p.stickers.concat(id === "classic" ? draft.stickers.extra.map(function (s) { return s.name; }) : []);
+    var o = ((draft.stickers.order || {})[id] || []).filter(function (n) { return all.indexOf(n) >= 0; });
+    return o.concat(all.filter(function (n) { return o.indexOf(n) < 0; }));
+  }
   function renderStickers() {
     var hidden = draft.stickers.hidden;
-    var tiles = data.stickers.inPicker.map(function (n) { return { n: n, isNew: false }; })
-      .concat(draft.stickers.extra.map(function (s) { return { n: s.name, isNew: true }; }));
-    $("stickerGrid").innerHTML = tiles.map(function (t) {
-      var off = hidden.indexOf(t.n) >= 0;
-      return '<div class="s' + (off ? " off" : "") + (t.isNew ? " new" : "") + '" data-n="' + t.n + '"><img src="' + stickerUrl(t.n) + '" alt="">' + esc(t.n) +
-        (off ? "<br>скрыт" : "") + (t.isNew ? '<br><button class="btn2 danger sm" data-rm="' + t.n + '" style="margin-top:6px">Удалить</button>' : "") + "</div>";
+    var packs = {}; (data.stickers.packs || []).forEach(function (p) { packs[p.id] = p; });
+    $("stickerGrid").innerHTML = packOrder().map(function (id, i) {
+      var p = packs[id];
+      var tiles = packNames(id).map(function (n) { return { n: n, isNew: isExtra(n) }; });
+      return '<div class="pk" data-pack="' + id + '"><div class="pkh" draggable="true"><span class="grip">⠿</span><b>' + (i + 1) + ". " + esc(p.title) + "</b>" + (id === "party" ? ' <span class="soon">Premium · выйдет в 1.0.2</span>' : "") + "</div>" +
+        '<div class="stk">' + tiles.map(function (t) {
+          var off = hidden.indexOf(t.n) >= 0;
+          return '<div class="s' + (off ? " off" : "") + (t.isNew ? " new" : "") + '" draggable="true" data-n="' + t.n + '"><img src="' + stickerUrl(t.n) + '" alt="" draggable="false">' + esc(t.n) +
+            (off ? "<br>скрыт" : "") + (t.isNew ? '<br><button class="btn2 danger sm" data-rm="' + t.n + '" style="margin-top:6px">Удалить</button>' : "") + "</div>";
+        }).join("") + "</div></div>";
     }).join("");
   }
+  // drag a pack (by its header or anywhere on it) to change the order
+  var dragPack = null, dragStk = null, dragStkPack = null;
+  $("stickerGrid").addEventListener("dragstart", function (e) {
+    var st = e.target.closest && e.target.closest(".s");
+    if (st) { dragStk = st.dataset.n; dragStkPack = st.closest(".pk").dataset.pack; st.classList.add("drag"); e.dataTransfer.effectAllowed = "move"; return; }
+    var h = e.target.closest && e.target.closest(".pkh"); if (!h) return;
+    dragPack = h.closest(".pk").dataset.pack; h.closest(".pk").classList.add("drag"); e.dataTransfer.effectAllowed = "move";
+  });
+  $("stickerGrid").addEventListener("dragend", function () { dragPack = null; dragStk = null; renderStickers(); });
+  $("stickerGrid").addEventListener("dragover", function (e) {
+    document.querySelectorAll("#stickerGrid .over").forEach(function (x) { x.classList.remove("over"); });
+    if (dragStk) { var s2 = e.target.closest(".s"); if (!s2 || s2.closest(".pk").dataset.pack !== dragStkPack) return; e.preventDefault(); s2.classList.add("over"); return; }
+    var t = e.target.closest(".pk"); if (!t || !dragPack) return; e.preventDefault(); t.classList.add("over");
+  });
+  $("stickerGrid").addEventListener("drop", function (e) {
+    if (dragStk) {
+      var s2 = e.target.closest(".s"); if (!s2 || s2.closest(".pk").dataset.pack !== dragStkPack) return; e.preventDefault();
+      var cur2 = packNames(dragStkPack), o2 = cur2.filter(function (n) { return n !== dragStk; });
+      o2.splice(o2.indexOf(s2.dataset.n) + (cur2.indexOf(dragStk) < cur2.indexOf(s2.dataset.n) ? 1 : 0), 0, dragStk);
+      draft.stickers.order = Object.assign({}, draft.stickers.order || {}); draft.stickers.order[dragStkPack] = o2;
+      dragStk = null; renderStickers(); updateBar(); return;
+    }
+    var t = e.target.closest(".pk"); if (!t || !dragPack) return; e.preventDefault();
+    var cur = packOrder(), o = cur.filter(function (id) { return id !== dragPack; });
+    o.splice(o.indexOf(t.dataset.pack) + (cur.indexOf(dragPack) < cur.indexOf(t.dataset.pack) ? 1 : 0), 0, dragPack);
+    draft.stickers.packOrder = o; dragPack = null; renderStickers(); updateBar();
+  });
   $("stickerGrid").addEventListener("click", function (e) {
     var rm = e.target.dataset && e.target.dataset.rm;
     if (rm) {
@@ -305,11 +369,12 @@
         l3(i, "blocks." + k + ".text", b.text, b.type === "list" ? "Пункты" : "Текст", true, 1500) + "</div>";
     }).join("");
     return '<div class="item' + (n.id === focusNews ? " focus" : "") + '" data-nid="' + esc(n.id) + '">' +
-      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-n="' + i + '" data-k="active"' + (n.active ? " checked" : "") + "> Опубликовано</label>" +
+      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-n="' + i + '" data-k="active"' + (n.active ? " checked" : "") + "> Опубликовано</label>" + schedChip(n.active, n.date, n.until) +
       '<button class="btn2 danger sm" data-ndel="' + i + '" style="margin-left:auto">Удалить</button></div>' +
       '<div class="row" style="gap:16px;margin-top:8px;flex-wrap:wrap">' +
       '<label class="hint">Кому <select data-n="' + i + '" data-k="audience">' + opts([["all", "Всем"], ["signedIn", "Только вошедшим"], ["guest", "Только гостям"]], n.audience) + "</select></label>" +
-      '<label class="hint">Дата <input type="date" data-n="' + i + '" data-k="date" value="' + esc(n.date) + '"></label>' +
+      '<label class="hint" title="В этот день уведомление появится у людей; до него ждёт">Дата выхода <input type="date" data-n="' + i + '" data-k="date" value="' + esc(n.date) + '"></label>' +
+      '<label class="hint" title="Пусто = остаётся в списке всегда">Убрать после <input type="date" data-n="' + i + '" data-k="until" value="' + esc(n.until || "") + '"></label>' +
       '<label class="hint">Иконка <select data-n="' + i + '" data-k="icon">' + opts(NEWS_ICONS, n.icon) + "</select></label>" +
       '<label class="row hint" style="gap:6px"><input type="color" data-n="' + i + '" data-k="color" value="' + n.color + '"> Цвет кружка</label></div>' +
       l3(i, "title", n.title, "Заголовок", false, 80) +
@@ -331,7 +396,7 @@
   $("addNews").onclick = function () {
     var id = "n" + Date.now().toString(36);
     focusNews = id;
-    draft.news.unshift({ id: id, active: false, audience: "all", date: new Date().toISOString().slice(0, 10), icon: "bell", color: "#0A82F9", title: emptyL(), sub: emptyL(), image: "", blocks: [{ type: "text", text: emptyL() }], button: { label: emptyL(), action: "none", url: "" } });
+    draft.news.unshift({ id: id, active: false, audience: "all", date: new Date().toISOString().slice(0, 10), icon: "bell", color: "#0A82F9", until: "", title: emptyL(), sub: emptyL(), image: "", blocks: [{ type: "text", text: emptyL() }], button: { label: emptyL(), action: "none", url: "" } });
     renderNews(); updateBar(); pv.go("/news/" + id);
   };
   function setPath(o, path, v) { var ks = path.split("."); for (var j = 0; j < ks.length - 1; j++) o = o[ks[j]]; o[ks[ks.length - 1]] = v; }
@@ -339,7 +404,7 @@
     var el = e.target, i = el.dataset.n, k = el.dataset.k;
     if (i == null || !k) return;
     setPath(draft.news[+i], k, el.type === "checkbox" ? el.checked : el.value);
-    if (el.tagName === "SELECT" && e.type === "change") renderNews();
+    if ((el.tagName === "SELECT" || el.type === "date" || el.type === "checkbox") && e.type === "change") renderNews();
     updateBar();
   }
   $("newsList").addEventListener("input", onNewsEdit);
@@ -449,6 +514,180 @@
   }
   $("statsReload").onclick = loadStats;
 
+  // ---------- Premium: subscriptions (RevenueCat) and gifts ----------
+  var EV_NAME = { INITIAL_PURCHASE: "Покупка", RENEWAL: "Продление", CANCELLATION: "Отключил автопродление", UNCANCELLATION: "Включил автопродление обратно", EXPIRATION: "Закончилась", BILLING_ISSUE: "Проблема с оплатой", PRODUCT_CHANGE: "Сменил план", NON_RENEWING_PURCHASE: "Разовая покупка", REFUND: "Возврат" };
+  function usd(n) { return "$" + (Math.round(n * 100) / 100).toLocaleString("ru", { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function dmy(ms) { return new Date(ms).toLocaleDateString("ru"); }
+  function plan(p) { return /annual|year/i.test(p || "") ? "год" : /month/i.test(p || "") ? "месяц" : (p || ""); }
+  function loadPremium() {
+    if (!$("premStats").innerHTML) $("premStats").innerHTML = '<p class="hint" style="margin-top:12px">Загружаю…</p>';
+    api("GET", "/admin/premium").then(function (r) {
+      var s = r.stats, conv = s.trialsEnded30 ? Math.round(s.converted30 / s.trialsEnded30 * 100) + "%" : "–";
+      var rc = r.revenuecat;
+      $("premStats").innerHTML =
+        (r.webhook ? "" : '<p class="hint" style="margin-top:12px;color:#FFC94D">Данные о покупках ещё не подключены. В RevenueCat › Integrations › Webhooks добавь адрес <b>https://wishpool.clickbrickk.com/api/revenuecat</b> и заголовок Authorization с любым длинным паролем, и этот же пароль положи в Vercel как <b>REVENUECAT_WEBHOOK_AUTH</b>.</p>') +
+        '<div class="kpis">' +
+        kpi(s.subs, "Платных подписчиков", "месяц: " + s.monthly + " · год: " + s.annual) +
+        kpi(s.trials, "На пробном периоде", "начали за 30 дней: " + s.trialsStarted30) +
+        kpi(conv, "Пробный → платный", "за 30 дней: " + s.converted30 + " из " + s.trialsEnded30) +
+        kpi(s.cancelling, "Отключили продление", "ещё с Premium до конца срока") +
+        kpi(usd(s.revenue30), "Выручка за 30 дней", "за 7 дней: " + usd(s.revenue7)) +
+        kpi(usd(s.revenueAll), "Выручка всего", "до комиссии Apple") +
+        kpi(r.grants.filter(function (g) { return g.active; }).length, "Подарено сейчас", "Premium без покупки") +
+        "</div>" +
+        (s.sandbox ? '<p class="hint" style="margin-top:8px">Тестовых покупок (песочница, не считаются): ' + s.sandbox + "</p>" : "") +
+        (rc && rc.metrics ? '<h3 style="margin:24px 0 0">RevenueCat</h3><div class="kpis">' + rc.metrics.map(function (m) {
+          var v = m.unit === "$" || /revenue|mrr/i.test(m.id) ? usd(m.value) : (m.value == null ? "–" : m.value);
+          return kpi(v, esc(m.name), esc(m.period || ""));
+        }).join("") + "</div>" : rc && rc.error ? '<p class="hint" style="margin-top:12px">RevenueCat: ' + esc(rc.error) + "</p>" :
+          '<p class="hint" style="margin-top:12px">Цифры прямо из RevenueCat (MRR, активные подписки) появятся, если положить в Vercel <b>REVENUECAT_API_KEY</b> (секретный ключ v2, только чтение) и <b>REVENUECAT_PROJECT_ID</b>.</p>') +
+        (r.recent.length ? '<h3 style="margin:24px 0 0">Последние события</h3><table class="ev">' + r.recent.map(function (e) {
+          return "<tr><td>" + esc(EV_NAME[e.type] || e.type) + (e.period === "TRIAL" ? " (пробный)" : "") + ' · <b>' + esc(e.name || e.userId) + "</b>" + (e.product ? ' <span class="key">' + esc(plan(e.product)) + "</span>" : "") +
+            '</td><td class="n">' + (e.price ? usd(e.price) + " · " : "") + new Date(e.at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) + "</td></tr>";
+        }).join("") + "</table>" : "");
+      $("premGrants").innerHTML = r.grants.length ? r.grants.map(function (g) {
+        return '<div class="urow"><div class="who"><b>' + esc(g.name || "без имени") + '</b><span class="hint">' + (g.forever ? "навсегда" : (g.active ? "до " : "закончился ") + dmy(g.until)) + (g.note ? " · " + esc(g.note) : "") + ' · <span class="key">' + esc(g.userId) + "</span></span></div>" +
+          '<button class="btn2 danger sm" data-revoke="' + esc(g.userId) + '">Забрать</button></div>';
+      }).join("") : '<p class="hint" style="margin-top:8px">Пока никому.</p>';
+    }).catch(function (e) { $("premStats").innerHTML = '<p class="hint" style="margin-top:12px">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+  $("premReload").onclick = loadPremium;
+  var premT;
+  $("premQ").oninput = function () {
+    clearTimeout(premT);
+    var q = $("premQ").value.trim();
+    if (q.length < 2) { $("premFound").innerHTML = ""; return; }
+    premT = setTimeout(function () {
+      api("GET", "/admin/premium/users?q=" + encodeURIComponent(q)).then(function (r) {
+        $("premFound").innerHTML = r.users.length ? r.users.map(function (u) {
+          return '<div class="urow"><div class="who"><b>' + esc(u.name || "без имени") + '</b><span class="hint">' + esc(u.email || "Telegram") + (u.lastSeen ? " · был " + dmy(u.lastSeen) : "") + ' · <span class="key">' + esc(u.id) + "</span></span></div>" +
+            [[30, "Месяц"], [90, "3 месяца"], [365, "Год"], [0, "Навсегда"]].map(function (d) { return '<button class="btn2 sm" data-grant="' + esc(u.id) + '" data-days="' + d[0] + '" data-name="' + esc(u.name || "") + '">' + d[1] + "</button>"; }).join("") + "</div>";
+        }).join("") : '<p class="hint" style="margin-top:8px">Никого не нашёл.</p>';
+      }).catch(function (e) { toast("Ошибка: " + e.message); });
+    }, 250);
+  };
+  $("premFound").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-grant]"); if (!b) return;
+    var days = +b.dataset.days;
+    if (!confirm("Подарить Premium " + (b.dataset.name || "этому человеку") + " " + (days ? "на " + b.textContent.toLowerCase() : "навсегда") + "?")) return;
+    api("POST", "/admin/premium/grant", { userId: b.dataset.grant, days: days, note: $("premNote").value.trim() })
+      .then(function () { toast("Premium подарен"); $("premQ").value = ""; $("premNote").value = ""; $("premFound").innerHTML = ""; loadPremium(); })
+      .catch(function (er) { toast("Ошибка: " + er.message); });
+  });
+  $("premGrants").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-revoke]"); if (!b) return;
+    if (!confirm("Забрать подаренный Premium?")) return;
+    api("DELETE", "/admin/premium/grant/" + encodeURIComponent(b.dataset.revoke)).then(function () { toast("Забрал"); loadPremium(); }).catch(function (er) { toast("Ошибка: " + er.message); });
+  });
+
+  // ---------- analytics: the funnel and what people pick ----------
+  var insDays = 30;
+  document.querySelectorAll("#insDays button").forEach(function (b) {
+    b.onclick = function () { insDays = +b.dataset.d; document.querySelectorAll("#insDays button").forEach(function (x) { x.classList.toggle("on", x === b); }); loadInsights(); };
+  });
+  var PICK = { paywall_open: "Открыли экран оплаты" };
+  function pickName(id) {
+    if (PICK[id]) return PICK[id];
+    if (id.indexOf("accent_") === 0) return "Цвет приложения: " + id.slice(7);
+    if (id.indexOf("icon_") === 0) return "Иконка: " + (id === "icon_glow" ? "Сияние" : id === "icon_classic" || id === "icon_default" ? "Классика" : id.slice(5));
+    if (id.indexOf("paywall_buy_") === 0) return "Нажали «Купить»: " + ({ annual: "год", monthly: "месяц" }[id.slice(12)] || id.slice(12));
+    return id;
+  }
+  function stkTiles(list) {
+    return list.length ? '<div class="pop">' + list.map(function (x) { var n = x.id.replace(/^stk:/, ""); return '<div class="p"><img src="/stickers/' + esc(n) + '.webp" alt=""><b>' + x.n + "</b>" + esc(n) + "</div>"; }).join("") + "</div>" : '<p class="hint">Пока пусто.</p>';
+  }
+  function loadInsights() {
+    if (!$("insights").innerHTML) $("insights").innerHTML = '<p class="hint" style="margin-top:12px">Загружаю…</p>';
+    api("GET", "/admin/insights?days=" + insDays).then(function (r) {
+      var f = r.funnel, steps = [[f.n, "Пришли в приложение"], [f.wish, "Добавили желание"], [f.room, "Есть комната"], [f.friends, "В комнате с друзьями"], [f.gift, "Взяли подарок другу"]];
+      var pct = function (a, b) { return b ? Math.round(a / b * 100) + "%" : "–"; };
+      var P = r.popular;
+      $("insights").innerHTML =
+        '<h3 style="margin:20px 0 0">Воронка</h3><p class="hint" style="margin-top:4px">' + (r.days ? "Люди, которые пришли за последние " + r.days + " дней" : "Все люди") + ", и сколько из них дошли до каждого шага.</p>" +
+        '<div class="funnel">' + steps.map(function (s, i) {
+          return '<div class="st"><div class="top"><span>' + s[1] + '</span><span><b>' + s[0] + "</b> · " + pct(s[0], f.n) + (i ? ' <span class="key">' + pct(s[0], steps[i - 1][0]) + " от прошлого шага</span>" : "") + '</span></div><div class="tr"><div class="fl" style="width:' + (f.n ? Math.max(2, s[0] / f.n * 100) : 0) + '%"></div></div></div>';
+        }).join("") + "</div>" +
+        '<div class="kpis">' + kpi(pct(f.week, f.n), "Вернулись через неделю", f.week + " из " + f.n + " заходили спустя 7+ дней") + "</div>" +
+        '<h3 style="margin:28px 0 0">Стикеры на желаниях</h3>' + stkTiles(P.wishStickers) +
+        '<h3 style="margin:24px 0 0">Стикеры на комнатах</h3>' + stkTiles(P.roomStickers) +
+        '<h3 style="margin:24px 0 0">Кастомные папки</h3>' + (P.folders.length ? '<div class="pop">' + P.folders.map(function (x) {
+          return '<div class="p">' + (x.id === "photo" ? '<div class="sw" style="background:#353C49"></div>' : '<div class="fd"><img src="/admin/folders/' + esc(x.id) + '_back.webp" alt=""><img src="/admin/folders/' + esc(x.id) + '_front.webp" alt=""></div>') + "<b>" + x.n + "</b>" + esc(x.id === "photo" ? "своё фото" : x.id) + "</div>";
+        }).join("") + "</div>" : '<p class="hint">Пока пусто.</p>') +
+        '<h3 style="margin:24px 0 0">Цвета комнат</h3>' + (P.colors.length ? '<div class="pop">' + P.colors.map(function (x) { return '<div class="p"><div class="sw" style="background:' + esc(x.id) + '"></div><b>' + x.n + "</b>" + esc(x.id) + "</div>"; }).join("") + "</div>" : '<p class="hint">Пока пусто.</p>') +
+        '<h3 style="margin:24px 0 0">Выборы в приложении</h3><p class="hint" style="margin-top:4px">Цвет приложения, иконка, экран оплаты: сколько разных людей. Считается с версии 1.0.2.</p>' +
+        (P.picks.length ? '<table class="ev">' + P.picks.map(function (x) { return "<tr><td>" + esc(pickName(x.id)) + '</td><td class="n">' + x.n + " чел.</td></tr>"; }).join("") + "</table>" : '<p class="hint">Пока пусто.</p>');
+    }).catch(function (e) { $("insights").innerHTML = '<p class="hint" style="margin-top:12px">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+
+  // ---------- feature switches (mobile/src/lib/flags.ts) ----------
+  function renderFlags() {
+    var list = (data && data.flags) || [];
+    $("flagList").innerHTML = list.map(function (f) {
+      var v = draft.flags[f.id], on = v ? v.on : f.on, pc = v ? v.percent : 100;
+      return '<div class="item"><div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-flag="' + f.id + '"' + (on ? " checked" : "") + "> " + esc(f.title) + "</label>" +
+        (v ? "" : '<span class="key" style="margin-left:8px">как в приложении</span>') +
+        (on ? '<label class="row hint" style="gap:8px;margin-left:auto">Кому: <input type="range" min="0" max="100" step="5" data-pct="' + f.id + '" value="' + pc + '"><b style="min-width:84px">' + (pc >= 100 ? "всем" : pc + "% людей") + "</b></label>" : "") +
+        '</div><p class="hint" style="margin-top:6px">' + esc(f.about) + ' <span class="key">' + f.id + "</span></p></div>";
+    }).join("") || '<p class="hint">Список флагов не загрузился.</p>';
+  }
+  $("flagList").addEventListener("input", function (e) {
+    var el = e.target, id = el.dataset.flag || el.dataset.pct; if (!id) return;
+    var def = (data.flags || []).filter(function (f) { return f.id === id; })[0] || { on: true };
+    var cur = draft.flags[id] || { on: def.on, percent: 100 };
+    if (el.dataset.flag) cur.on = el.checked; else cur.percent = +el.value;
+    draft.flags[id] = { on: cur.on, percent: cur.percent };
+    if (el.dataset.flag) renderFlags(); else el.nextElementSibling.textContent = cur.percent >= 100 ? "всем" : cur.percent + "% людей";
+    updateBar();
+  });
+
+  // ---------- support chat ----------
+  var supOpen = null;
+  function ago(ms) { return new Date(ms).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+  function supportCount() {
+    api("GET", "/admin/support").then(function (r) {
+      var n = r.threads.filter(function (x) { return x.unread || x.status === "open"; }).length;
+      $("supCnt").textContent = n; $("supCnt").classList.toggle("hidden", !n);
+    }).catch(function () {});
+  }
+  function loadSupport() {
+    if (supOpen) return openThread(supOpen);
+    $("supList").innerHTML = '<p class="hint" style="margin-top:12px">Загружаю…</p>';
+    api("GET", "/admin/support").then(function (r) {
+      var n = r.threads.filter(function (x) { return x.unread || x.status === "open"; }).length;
+      $("supCnt").textContent = n; $("supCnt").classList.toggle("hidden", !n);
+      $("supList").innerHTML = r.threads.length ? r.threads.map(function (x) {
+        return '<div class="urow thr" data-thread="' + esc(x.userId) + '"><div class="who"><b>' + esc(x.name || x.userId) +
+          (x.status === "open" ? ' <span class="sch wait">ждёт ответа</span>' : ' <span class="sch over">отвечено</span>') + (x.unread ? ' <span class="cnt" style="display:inline-flex;min-width:18px;height:18px;border-radius:9px;background:#FF3B30;color:#fff;font-size:11px;align-items:center;justify-content:center;padding:0 5px">' + x.unread + "</span>" : "") +
+          '</b><span class="hint">' + esc(x.lastText.slice(0, 140)) + '</span></div><span class="key">' + ago(x.lastAt) + "</span></div>";
+      }).join("") : '<p class="hint" style="margin-top:12px">Пока никто не писал.</p>';
+    }).catch(function (e) { $("supList").innerHTML = '<p class="hint">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+  function openThread(id) {
+    supOpen = id;
+    api("GET", "/admin/support/" + encodeURIComponent(id)).then(function (r) {
+      $("supList").innerHTML =
+        '<div class="row" style="margin-top:12px"><button class="btn2 ghost sm" id="supBack">‹ Все обращения</button>' +
+        '<button class="btn2 ghost sm" id="supStatus" style="margin-left:auto">' + (r.thread.status === "open" ? "Отметить отвеченным" : "Вернуть в «ждёт ответа»") + "</button></div>" +
+        '<div class="urow"><div class="who"><b>' + esc(r.user ? r.user.name : id) + '</b><span class="hint">' + esc(r.email || "без почты: ответ увидит только в приложении") + ' · <span class="key">' + esc(id) + "</span>" + (r.thread.meta ? "<br>" + esc(r.thread.meta) : "") + "</span></div></div>" +
+        '<div class="chat">' + r.messages.map(function (m) { return '<div class="bub ' + (m.author === "admin" ? "a" : "u") + '">' + esc(m.text) + '<div class="t">' + ago(m.at) + "</div></div>"; }).join("") + "</div>" +
+        '<textarea id="supText" placeholder="Ответ" style="margin-top:16px;min-height:90px"></textarea>' +
+        '<div class="row" style="margin-top:8px"><button class="btn2" id="supSend" style="margin-left:auto">Ответить</button></div>';
+      $("supBack").onclick = function () { supOpen = null; loadSupport(); };
+      $("supStatus").onclick = function () {
+        api("POST", "/admin/support/" + encodeURIComponent(id) + "/status", { status: r.thread.status === "open" ? "done" : "open" }).then(function () { openThread(id); supportCount(); });
+      };
+      $("supSend").onclick = function () {
+        var t = $("supText").value.trim(); if (!t) return;
+        $("supSend").disabled = true;
+        api("POST", "/admin/support/" + encodeURIComponent(id), { text: t }).then(function (x) { toast(x.mailed ? "Ответ отправлен и письмом" : "Ответ отправлен в приложение"); openThread(id); supportCount(); })
+          .catch(function (e) { $("supSend").disabled = false; toast("Ошибка: " + e.message); });
+      };
+      supportCount();
+    }).catch(function (e) { supOpen = null; toast("Ошибка: " + e.message); loadSupport(); });
+  }
+  $("supList").addEventListener("click", function (e) { var t = e.target.closest("[data-thread]"); if (t) openThread(t.dataset.thread); });
+  $("supReload").onclick = loadSupport;
+
   // ---------- phone preview ----------
   // The iPhone app's web build in an iframe (same site), as a guest with the demo
   // content. It exposes window.__wpPreview (mobile/src/lib/adminPreview.ts).
@@ -465,7 +704,7 @@
     function cfg() {
       var banners = draft ? draft.banners : [];
       var forced = tab === "banners" ? (banners.some(function (b) { return b.id === focusBanner; }) ? focusBanner : banners[0] && banners[0].id) : null;
-      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, folders: draft.folders, season: draft.season, news: draft.news, previewBanner: forced || null } : null;
+      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, folders: draft.folders, season: draft.season, news: draft.news, flags: draft.flags, previewBanner: forced || null } : null;
     }
     function push() { clearTimeout(pushT); pushT = setTimeout(function () { var a = api(), c = cfg(); if (a && c) a.setConfig(c); }, 120); }
     function go(path) {

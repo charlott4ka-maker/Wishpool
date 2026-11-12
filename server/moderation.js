@@ -9,7 +9,7 @@ import { uid } from "./util.js";
 const REASONS = ["spam", "offensive", "inappropriate", "other"];
 const SUPPORT = () => process.env.SUPPORT_EMAIL || "support@clickbrickk.com";
 
-async function mailSupport(subject, text) {
+export async function mailSupport(subject, text) {
   const key = process.env.RESEND_API_KEY, from = process.env.MAIL_FROM;
   if (!key || !from) { if (!process.env.VERCEL) console.log(`[mail] ${subject}\n${text}`); return; }
   await fetch("https://api.resend.com/emails", {

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "../auth/AuthContext";
 import { GlassCircle, Pill, Txt } from "../components/ui";
 import { useT, type Lang } from "../i18n";
 import { haptic } from "../lib/haptics";
@@ -113,6 +114,7 @@ export default function FaqScreen() {
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { status } = useAuth();
   const [open, setOpen] = useState<number | null>(null);
   const toggle = (i: number) => {
     haptic("select");
@@ -137,7 +139,7 @@ export default function FaqScreen() {
           ))}
         </View>
         <Txt className="mb-4 mt-8 text-center text-[14.5px] text-t2">{t("faqMore")}</Txt>
-        <Pill full kind="ghost" onPress={() => writeSupport(t("supportCopied", { email: SUPPORT_EMAIL }))}>{t("support")}</Pill>
+        <Pill full kind="ghost" onPress={() => (status === "signedIn" ? router.push("/support") : writeSupport(t("supportCopied", { email: SUPPORT_EMAIL })))}>{t("support")}</Pill>
       </ScrollView>
     </View>
   );

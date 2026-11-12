@@ -18,9 +18,11 @@ import { useT } from "../../../i18n";
 import { useWishpool } from "../../../store/WishpoolContext";
 import { C } from "../../../theme/tokens";
 import { useAccent } from "../../../theme/accent";
+import { useFlag } from "../../../lib/flags";
 
 export default function RoomsScreen() {
   useAccent(); // re-render in place when the app colour changes
+  const nyCard = useFlag("newYearCard");
   const { t } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -67,7 +69,7 @@ export default function RoomsScreen() {
         ) : (
           <View className="gap-6">
             {/* till New Year: the countdown and a quick Secret Santa */}
-            <NewYearCountdown rooms={rooms} />
+            {nyCard ? <NewYearCountdown rooms={rooms} /> : null}
             {rows.map((row, i) => (
               <View key={i} className="flex-row gap-3">
                 {row.map((r, j) => (

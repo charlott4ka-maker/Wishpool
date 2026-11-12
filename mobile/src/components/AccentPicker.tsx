@@ -13,6 +13,7 @@ import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { ACCENTS, accent, setAccent, useAccent } from "../theme/accent";
 import { Txt } from "./ui";
+import { track } from "../lib/track";
 
 export function AccentPicker({ unlocked }: { unlocked: boolean }) {
   const { t } = useT();
@@ -34,6 +35,7 @@ export function AccentPicker({ unlocked }: { unlocked: boolean }) {
                 if (on) return;
                 haptic("select");
                 setAccent(a.id);
+                track("accent_" + a.id);
               }}
               style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: a.base, alignItems: "center", justifyContent: "center", opacity: locked ? 0.55 : 1 }}
             >
