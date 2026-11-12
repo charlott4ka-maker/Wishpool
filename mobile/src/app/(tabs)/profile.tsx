@@ -2,6 +2,8 @@
 
 import { useRouter } from "expo-router";
 import { Bell, Crown, Gift, Heart, Pencil, Settings, Users } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -23,7 +25,7 @@ import { PremiumCard } from "../../components/PremiumCard";
 import { IN_TG } from "../../lib/telegram";
 import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
-import { C } from "../../theme/tokens";
+import { C, hex } from "../../theme/tokens";
 import { useAccent } from "../../theme/accent";
 
 export default function ProfileScreen() {
@@ -39,13 +41,29 @@ export default function ProfileScreen() {
   // the same name, photo and colour your avatar has in rooms
   const me = useMe();
   const { unread } = useNews();
+  const [viewH, setViewH] = useState(0);
+  const [contentH, setContentH] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  // the bottom padding is room for the tab bar: it fits if the rest does
+  const fits = viewH && contentH ? contentH - insets.bottom - 120 + 24 <= viewH - insets.bottom - 90 : null;
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
   const gifting = rooms.reduce((n, r) => n + (r.demoLists || []).reduce((k, l) => k + l.wishes.filter((x) => x.reservedByMe).length, 0), 0);
 
 
   return (
     <View className="flex-1 bg-card">
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1 bg-card" contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}>
+      {/* scrolls only when it doesn't fit (small phones); then a soft fade under the status bar, like everywhere */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="flex-1 bg-card"
+        scrollEnabled={fits === false}
+        bounces={fits === false}
+        onLayout={(e) => setViewH(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => setContentH(h)}
+        scrollEventThrottle={16}
+        onScroll={(e) => setScrolled(e.nativeEvent.contentOffset.y > 4)}
+        contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 16, paddingBottom: insets.bottom + 120 }}
+      >
         <View className="items-center">
           {/* notifications from us (the admin page): a bell with a red count of unread */}
           <View style={{ position: "absolute", right: 0, top: 0, zIndex: 2 }}>
@@ -126,6 +144,7 @@ export default function ProfileScreen() {
           </View>
         ) : null}
       </ScrollView>
+      {scrolled ? <LinearGradient pointerEvents="none" colors={[C.card, hex(C.card, 0)]} style={{ position: "absolute", top: insets.top, left: 0, right: 0, height: 32 }} /> : null}
       <TabBarFade />
       <StatusBarBackdrop color={C.card} />
     </View>
