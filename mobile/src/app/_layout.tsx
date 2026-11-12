@@ -19,6 +19,7 @@ import { LangProvider } from "../i18n";
 import { ReminderSync } from "../settings/ReminderSync";
 import { ToastHost } from "../components/Toast";
 import { UploadBarHost } from "../components/UploadBar";
+import { IconSplash, releaseSplash } from "../components/IconSplash";
 import { joinSheet, takePendingJoin } from "../lib/pendingJoin";
 import { startAdminPreview } from "../lib/adminPreview";
 import { startRemoteConfig } from "../lib/remoteConfig";
@@ -60,7 +61,7 @@ function Gate() {
   }, []);
   const ready = status !== "loading" && accReady;
   useEffect(() => {
-    if (ready) updateChecked.finally(() => SplashScreen.hideAsync().catch(() => {}));
+    if (ready) updateChecked.finally(() => releaseSplash());
   }, [ready]);
   const inside = status === "signedIn" || status === "guest";
   // an invite opened before signing in comes back once there's an account
@@ -157,6 +158,7 @@ export default function RootLayout() {
             <Gate />
             <UploadBarHost />
             <ToastHost />
+            <IconSplash />
           </AuthProvider>
         </LangProvider>
       </ThemeProvider>
