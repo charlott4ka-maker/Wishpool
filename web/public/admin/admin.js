@@ -103,7 +103,7 @@
       '<label class="row hint" style="gap:6px"><input type="color" data-b="' + i + '" data-k="textColor" value="' + b.textColor + '"> Текст</label></div>' +
       '<label class="f">Стикер</label><select data-b="' + i + '" data-k="sticker"><option value="">без стикера</option>' + stickers + "</select>" +
       '<label class="f">По нажатию</label><select data-b="' + i + '" data-k="action">' +
-      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"], ["santa", "Создать комнату Тайного Санты"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
+      [["none", "Ничего"], ["signin", "Открыть вход в аккаунт"], ["link", "Открыть ссылку"], ["santa", "Создать комнату Тайного Санты (с 1.0.2)"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.action === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       (b.action === "link" ? '<label class="f">Ссылка (https://…)</label><input type="url" data-b="' + i + '" data-k="url" value="' + esc(b.url) + '" placeholder="https://">' : "") +
       '<label class="row hint" style="gap:6px;margin-top:12px"><input type="checkbox" data-b="' + i + '" data-k="dismissible"' + (b.dismissible ? " checked" : "") + "> Можно закрыть крестиком</label>" +
       "</div>";
@@ -246,7 +246,7 @@
       var tiles = p.stickers.map(function (n) { return { n: n, isNew: false }; });
       // uploaded stickers join the first (classic) pack in the app
       if (id === "classic") tiles = tiles.concat(draft.stickers.extra.map(function (s) { return { n: s.name, isNew: true }; }));
-      return '<div class="pk" draggable="true" data-pack="' + id + '"><div class="pkh"><span class="grip">⠿</span><b>' + (i + 1) + ". " + esc(p.title) + "</b>" + (id === "party" ? ' <span class="hint">· Premium</span>' : "") + "</div>" +
+      return '<div class="pk" draggable="true" data-pack="' + id + '"><div class="pkh"><span class="grip">⠿</span><b>' + (i + 1) + ". " + esc(p.title) + "</b>" + (id === "party" ? ' <span class="soon">Premium · выйдет в 1.0.2</span>' : "") + "</div>" +
         '<div class="stk">' + tiles.map(function (t) {
           var off = hidden.indexOf(t.n) >= 0;
           return '<div class="s' + (off ? " off" : "") + (t.isNew ? " new" : "") + '" data-n="' + t.n + '"><img src="' + stickerUrl(t.n) + '" alt="" draggable="false">' + esc(t.n) +

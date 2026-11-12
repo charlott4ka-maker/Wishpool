@@ -44,6 +44,10 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
 .stk{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
 .stk .s{background:var(--raised);border-radius:16px;padding:8px;text-align:center;font-size:12px;color:var(--t2);cursor:pointer;user-select:none}
 .stk .s img{width:56px;height:56px;object-fit:contain;display:block;margin:0 auto 4px}
+.soon{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#FFC94D;background:rgba(255,201,77,.12);border:1px solid rgba(255,201,77,.35);border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:6px;letter-spacing:.2px}
+.soon::before{content:"";width:6px;height:6px;border-radius:3px;background:#FFC94D}
+.tabs .dot{display:inline-block;width:6px;height:6px;border-radius:3px;background:#FFC94D;vertical-align:middle;margin-left:4px}
+.legend{font-size:12px;color:var(--t2);margin-top:8px}
 .stk .s.off{opacity:.35}
 .pk{background:rgba(255,255,255,.03);border-radius:18px;padding:12px;margin-bottom:12px;border:1px solid transparent}
 .pk.drag{opacity:.4}.pk.over{border-color:#0A82F9}
@@ -123,11 +127,11 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
           <button data-tab="banners">Баннеры</button>
           <button data-tab="strings">Тексты</button>
           <button data-tab="stickers">Стикеры</button>
-          <button data-tab="folders">Папки</button>
-          <button data-tab="news">Уведомления</button>
+          <button data-tab="folders">Папки <span class="dot" title="Выйдет в 1.0.2"></span></button>
+          <button data-tab="news">Уведомления <span class="dot" title="Выйдет в 1.0.2"></span></button>
           <button data-tab="reports">Жалобы</button>
         </div>
-        <p class="hint" style="margin-top:12px">Справа живой предпросмотр: изменения видны в нём сразу, а в приложение попадают после «Сохранить», примерно за минуту.</p>
+        <p class="hint" style="margin-top:12px">Справа живой предпросмотр: изменения видны в нём сразу, а в приложение попадают после «Сохранить», примерно за минуту. <span class="soon">Выйдет в 1.0.2</span> и жёлтая точка у вкладки: это пока видно только в тестовой сборке, пользователи увидят с новой версии приложения.</p>
       </div>
 
       <div class="block" data-pane="stats">
@@ -141,7 +145,7 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
         <p class="hint">Полоска под заголовком на вкладке «Желания». Показывается первый включённый баннер, подходящий пользователю. Если пользователь закрыл баннер крестиком, он больше его не увидит. Нажми на баннер, чтобы увидеть его в телефоне справа.</p>
         <div id="bannerList"></div>
         <div class="btns"><button class="btn2 ghost" id="addBanner">+ Добавить баннер</button></div>
-        <h2>Сезон</h2>
+        <h2>Сезон <span class="soon" title="Пользователи увидят это с версии 1.0.2 приложения">Выйдет в 1.0.2</span></h2>
         <label class="row" style="gap:8px;font-weight:700"><input type="checkbox" id="seasonNY"> Новый год</label>
         <p class="hint">Плашка про Тайного Санту на «Желаниях», отсчёт до Нового года на «Комнатах» и снег в декабре. Выключи, и всё это сразу пропадёт у всех (приложение подтягивает настройки раз в несколько минут).</p>
       </div>
@@ -156,7 +160,7 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
 
       <div class="block hidden" data-pane="stickers">
         <h2 style="margin-top:0">Стикеры</h2>
-        <p class="hint">Стикеры по разделам. Перетаскивай раздел за заголовок, чтобы поменять порядок разделов в приложении. Нажми на стикер, чтобы скрыть его из выбора или вернуть; старые желания со скрытым стикером продолжат его показывать.</p>
+        <p class="hint"><span class="soon">Порядок разделов: с 1.0.2</span> Стикеры по разделам. Перетаскивай раздел за заголовок, чтобы поменять порядок разделов в приложении. Нажми на стикер, чтобы скрыть его из выбора или вернуть; старые желания со скрытым стикером продолжат его показывать.</p>
         <div id="stickerGrid" style="margin-top:12px"></div>
         <h2>Новый стикер</h2>
         <p class="hint">PNG или WebP с белой обводкой и прозрачным фоном, как у остальных. Квадрат, лучше 512×512. Имя латиницей, например <b>teddy</b>. Перезалить под тем же именем нельзя: удали и загрузи с новым.</p>
@@ -169,13 +173,13 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
       </div>
 
       <div class="block hidden" data-pane="folders">
-        <h2 style="margin-top:0">Премиум-папки</h2>
+        <h2 style="margin-top:0">Кастомные папки <span class="soon" title="Пользователи увидят это с версии 1.0.2 приложения">Выйдет в 1.0.2</span></h2>
         <p class="hint">Перетащи папку, чтобы поменять порядок в приложении (первые девять видны в превью без премиума). Нажми на папку, чтобы скрыть её из выбора или вернуть. Комнаты со скрытой папкой продолжат её показывать.</p>
         <div class="fld" id="folderGrid" style="margin-top:12px"></div>
       </div>
 
       <div class="block hidden" data-pane="news">
-        <h2 style="margin-top:0">Уведомления</h2>
+        <h2 style="margin-top:0">Уведомления <span class="soon" title="Пользователи увидят это с версии 1.0.2 приложения">Выйдет в 1.0.2</span></h2>
         <p class="hint">Колокольчик в профиле справа сверху: список как в банковском приложении и страница уведомления. Пустой язык не показывается в этом языке. В тексте <b>**так**</b> пишется жирным, <b>{name}</b> заменится на имя человека; в списке каждый пункт с новой строки; абзацы разделяй пустой строкой. Нажми на уведомление, чтобы открыть его в телефоне справа.</p>
         <div id="newsList"></div>
         <div class="btns"><button class="btn2 ghost" id="addNews">+ Новое уведомление</button></div>
