@@ -59,6 +59,7 @@
       pv.clearMark(); pv.note("");
       if (tab === "reports") loadReports();
       if (tab === "stats") loadStats();
+      if (tab === "premium") loadPremium();
       if (tab === "banners") { pv.go("/"); pv.push(); }
       if (tab === "stickers") pv.go("/wish/new");
       if (tab === "folders") pv.go("/room/new");
@@ -85,6 +86,18 @@
   }
   $("seasonNY").onchange = function () { draft.season = { newYear: $("seasonNY").checked }; updateBar(); };
 
+  // ---------- schedules (banners, notifications) ----------
+  function today() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function ddmm(iso) { var p = String(iso).split("-"); return p[2] + "." + p[1]; }
+  // a chip next to "on": waits for its first day, runs, or is over
+  function schedChip(active, from, until) {
+    if (!active) return "";
+    var t = today();
+    if (from && from > t) return '<span class="sch wait">Запланировано с ' + ddmm(from) + "</span>";
+    if (until && until < t) return '<span class="sch over">Закончилось ' + ddmm(until) + "</span>";
+    return '<span class="sch live">Показывается' + (until ? " до " + ddmm(until) : "") + "</span>";
+  }
+
   // ---------- banners ----------
   function stickerUrl(name) { return "/stickers/" + name + ".webp"; }
   function allStickerNames() { return data.stickers.inPicker.concat(draft.stickers.extra.map(function (s) { return s.name; })); }
@@ -92,8 +105,12 @@
     var stickers = allStickerNames().map(function (n) { return '<option value="stk:' + n + '"' + (b.sticker === "stk:" + n ? " selected" : "") + ">" + n + "</option>"; }).join("");
     var texts = LANGS.map(function (l) { return '<div><label class="f">Текст ' + LNAME[l] + '</label><textarea data-b="' + i + '" data-k="text.' + l + '" maxlength="200">' + esc(b.text[l]) + "</textarea></div>"; }).join("");
     return '<div class="item' + (b.id === focusBanner ? " focus" : "") + '" data-bid="' + esc(b.id) + '">' +
-      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-b="' + i + '" data-k="active"' + (b.active ? " checked" : "") + "> Включён</label>" +
+      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-b="' + i + '" data-k="active"' + (b.active ? " checked" : "") + "> Включён</label>" + schedChip(b.active, b.from, b.until) +
       '<button class="btn2 danger sm" data-del="' + i + '" style="margin-left:auto">Удалить</button></div>' +
+      '<div class="row" style="gap:16px;margin-top:10px">' +
+      '<label class="hint">Показывать с <input type="date" data-b="' + i + '" data-k="from" value="' + esc(b.from || "") + '"></label>' +
+      '<label class="hint">по <input type="date" data-b="' + i + '" data-k="until" value="' + esc(b.until || "") + '"></label>' +
+      '<span class="hint">пусто = без ограничения, включается и выключается сам</span></div>' +
       '<label class="f">Кому показывать</label><select data-b="' + i + '" data-k="audience">' +
       [["signedIn", "Только вошедшим в аккаунт"], ["guest", "Только гостям (вместо плашки «Войти»)"], ["all", "Всем"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.audience === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       '<div class="grid3">' + texts + "</div>" +
@@ -114,7 +131,7 @@
   $("addBanner").onclick = function () {
     var id = "b" + Date.now().toString(36);
     focusBanner = id;
-    draft.banners.push({ id: id, active: false, audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true });
+    draft.banners.push({ id: id, active: false, audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true, from: "", until: "" });
     renderBanners(); updateBar();
   };
   $("bannerList").addEventListener("input", onBannerEdit);
@@ -128,7 +145,7 @@
     // redraw the preview (and the link field) without losing the caret in a text field
     // only selects, checkboxes and colours redraw the card: a text field's "change"
     // fires when it loses focus, and a redraw then would swallow the next click
-    if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "color") { if (e.type === "change" || el.type === "color") renderBanners(); }
+    if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "color" || el.type === "date") { if (e.type === "change" || el.type === "color") renderBanners(); }
     updateBar();
   }
   $("bannerList").addEventListener("click", function (e) {
@@ -350,11 +367,12 @@
         l3(i, "blocks." + k + ".text", b.text, b.type === "list" ? "Пункты" : "Текст", true, 1500) + "</div>";
     }).join("");
     return '<div class="item' + (n.id === focusNews ? " focus" : "") + '" data-nid="' + esc(n.id) + '">' +
-      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-n="' + i + '" data-k="active"' + (n.active ? " checked" : "") + "> Опубликовано</label>" +
+      '<div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-n="' + i + '" data-k="active"' + (n.active ? " checked" : "") + "> Опубликовано</label>" + schedChip(n.active, n.date, n.until) +
       '<button class="btn2 danger sm" data-ndel="' + i + '" style="margin-left:auto">Удалить</button></div>' +
       '<div class="row" style="gap:16px;margin-top:8px;flex-wrap:wrap">' +
       '<label class="hint">Кому <select data-n="' + i + '" data-k="audience">' + opts([["all", "Всем"], ["signedIn", "Только вошедшим"], ["guest", "Только гостям"]], n.audience) + "</select></label>" +
-      '<label class="hint">Дата <input type="date" data-n="' + i + '" data-k="date" value="' + esc(n.date) + '"></label>' +
+      '<label class="hint" title="В этот день уведомление появится у людей; до него ждёт">Дата выхода <input type="date" data-n="' + i + '" data-k="date" value="' + esc(n.date) + '"></label>' +
+      '<label class="hint" title="Пусто = остаётся в списке всегда">Убрать после <input type="date" data-n="' + i + '" data-k="until" value="' + esc(n.until || "") + '"></label>' +
       '<label class="hint">Иконка <select data-n="' + i + '" data-k="icon">' + opts(NEWS_ICONS, n.icon) + "</select></label>" +
       '<label class="row hint" style="gap:6px"><input type="color" data-n="' + i + '" data-k="color" value="' + n.color + '"> Цвет кружка</label></div>' +
       l3(i, "title", n.title, "Заголовок", false, 80) +
@@ -376,7 +394,7 @@
   $("addNews").onclick = function () {
     var id = "n" + Date.now().toString(36);
     focusNews = id;
-    draft.news.unshift({ id: id, active: false, audience: "all", date: new Date().toISOString().slice(0, 10), icon: "bell", color: "#0A82F9", title: emptyL(), sub: emptyL(), image: "", blocks: [{ type: "text", text: emptyL() }], button: { label: emptyL(), action: "none", url: "" } });
+    draft.news.unshift({ id: id, active: false, audience: "all", date: new Date().toISOString().slice(0, 10), icon: "bell", color: "#0A82F9", until: "", title: emptyL(), sub: emptyL(), image: "", blocks: [{ type: "text", text: emptyL() }], button: { label: emptyL(), action: "none", url: "" } });
     renderNews(); updateBar(); pv.go("/news/" + id);
   };
   function setPath(o, path, v) { var ks = path.split("."); for (var j = 0; j < ks.length - 1; j++) o = o[ks[j]]; o[ks[ks.length - 1]] = v; }
@@ -384,7 +402,7 @@
     var el = e.target, i = el.dataset.n, k = el.dataset.k;
     if (i == null || !k) return;
     setPath(draft.news[+i], k, el.type === "checkbox" ? el.checked : el.value);
-    if (el.tagName === "SELECT" && e.type === "change") renderNews();
+    if ((el.tagName === "SELECT" || el.type === "date" || el.type === "checkbox") && e.type === "change") renderNews();
     updateBar();
   }
   $("newsList").addEventListener("input", onNewsEdit);
@@ -493,6 +511,72 @@
     }).catch(function (e) { $("stats").innerHTML = '<p class="hint" style="margin-top:12px">Ошибка: ' + esc(e.message) + "</p>"; });
   }
   $("statsReload").onclick = loadStats;
+
+  // ---------- Premium: subscriptions (RevenueCat) and gifts ----------
+  var EV_NAME = { INITIAL_PURCHASE: "Покупка", RENEWAL: "Продление", CANCELLATION: "Отключил автопродление", UNCANCELLATION: "Включил автопродление обратно", EXPIRATION: "Закончилась", BILLING_ISSUE: "Проблема с оплатой", PRODUCT_CHANGE: "Сменил план", NON_RENEWING_PURCHASE: "Разовая покупка", REFUND: "Возврат" };
+  function usd(n) { return "$" + (Math.round(n * 100) / 100).toLocaleString("ru", { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function dmy(ms) { return new Date(ms).toLocaleDateString("ru"); }
+  function plan(p) { return /annual|year/i.test(p || "") ? "год" : /month/i.test(p || "") ? "месяц" : (p || ""); }
+  function loadPremium() {
+    if (!$("premStats").innerHTML) $("premStats").innerHTML = '<p class="hint" style="margin-top:12px">Загружаю…</p>';
+    api("GET", "/admin/premium").then(function (r) {
+      var s = r.stats, conv = s.trialsEnded30 ? Math.round(s.converted30 / s.trialsEnded30 * 100) + "%" : "–";
+      var rc = r.revenuecat;
+      $("premStats").innerHTML =
+        (r.webhook ? "" : '<p class="hint" style="margin-top:12px;color:#FFC94D">Данные о покупках ещё не подключены. В RevenueCat › Integrations › Webhooks добавь адрес <b>https://wishpool.clickbrickk.com/api/revenuecat</b> и заголовок Authorization с любым длинным паролем, и этот же пароль положи в Vercel как <b>REVENUECAT_WEBHOOK_AUTH</b>.</p>') +
+        '<div class="kpis">' +
+        kpi(s.subs, "Платных подписчиков", "месяц: " + s.monthly + " · год: " + s.annual) +
+        kpi(s.trials, "На пробном периоде", "начали за 30 дней: " + s.trialsStarted30) +
+        kpi(conv, "Пробный → платный", "за 30 дней: " + s.converted30 + " из " + s.trialsEnded30) +
+        kpi(s.cancelling, "Отключили продление", "ещё с Premium до конца срока") +
+        kpi(usd(s.revenue30), "Выручка за 30 дней", "за 7 дней: " + usd(s.revenue7)) +
+        kpi(usd(s.revenueAll), "Выручка всего", "до комиссии Apple") +
+        kpi(r.grants.filter(function (g) { return g.active; }).length, "Подарено сейчас", "Premium без покупки") +
+        "</div>" +
+        (s.sandbox ? '<p class="hint" style="margin-top:8px">Тестовых покупок (песочница, не считаются): ' + s.sandbox + "</p>" : "") +
+        (rc && rc.metrics ? '<h3 style="margin:24px 0 0">RevenueCat</h3><div class="kpis">' + rc.metrics.map(function (m) {
+          var v = m.unit === "$" || /revenue|mrr/i.test(m.id) ? usd(m.value) : (m.value == null ? "–" : m.value);
+          return kpi(v, esc(m.name), esc(m.period || ""));
+        }).join("") + "</div>" : rc && rc.error ? '<p class="hint" style="margin-top:12px">RevenueCat: ' + esc(rc.error) + "</p>" :
+          '<p class="hint" style="margin-top:12px">Цифры прямо из RevenueCat (MRR, активные подписки) появятся, если положить в Vercel <b>REVENUECAT_API_KEY</b> (секретный ключ v2, только чтение) и <b>REVENUECAT_PROJECT_ID</b>.</p>') +
+        (r.recent.length ? '<h3 style="margin:24px 0 0">Последние события</h3><table class="ev">' + r.recent.map(function (e) {
+          return "<tr><td>" + esc(EV_NAME[e.type] || e.type) + (e.period === "TRIAL" ? " (пробный)" : "") + ' · <b>' + esc(e.name || e.userId) + "</b>" + (e.product ? ' <span class="key">' + esc(plan(e.product)) + "</span>" : "") +
+            '</td><td class="n">' + (e.price ? usd(e.price) + " · " : "") + new Date(e.at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) + "</td></tr>";
+        }).join("") + "</table>" : "");
+      $("premGrants").innerHTML = r.grants.length ? r.grants.map(function (g) {
+        return '<div class="urow"><div class="who"><b>' + esc(g.name || "без имени") + '</b><span class="hint">' + (g.forever ? "навсегда" : (g.active ? "до " : "закончился ") + dmy(g.until)) + (g.note ? " · " + esc(g.note) : "") + ' · <span class="key">' + esc(g.userId) + "</span></span></div>" +
+          '<button class="btn2 danger sm" data-revoke="' + esc(g.userId) + '">Забрать</button></div>';
+      }).join("") : '<p class="hint" style="margin-top:8px">Пока никому.</p>';
+    }).catch(function (e) { $("premStats").innerHTML = '<p class="hint" style="margin-top:12px">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+  $("premReload").onclick = loadPremium;
+  var premT;
+  $("premQ").oninput = function () {
+    clearTimeout(premT);
+    var q = $("premQ").value.trim();
+    if (q.length < 2) { $("premFound").innerHTML = ""; return; }
+    premT = setTimeout(function () {
+      api("GET", "/admin/premium/users?q=" + encodeURIComponent(q)).then(function (r) {
+        $("premFound").innerHTML = r.users.length ? r.users.map(function (u) {
+          return '<div class="urow"><div class="who"><b>' + esc(u.name || "без имени") + '</b><span class="hint">' + esc(u.email || "Telegram") + (u.lastSeen ? " · был " + dmy(u.lastSeen) : "") + ' · <span class="key">' + esc(u.id) + "</span></span></div>" +
+            [[30, "Месяц"], [90, "3 месяца"], [365, "Год"], [0, "Навсегда"]].map(function (d) { return '<button class="btn2 sm" data-grant="' + esc(u.id) + '" data-days="' + d[0] + '" data-name="' + esc(u.name || "") + '">' + d[1] + "</button>"; }).join("") + "</div>";
+        }).join("") : '<p class="hint" style="margin-top:8px">Никого не нашёл.</p>';
+      }).catch(function (e) { toast("Ошибка: " + e.message); });
+    }, 250);
+  };
+  $("premFound").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-grant]"); if (!b) return;
+    var days = +b.dataset.days;
+    if (!confirm("Подарить Premium " + (b.dataset.name || "этому человеку") + " " + (days ? "на " + b.textContent.toLowerCase() : "навсегда") + "?")) return;
+    api("POST", "/admin/premium/grant", { userId: b.dataset.grant, days: days, note: $("premNote").value.trim() })
+      .then(function () { toast("Premium подарен"); $("premQ").value = ""; $("premNote").value = ""; $("premFound").innerHTML = ""; loadPremium(); })
+      .catch(function (er) { toast("Ошибка: " + er.message); });
+  });
+  $("premGrants").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-revoke]"); if (!b) return;
+    if (!confirm("Забрать подаренный Premium?")) return;
+    api("DELETE", "/admin/premium/grant/" + encodeURIComponent(b.dataset.revoke)).then(function () { toast("Забрал"); loadPremium(); }).catch(function (er) { toast("Ошибка: " + er.message); });
+  });
 
   // ---------- phone preview ----------
   // The iPhone app's web build in an iframe (same site), as a guest with the demo

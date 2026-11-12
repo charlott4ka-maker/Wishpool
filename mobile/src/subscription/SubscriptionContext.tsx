@@ -1,10 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { photoLimit, isStickerLocked, canUse, PremiumFeature } from "./featureFlags";
+import { type Gift, giftActive, useGift } from "./gift";
 import { PremiumPackage, purchases } from "./purchases";
 
 type SubscriptionValue = {
+  /** bought, or given on the admin page */
   isPremium: boolean;
+  /** Premium given on the admin page (null when there's none) */
+  gift: Gift;
   loading: boolean;
   /** True when purchases are simulated (Expo Go, dev build without a RevenueCat key). */
   mock: boolean;
@@ -21,7 +25,9 @@ type SubscriptionValue = {
 const SubscriptionCtx = createContext<SubscriptionValue | null>(null);
 
 export function SubscriptionProvider({ userId, children }: { userId: string | null; children: React.ReactNode }) {
-  const [isPremium, setPremium] = useState(false);
+  const [bought, setPremium] = useState(false);
+  const gift = useGift();
+  const isPremium = bought || giftActive(gift);
   const [loading, setLoading] = useState(true);
   const [packages, setPackages] = useState<PremiumPackage[]>([]);
 
@@ -73,6 +79,7 @@ export function SubscriptionProvider({ userId, children }: { userId: string | nu
   const value = useMemo<SubscriptionValue>(
     () => ({
       isPremium,
+      gift: giftActive(gift) ? gift : null,
       loading,
       mock: purchases.mock,
       packages,
@@ -83,7 +90,7 @@ export function SubscriptionProvider({ userId, children }: { userId: string | nu
       can: (f) => canUse(f, isPremium),
       isStickerLocked: (e) => isStickerLocked(e, isPremium),
     }),
-    [isPremium, loading, packages, purchase, restore, refresh],
+    [isPremium, gift, loading, packages, purchase, restore, refresh],
   );
 
   return <SubscriptionCtx.Provider value={value}>{children}</SubscriptionCtx.Provider>;

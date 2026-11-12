@@ -23,11 +23,17 @@ export type RemoteBanner = {
   action: "none" | "link" | "signin" | "santa";
   url: string;
   dismissible: boolean;
+  /** schedule: first and last day it shows (YYYY-MM-DD, inclusive); empty = no limit */
+  from?: string;
+  until?: string;
 };
 export type NewsItem = {
   id: string;
   audience: "all" | "signedIn" | "guest";
+  /** the day it goes out (it waits till then) */
   date: string;
+  /** the last day it stays in the list; empty = always */
+  until?: string;
   icon: string;
   color: string;
   title: L;
@@ -64,6 +70,14 @@ const set = (c: RemoteConfig) => {
 };
 
 export const getRemoteConfig = () => current;
+
+/** Is today (the phone's own day) inside a from–until schedule? The admin
+ * preview shows everything, so drafts for later can be checked. */
+export function onToday(from?: string, until?: string, d = new Date()) {
+  if (ADMIN_PREVIEW) return true;
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return !(from && from > today) && !(until && until < today);
+}
 
 async function load() {
   fetchedAt = Date.now();

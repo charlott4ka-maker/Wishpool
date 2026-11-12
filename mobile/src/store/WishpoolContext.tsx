@@ -12,6 +12,7 @@ import { api } from "../services/api";
 import { getPrefs, setPref } from "../settings/prefs";
 import type { AppState, NewWish, Room, Wish } from "../types";
 import { asMe, useMe } from "../lib/me";
+import { setGift } from "../subscription/gift";
 
 const LOCAL_KEY = "wp_local_state";
 const CACHE_KEY = "wp_server_cache";
@@ -90,6 +91,9 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const stateRef = useRef(state);
   stateRef.current = state;
+  // Premium given on the admin page goes to the subscription context
+  const gift = state.premiumGift;
+  useEffect(() => setGift(online ? gift : null), [online, gift?.until, gift?.forever]);
 
   // only a guest's things live on the phone: right after signing out the account's
   // rooms are still in memory for a moment, and they must not land here
@@ -107,7 +111,7 @@ export function WishpoolProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const s = await api.state();
-    const next = { wishes: s.wishes || [], rooms: s.rooms || [], inbox: (s as { inbox?: number }).inbox || 0, admin: !!(s as { admin?: boolean }).admin };
+    const next = { wishes: s.wishes || [], rooms: s.rooms || [], inbox: (s as { inbox?: number }).inbox || 0, admin: !!(s as { admin?: boolean }).admin, premiumGift: (s as AppState).premiumGift || null };
     setState(next);
     AsyncStorage.setItem(CACHE_KEY, JSON.stringify(next)).catch(() => {});
   }, [online]);

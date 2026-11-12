@@ -47,6 +47,11 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
 .soon{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#FFC94D;background:rgba(255,201,77,.12);border:1px solid rgba(255,201,77,.35);border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:6px;letter-spacing:.2px}
 .soon::before{content:"";width:6px;height:6px;border-radius:3px;background:#FFC94D}
 .tabs .dot{display:inline-block;width:6px;height:6px;border-radius:3px;background:#FFC94D;vertical-align:middle;margin-left:4px}
+input[type=date]{font:inherit;font-weight:600;font-size:14px;color:var(--t1);background:var(--bg);border:1px solid transparent;border-radius:12px;padding:7px 10px;color-scheme:dark}
+.sch{display:inline-flex;align-items:center;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;margin-left:8px}
+.sch.wait{color:#6FB6FF;background:rgba(10,130,249,.14)}.sch.live{color:#4CD964;background:rgba(52,199,89,.14)}.sch.over{color:var(--t3);background:rgba(255,255,255,.06)}
+.urow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--raised);border-radius:16px;padding:12px 14px;margin-top:8px}
+.urow .who{flex:1;min-width:180px}.urow .who b{display:block}
 .legend{font-size:12px;color:var(--t2);margin-top:8px}
 .stk .s.off{opacity:.35}
 .pk{background:rgba(255,255,255,.03);border-radius:18px;padding:12px;margin-bottom:12px;border:1px solid transparent}
@@ -130,6 +135,7 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
           <button data-tab="stickers">Стикеры</button>
           <button data-tab="folders">Папки <span class="dot" title="Выйдет в 1.0.2"></span></button>
           <button data-tab="news">Уведомления <span class="dot" title="Выйдет в 1.0.2"></span></button>
+          <button data-tab="premium">Premium <span class="dot" title="Выйдет в 1.0.2"></span></button>
           <button data-tab="reports">Жалобы</button>
         </div>
         <p class="hint" style="margin-top:12px">Справа живой предпросмотр: изменения видны в нём сразу, а в приложение попадают после «Сохранить», примерно за минуту. <span class="soon">Выйдет в 1.0.2</span> и жёлтая точка у вкладки: это пока видно только в тестовой сборке, пользователи увидят с новой версии приложения.</p>
@@ -184,6 +190,20 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
         <p class="hint">Колокольчик в профиле справа сверху: список как в банковском приложении и страница уведомления. Пустой язык не показывается в этом языке. В тексте <b>**так**</b> пишется жирным, <b>{name}</b> заменится на имя человека; в списке каждый пункт с новой строки; абзацы разделяй пустой строкой. Нажми на уведомление, чтобы открыть его в телефоне справа.</p>
         <div id="newsList"></div>
         <div class="btns"><button class="btn2 ghost" id="addNews">+ Новое уведомление</button></div>
+      </div>
+
+      <div class="block hidden" data-pane="premium">
+        <div class="row"><h2 style="margin:0">Подписки <span class="soon" title="Покупки появятся с версии 1.0.2 приложения">Выйдет в 1.0.2</span></h2><button class="btn2 ghost sm" id="premReload" style="margin-left:auto">Обновить</button></div>
+        <div id="premStats"></div>
+        <h2>Подарить Premium <span class="soon" title="Подарок увидят с версии 1.0.2 приложения">Выйдет в 1.0.2</span></h2>
+        <p class="hint">Найди человека по имени или почте и выдай Premium на срок или навсегда, без покупки (блогеру, другу, тестеру). Если подарок ещё идёт, новый срок прибавится к нему. В приложении на странице Premium будет написано «Premium в подарок до …».</p>
+        <div class="row" style="margin-top:12px">
+          <input type="search" id="premQ" placeholder="Имя, почта или id" style="flex:1;min-width:200px" />
+          <input type="text" id="premNote" placeholder="Заметка: кому и зачем (видишь только ты)" style="flex:1;min-width:200px" />
+        </div>
+        <div id="premFound"></div>
+        <h3 style="margin:24px 0 0">Кому подарено</h3>
+        <div id="premGrants"></div>
       </div>
 
       <div class="block hidden" data-pane="reports">

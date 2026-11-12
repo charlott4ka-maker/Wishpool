@@ -2,9 +2,21 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [], friends: [], friendRequests: [], friendCodes: {}, roomInvites: [], roomAdd: {} };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [], friends: [], friendRequests: [], friendCodes: {}, roomInvites: [], roomAdd: {}, grants: {}, subEvents: [] };
   return {
     async init() {},
+    async premiumGrant(id) { return D.grants[id] ? { ...D.grants[id] } : null; },
+    async grantPremium(id, until, note) { D.grants[id] = { until, note, at: Date.now() }; },
+    async dropGrant(id) { delete D.grants[id]; },
+    async listGrants() { return Object.entries(D.grants).map(([userId, g]) => ({ userId, name: D.users[userId]?.name || null, ...g })).sort((a, b) => b.at - a.at); },
+    async addSubEvent(e) { if (!D.subEvents.some(x => x.id === e.id)) D.subEvents.push({ ...e }); },
+    async subEvents(since) { return D.subEvents.filter(e => e.at >= since).sort((a, b) => a.at - b.at); },
+    async usersByIds(ids) { return ids.filter(id => D.users[id]).map(id => ({ id, name: D.users[id].name })); },
+    async searchUsers(part) {
+      const p = part.toLowerCase();
+      const email = (id) => Object.entries(D.identities).filter(([k, v]) => v === id && k.startsWith("email:")).map(([k]) => k.slice(6)).join(", ");
+      return Object.values(D.users).filter(u => u.id === part || (u.name || "").toLowerCase().includes(p) || email(u.id).toLowerCase().includes(p)).slice(0, 20).map(u => ({ id: u.id, name: u.name, email: email(u.id), lastSeen: u.lastSeen || null }));
+    },
     async getConfig() { return JSON.parse(JSON.stringify(D.config)); },
     async setConfig(key, value) { D.config[key] = JSON.parse(JSON.stringify(value)); },
     async friendIds(me) { return D.friends.filter(f => f.a === me).sort((x, y) => y.at - x.at).map(f => f.b); },

@@ -34,7 +34,7 @@ export default function PremiumScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { admin } = useWishpool();
-  const { isPremium } = useSubscription();
+  const { isPremium, gift } = useSubscription();
   const [until, setUntil] = useState<{ date: Date; renews: boolean } | null>(null);
   useEffect(() => {
     purchases.expiresAt().then(setUntil).catch(() => setUntil(null));
@@ -81,7 +81,11 @@ export default function PremiumScreen() {
           {/* small, at the very bottom: it's on, and the next payment (or, once cancelled, the last day) */}
           {isPremium ? (
             <Txt className="-mt-4 px-4 text-center text-[12.5px] leading-[18px] text-t3">
-              {until ? t(until.renews ? "premiumNextPay" : "premiumUntil", { date: fmt(until.date) }) : t("premiumActive")}
+              {until
+                ? t(until.renews ? "premiumNextPay" : "premiumUntil", { date: fmt(until.date) })
+                : gift
+                  ? gift.forever ? t("premiumGiftForever") : t("premiumGiftUntil", { date: fmt(new Date(gift.until)) })
+                  : t("premiumActive")}
             </Txt>
           ) : null}
         </View>

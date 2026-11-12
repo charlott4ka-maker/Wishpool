@@ -55,6 +55,30 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS friend_codes(code text primary key, user_id text unique)`);
       await q(`CREATE TABLE IF NOT EXISTS room_invites(room_id text, user_id text, inviter_id text, created_at bigint, primary key(room_id, user_id))`);
       await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS room_add text`);
+      // Premium: gifts from the admin page, and RevenueCat's webhook events (server/premium.js)
+      await q(`CREATE TABLE IF NOT EXISTS premium_grants(user_id text primary key, until bigint, note text, created_at bigint)`);
+      await q(`CREATE TABLE IF NOT EXISTS sub_events(id text primary key, at bigint, user_id text, type text, product text, period text, price double precision, env text, conversion boolean, expires bigint)`);
+      await q(`CREATE INDEX IF NOT EXISTS sub_events_at ON sub_events(at)`);
+    },
+    async premiumGrant(id) { const { rows } = await q(`SELECT until,note,created_at FROM premium_grants WHERE user_id=$1`, [id]); return rows[0] ? { until: Number(rows[0].until), note: rows[0].note, at: Number(rows[0].created_at) } : null; },
+    async grantPremium(id, until, note) { await q(`INSERT INTO premium_grants(user_id,until,note,created_at) VALUES($1,$2,$3,$4) ON CONFLICT(user_id) DO UPDATE SET until=EXCLUDED.until, note=EXCLUDED.note, created_at=EXCLUDED.created_at`, [id, until, note, Date.now()]); },
+    async dropGrant(id) { await q(`DELETE FROM premium_grants WHERE user_id=$1`, [id]); },
+    async listGrants() {
+      const { rows } = await q(`SELECT g.user_id,g.until,g.note,g.created_at,u.name FROM premium_grants g LEFT JOIN users u ON u.id=g.user_id ORDER BY g.created_at DESC LIMIT 300`);
+      return rows.map(r => ({ userId: r.user_id, name: r.name, until: Number(r.until), note: r.note || "", at: Number(r.created_at) }));
+    },
+    async addSubEvent(e) { await q(`INSERT INTO sub_events(id,at,user_id,type,product,period,price,env,conversion,expires) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT(id) DO NOTHING`, [e.id, e.at, e.userId, e.type, e.product, e.period, e.price, e.env, e.conversion, e.expires]); },
+    async subEvents(since) {
+      const { rows } = await q(`SELECT * FROM sub_events WHERE at>=$1 ORDER BY at`, [since]);
+      return rows.map(r => ({ id: r.id, at: Number(r.at), userId: r.user_id, type: r.type, product: r.product, period: r.period, price: Number(r.price) || 0, env: r.env, conversion: !!r.conversion, expires: r.expires == null ? null : Number(r.expires) }));
+    },
+    async usersByIds(ids) { if (!ids.length) return []; const { rows } = await q(`SELECT id,name FROM users WHERE id = ANY($1)`, [ids]); return rows; },
+    // the admin page's search: a name part, an e-mail part or an exact id
+    async searchUsers(part) {
+      const { rows } = await q(`SELECT u.id,u.name,u.last_seen,(SELECT string_agg(subject, ', ') FROM identities i WHERE i.user_id=u.id AND i.provider='email') AS email
+        FROM users u WHERE u.id=$2 OR u.name ILIKE $1 OR EXISTS(SELECT 1 FROM identities i WHERE i.user_id=u.id AND i.provider='email' AND i.subject ILIKE $1)
+        ORDER BY u.last_seen DESC NULLS LAST LIMIT 20`, ["%" + part + "%", part]);
+      return rows.map(r => ({ id: r.id, name: r.name, email: r.email || "", lastSeen: r.last_seen == null ? null : Number(r.last_seen) }));
     },
     async getConfig() { const { rows } = await q(`SELECT key,value FROM app_config`); return Object.fromEntries(rows.map(r => [r.key, JSON.parse(r.value)])); },
     async setConfig(key, value) { await q(`INSERT INTO app_config(key,value,updated_at) VALUES($1,$2,$3) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at`, [key, JSON.stringify(value), Date.now()]); },
@@ -111,6 +135,7 @@ export function createPgStore(q) {
       await q(`DELETE FROM friends WHERE user_id=$1 OR friend_id=$1`, [id]);
       await q(`DELETE FROM friend_requests WHERE from_id=$1 OR to_id=$1`, [id]);
       await q(`DELETE FROM friend_codes WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM premium_grants WHERE user_id=$1`, [id]);
       await q(`DELETE FROM room_invites WHERE user_id=$1 OR inviter_id=$1`, [id]);
       const { rows: ws } = await q(`SELECT * FROM wishes WHERE owner_id=$1`, [id]);
       const photos = ws.map(mapWish).flatMap(w => w.images && w.images.length ? w.images : [w.image]).filter(Boolean);

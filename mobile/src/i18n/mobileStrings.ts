@@ -110,6 +110,8 @@ export const MOBILE_STRINGS = {
 
   premium: { uk: "Wishpool Premium", ru: "Wishpool Premium", en: "Wishpool Premium" },
   premiumSub: { uk: "Зроби свої кімнати особливими", ru: "Сделай свои комнаты особенными", en: "Make your rooms one of a kind" },
+  premiumGiftUntil: { uk: "Premium у подарунок до {date}", ru: "Premium в подарок до {date}", en: "Premium as a gift until {date}" },
+  premiumGiftForever: { uk: "Premium у подарунок назавжди", ru: "Premium в подарок навсегда", en: "Premium as a gift, forever" },
   premiumActive: { uk: "Premium активний", ru: "Premium активен", en: "Premium is on" },
   premiumCardSub: { uk: "Кастомні папки, своє фото на папці, кольори й іконка застосунку.", ru: "Кастомные папки, своё фото на папке, цвета и иконка приложения.", en: "Custom folders, your own photo on a folder, app colours and icon." },
   premiumTry: { uk: "Спробувати безкоштовно", ru: "Попробовать бесплатно", en: "Try for free" },

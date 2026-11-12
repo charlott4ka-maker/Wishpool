@@ -15,6 +15,14 @@ const NAME_RE = /^[a-z0-9][a-z0-9_-]{0,39}$/;
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const LANGS = ["uk", "ru", "en"];
 
+const day = (v) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
+// a schedule check for the public config: a day of slack each side, since people
+// live in other time zones; the app checks the exact day on the phone
+export function inWindow(x, now = Date.now()) {
+  const lo = new Date(now - 86400000).toISOString().slice(0, 10), hi = new Date(now + 86400000).toISOString().slice(0, 10);
+  return !(x.from && x.from > hi) && !(x.until && x.until < lo);
+}
+
 const text = (v, max) => Object.fromEntries(LANGS.map(l => [l, typeof v?.[l] === "string" ? v[l].slice(0, max) : ""]));
 
 export function cleanStrings(v) {
@@ -42,6 +50,9 @@ export function cleanBanners(v) {
     action: ["none", "link", "signin", "santa"].includes(b?.action) ? b.action : "none",
     url: typeof b?.url === "string" && /^https:\/\/\S{1,500}$/.test(b.url) ? b.url : "",
     dismissible: b?.dismissible !== false,
+    // a schedule: shown from / until these days (inclusive), empty = no limit
+    from: day(b?.from),
+    until: day(b?.until),
   }));
 }
 
@@ -80,6 +91,8 @@ export function cleanNews(v) {
     active: !!n?.active,
     audience: ["all", "signedIn", "guest"].includes(n?.audience) ? n.audience : "all",
     date: typeof n?.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(n.date) ? n.date : new Date().toISOString().slice(0, 10),
+    // the date is also when it goes out; until: the last day it's in the list (empty = always)
+    until: day(n?.until),
     icon: NEWS_ICONS.includes(n?.icon) ? n.icon : "bell",
     color: typeof n?.color === "string" && /^#[0-9a-fA-F]{6}$/.test(n.color) ? n.color : "#0A82F9",
     title: L3(n?.title, 80),
@@ -106,7 +119,7 @@ export function publicConfigRoute(store) {
     try {
       const c = { ...EMPTY, ...(await store.getConfig()) };
       res.set("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
-      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active), stickers: c.stickers, folders: c.folders, season: cleanSeason(c.season), news: (c.news || []).filter(n => n.active) });
+      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active && inWindow(b)), stickers: c.stickers, folders: c.folders, season: cleanSeason(c.season), news: (c.news || []).filter(n => n.active && inWindow({ from: n.date, until: n.until })) });
     } catch (e) { next(e); }
   };
 }

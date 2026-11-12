@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "../auth/AuthContext";
 import { useT } from "../i18n";
-import { type NewsItem, useRemoteConfig } from "./remoteConfig";
+import { type NewsItem, onToday, useRemoteConfig } from "./remoteConfig";
 
 export const NEWS_ICON: Record<string, LucideIcon> = { bell: Bell, gift: Gift, sparkles: Sparkles, snowflake: Snowflake, star: Star, heart: Heart, info: Info, megaphone: Megaphone, crown: Crown, calendar: CalendarDays, palette: Palette, users: Users };
 
@@ -46,7 +46,7 @@ export function useNews(): { items: NewsItem[]; read: string[]; unread: number }
   }, []);
   const who = status === "signedIn" ? "signedIn" : "guest";
   const items = (news || [])
-    .filter((n) => (n.audience === "all" || n.audience === who) && pick(n.title, lang))
+    .filter((n) => (n.audience === "all" || n.audience === who) && onToday(n.date, n.until) && pick(n.title, lang))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   return { items, read: r, unread: items.filter((n) => !r.includes(n.id)).length };
 }
