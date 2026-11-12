@@ -95,3 +95,12 @@ export function orderedNames(names: string[], order?: string[]): string[] {
   const o = (order || []).filter((n) => names.includes(n));
   return [...o, ...names.filter((n) => !o.includes(n))];
 }
+
+/** The sticker a new room or wish starts with: the first classic sticker in the
+ *  admin page's order (not hidden), else the candle. */
+export function defaultSticker(cfg?: { order?: Record<string, string[]>; hidden?: string[] }): string {
+  const classic = STICKER_PACKS.find((p) => p.id === "classic");
+  const hidden = new Set(cfg?.hidden || []);
+  const first = classic ? orderedNames(classic.stickers as string[], cfg?.order?.classic).find((n) => !hidden.has(n)) : undefined;
+  return first ? `stk:${first}` : "stk:candle";
+}

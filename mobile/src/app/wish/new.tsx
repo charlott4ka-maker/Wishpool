@@ -19,6 +19,7 @@ import { DragTile } from "../../components/DragTile";
 import { Press } from "../../components/Press";
 import { Sticker } from "../../components/Sticker";
 import { StickerTabs } from "../../components/StickerTabs";
+import { useRemoteConfig } from "../../lib/remoteConfig";
 import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
@@ -32,7 +33,7 @@ import { priceRangeText, RANGE_RE, withCurrency } from "../../lib/price";
 import { toAffiliateUrl } from "../../services/affiliateConverter";
 import { fetchLinkPreview } from "../../services/linkPreview";
 import { useWishpool, wishImages } from "../../store/WishpoolContext";
-import { PLAN_LIMITS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
+import { defaultSticker, PLAN_LIMITS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { wishAdded } from "../../lib/review";
 import { usePrefs } from "../../settings/prefs";
 import { useSubscription } from "../../subscription/SubscriptionContext";
@@ -76,7 +77,8 @@ export default function AddWishScreen() {
   // Editing: show the shop's own URL, not our affiliate redirect.
   const initialLink = initial?.link ? toAffiliateUrl(initial.link).clean : "";
   const [link, setLink] = useState(initialLink || sharedLink || "");
-  const [emoji, setEmoji] = useState(initial?.emoji?.startsWith("stk:") ? initial.emoji : "stk:candle");
+  const stickerCfg = useRemoteConfig().stickers;
+  const [emoji, setEmoji] = useState(initial?.emoji?.startsWith("stk:") ? initial.emoji : defaultSticker(stickerCfg));
   const [images, setImages] = useState<string[]>(initial ? wishImages(initial) : []);
   const [cover, setCover] = useState<"photo" | "emoji">(initial && !wishImages(initial).length ? "emoji" : "photo");
   const [inRooms, setInRooms] = useState<string[]>(presetRoom ? [presetRoom] : []);

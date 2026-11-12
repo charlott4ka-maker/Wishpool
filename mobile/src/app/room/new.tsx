@@ -36,7 +36,7 @@ import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, hex, ROOM_COLORS } from "../../theme/tokens";
-import { NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
+import { defaultSticker, NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { orderedSkins } from "../../lib/folderSkins";
 import { useRemoteConfig } from "../../lib/remoteConfig";
 import type { RoomType } from "../../types";
@@ -98,7 +98,8 @@ export default function CreateRoomScreen() {
   const skinLocked = PREMIUM_ENABLED && !isPremium && !admin;
   const [preset, setPreset] = useState(PRESETS.find((p) => p.type === editing?.type) || PRESETS[0]);
   const [scrolled, setScrolled] = useState(false);
-  const [emoji, setEmoji] = useState(editing?.emoji || "stk:candle");
+  const stickerCfg = useRemoteConfig().stickers;
+  const [emoji, setEmoji] = useState(editing?.emoji || defaultSticker(stickerCfg));
   const [tint, setTint] = useState(editing?.tint || ROOM_COLORS[0]);
   const [skin, setSkin] = useState(editing?.skin || "");
   // premium folders in the order set on the admin page
@@ -150,7 +151,7 @@ export default function CreateRoomScreen() {
     // Secret Santa gets its own look unless a sticker or colour was already chosen
     // and only New Year stickers; leaving it puts back an ordinary one
     if (p.santa && !NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:santa");
-    if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji("stk:candle");
+    if (!p.santa && NEW_YEAR_STICKERS.includes(emoji)) setEmoji(defaultSticker(stickerCfg));
     if (p.santa && tint === ROOM_COLORS[0]) setTint("#FF4D8D");
   };
   // opened from the Secret Santa banner: start as a Santa room
