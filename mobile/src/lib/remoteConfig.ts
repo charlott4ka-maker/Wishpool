@@ -39,7 +39,8 @@ export type NewsItem = {
 export type RemoteConfig = {
   strings: Record<string, L>;
   banners: RemoteBanner[];
-  stickers: { hidden: string[]; extra: { name: string }[] };
+  /** packOrder: the packs' order set on the admin page (others after, as in the app) */
+  stickers: { hidden: string[]; extra: { name: string }[]; packOrder?: string[] };
   /** premium folders: order and hidden ones, set on the admin page */
   folders: { order: string[]; hidden: string[] };
   /** seasonal things, switched on the admin page (Banners › Season) */

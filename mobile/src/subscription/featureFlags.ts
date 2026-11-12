@@ -82,3 +82,10 @@ export function canUse(feature: PremiumFeature, isPremium: boolean): boolean {
       return isPremium;
   }
 }
+
+/** The packs in the admin page's order (any it doesn't list keep the app's order, after). */
+export function orderedPacks(order?: string[]): StickerPack[] {
+  const o = order || [];
+  const rank = (id: string) => (o.includes(id) ? o.indexOf(id) : o.length + STICKER_PACKS.findIndex((p) => p.id === id));
+  return [...STICKER_PACKS].sort((a, b) => rank(a.id) - rank(b.id));
+}

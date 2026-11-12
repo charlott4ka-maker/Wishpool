@@ -47,7 +47,9 @@ export function cleanBanners(v) {
 
 export function cleanStickers(v) {
   const names = (a) => [...new Set((Array.isArray(a) ? a : []).map(x => (typeof x === "string" ? x : x?.name)).filter(n => typeof n === "string" && NAME_RE.test(n)))];
-  return { hidden: names(v?.hidden).slice(0, 200), extra: names(v?.extra).slice(0, 200).map(name => ({ name })) };
+  // packOrder: the sticker packs (classic, newyear, party...) in the order the pickers show them
+  const ids = [...new Set((Array.isArray(v?.packOrder) ? v.packOrder : []).filter(id => typeof id === "string" && /^[a-z0-9_-]{1,40}$/.test(id)))].slice(0, 30);
+  return { hidden: names(v?.hidden).slice(0, 200), extra: names(v?.extra).slice(0, 200).map(name => ({ name })), packOrder: ids };
 }
 
 // premium folders: the order they show in, and any taken out of the picker
