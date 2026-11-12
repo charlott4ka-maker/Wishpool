@@ -12,7 +12,7 @@ import { type LayoutChangeEvent, Pressable, ScrollView, View } from "react-nativ
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { useRemoteConfig } from "../lib/remoteConfig";
-import { orderedPacks, PREMIUM_ENABLED, stickerId } from "../subscription/featureFlags";
+import { orderedNames, orderedPacks, PREMIUM_ENABLED, stickerId } from "../subscription/featureFlags";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
 import { Press } from "./Press";
@@ -44,7 +44,7 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
 
   const packs = orderedPacks(stickers.packOrder).filter((p) => PREMIUM_ENABLED || !p.isPremiumOnly).map((p) => ({
     ...p,
-    names: [...(p.stickers as string[]), ...(p.id === "classic" ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k),
+    names: orderedNames([...(p.stickers as string[]), ...(p.id === "classic" ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k), stickers.order?.[p.id]),
   }));
   const tabs = [...(recent && recent.length ? [{ id: "recent", title: t("stickersRecent"), premium: false }] : []), ...packs.map((p) => ({ id: p.id, title: t(p.titleKey), premium: p.isPremiumOnly }))];
   const cur = tab && tabs.some((x) => x.id === tab) ? tab : tabs[0]?.id;

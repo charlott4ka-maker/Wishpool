@@ -238,28 +238,50 @@
     var o = (draft.stickers.packOrder || []).filter(function (id) { return all.indexOf(id) >= 0; });
     return o.concat(all.filter(function (id) { return o.indexOf(id) < 0; }));
   }
+  function isExtra(n) { return draft.stickers.extra.some(function (s) { return s.name === n; }); }
+  // a pack's stickers in the admin's order (uploaded ones join the classic pack)
+  function packNames(id) {
+    var p = (data.stickers.packs || []).filter(function (x) { return x.id === id; })[0];
+    var all = p.stickers.concat(id === "classic" ? draft.stickers.extra.map(function (s) { return s.name; }) : []);
+    var o = ((draft.stickers.order || {})[id] || []).filter(function (n) { return all.indexOf(n) >= 0; });
+    return o.concat(all.filter(function (n) { return o.indexOf(n) < 0; }));
+  }
   function renderStickers() {
     var hidden = draft.stickers.hidden;
     var packs = {}; (data.stickers.packs || []).forEach(function (p) { packs[p.id] = p; });
     $("stickerGrid").innerHTML = packOrder().map(function (id, i) {
       var p = packs[id];
-      var tiles = p.stickers.map(function (n) { return { n: n, isNew: false }; });
-      // uploaded stickers join the first (classic) pack in the app
-      if (id === "classic") tiles = tiles.concat(draft.stickers.extra.map(function (s) { return { n: s.name, isNew: true }; }));
-      return '<div class="pk" draggable="true" data-pack="' + id + '"><div class="pkh"><span class="grip">⠿</span><b>' + (i + 1) + ". " + esc(p.title) + "</b>" + (id === "party" ? ' <span class="soon">Premium · выйдет в 1.0.2</span>' : "") + "</div>" +
+      var tiles = packNames(id).map(function (n) { return { n: n, isNew: isExtra(n) }; });
+      return '<div class="pk" data-pack="' + id + '"><div class="pkh" draggable="true"><span class="grip">⠿</span><b>' + (i + 1) + ". " + esc(p.title) + "</b>" + (id === "party" ? ' <span class="soon">Premium · выйдет в 1.0.2</span>' : "") + "</div>" +
         '<div class="stk">' + tiles.map(function (t) {
           var off = hidden.indexOf(t.n) >= 0;
-          return '<div class="s' + (off ? " off" : "") + (t.isNew ? " new" : "") + '" data-n="' + t.n + '"><img src="' + stickerUrl(t.n) + '" alt="" draggable="false">' + esc(t.n) +
+          return '<div class="s' + (off ? " off" : "") + (t.isNew ? " new" : "") + '" draggable="true" data-n="' + t.n + '"><img src="' + stickerUrl(t.n) + '" alt="" draggable="false">' + esc(t.n) +
             (off ? "<br>скрыт" : "") + (t.isNew ? '<br><button class="btn2 danger sm" data-rm="' + t.n + '" style="margin-top:6px">Удалить</button>' : "") + "</div>";
         }).join("") + "</div></div>";
     }).join("");
   }
   // drag a pack (by its header or anywhere on it) to change the order
-  var dragPack = null;
-  $("stickerGrid").addEventListener("dragstart", function (e) { var t = e.target.closest(".pk"); if (!t) return; dragPack = t.dataset.pack; t.classList.add("drag"); e.dataTransfer.effectAllowed = "move"; });
-  $("stickerGrid").addEventListener("dragend", function () { dragPack = null; renderStickers(); });
-  $("stickerGrid").addEventListener("dragover", function (e) { var t = e.target.closest(".pk"); if (!t || !dragPack) return; e.preventDefault(); document.querySelectorAll("#stickerGrid .pk.over").forEach(function (x) { x.classList.remove("over"); }); t.classList.add("over"); });
+  var dragPack = null, dragStk = null, dragStkPack = null;
+  $("stickerGrid").addEventListener("dragstart", function (e) {
+    var st = e.target.closest && e.target.closest(".s");
+    if (st) { dragStk = st.dataset.n; dragStkPack = st.closest(".pk").dataset.pack; st.classList.add("drag"); e.dataTransfer.effectAllowed = "move"; return; }
+    var h = e.target.closest && e.target.closest(".pkh"); if (!h) return;
+    dragPack = h.closest(".pk").dataset.pack; h.closest(".pk").classList.add("drag"); e.dataTransfer.effectAllowed = "move";
+  });
+  $("stickerGrid").addEventListener("dragend", function () { dragPack = null; dragStk = null; renderStickers(); });
+  $("stickerGrid").addEventListener("dragover", function (e) {
+    document.querySelectorAll("#stickerGrid .over").forEach(function (x) { x.classList.remove("over"); });
+    if (dragStk) { var s2 = e.target.closest(".s"); if (!s2 || s2.closest(".pk").dataset.pack !== dragStkPack) return; e.preventDefault(); s2.classList.add("over"); return; }
+    var t = e.target.closest(".pk"); if (!t || !dragPack) return; e.preventDefault(); t.classList.add("over");
+  });
   $("stickerGrid").addEventListener("drop", function (e) {
+    if (dragStk) {
+      var s2 = e.target.closest(".s"); if (!s2 || s2.closest(".pk").dataset.pack !== dragStkPack) return; e.preventDefault();
+      var cur2 = packNames(dragStkPack), o2 = cur2.filter(function (n) { return n !== dragStk; });
+      o2.splice(o2.indexOf(s2.dataset.n) + (cur2.indexOf(dragStk) < cur2.indexOf(s2.dataset.n) ? 1 : 0), 0, dragStk);
+      draft.stickers.order = Object.assign({}, draft.stickers.order || {}); draft.stickers.order[dragStkPack] = o2;
+      dragStk = null; renderStickers(); updateBar(); return;
+    }
     var t = e.target.closest(".pk"); if (!t || !dragPack) return; e.preventDefault();
     var cur = packOrder(), o = cur.filter(function (id) { return id !== dragPack; });
     o.splice(o.indexOf(t.dataset.pack) + (cur.indexOf(dragPack) < cur.indexOf(t.dataset.pack) ? 1 : 0), 0, dragPack);

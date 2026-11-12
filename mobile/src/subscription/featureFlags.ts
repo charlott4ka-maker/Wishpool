@@ -89,3 +89,9 @@ export function orderedPacks(order?: string[]): StickerPack[] {
   const rank = (id: string) => (o.includes(id) ? o.indexOf(id) : o.length + STICKER_PACKS.findIndex((p) => p.id === id));
   return [...STICKER_PACKS].sort((a, b) => rank(a.id) - rank(b.id));
 }
+
+/** A pack's stickers in the admin page's order (new ones it doesn't list keep their place, after). */
+export function orderedNames(names: string[], order?: string[]): string[] {
+  const o = (order || []).filter((n) => names.includes(n));
+  return [...o, ...names.filter((n) => !o.includes(n))];
+}

@@ -7,7 +7,7 @@ import { Pressable, View } from "react-native";
 import { useT } from "../i18n";
 import { useRemoteConfig } from "../lib/remoteConfig";
 import { haptic } from "../lib/haptics";
-import { orderedPacks, PREMIUM_ENABLED, stickerId } from "../subscription/featureFlags";
+import { orderedNames, orderedPacks, PREMIUM_ENABLED, stickerId } from "../subscription/featureFlags";
 import type { StickerName } from "./stickerAssets";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
@@ -29,7 +29,7 @@ export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked
     <View className="gap-4">
       {orderedPacks(stickers.packOrder).sort((a, b) => Number(b.id === only) - Number(a.id === only)).filter((p) => PREMIUM_ENABLED || !p.isPremiumOnly).map((pack, i, packs) => {
         const locked = pack.isPremiumOnly && !isPremium;
-        const names = [...(pack.stickers as string[]), ...(pack.id === "classic" ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k);
+        const names = orderedNames([...(pack.stickers as string[]), ...(pack.id === "classic" ? extra : [])].filter((n, k, a) => !hidden.has(n) && a.indexOf(n) === k), stickers.order?.[pack.id]);
         return (
           <View key={pack.id}>
             {packs.length > 1 ? (

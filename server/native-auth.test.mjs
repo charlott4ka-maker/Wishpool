@@ -178,7 +178,7 @@ try {
   assert.deepEqual(pub.body.strings, { poolTitle: { ru: "Хотелки" } });
   assert.equal(pub.body.banners.length, 1);
   assert.equal(pub.body.banners[0].color2, "#ff0000");
-  assert.deepEqual(pub.body.stickers, { hidden: ["uno"], extra: [{ name: "star-new" }], packOrder: [] });
+  assert.deepEqual(pub.body.stickers, { hidden: ["uno"], extra: [{ name: "star-new" }], packOrder: [], order: {} });
   delete process.env.ADMIN_EMAILS;
 
   globalThis.fetch = realFetch;

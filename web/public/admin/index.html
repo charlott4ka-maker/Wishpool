@@ -51,6 +51,7 @@ label.f{display:block;font-size:13px;font-weight:700;color:var(--t2);margin:12px
 .stk .s.off{opacity:.35}
 .pk{background:rgba(255,255,255,.03);border-radius:18px;padding:12px;margin-bottom:12px;border:1px solid transparent}
 .pk.drag{opacity:.4}.pk.over{border-color:#0A82F9}
+.stk .s{cursor:grab}.stk .s.drag{opacity:.35}.stk .s.over{box-shadow:inset 0 0 0 2px #0A82F9}
 .pkh{display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:grab;user-select:none}.pkh .grip{color:var(--t2);font-size:18px}
 .stk .s.new{box-shadow:inset 0 0 0 1px rgba(52,199,89,.6)}
 .fld{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
@@ -160,7 +161,7 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
 
       <div class="block hidden" data-pane="stickers">
         <h2 style="margin-top:0">Стикеры</h2>
-        <p class="hint"><span class="soon">Порядок разделов: с 1.0.2</span> Стикеры по разделам. Перетаскивай раздел за заголовок, чтобы поменять порядок разделов в приложении. Нажми на стикер, чтобы скрыть его из выбора или вернуть; старые желания со скрытым стикером продолжат его показывать.</p>
+        <p class="hint"><span class="soon">Порядок: с 1.0.2</span> Стикеры по разделам. Перетаскивай раздел за заголовок, чтобы поменять порядок разделов, а стикер внутри раздела, чтобы поменять порядок стикеров. Нажми на стикер, чтобы скрыть его из выбора или вернуть; старые желания со скрытым стикером продолжат его показывать.</p>
         <div id="stickerGrid" style="margin-top:12px"></div>
         <h2>Новый стикер</h2>
         <p class="hint">PNG или WebP с белой обводкой и прозрачным фоном, как у остальных. Квадрат, лучше 512×512. Имя латиницей, например <b>teddy</b>. Перезалить под тем же именем нельзя: удали и загрузи с новым.</p>

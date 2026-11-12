@@ -49,7 +49,11 @@ export function cleanStickers(v) {
   const names = (a) => [...new Set((Array.isArray(a) ? a : []).map(x => (typeof x === "string" ? x : x?.name)).filter(n => typeof n === "string" && NAME_RE.test(n)))];
   // packOrder: the sticker packs (classic, newyear, party...) in the order the pickers show them
   const ids = [...new Set((Array.isArray(v?.packOrder) ? v.packOrder : []).filter(id => typeof id === "string" && /^[a-z0-9_-]{1,40}$/.test(id)))].slice(0, 30);
-  return { hidden: names(v?.hidden).slice(0, 200), extra: names(v?.extra).slice(0, 200).map(name => ({ name })), packOrder: ids };
+  // order: inside each pack, the stickers' own order
+  const order = {};
+  for (const [k, list] of Object.entries(v?.order && typeof v.order === "object" ? v.order : {}).slice(0, 30))
+    if (/^[a-z0-9_-]{1,40}$/.test(k)) order[k] = names(list).slice(0, 200);
+  return { hidden: names(v?.hidden).slice(0, 200), extra: names(v?.extra).slice(0, 200).map(name => ({ name })), packOrder: ids, order };
 }
 
 // premium folders: the order they show in, and any taken out of the picker
