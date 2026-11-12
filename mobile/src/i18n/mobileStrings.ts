@@ -133,6 +133,7 @@ export const MOBILE_STRINGS = {
   newsReadAll: { uk: "Прочитати все", ru: "Прочитать все", en: "Mark all read" },
   newsEmpty: { uk: "Поки тихо", ru: "Пока тихо", en: "Nothing here yet" },
   newsEmptySub: { uk: "Тут з'являтимуться новини Wishpool", ru: "Здесь будут новости Wishpool", en: "Wishpool news will show up here" },
+  emojiTab: { uk: "Стікер", ru: "Стикер", en: "Sticker" },
   setSnow: { uk: "Сніг у грудні", ru: "Снег в декабре", en: "Snow in December" },
   customColor: { uk: "Свій колір", ru: "Свой цвет", en: "Your own colour" },
   perkFolders: { uk: "Кастомні папки", ru: "Кастомные папки", en: "Custom folders" },
