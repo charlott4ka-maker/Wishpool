@@ -208,6 +208,27 @@ try {
   assert.equal(prem.stats.revenue30, 24.99); assert.equal(prem.stats.sandbox, 1);
   assert.equal(prem.recent[0].name, "Rev"); assert.equal(prem.grants[0].forever, true);
   delete process.env.REVENUECAT_WEBHOOK_AUTH;
+  // feature switches: cleaned and public
+  await call("PUT", "/api/admin/config/flags", { value: { holidaySnow: { on: false, percent: 140 }, "bad key": { on: true } } }, rv.body.token);
+  assert.deepEqual((await call("GET", "/api/config")).body.flags, { holidaySnow: { on: false, percent: 100 } });
+  // analytics: funnel and picks
+  const ins = (await call("GET", "/api/admin/insights?days=30", null, rv.body.token)).body;
+  assert.equal(ins.days, 30); assert.ok(ins.funnel.n >= 1); assert.ok(Array.isArray(ins.popular.wishStickers));
+  await call("POST", "/api/ev", { names: ["accent_pink"] }, rv.body.token);
+  assert.ok((await call("GET", "/api/admin/insights", null, rv.body.token)).body.popular.picks.some(p => p.id === "accent_pink"));
+  // support chat: a message, the admin answers, the person sees one unread until they open it
+  assert.equal((await call("POST", "/api/support", { text: "  " }, rv.body.token)).status, 400);
+  await call("POST", "/api/support", { text: "Не грузится фото", meta: "1.0.2 ios" }, rv.body.token);
+  const th = (await call("GET", "/api/admin/support", null, rv.body.token)).body.threads;
+  assert.equal(th[0].unread, 1); assert.equal(th[0].status, "open");
+  const one = (await call("GET", "/api/admin/support/" + me0.me.id, null, rv.body.token)).body;
+  assert.equal(one.messages[0].text, "Не грузится фото"); assert.equal(one.thread.meta, "1.0.2 ios");
+  const rep = await call("POST", "/api/admin/support/" + me0.me.id, { text: "Уже чиним" }, rv.body.token);
+  assert.equal(rep.body.mailed, true);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.supportUnread, 1);
+  assert.equal((await call("GET", "/api/support", null, rv.body.token)).body.messages.length, 2);
+  assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.supportUnread, 0);
+  assert.equal((await call("GET", "/api/admin/support", null, rv.body.token)).body.threads[0].status, "done");
   await call("DELETE", "/api/admin/premium/grant/" + me0.me.id, null, rv.body.token);
   assert.equal((await call("GET", "/api/state", null, rv.body.token)).body.premiumGift, null);
   delete process.env.ADMIN_EMAILS;

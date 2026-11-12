@@ -27,9 +27,11 @@ import { PREMIUM_ENABLED } from "../../subscription/featureFlags";
 import { useSubscription } from "../../subscription/SubscriptionContext";
 import { C, hex } from "../../theme/tokens";
 import { useAccent } from "../../theme/accent";
+import { useFlag } from "../../lib/flags";
 
 export default function ProfileScreen() {
   useAccent(); // re-render in place when the app colour changes
+  const premiumCardOn = useFlag("premiumCard");
   const { t } = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -108,7 +110,7 @@ export default function ProfileScreen() {
 
         {/* Premium: the offer under the birthday until you have it; in Telegram a
             pointer to the iPhone app, shown once Premium is on sale (admins see it now) */}
-        {(IN_TG ? PREMIUM_ENABLED || admin || PREVIEW_PREMIUM : showPremium(admin)) && !isPremium ? (
+        {premiumCardOn && (IN_TG ? PREMIUM_ENABLED || admin || PREVIEW_PREMIUM : showPremium(admin)) && !isPremium ? (
           <View className="mt-3">
             <PremiumCard />
           </View>

@@ -7,6 +7,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Linking, Platform } from "react-native";
 
+import { flagOn } from "./flags";
+
 const KEY = "wp_review";
 const ASK_AT = [3, 10];
 const GAP = 120 * 24 * 60 * 60 * 1000;
@@ -16,7 +18,7 @@ type State = { added: number; askedAt: number; asks: number };
 
 /** Call after a new wish was added (not edits, not undo). */
 export async function wishAdded(demo: boolean) {
-  if (demo || Platform.OS !== "ios") return;
+  if (demo || Platform.OS !== "ios" || !flagOn("ratePrompt")) return;
   try {
     const s: State = { added: 0, askedAt: 0, asks: 0, ...JSON.parse((await AsyncStorage.getItem(KEY)) || "{}") };
     s.added++;

@@ -2,7 +2,7 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [], friends: [], friendRequests: [], friendCodes: {}, roomInvites: [], roomAdd: {}, grants: {}, subEvents: [] };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [], friends: [], friendRequests: [], friendCodes: {}, roomInvites: [], roomAdd: {}, grants: {}, subEvents: [], support: [], threads: {} };
   return {
     async init() {},
     async premiumGrant(id) { return D.grants[id] ? { ...D.grants[id] } : null; },
@@ -11,6 +11,47 @@ export function createMemStore() {
     async listGrants() { return Object.entries(D.grants).map(([userId, g]) => ({ userId, name: D.users[userId]?.name || null, ...g })).sort((a, b) => b.at - a.at); },
     async addSubEvent(e) { if (!D.subEvents.some(x => x.id === e.id)) D.subEvents.push({ ...e }); },
     async subEvents(since) { return D.subEvents.filter(e => e.at >= since).sort((a, b) => a.at - b.at); },
+    async funnel(since) {
+      const us = Object.values(D.users).filter(u => u.id !== "admin-panel" && (u.firstSeen || 0) >= since);
+      const size = (rid) => D.members.filter(m => m.roomId === rid).length;
+      const mine = (id) => D.members.filter(m => m.userId === id);
+      return {
+        n: us.length,
+        wish: us.filter(u => Object.values(D.wishes).some(w => w.ownerId === u.id)).length,
+        room: us.filter(u => mine(u.id).length).length,
+        friends: us.filter(u => mine(u.id).some(m => size(m.roomId) > 1)).length,
+        gift: us.filter(u => Object.values(D.reservations).includes(u.id) || D.chips.some(c => c.userId === u.id)).length,
+        week: us.filter(u => u.lastSeen - u.firstSeen >= 604800000).length,
+      };
+    },
+    async popular(since) {
+      const top = (list, key, max = 40) => { const c = {}; for (const x of list) { const k = key(x); if (k) c[k] = (c[k] || 0) + 1; } return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, max).map(([id, n]) => ({ id, n })); };
+      const ws = Object.values(D.wishes).filter(w => w.createdAt >= since), rs = Object.values(D.rooms).filter(r => (r.createdAt || 0) >= since);
+      const picks = {}; for (const e of D.events) if (e.at >= since && /^(accent|icon|paywall)_/.test(e.name)) (picks[e.name] = picks[e.name] || new Set()).add(e.userId);
+      return {
+        wishStickers: top(ws, w => /^stk:/.test(w.emoji || "") && w.emoji), roomStickers: top(rs, r => /^stk:/.test(r.emoji || "") && r.emoji),
+        folders: top(rs, r => r.skin || ""), colors: top(rs, r => (r.tint || "").toLowerCase(), 20),
+        picks: Object.entries(picks).map(([id, u]) => ({ id, n: u.size })).sort((a, b) => b.n - a.n),
+      };
+    },
+    async addSupportMsg(m, meta) {
+      D.support.push({ ...m });
+      const t = D.threads[m.userId] || (D.threads[m.userId] = { userId: m.userId, status: "open", lastAt: 0, userRead: 0, adminRead: 0, meta: "" });
+      t.lastAt = m.at; if (meta) t.meta = meta;
+      if (m.author === "user") { t.status = "open"; t.userRead = m.at; } else t.adminRead = m.at;
+    },
+    async userLang(id) { return D.users[id]?.lang || null; },
+    async supportMsgs(userId) { return D.support.filter(m => m.userId === userId).sort((a, b) => a.at - b.at).map(({ id, author, text, at }) => ({ id, author, text, at })); },
+    async supportThread(userId) { return D.threads[userId] ? { ...D.threads[userId] } : null; },
+    async markSupport(userId, who, at) { const t = D.threads[userId]; if (t) t[who === "user" ? "userRead" : "adminRead"] = at; },
+    async setSupportStatus(userId, status) { if (D.threads[userId]) D.threads[userId].status = status; },
+    async supportUnread(userId) { const t = D.threads[userId]; return t ? D.support.filter(m => m.userId === userId && m.author === "admin" && m.at > t.userRead).length : 0; },
+    async supportThreads() {
+      return Object.values(D.threads).sort((a, b) => b.lastAt - a.lastAt).map(t => {
+        const ms = D.support.filter(m => m.userId === t.userId);
+        return { userId: t.userId, name: D.users[t.userId]?.name || null, status: t.status, lastAt: t.lastAt, lastText: ms.length ? ms[ms.length - 1].text : "", unread: ms.filter(m => m.author === "user" && m.at > t.adminRead).length };
+      });
+    },
     async usersByIds(ids) { return ids.filter(id => D.users[id]).map(id => ({ id, name: D.users[id].name })); },
     async searchUsers(part) {
       const p = part.toLowerCase();

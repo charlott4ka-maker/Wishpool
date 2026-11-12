@@ -110,8 +110,20 @@ export function cleanNews(v) {
   }));
 }
 
-const CLEAN = { strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders, season: cleanSeason, news: cleanNews };
-const EMPTY = { strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true }, news: [] };
+// feature switches (mobile/src/lib/flags.ts lists them): on/off and the share of
+// people who get it (0-100, picked by a stable hash of the account or phone)
+export function cleanFlags(v) {
+  const out = {};
+  for (const [k, f] of Object.entries(v && typeof v === "object" && !Array.isArray(v) ? v : {}).slice(0, 60)) {
+    if (!/^[a-zA-Z0-9_]{1,40}$/.test(k)) continue;
+    const p = Math.round(Number(f?.percent));
+    out[k] = { on: !!f?.on, percent: isFinite(p) ? Math.min(100, Math.max(0, p)) : 100 };
+  }
+  return out;
+}
+
+const CLEAN = { flags: cleanFlags, strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders, season: cleanSeason, news: cleanNews };
+const EMPTY = { flags: {}, strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true }, news: [] };
 
 /** GET /api/config: what the app reads on start (only active banners). */
 export function publicConfigRoute(store) {
@@ -119,7 +131,7 @@ export function publicConfigRoute(store) {
     try {
       const c = { ...EMPTY, ...(await store.getConfig()) };
       res.set("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=300");
-      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active && inWindow(b)), stickers: c.stickers, folders: c.folders, season: cleanSeason(c.season), news: (c.news || []).filter(n => n.active && inWindow({ from: n.date, until: n.until })) });
+      res.json({ strings: c.strings, banners: c.banners.filter(b => b.active && inWindow(b)), stickers: c.stickers, folders: c.folders, season: cleanSeason(c.season), flags: c.flags || {}, news: (c.news || []).filter(n => n.active && inWindow({ from: n.date, until: n.until })) });
     } catch (e) { next(e); }
   };
 }

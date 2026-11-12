@@ -51,6 +51,8 @@ export type RemoteConfig = {
   folders: { order: string[]; hidden: string[] };
   /** seasonal things, switched on the admin page (Banners › Season) */
   season: { newYear: boolean };
+  /** feature switches (lib/flags.ts): on/off and the share of people */
+  flags?: Record<string, { on: boolean; percent: number }>;
   /** in-app notifications (Profile › bell), made on the admin page */
   news: NewsItem[];
   /** Admin preview only: show this banner whatever its audience. */

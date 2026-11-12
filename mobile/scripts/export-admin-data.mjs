@@ -60,7 +60,10 @@ const packs = [...flags.matchAll(/id:\s*"([a-z0-9_-]+)",[\s\S]*?titleKey:\s*"([A
   title: (strings[m[2]] && strings[m[2]].ru) || m[1],
   stickers: [...m[3].replace(/\/\/.*$/gm, "").matchAll(/"([a-z0-9_-]+)"/g)].map((x) => x[1]),
 }));
-const out = { strings, stickers: { bundled, inPicker, packs }, folders: skinIds, screens };
+// feature switches for the Флаги tab (lib/flags.ts FLAGS)
+const flagSrc = fs.readFileSync(path.join(src, "lib/flags.ts"), "utf8");
+const featureFlags = [...flagSrc.matchAll(/\{ id: "([a-zA-Z0-9_]+)", title: "([^"]*)", about: "([^"]*)", on: (true|false) \}/g)].map((m) => ({ id: m[1], title: m[2], about: m[3], on: m[4] === "true" }));
+const out = { strings, stickers: { bundled, inPicker, packs }, folders: skinIds, screens, flags: featureFlags };
 const file = path.join(here, "..", "..", "web/public/admin/app-data.json");
 fs.mkdirSync(path.dirname(file), { recursive: true });
 fs.writeFileSync(file, JSON.stringify(out));

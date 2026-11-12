@@ -14,10 +14,10 @@ body{padding:16px 16px 96px}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:start}
 .col{display:flex;flex-direction:column;gap:4px;min-width:0}
 @media (max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.phoneCol{display:none}}
-.tabs{display:flex;gap:4px;background:var(--bg);border-radius:999px;padding:4px;width:max-content;max-width:100%;overflow-x:auto}
-.tabs button,.btn2{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:999px;height:40px;padding:0 16px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.tabs button{background:none;color:var(--t2)}
-.tabs button.on{background:#353C49;color:var(--t1)}
+.tabs,.tabs2{display:flex;gap:4px;background:var(--bg);border-radius:999px;padding:4px;width:max-content;max-width:100%;overflow-x:auto}
+.tabs button,.tabs2 button,.btn2{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:999px;height:40px;padding:0 16px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.tabs button,.tabs2 button{background:none;color:var(--t2)}
+.tabs button.on,.tabs2 button.on{background:#353C49;color:var(--t1)}
 .btn2{background:var(--blue);color:#fff}
 .btn2.ghost{background:#2D3440;color:var(--t1)}
 .btn2.danger{background:#3a1f22;color:#ff6b6b}
@@ -52,6 +52,20 @@ input[type=date]{font:inherit;font-weight:600;font-size:14px;color:var(--t1);bac
 .sch.wait{color:#6FB6FF;background:rgba(10,130,249,.14)}.sch.live{color:#4CD964;background:rgba(52,199,89,.14)}.sch.over{color:var(--t3);background:rgba(255,255,255,.06)}
 .urow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--raised);border-radius:16px;padding:12px 14px;margin-top:8px}
 .urow .who{flex:1;min-width:180px}.urow .who b{display:block}
+.tabs .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;background:#FF3B30;color:#fff;font-size:11px;padding:0 5px;margin-left:4px}
+.funnel .st{margin-top:12px}.funnel .top{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}.funnel .top b{font-weight:700}
+.funnel .tr{height:28px;border-radius:10px;background:rgba(255,255,255,.05);overflow:hidden}.funnel .fl{height:100%;border-radius:10px;background:linear-gradient(90deg,#0A82F9,#55A9FC)}
+.pop{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-top:10px}
+.pop .p{background:var(--raised);border-radius:16px;padding:8px;text-align:center;font-size:12px;color:var(--t2)}
+.pop .p img{width:52px;height:52px;object-fit:contain;display:block;margin:0 auto 4px}.pop .p b{display:block;color:var(--t1);font-size:15px}
+.pop .p .sw{width:44px;height:44px;border-radius:22px;margin:4px auto 8px}
+.pop .p .fd{position:relative;width:64px;height:58px;margin:0 auto 4px}.pop .p .fd img{position:absolute;inset:0;width:100%;height:100%;margin:0}
+.chat{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.bub{max-width:78%;padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
+.bub.u{align-self:flex-start;background:var(--raised)}.bub.a{align-self:flex-end;background:#0A82F9;color:#fff}
+.bub .t{font-size:11px;opacity:.6;margin-top:4px}
+.thr{cursor:pointer}.thr:hover{background:#252a31}
+input[type=range]{accent-color:#0A82F9;width:160px}
 .legend{font-size:12px;color:var(--t2);margin-top:8px}
 .stk .s.off{opacity:.35}
 .pk{background:rgba(255,255,255,.03);border-radius:18px;padding:12px;margin-bottom:12px;border:1px solid transparent}
@@ -130,12 +144,15 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
       <div class="block">
         <div class="tabs">
           <button data-tab="stats" class="on">Статистика</button>
+          <button data-tab="insights">Аналитика</button>
           <button data-tab="banners">Баннеры</button>
           <button data-tab="strings">Тексты</button>
           <button data-tab="stickers">Стикеры</button>
           <button data-tab="folders">Папки <span class="dot" title="Выйдет в 1.0.2"></span></button>
           <button data-tab="news">Уведомления <span class="dot" title="Выйдет в 1.0.2"></span></button>
           <button data-tab="premium">Premium <span class="dot" title="Выйдет в 1.0.2"></span></button>
+          <button data-tab="flags">Флаги <span class="dot" title="Выйдет в 1.0.2"></span></button>
+          <button data-tab="support">Поддержка <span class="dot" title="Выйдет в 1.0.2"></span><span class="cnt hidden" id="supCnt"></span></button>
           <button data-tab="reports">Жалобы</button>
         </div>
         <p class="hint" style="margin-top:12px">Справа живой предпросмотр: изменения видны в нём сразу, а в приложение попадают после «Сохранить», примерно за минуту. <span class="soon">Выйдет в 1.0.2</span> и жёлтая точка у вкладки: это пока видно только в тестовой сборке, пользователи увидят с новой версии приложения.</p>
@@ -204,6 +221,24 @@ table.ev td.n{text-align:right;color:var(--t2);white-space:nowrap;padding-left:1
         <div id="premFound"></div>
         <h3 style="margin:24px 0 0">Кому подарено</h3>
         <div id="premGrants"></div>
+      </div>
+
+      <div class="block hidden" data-pane="insights">
+        <div class="row"><h2 style="margin:0">Аналитика</h2>
+          <div class="tabs2" id="insDays" style="margin-left:auto"><button data-d="7">7 дней</button><button data-d="30" class="on">30 дней</button><button data-d="90">90 дней</button><button data-d="0">Всё время</button></div></div>
+        <div id="insights"></div>
+      </div>
+
+      <div class="block hidden" data-pane="flags">
+        <h2 style="margin-top:0">Флаги <span class="soon" title="Пользователи увидят это с версии 1.0.2 приложения">Выйдет в 1.0.2</span></h2>
+        <p class="hint">Включай и выключай части приложения без обновления: у всех или у доли людей (например, 10%, чтобы проверить на части). Один и тот же человек всегда попадает в одну и ту же долю. Приложение подтягивает изменения за несколько минут.</p>
+        <div id="flagList"></div>
+      </div>
+
+      <div class="block hidden" data-pane="support">
+        <div class="row"><h2 style="margin:0">Поддержка <span class="soon" title="Чат в приложении появится с версии 1.0.2">Выйдет в 1.0.2</span></h2><button class="btn2 ghost sm" id="supReload" style="margin-left:auto">Обновить</button></div>
+        <p class="hint" style="margin-top:8px">Сообщения из приложения: Настройки › Поддержка (они же приходят на support@). Ответ появится у человека в приложении с красным счётчиком, а если он вошёл по почте, придёт и письмом.</p>
+        <div id="supList"></div>
       </div>
 
       <div class="block hidden" data-pane="reports">

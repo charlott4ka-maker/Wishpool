@@ -38,12 +38,12 @@
     show("login", false);
     if (!token) { show("login", true); return; }
     Promise.all([api("GET", "/admin/config"), fetch("/admin/app-data.json").then(function (r) { return r.json(); })]).then(function (res) {
-      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [], packOrder: [] }, folders: res[0].folders || { order: [], hidden: [] }, season: res[0].season || { newYear: true }, news: res[0].news || [] };
+      saved = { strings: res[0].strings || {}, banners: res[0].banners || [], stickers: res[0].stickers || { hidden: [], extra: [], packOrder: [] }, folders: res[0].folders || { order: [], hidden: [] }, season: res[0].season || { newYear: true }, flags: res[0].flags || {}, news: res[0].news || [] };
       draft = clone(saved);
       data = res[1];
       show("noStorage", !res[0].storage);
       show("app", true); show("logout", true);
-      renderAll(); loadStats(); startPreview();
+      renderAll(); loadStats(); startPreview(); supportCount();
     }).catch(function () {
       localStorage.removeItem("wp_admin_token"); token = ""; show("login", true);
     });
@@ -60,6 +60,8 @@
       if (tab === "reports") loadReports();
       if (tab === "stats") loadStats();
       if (tab === "premium") loadPremium();
+      if (tab === "insights") loadInsights();
+      if (tab === "support") loadSupport();
       if (tab === "banners") { pv.go("/"); pv.push(); }
       if (tab === "stickers") pv.go("/wish/new");
       if (tab === "folders") pv.go("/room/new");
@@ -67,17 +69,17 @@
     };
   });
   function dirty(key) { return JSON.stringify(saved[key]) !== JSON.stringify(draft[key]); }
-  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders", "season", "news"].some(dirty)); pv.push(); }
+  function updateBar() { $("bar").classList.toggle("show", ["banners", "strings", "stickers", "folders", "season", "news", "flags"].some(dirty)); pv.push(); }
   $("discard").onclick = function () { draft = clone(saved); renderAll(); };
   $("save").onclick = function () {
-    var keys = ["banners", "strings", "stickers", "folders", "season", "news"].filter(dirty);
+    var keys = ["banners", "strings", "stickers", "folders", "season", "news", "flags"].filter(dirty);
     Promise.all(keys.map(function (k) { return api("PUT", "/admin/config/" + k, { value: draft[k] }).then(function (r) { saved[k] = r.value; }); }))
       .then(function () { draft = clone(saved); renderAll(); toast("Сохранено"); })
       .catch(function (e) { toast("Ошибка: " + e.message); });
   };
-  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders", "season", "news"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
+  window.addEventListener("beforeunload", function (e) { if (draft && ["banners", "strings", "stickers", "folders", "season", "news", "flags"].some(dirty)) { e.preventDefault(); e.returnValue = ""; } });
 
-  function renderAll() { renderBanners(); renderNews(); renderSeason(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
+  function renderAll() { renderFlags(); renderBanners(); renderNews(); renderSeason(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
 
   // ---------- the season (New Year) ----------
   function renderSeason() {
@@ -578,6 +580,114 @@
     api("DELETE", "/admin/premium/grant/" + encodeURIComponent(b.dataset.revoke)).then(function () { toast("Забрал"); loadPremium(); }).catch(function (er) { toast("Ошибка: " + er.message); });
   });
 
+  // ---------- analytics: the funnel and what people pick ----------
+  var insDays = 30;
+  document.querySelectorAll("#insDays button").forEach(function (b) {
+    b.onclick = function () { insDays = +b.dataset.d; document.querySelectorAll("#insDays button").forEach(function (x) { x.classList.toggle("on", x === b); }); loadInsights(); };
+  });
+  var PICK = { paywall_open: "Открыли экран оплаты" };
+  function pickName(id) {
+    if (PICK[id]) return PICK[id];
+    if (id.indexOf("accent_") === 0) return "Цвет приложения: " + id.slice(7);
+    if (id.indexOf("icon_") === 0) return "Иконка: " + (id === "icon_glow" ? "Сияние" : id === "icon_classic" || id === "icon_default" ? "Классика" : id.slice(5));
+    if (id.indexOf("paywall_buy_") === 0) return "Нажали «Купить»: " + ({ annual: "год", monthly: "месяц" }[id.slice(12)] || id.slice(12));
+    return id;
+  }
+  function stkTiles(list) {
+    return list.length ? '<div class="pop">' + list.map(function (x) { var n = x.id.replace(/^stk:/, ""); return '<div class="p"><img src="/stickers/' + esc(n) + '.webp" alt=""><b>' + x.n + "</b>" + esc(n) + "</div>"; }).join("") + "</div>" : '<p class="hint">Пока пусто.</p>';
+  }
+  function loadInsights() {
+    if (!$("insights").innerHTML) $("insights").innerHTML = '<p class="hint" style="margin-top:12px">Загружаю…</p>';
+    api("GET", "/admin/insights?days=" + insDays).then(function (r) {
+      var f = r.funnel, steps = [[f.n, "Пришли в приложение"], [f.wish, "Добавили желание"], [f.room, "Есть комната"], [f.friends, "В комнате с друзьями"], [f.gift, "Взяли подарок другу"]];
+      var pct = function (a, b) { return b ? Math.round(a / b * 100) + "%" : "–"; };
+      var P = r.popular;
+      $("insights").innerHTML =
+        '<h3 style="margin:20px 0 0">Воронка</h3><p class="hint" style="margin-top:4px">' + (r.days ? "Люди, которые пришли за последние " + r.days + " дней" : "Все люди") + ", и сколько из них дошли до каждого шага.</p>" +
+        '<div class="funnel">' + steps.map(function (s, i) {
+          return '<div class="st"><div class="top"><span>' + s[1] + '</span><span><b>' + s[0] + "</b> · " + pct(s[0], f.n) + (i ? ' <span class="key">' + pct(s[0], steps[i - 1][0]) + " от прошлого шага</span>" : "") + '</span></div><div class="tr"><div class="fl" style="width:' + (f.n ? Math.max(2, s[0] / f.n * 100) : 0) + '%"></div></div></div>';
+        }).join("") + "</div>" +
+        '<div class="kpis">' + kpi(pct(f.week, f.n), "Вернулись через неделю", f.week + " из " + f.n + " заходили спустя 7+ дней") + "</div>" +
+        '<h3 style="margin:28px 0 0">Стикеры на желаниях</h3>' + stkTiles(P.wishStickers) +
+        '<h3 style="margin:24px 0 0">Стикеры на комнатах</h3>' + stkTiles(P.roomStickers) +
+        '<h3 style="margin:24px 0 0">Кастомные папки</h3>' + (P.folders.length ? '<div class="pop">' + P.folders.map(function (x) {
+          return '<div class="p">' + (x.id === "photo" ? '<div class="sw" style="background:#353C49"></div>' : '<div class="fd"><img src="/admin/folders/' + esc(x.id) + '_back.webp" alt=""><img src="/admin/folders/' + esc(x.id) + '_front.webp" alt=""></div>') + "<b>" + x.n + "</b>" + esc(x.id === "photo" ? "своё фото" : x.id) + "</div>";
+        }).join("") + "</div>" : '<p class="hint">Пока пусто.</p>') +
+        '<h3 style="margin:24px 0 0">Цвета комнат</h3>' + (P.colors.length ? '<div class="pop">' + P.colors.map(function (x) { return '<div class="p"><div class="sw" style="background:' + esc(x.id) + '"></div><b>' + x.n + "</b>" + esc(x.id) + "</div>"; }).join("") + "</div>" : '<p class="hint">Пока пусто.</p>') +
+        '<h3 style="margin:24px 0 0">Выборы в приложении</h3><p class="hint" style="margin-top:4px">Цвет приложения, иконка, экран оплаты: сколько разных людей. Считается с версии 1.0.2.</p>' +
+        (P.picks.length ? '<table class="ev">' + P.picks.map(function (x) { return "<tr><td>" + esc(pickName(x.id)) + '</td><td class="n">' + x.n + " чел.</td></tr>"; }).join("") + "</table>" : '<p class="hint">Пока пусто.</p>');
+    }).catch(function (e) { $("insights").innerHTML = '<p class="hint" style="margin-top:12px">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+
+  // ---------- feature switches (mobile/src/lib/flags.ts) ----------
+  function renderFlags() {
+    var list = (data && data.flags) || [];
+    $("flagList").innerHTML = list.map(function (f) {
+      var v = draft.flags[f.id], on = v ? v.on : f.on, pc = v ? v.percent : 100;
+      return '<div class="item"><div class="row"><label class="row" style="gap:6px;font-weight:700"><input type="checkbox" data-flag="' + f.id + '"' + (on ? " checked" : "") + "> " + esc(f.title) + "</label>" +
+        (v ? "" : '<span class="key" style="margin-left:8px">как в приложении</span>') +
+        (on ? '<label class="row hint" style="gap:8px;margin-left:auto">Кому: <input type="range" min="0" max="100" step="5" data-pct="' + f.id + '" value="' + pc + '"><b style="min-width:84px">' + (pc >= 100 ? "всем" : pc + "% людей") + "</b></label>" : "") +
+        '</div><p class="hint" style="margin-top:6px">' + esc(f.about) + ' <span class="key">' + f.id + "</span></p></div>";
+    }).join("") || '<p class="hint">Список флагов не загрузился.</p>';
+  }
+  $("flagList").addEventListener("input", function (e) {
+    var el = e.target, id = el.dataset.flag || el.dataset.pct; if (!id) return;
+    var def = (data.flags || []).filter(function (f) { return f.id === id; })[0] || { on: true };
+    var cur = draft.flags[id] || { on: def.on, percent: 100 };
+    if (el.dataset.flag) cur.on = el.checked; else cur.percent = +el.value;
+    draft.flags[id] = { on: cur.on, percent: cur.percent };
+    if (el.dataset.flag) renderFlags(); else el.nextElementSibling.textContent = cur.percent >= 100 ? "всем" : cur.percent + "% людей";
+    updateBar();
+  });
+
+  // ---------- support chat ----------
+  var supOpen = null;
+  function ago(ms) { return new Date(ms).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+  function supportCount() {
+    api("GET", "/admin/support").then(function (r) {
+      var n = r.threads.filter(function (x) { return x.unread || x.status === "open"; }).length;
+      $("supCnt").textContent = n; $("supCnt").classList.toggle("hidden", !n);
+    }).catch(function () {});
+  }
+  function loadSupport() {
+    if (supOpen) return openThread(supOpen);
+    $("supList").innerHTML = '<p class="hint" style="margin-top:12px">Загружаю…</p>';
+    api("GET", "/admin/support").then(function (r) {
+      var n = r.threads.filter(function (x) { return x.unread || x.status === "open"; }).length;
+      $("supCnt").textContent = n; $("supCnt").classList.toggle("hidden", !n);
+      $("supList").innerHTML = r.threads.length ? r.threads.map(function (x) {
+        return '<div class="urow thr" data-thread="' + esc(x.userId) + '"><div class="who"><b>' + esc(x.name || x.userId) +
+          (x.status === "open" ? ' <span class="sch wait">ждёт ответа</span>' : ' <span class="sch over">отвечено</span>') + (x.unread ? ' <span class="cnt" style="display:inline-flex;min-width:18px;height:18px;border-radius:9px;background:#FF3B30;color:#fff;font-size:11px;align-items:center;justify-content:center;padding:0 5px">' + x.unread + "</span>" : "") +
+          '</b><span class="hint">' + esc(x.lastText.slice(0, 140)) + '</span></div><span class="key">' + ago(x.lastAt) + "</span></div>";
+      }).join("") : '<p class="hint" style="margin-top:12px">Пока никто не писал.</p>';
+    }).catch(function (e) { $("supList").innerHTML = '<p class="hint">Ошибка: ' + esc(e.message) + "</p>"; });
+  }
+  function openThread(id) {
+    supOpen = id;
+    api("GET", "/admin/support/" + encodeURIComponent(id)).then(function (r) {
+      $("supList").innerHTML =
+        '<div class="row" style="margin-top:12px"><button class="btn2 ghost sm" id="supBack">‹ Все обращения</button>' +
+        '<button class="btn2 ghost sm" id="supStatus" style="margin-left:auto">' + (r.thread.status === "open" ? "Отметить отвеченным" : "Вернуть в «ждёт ответа»") + "</button></div>" +
+        '<div class="urow"><div class="who"><b>' + esc(r.user ? r.user.name : id) + '</b><span class="hint">' + esc(r.email || "без почты: ответ увидит только в приложении") + ' · <span class="key">' + esc(id) + "</span>" + (r.thread.meta ? "<br>" + esc(r.thread.meta) : "") + "</span></div></div>" +
+        '<div class="chat">' + r.messages.map(function (m) { return '<div class="bub ' + (m.author === "admin" ? "a" : "u") + '">' + esc(m.text) + '<div class="t">' + ago(m.at) + "</div></div>"; }).join("") + "</div>" +
+        '<textarea id="supText" placeholder="Ответ" style="margin-top:16px;min-height:90px"></textarea>' +
+        '<div class="row" style="margin-top:8px"><button class="btn2" id="supSend" style="margin-left:auto">Ответить</button></div>';
+      $("supBack").onclick = function () { supOpen = null; loadSupport(); };
+      $("supStatus").onclick = function () {
+        api("POST", "/admin/support/" + encodeURIComponent(id) + "/status", { status: r.thread.status === "open" ? "done" : "open" }).then(function () { openThread(id); supportCount(); });
+      };
+      $("supSend").onclick = function () {
+        var t = $("supText").value.trim(); if (!t) return;
+        $("supSend").disabled = true;
+        api("POST", "/admin/support/" + encodeURIComponent(id), { text: t }).then(function (x) { toast(x.mailed ? "Ответ отправлен и письмом" : "Ответ отправлен в приложение"); openThread(id); supportCount(); })
+          .catch(function (e) { $("supSend").disabled = false; toast("Ошибка: " + e.message); });
+      };
+      supportCount();
+    }).catch(function (e) { supOpen = null; toast("Ошибка: " + e.message); loadSupport(); });
+  }
+  $("supList").addEventListener("click", function (e) { var t = e.target.closest("[data-thread]"); if (t) openThread(t.dataset.thread); });
+  $("supReload").onclick = loadSupport;
+
   // ---------- phone preview ----------
   // The iPhone app's web build in an iframe (same site), as a guest with the demo
   // content. It exposes window.__wpPreview (mobile/src/lib/adminPreview.ts).
@@ -594,7 +704,7 @@
     function cfg() {
       var banners = draft ? draft.banners : [];
       var forced = tab === "banners" ? (banners.some(function (b) { return b.id === focusBanner; }) ? focusBanner : banners[0] && banners[0].id) : null;
-      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, folders: draft.folders, season: draft.season, news: draft.news, previewBanner: forced || null } : null;
+      return draft ? { strings: draft.strings, banners: banners, stickers: draft.stickers, folders: draft.folders, season: draft.season, news: draft.news, flags: draft.flags, previewBanner: forced || null } : null;
     }
     function push() { clearTimeout(pushT); pushT = setTimeout(function () { var a = api(), c = cfg(); if (a && c) a.setConfig(c); }, 120); }
     function go(path) {

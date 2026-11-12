@@ -59,6 +59,10 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS premium_grants(user_id text primary key, until bigint, note text, created_at bigint)`);
       await q(`CREATE TABLE IF NOT EXISTS sub_events(id text primary key, at bigint, user_id text, type text, product text, period text, price double precision, env text, conversion boolean, expires bigint)`);
       await q(`CREATE INDEX IF NOT EXISTS sub_events_at ON sub_events(at)`);
+      // support: a chat per person (server/support.js)
+      await q(`CREATE TABLE IF NOT EXISTS support_msgs(id text primary key, user_id text, author text, text text, at bigint)`);
+      await q(`CREATE INDEX IF NOT EXISTS support_msgs_user ON support_msgs(user_id, at)`);
+      await q(`CREATE TABLE IF NOT EXISTS support_threads(user_id text primary key, status text, last_at bigint, user_read bigint, admin_read bigint, meta text)`);
     },
     async premiumGrant(id) { const { rows } = await q(`SELECT until,note,created_at FROM premium_grants WHERE user_id=$1`, [id]); return rows[0] ? { until: Number(rows[0].until), note: rows[0].note, at: Number(rows[0].created_at) } : null; },
     async grantPremium(id, until, note) { await q(`INSERT INTO premium_grants(user_id,until,note,created_at) VALUES($1,$2,$3,$4) ON CONFLICT(user_id) DO UPDATE SET until=EXCLUDED.until, note=EXCLUDED.note, created_at=EXCLUDED.created_at`, [id, until, note, Date.now()]); },
@@ -71,6 +75,50 @@ export function createPgStore(q) {
     async subEvents(since) {
       const { rows } = await q(`SELECT * FROM sub_events WHERE at>=$1 ORDER BY at`, [since]);
       return rows.map(r => ({ id: r.id, at: Number(r.at), userId: r.user_id, type: r.type, product: r.product, period: r.period, price: Number(r.price) || 0, env: r.env, conversion: !!r.conversion, expires: r.expires == null ? null : Number(r.expires) }));
+    },
+    // the admin page's funnel: of the people who came since `since`, how many got how far
+    async funnel(since) {
+      const { rows } = await q(`SELECT count(*) n,
+        count(*) FILTER (WHERE EXISTS(SELECT 1 FROM wishes w WHERE w.owner_id=u.id)) wish,
+        count(*) FILTER (WHERE EXISTS(SELECT 1 FROM members m WHERE m.user_id=u.id)) room,
+        count(*) FILTER (WHERE EXISTS(SELECT 1 FROM members m WHERE m.user_id=u.id AND (SELECT count(*) FROM members m2 WHERE m2.room_id=m.room_id) > 1)) friends,
+        count(*) FILTER (WHERE EXISTS(SELECT 1 FROM reservations r WHERE r.gifter_id=u.id) OR EXISTS(SELECT 1 FROM chips c WHERE c.user_id=u.id)) gift,
+        count(*) FILTER (WHERE u.last_seen - u.first_seen >= 604800000) week
+        FROM users u WHERE u.id <> 'admin-panel' AND COALESCE(u.first_seen,0) >= $1`, [since]);
+      const r = rows[0];
+      return Object.fromEntries(["n", "wish", "room", "friends", "gift", "week"].map(k => [k, Number(r[k]) || 0]));
+    },
+    // what people pick: stickers, folders, colours (made since `since`), app colour and icon (events)
+    async popular(since) {
+      const top = async (sql) => (await q(sql, [since])).rows.map(r => ({ id: r.id, n: Number(r.n) }));
+      const [wishStickers, roomStickers, folders, colors, picks] = await Promise.all([
+        top(`SELECT emoji id, count(*) n FROM wishes WHERE emoji LIKE 'stk:%' AND created_at >= $1 GROUP BY 1 ORDER BY 2 DESC LIMIT 40`),
+        top(`SELECT emoji id, count(*) n FROM rooms WHERE emoji LIKE 'stk:%' AND created_at >= $1 GROUP BY 1 ORDER BY 2 DESC LIMIT 40`),
+        top(`SELECT skin id, count(*) n FROM rooms WHERE skin IS NOT NULL AND skin <> '' AND created_at >= $1 GROUP BY 1 ORDER BY 2 DESC LIMIT 40`),
+        top(`SELECT lower(tint) id, count(*) n FROM rooms WHERE tint IS NOT NULL AND tint <> '' AND created_at >= $1 GROUP BY 1 ORDER BY 2 DESC LIMIT 20`),
+        q(`SELECT name id, count(DISTINCT user_id) n FROM events WHERE (name LIKE 'accent\\_%' OR name LIKE 'icon\\_%' OR name LIKE 'paywall\\_%') AND at >= $1 GROUP BY 1 ORDER BY 2 DESC`, [since]),
+      ]);
+      return { wishStickers, roomStickers, folders, colors, picks: picks.rows.map(r => ({ id: r.id, n: Number(r.n) })) };
+    },
+    async addSupportMsg(m, meta) {
+      await q(`INSERT INTO support_msgs(id,user_id,author,text,at) VALUES($1,$2,$3,$4,$5)`, [m.id, m.userId, m.author, m.text, m.at]);
+      const mine = m.author === "user";
+      await q(`INSERT INTO support_threads(user_id,status,last_at,user_read,admin_read,meta) VALUES($1,$2,$3,$4,$5,$6)
+        ON CONFLICT(user_id) DO UPDATE SET status=CASE WHEN $7 THEN 'open' ELSE support_threads.status END, last_at=EXCLUDED.last_at,
+        user_read=CASE WHEN $7 THEN EXCLUDED.user_read ELSE support_threads.user_read END, admin_read=CASE WHEN $7 THEN support_threads.admin_read ELSE EXCLUDED.admin_read END,
+        meta=COALESCE(EXCLUDED.meta, support_threads.meta)`, [m.userId, "open", m.at, mine ? m.at : 0, mine ? 0 : m.at, meta || null, mine]);
+    },
+    async userLang(id) { const { rows } = await q(`SELECT lang FROM users WHERE id=$1`, [id]); return rows[0]?.lang || null; },
+    async supportMsgs(userId) { const { rows } = await q(`SELECT id,author,text,at FROM support_msgs WHERE user_id=$1 ORDER BY at`, [userId]); return rows.map(r => ({ ...r, at: Number(r.at) })); },
+    async supportThread(userId) { const { rows } = await q(`SELECT * FROM support_threads WHERE user_id=$1`, [userId]); const r = rows[0]; return r ? { userId: r.user_id, status: r.status, lastAt: Number(r.last_at), userRead: Number(r.user_read) || 0, adminRead: Number(r.admin_read) || 0, meta: r.meta || "" } : null; },
+    async markSupport(userId, who, at) { await q(who === "user" ? `UPDATE support_threads SET user_read=$2 WHERE user_id=$1` : `UPDATE support_threads SET admin_read=$2 WHERE user_id=$1`, [userId, at]); },
+    async setSupportStatus(userId, status) { await q(`UPDATE support_threads SET status=$2 WHERE user_id=$1`, [userId, status]); },
+    async supportUnread(userId) { const { rows } = await q(`SELECT count(*) n FROM support_msgs m JOIN support_threads t ON t.user_id=m.user_id WHERE m.user_id=$1 AND m.author='admin' AND m.at > COALESCE(t.user_read,0)`, [userId]); return Number(rows[0].n) || 0; },
+    async supportThreads() {
+      const { rows } = await q(`SELECT t.*, u.name, (SELECT text FROM support_msgs m WHERE m.user_id=t.user_id ORDER BY at DESC LIMIT 1) last_text,
+        (SELECT count(*) FROM support_msgs m WHERE m.user_id=t.user_id AND m.author='user' AND m.at > COALESCE(t.admin_read,0)) unread
+        FROM support_threads t LEFT JOIN users u ON u.id=t.user_id ORDER BY t.last_at DESC LIMIT 300`);
+      return rows.map(r => ({ userId: r.user_id, name: r.name, status: r.status, lastAt: Number(r.last_at), lastText: r.last_text || "", unread: Number(r.unread) || 0 }));
     },
     async usersByIds(ids) { if (!ids.length) return []; const { rows } = await q(`SELECT id,name FROM users WHERE id = ANY($1)`, [ids]); return rows; },
     // the admin page's search: a name part, an e-mail part or an exact id
@@ -136,6 +184,8 @@ export function createPgStore(q) {
       await q(`DELETE FROM friend_requests WHERE from_id=$1 OR to_id=$1`, [id]);
       await q(`DELETE FROM friend_codes WHERE user_id=$1`, [id]);
       await q(`DELETE FROM premium_grants WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM support_msgs WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM support_threads WHERE user_id=$1`, [id]);
       await q(`DELETE FROM room_invites WHERE user_id=$1 OR inviter_id=$1`, [id]);
       const { rows: ws } = await q(`SELECT * FROM wishes WHERE owner_id=$1`, [id]);
       const photos = ws.map(mapWish).flatMap(w => w.images && w.images.length ? w.images : [w.image]).filter(Boolean);

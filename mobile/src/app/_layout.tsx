@@ -111,6 +111,7 @@ function Gate() {
             <Stack.Screen name="news/index" />
             <Stack.Screen name="news/[id]" />
             <Stack.Screen name="faq" />
+            <Stack.Screen name="support" />
             <Stack.Screen name="friends" />
             <Stack.Screen name="friends-guest" options={FIT_SHEET} />
             {/* the two long forms are full screen, not sheets: dragging the folder sticker

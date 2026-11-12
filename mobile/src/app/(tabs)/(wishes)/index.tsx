@@ -27,9 +27,11 @@ import { useKeyboardHeight } from "../../../lib/useKeyboardHeight";
 import { useWishpool } from "../../../store/WishpoolContext";
 import { C } from "../../../theme/tokens";
 import { useAccent } from "../../../theme/accent";
+import { useFlag } from "../../../lib/flags";
 
 export default function PoolScreen() {
   useAccent(); // re-render in place when the app colour changes
+  const snowFlag = useFlag("holidaySnow");
   const snowPref = usePrefs().snow;
   const { season } = useRemoteConfig();
   const snowOn = snowPref && season.newYear;
@@ -184,7 +186,7 @@ export default function PoolScreen() {
       </View>
       <TabBarFade />
       {/* the holiday season: light snow over the list (Settings › Snow) */}
-      {snowOn && snowSeason() ? <HolidaySnow /> : null}
+      {snowOn && snowFlag && snowSeason() ? <HolidaySnow /> : null}
     </View>
   );
 }
