@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DragTile } from "../../components/DragTile";
 import { Press } from "../../components/Press";
 import { Sticker } from "../../components/Sticker";
-import { StickerPicker } from "../../components/StickerPicker";
+import { StickerTabs } from "../../components/StickerTabs";
 import { Chip, Field, Pill, SEG_ON, Segmented, Txt } from "../../components/ui";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
@@ -304,7 +304,7 @@ export default function AddWishScreen() {
         </View>
       ) : (
         <View className="mb-4">
-          <StickerPicker value={emoji} onChange={setEmoji} />
+          <StickerTabs value={emoji} onChange={setEmoji} />
         </View>
       )}
 
