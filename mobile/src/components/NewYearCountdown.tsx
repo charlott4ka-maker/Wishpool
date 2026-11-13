@@ -44,14 +44,18 @@ export function NewYearCountdown({ rooms }: { rooms: Room[] }) {
         haptic("light");
         router.push({ pathname: "/room/new", params: { preset: "santa" } });
       }}
-      className="flex-row items-center gap-3 rounded-tile bg-raised py-3 pl-3 pr-2"
+      className="flex-row items-center gap-3 rounded-tile bg-raised py-3 pl-3 pr-3"
     >
       <Sticker emoji="stk:tree" size={34} />
       <View className="flex-1">
         <Txt className="font-m700 text-[15px]">{t("nyCountdown", { days })}</Txt>
-        <Txt className="mt-0.5 text-[13px] text-t2">{t("nyCountdownSub")}</Txt>
+        {/* the chevron follows the line, 4pt after it, on its level */}
+        <View className="mt-0.5 flex-row items-center gap-1">
+          <Txt className="shrink text-[13px] text-t2" numberOfLines={1}>{t("nyCountdownSub")}</Txt>
+          <ChevronRight size={14} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />
+        </View>
       </View>
-      <ChevronRight size={18} color={C.t3} />
+      {/* the same round close button as the banners */}
       <Pressable
         hitSlop={8}
         onPress={() => {
@@ -59,10 +63,10 @@ export function NewYearCountdown({ rooms }: { rooms: Room[] }) {
           setClosed(true);
           AsyncStorage.setItem(KEY, "1").catch(() => {});
         }}
-        className="h-8 w-8 items-center justify-center"
+        style={{ width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.15)" }}
         accessibilityLabel={t("closeBtn")}
       >
-        <X size={16} color={C.t3} strokeWidth={1.5} absoluteStrokeWidth />
+        <X size={16} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
       </Pressable>
     </Pressable>
   );
