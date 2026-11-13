@@ -125,7 +125,7 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
                     scaleTo={0.85}
                     onPress={() => pick(e)}
                     className="items-center justify-center rounded-full"
-                    style={{ width: cell, height: cell, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent", opacity: locked ? 0.45 : 1 }}
+                    style={{ width: cell, height: cell, backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
                   >
                     <Sticker emoji={e} size={cell * 0.6} />
                   </Press>

@@ -2,7 +2,7 @@
 // paywall instead of selecting.
 
 import { useRouter } from "expo-router";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 
 import { useT } from "../i18n";
 import { useRemoteConfig } from "../lib/remoteConfig";
@@ -35,17 +35,8 @@ export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked
             {packs.length > 1 ? (
               <View className="mb-2 flex-row items-center gap-2">
                 <Txt className="font-m600 text-[13px] text-t2">{t(pack.titleKey)}</Txt>
-                {pack.isPremiumOnly ? (
-                  locked ? (
-                    // locked: the badge opens the paywall too
-                    <Pressable onPress={() => (onLocked ? onLocked() : router.push("/paywall"))} hitSlop={6}>
-                      <PremiumBadge label={t("premiumOnly")} />
-                    </Pressable>
-                  ) : (
-                    // yours: just the crown
-                    <PremiumBadge />
-                  )
-                ) : null}
+                {/* just the crown; the stickers aren't dimmed, a tap on one opens the paywall */}
+                {pack.isPremiumOnly ? <PremiumBadge /> : null}
               </View>
             ) : null}
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
@@ -62,7 +53,7 @@ export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked
                         onChange(e);
                       }}
                       className="aspect-square items-center justify-center rounded-full"
-                      style={{ backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent", opacity: locked ? 0.45 : 1 }}
+                      style={{ backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
                     >
                       <Sticker emoji={e} size={size} />
                     </Press>
