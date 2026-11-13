@@ -60,7 +60,7 @@ export const STICKER_PACKS: StickerPack[] = [
     titleKey: "packParty",
     isPremiumOnly: true,
     // "Aesthetic": photo cut-outs; then (2026-11-14) her Pinterest collage set (gpt-image-1.5 from her refs)
-    stickers: ["disc", "disco", "camera", "evileye", "bow", "glassheart", "ball8", "kiss", "ball7", "cherries", "leostar", "martini", "redlips", "strawberry", "hibiscus", "champagne", "dice", "leoheart", "oyster", "swan", "leobow"],
+    stickers: ["disc", "disco", "camera", "evileye", "bow", "glassheart", "ball8", "kiss", "ball7", "cherries", "strawberry", "hibiscus", "champagne", "dice", "leoheart", "swan"],
   },
   {
     // "Cute": soft 3D ones from her references, in our santa sticker's style
