@@ -21,7 +21,7 @@ import { Sticker } from "./Sticker";
 import type { StickerName } from "./stickerAssets";
 import { Txt } from "./ui";
 
-const RECENT_KEY = "wp_recent_stickers";
+import { RECENT_KEY } from "../lib/recentStickers";
 const COLS = 7;
 const GAP = 8;
 
@@ -58,10 +58,7 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
     if (locked) return router.push("/paywall");
     haptic("select");
     onChange(e);
-    const next = [e, ...(recent || []).filter((x) => x !== e)].slice(0, COLS * 3);
-    AsyncStorage.setItem(RECENT_KEY, JSON.stringify(next)).catch(() => {});
-    // the Recent tab keeps its order until next time, so the grid doesn't jump
-    if (cur !== "recent") setRecent(next);
+    // Recent fills in once the wish is saved (lib/recentStickers), not on a tap here
   };
 
   const cell = w ? (w - GAP * (COLS - 1)) / COLS : 0;

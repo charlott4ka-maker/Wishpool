@@ -25,6 +25,7 @@ import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace } from "../../components/SheetHeader";
 import { ToastHost, toast } from "../../components/Toast";
 import { startUpload } from "../../components/UploadBar";
+import { rememberStickers } from "../../lib/recentStickers";
 import { EdgeGlow } from "../../components/EdgeGlow";
 import { Spin } from "../../components/Spin";
 import { useT } from "../../i18n";
@@ -171,6 +172,8 @@ export default function AddWishScreen() {
         const raw = link.trim();
         const affiliate = raw ? toAffiliateUrl(resolved.current && raw === lastLink.current ? resolved.current : raw).url : null;
         await addWish({ emoji, images: pics, image: pics[0] || null, link: affiliate, title: title.trim(), price: priceMode === "range" ? priceRangeText(priceA.trim(), priceB.trim(), lang, t) : withCurrency(price, lang), note: note.trim(), rooms: inRooms });
+        // a sticker wish saved: its sticker joins Recent
+        if (!thumbs.length) rememberStickers([emoji]);
       };
       router.back();
       startUpload({ thumbs, emoji: thumbs.length ? undefined : emoji, run, onDone: () => wishAdded(demo) });
@@ -185,6 +188,7 @@ export default function AddWishScreen() {
       const data = { emoji, images: pics, image: pics[0] || null, link: affiliate, title: title.trim(), price: priceMode === "range" ? priceRangeText(priceA.trim(), priceB.trim(), lang, t) : withCurrency(price, lang), note: note.trim(), rooms: inRooms };
       if (initial) await updateWish(initial.id, data);
       else await addWish(data);
+      if (cover !== "photo") rememberStickers([emoji]);
       haptic("success");
       router.back();
       toast.success(t(initial ? "toastSaved" : "toastWishAdded"), { root: true });

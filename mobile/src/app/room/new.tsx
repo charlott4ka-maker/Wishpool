@@ -28,6 +28,7 @@ import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
 import { StickerPicker, useStickerSections } from "../../components/StickerPicker";
+import { rememberStickers } from "../../lib/recentStickers";
 import { Chip, Field, Pill, Segmented, Txt, PremiumButton } from "../../components/ui";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
@@ -149,7 +150,7 @@ export default function CreateRoomScreen() {
   // a Secret Santa (new, or one being edited: it wears a New Year sticker)
   const santa = !!preset.santa || (!!editing && NEW_YEAR_STICKERS.includes(editing.emoji));
   // a Santa room opens the sticker list on the New Year pack
-  const { sections: stickerSections, remember: rememberSticker } = useStickerSections(santa ? "newyear" : undefined);
+  const { sections: stickerSections } = useStickerSections(santa ? "newyear" : undefined);
   // the swap date: a new Secret Santa, or a friends room that already has a date
   const swapDate = !bday && (!!preset.santa || (!!editing && editing.type === "friends" && !!editing.eventDate));
   const pickPreset = (p: (typeof PRESETS)[number]) => {
@@ -182,12 +183,14 @@ export default function CreateRoomScreen() {
       if (editing) {
         await updateRoom(editing.id, { name: title, emoji, tint, stickerPos, skin, charms, ...(online ? {} : { cover: coverDraft || editing.cover }), ...(bday ? { eventDate: date || undefined, ...(mode === "other" ? { celebrantName: celName.trim() } : {}) } : swapDate ? { eventDate: date || "" } : {}) });
         if (online && coverDraft) await api.setRoomCover(editing.id, coverDraft).then(() => refresh()).catch(() => toast.error(t("toastError")));
+        rememberStickers([emoji, ...charms.map((c) => c.e)]);
         haptic("success");
         router.back();
         toast.success(t("toastSaved"), { root: true });
         return;
       }
       const id = await createRoom({ name: title, type: preset.type, emoji, tint, stickerPos, skin, charms, ...(online ? {} : { cover: coverDraft || undefined }), ...extra } as Parameters<typeof createRoom>[0]);
+      rememberStickers([emoji, ...charms.map((c) => c.e)]);
       // the own photo goes up once the room exists
       if (online && coverDraft) await api.setRoomCover(id, coverDraft).then(() => refresh()).catch(() => toast.error(t("toastError")));
       // friends picked below: in at once or invited, as each of them prefers
@@ -396,7 +399,6 @@ export default function CreateRoomScreen() {
             <View>
               <StickerPicker
                 sections={stickerSections}
-                remember={rememberSticker}
                 onLocked={openPaywall}
                 onSectionY={(id, y) => { sectionY.current[id] = y; }}
                 value={stickerSlot === "main" ? emoji : charms[stickerSlot === "c0" ? 0 : 1]?.e || ""}

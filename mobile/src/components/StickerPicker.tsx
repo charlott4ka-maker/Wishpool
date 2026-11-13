@@ -1,5 +1,5 @@
-// Sticker list grouped by pack, like Telegram's: Recent first (the same list
-// the wish form keeps), then each pack under its title, all in one scroll.
+// Sticker list grouped by pack, like Telegram's: Recent first (stickers of
+// saved wishes and rooms, lib/recentStickers), then each pack under its title, all in one scroll.
 // The look sheet in New room puts the pack chips above it and keeps them in
 // step with the scroll (`onSectionY` tells where each section starts).
 // Premium stickers aren't dimmed: a tap opens the paywall instead.
@@ -20,13 +20,12 @@ import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { PremiumBadge, Txt } from "./ui";
 
-const RECENT_KEY = "wp_recent_stickers";
-const RECENT_MAX = 21;
+import { RECENT_KEY } from "../lib/recentStickers";
 
 export type StickerSection = { id: string; title: string; premium: boolean; locked: boolean; names: string[] };
 
 /** the sections in order: Recent (once you have picked some), then each pack; `only` puts that pack first */
-export function useStickerSections(only?: string): { sections: StickerSection[]; remember: (e: string) => void } {
+export function useStickerSections(only?: string): { sections: StickerSection[] } {
   const { t } = useT();
   const { isPremium } = useSubscription();
   // the admin page can hide stickers from the picker and add new ones to the first pack
@@ -52,21 +51,11 @@ export function useStickerSections(only?: string): { sections: StickerSection[];
   // only stickers you can still put on (a hidden or locked one drops out of Recent)
   const shown = recent.map((e) => e.slice(4)).filter((n) => packs.some((p) => p.names.includes(n) && !p.locked));
   const sections = shown.length ? [{ id: "recent", title: t("stickersRecent"), premium: false, locked: false, names: shown }, ...packs] : packs;
-  // saved for next time; the Recent row keeps its order meanwhile, so nothing jumps while you pick
-  const remember = (e: string) => {
-    AsyncStorage.getItem(RECENT_KEY)
-      .then((raw) => {
-        const cur: string[] = raw ? JSON.parse(raw) : [];
-        return AsyncStorage.setItem(RECENT_KEY, JSON.stringify([e, ...cur.filter((x) => x !== e)].slice(0, RECENT_MAX)));
-      })
-      .catch(() => {});
-  };
-  return { sections, remember };
+  return { sections };
 }
 
-export function StickerPicker({ sections, remember, value, onChange, size = 28, onLocked, onSectionY }: {
+export function StickerPicker({ sections, value, onChange, size = 28, onLocked, onSectionY }: {
   sections: StickerSection[];
-  remember: (e: string) => void;
   value: string;
   onChange: (emoji: string) => void;
   size?: number;
@@ -96,7 +85,6 @@ export function StickerPicker({ sections, remember, value, onChange, size = 28, 
                       if (s.locked) return onLocked ? onLocked() : router.push("/paywall");
                       haptic("select");
                       onChange(e);
-                      remember(e);
                     }}
                     className="aspect-square items-center justify-center rounded-full"
                     style={{ backgroundColor: on ? C.blueSoft : C.card2, borderWidth: 1.5, borderColor: on ? C.blue : "transparent" }}
