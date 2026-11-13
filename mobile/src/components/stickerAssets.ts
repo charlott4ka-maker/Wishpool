@@ -8,7 +8,6 @@ export const STICKER_ASSETS = {
   "cherries": require("../../assets/stickers/cherries.webp"),
   "strawberry": require("../../assets/stickers/strawberry.webp"),
   "hibiscus": require("../../assets/stickers/hibiscus.webp"),
-  "dice": require("../../assets/stickers/dice.webp"),
   "leoheart": require("../../assets/stickers/leoheart.webp"),
   "swan": require("../../assets/stickers/swan.webp"),
   "bun": require("../../assets/stickers/bun.webp"),
