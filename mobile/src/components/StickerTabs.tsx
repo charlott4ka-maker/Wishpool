@@ -14,11 +14,12 @@ import { haptic } from "../lib/haptics";
 import { useRemoteConfig } from "../lib/remoteConfig";
 import { orderedNames, orderedPacks, PREMIUM_ENABLED, stickerId } from "../subscription/featureFlags";
 import { useSubscription } from "../subscription/SubscriptionContext";
-import { C, hex } from "../theme/tokens";
+import { useAccent } from "../theme/accent";
+import { C, hex, mixHex } from "../theme/tokens";
 import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import type { StickerName } from "./stickerAssets";
-import { PremiumBadge, Txt } from "./ui";
+import { Txt } from "./ui";
 
 const RECENT_KEY = "wp_recent_stickers";
 const COLS = 7;
@@ -26,6 +27,7 @@ const GAP = 8;
 
 export function StickerTabs({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
   const { t } = useT();
+  const acc = useAccent();
   const router = useRouter();
   const { isPremium } = useSubscription();
   const { stickers } = useRemoteConfig();
@@ -69,10 +71,12 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
 
   return (
     <View onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}>
-      {/* the sections */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
+      {/* the sections: the row runs to the screen edges, so the last chip scrolls in whole */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 12 }}>
         {tabs.map((x) => {
           const on = x.id === cur;
+          // the Premium pack, picked: the raised blue pill of the Folders tab in New room
+          const lit = on && x.premium;
           return (
             <Pressable
               key={x.id}
@@ -82,20 +86,22 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
                 setTab(x.id);
                 setAtEnd(false);
               }}
-              className="h-sm flex-row items-center gap-1.5 rounded-full px-4"
-              style={{ backgroundColor: on ? C.blueSoft : "transparent", borderWidth: 1, borderColor: on ? C.blueLine : C.line }}
+              className="h-sm flex-row items-center gap-1.5 overflow-hidden rounded-full px-4"
+              style={{ backgroundColor: on && !lit ? C.blueSoft : "transparent", borderWidth: 1, borderColor: lit ? "transparent" : on ? C.blueLine : C.line }}
             >
-              {x.premium ? <Crown size={14} color={on ? C.blueText : C.t2} fill={on ? C.blueText : C.t2} strokeWidth={1.5} /> : null}
-              <Txt className={`font-m600 text-sm ${on ? "text-blueText" : "text-t2"}`}>{x.title}</Txt>
+              {lit ? (
+                <>
+                  <LinearGradient colors={[acc.base, mixHex(acc.base, "#ffffff", 0.3)]} start={{ x: 0.2, y: 1 }} end={{ x: 0.8, y: 0 }} style={{ position: "absolute", top: -1, left: -1, right: -1, bottom: -1 }} />
+                  <LinearGradient colors={[hex(mixHex(acc.base, "#ffffff", 0.2), 0), hex(mixHex(acc.base, "#ffffff", 0.2), 0.52)]} start={{ x: 0.88, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={{ position: "absolute", top: -1, left: -1, right: -1, bottom: -1 }} />
+                  <LinearGradient colors={[hex(mixHex(acc.base, "#ffffff", 0.45), 0.7), hex(mixHex(acc.base, "#ffffff", 0.45), 0)]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.22 }} style={{ position: "absolute", top: -1, left: -1, right: -1, bottom: -1 }} />
+                </>
+              ) : null}
+              {x.premium ? <Crown size={14} color={lit ? "#fff" : C.blueText} fill={lit ? "#fff" : "transparent"} strokeWidth={1.5} absoluteStrokeWidth /> : null}
+              <Txt className={`font-m600 text-sm ${lit ? "text-white" : on || x.premium ? "text-blueText" : "text-t2"}`}>{x.title}</Txt>
             </Pressable>
           );
         })}
       </ScrollView>
-      {locked ? (
-        <Pressable onPress={() => router.push("/paywall")} className="mb-3 self-start">
-          <PremiumBadge label={t("premiumOnly")} />
-        </Pressable>
-      ) : null}
       {/* the grid: two and a half rows, the rest scrolls */}
       {cell ? (
         <View style={{ height: scrolls ? boxH : rows * cell + Math.max(0, rows - 1) * GAP }}>
