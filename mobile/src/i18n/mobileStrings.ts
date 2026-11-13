@@ -245,6 +245,8 @@ export const MOBILE_STRINGS = {
   roomFolderLook: { uk: "Папка", ru: "Папка", en: "Folder" },
   stickerMain: { uk: "Головний", ru: "Главный", en: "Main" },
   stickerMore: { uk: "Ще", ru: "Ещё", en: "More" },
+  stickerSecond: { uk: "Другий", ru: "Второй", en: "Second" },
+  stickerThird: { uk: "Третій", ru: "Третий", en: "Third" },
   folderTag: { uk: "Бірка на папці", ru: "Бирка на папке", en: "Name tag" },
   folderTagPh: { uk: "Наприклад, Наша банда", ru: "Например, Наша банда", en: "For example, Our crew" },
   ownPhoto: { uk: "Своє фото", ru: "Своё фото", en: "Your photo" },

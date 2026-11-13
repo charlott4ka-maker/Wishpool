@@ -12,8 +12,8 @@ import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { SymbolView } from "expo-symbols";
 import Svg, { Circle, Rect } from "react-native-svg";
-import { Check, ImagePlus, Lock, Paintbrush, Plus } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { Check, Crown, ImagePlus, Lock, Paintbrush, Plus, X } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, { SlideInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,7 +27,7 @@ import { SantaChip } from "../../components/SantaChip";
 import { SheetFooter, SHEET_FOOTER_SPACE } from "../../components/SheetFooter";
 import { FormHeader, formHeaderSpace, SheetHeader } from "../../components/SheetHeader";
 import { Sticker } from "../../components/Sticker";
-import { StickerPicker } from "../../components/StickerPicker";
+import { StickerPicker, useStickerSections } from "../../components/StickerPicker";
 import { Chip, Field, Pill, Segmented, Txt, PremiumButton } from "../../components/ui";
 import { ToastHost, toast } from "../../components/Toast";
 import { useT } from "../../i18n";
@@ -44,7 +44,6 @@ import { useAccent } from "../../theme/accent";
 
 // Secret Santa is a friends room (so it has the draw) with its own name,
 // sticker and colour, and an optional gift swap date with a countdown
-const SEG_ON_BG = "#353C49";
 
 const PRESETS: { type: RoomType; key: string; hint: string; santa?: boolean }[] = [
   { type: "friends", key: "roomFriends", hint: "friendsRoomHint" },
@@ -119,6 +118,11 @@ export default function CreateRoomScreen() {
   // premium decorations: two more stickers
   const [charms, setCharms] = useState<{ e: string; pos: string }[]>(editing?.charms || []);
   const [stickerSlot, setStickerSlot] = useState<"main" | "c0" | "c1">("main");
+  // the Sticker tab: one list of packs (Recent first) with chips above it, like Telegram:
+  // a chip scrolls to its pack, and the chip of the pack in view lights up as you scroll
+  const lookScroll = useRef<ScrollView>(null);
+  const sectionY = useRef<Record<string, number>>({});
+  const [packInView, setPackInView] = useState<string | null>(null);
   // your own photo on the folder (premium): a fresh pick waits here until the room is saved
   const [coverDraft, setCoverDraft] = useState<string | null>(null);
   const coverShown = coverDraft || editing?.cover || null;
@@ -144,6 +148,8 @@ export default function CreateRoomScreen() {
   const bday = preset.type === "birthday";
   // a Secret Santa (new, or one being edited: it wears a New Year sticker)
   const santa = !!preset.santa || (!!editing && NEW_YEAR_STICKERS.includes(editing.emoji));
+  // a Santa room opens the sticker list on the New Year pack
+  const { sections: stickerSections, remember: rememberSticker } = useStickerSections(santa ? "newyear" : undefined);
   // the swap date: a new Secret Santa, or a friends room that already has a date
   const swapDate = !bday && (!!preset.santa || (!!editing && editing.type === "friends" && !!editing.eventDate));
   const pickPreset = (p: (typeof PRESETS)[number]) => {
@@ -302,51 +308,97 @@ export default function CreateRoomScreen() {
           <LookTabs
             options={showSkins ? [["sticker", t("lookSticker")], ["color", t("lookColor")], ["folders", t("lookFolders")]] : [["sticker", t("lookSticker")], ["color", t("lookColor")]]}
             value={lookTab}
-            onChange={(k) => { setLookTab(k); setLookScrolled(false); }}
+            onChange={(k) => { setLookTab(k); setLookScrolled(false); setPackInView(null); }}
             premium="folders"
           />
+          {lookTab === "sticker" && showSkins ? (
+            // which sticker the list sets: the main one, or (Premium) a second and a third.
+            // All three tiles look the same; the picked one only has a white caption.
+            <View className="mt-4 flex-row gap-2">
+              {(["main", "c0", "c1"] as const).map((slot, i) => {
+                const e = slot === "main" ? emoji : charms[i - 1]?.e;
+                const on = stickerSlot === slot;
+                const locked = slot !== "main" && !isPremium && !admin;
+                return (
+                  <Pressable
+                    key={slot}
+                    onPress={() => {
+                      if (locked) return openPaywall();
+                      haptic("select");
+                      setStickerSlot(slot);
+                    }}
+                    className="flex-1 items-center justify-center gap-1.5 rounded-tile bg-raised"
+                    style={{ height: 84 }}
+                  >
+                    {e ? (
+                      <Sticker emoji={e} size={36} />
+                    ) : (
+                      <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                        <Plus size={18} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />
+                      </View>
+                    )}
+                    <View className="flex-row items-center gap-1">
+                      {locked ? <Crown size={12} color={C.blueText} strokeWidth={1.5} absoluteStrokeWidth /> : null}
+                      <Txt className={`font-m600 text-[12.5px] ${on ? "text-white" : locked ? "text-blueText" : "text-t2"}`}>{t(slot === "main" ? "stickerMain" : slot === "c0" ? "stickerSecond" : "stickerThird")}</Txt>
+                    </View>
+                    {/* a filled extra slot can be emptied again */}
+                    {slot !== "main" && e && on ? (
+                      <Pressable
+                        hitSlop={8}
+                        onPress={() => { haptic("select"); setCharms((cur) => cur.filter((_, j) => j !== i - 1)); setStickerSlot("main"); }}
+                        className="absolute right-1.5 top-1.5 h-6 w-6 items-center justify-center rounded-full"
+                        style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+                        accessibilityLabel={t("setDelete")}
+                      >
+                        <X size={12} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+                      </Pressable>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+          {lookTab === "sticker" ? (
+            // the pack chips, to the screen edges so the last one scrolls in whole
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3" style={{ marginHorizontal: -16, flexGrow: 0 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
+              {stickerSections.map((x) => {
+                const on = x.id === (packInView || stickerSections[0]?.id);
+                return (
+                  <Pressable
+                    key={x.id}
+                    onPress={() => {
+                      haptic("select");
+                      setPackInView(x.id);
+                      lookScroll.current?.scrollTo({ y: sectionY.current[x.id] ?? 0, animated: true });
+                    }}
+                    className="h-sm flex-row items-center gap-1.5 rounded-full px-4"
+                    style={{ backgroundColor: on ? C.blueSoft : "transparent", borderWidth: 1, borderColor: on ? C.blueLine : C.line }}
+                  >
+                    {x.premium ? <Crown size={14} color={C.blueText} strokeWidth={1.5} absoluteStrokeWidth /> : null}
+                    <Txt className={`font-m600 text-sm ${on || x.premium ? "text-blueText" : "text-t2"}`}>{x.title}</Txt>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : null}
         </View>
         <View style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} scrollEnabled={!(lookTab === "folders" && foldersLocked)} scrollEventThrottle={16} onScroll={(e) => setLookScrolled(e.nativeEvent.contentOffset.y > 4)} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
+        <ScrollView ref={lookScroll} showsVerticalScrollIndicator={false} scrollEnabled={!(lookTab === "folders" && foldersLocked)} scrollEventThrottle={16} onScroll={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          setLookScrolled(y > 4);
+          if (lookTab !== "sticker") return;
+          // the last pack whose title has reached the top is the one in view
+          let cur = stickerSections[0]?.id || null;
+          for (const sec of stickerSections) if ((sectionY.current[sec.id] ?? Infinity) <= y + 24) cur = sec.id;
+          if (cur !== packInView) setPackInView(cur);
+        }} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}>
           {lookTab === "sticker" ? (
             <View>
-              {/* which sticker the picker sets: the main one, or (premium) one of two more */}
-              {showSkins ? (
-                <View className="mb-4 flex-row items-center gap-2">
-                  {(isPremium || admin ? (["main", "c0", "c1"] as const) : (["main"] as const)).map((slot, i) => {
-                    const e = slot === "main" ? emoji : charms[i - 1]?.e;
-                    const on = stickerSlot === slot;
-                    return (
-                      <Pressable
-                        key={slot}
-                        onPress={() => {
-                          haptic("select");
-                          setStickerSlot(slot);
-                        }}
-                        className="h-sm flex-row items-center gap-1.5 rounded-full px-3.5"
-                        style={{ backgroundColor: on ? SEG_ON_BG : C.bg }}
-                      >
-                        {e ? <Sticker emoji={e} size={20} /> : <Plus size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />}
-                        <Txt className={`font-m600 text-[13px] ${on ? "text-white" : "text-t2"}`}>{slot === "main" ? t("stickerMain") : t("stickerMore")}</Txt>
-                      </Pressable>
-                    );
-                  })}
-                  {/* without Premium: one locked chip instead of the two extra slots */}
-                  {!isPremium && !admin ? (
-                    <Pressable onPress={openPaywall} className="h-sm flex-row items-center gap-1.5 rounded-full px-3.5" style={{ backgroundColor: C.bg }}>
-                      <Lock size={16} color={C.t2} strokeWidth={1.5} absoluteStrokeWidth />
-                      <Txt className="font-m600 text-[13px] text-t2">Premium</Txt>
-                    </Pressable>
-                  ) : null}
-                  {stickerSlot !== "main" && charms[stickerSlot === "c0" ? 0 : 1] ? (
-                    <Pressable onPress={() => { haptic("select"); setCharms((cur) => cur.filter((_, j) => j !== (stickerSlot === "c0" ? 0 : 1))); setStickerSlot("main"); }} hitSlop={8}>
-                      <Txt className="font-m600 text-[13px] text-t2">{t("setDelete")}</Txt>
-                    </Pressable>
-                  ) : null}
-                </View>
-              ) : null}
               <StickerPicker
+                sections={stickerSections}
+                remember={rememberSticker}
                 onLocked={openPaywall}
+                onSectionY={(id, y) => { sectionY.current[id] = y; }}
                 value={stickerSlot === "main" ? emoji : charms[stickerSlot === "c0" ? 0 : 1]?.e || ""}
                 onChange={(e) => {
                   if (stickerSlot === "main") return setEmoji(e);
@@ -358,7 +410,6 @@ export default function CreateRoomScreen() {
                     return next.slice(0, 2);
                   });
                 }}
-                pack={santa ? "newyear" : undefined}
               />
             </View>
           ) : lookTab === "color" ? (
