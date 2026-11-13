@@ -60,14 +60,14 @@ export const STICKER_PACKS: StickerPack[] = [
     titleKey: "packParty",
     isPremiumOnly: true,
     // "Aesthetic": photo cut-outs; then (2026-11-14) her Pinterest collage set (gpt-image-1.5 from her refs)
-    stickers: ["disc", "disco", "camera", "evileye", "bow", "glassheart", "ball8", "kiss", "ball7", "cherries", "strawberry", "hibiscus", "champagne", "dice", "leoheart", "swan"],
+    stickers: ["disc", "disco", "camera", "evileye", "bow", "glassheart", "ball8", "kiss", "ball7", "cherries", "strawberry", "hibiscus", "dice", "leoheart", "swan"],
   },
   {
     // "Cute": soft 3D ones from her references, in our santa sticker's style
     id: "cute",
     titleKey: "packCute",
     isPremiumOnly: true,
-    stickers: ["bun", "pin", "sushi", "corgi", "cat"],
+    stickers: ["bun", "pin", "sushi"],
   },
   {
     // "Fluffy letters" A to Z: fawn fur like our fawn folder, from her reference
