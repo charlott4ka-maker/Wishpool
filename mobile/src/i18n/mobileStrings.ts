@@ -188,7 +188,9 @@ export const MOBILE_STRINGS = {
   iconGlow: { uk: "Сяйво", ru: "Сияние", en: "Glow" },
   packClassic: { uk: "Класичні", ru: "Классические", en: "Classic" },
   packNewYear: { uk: "Новий рік", ru: "Новый год", en: "New Year" },
-  packParty: { uk: "Premium", ru: "Premium", en: "Premium" },
+  packParty: { uk: "Естетика", ru: "Эстетика", en: "Aesthetic" },
+  packCute: { uk: "Милі", ru: "Милые", en: "Cute" },
+  packLetters: { uk: "Пухнасті літери", ru: "Пушистые буквы", en: "Fluffy letters" },
 
   planYearly: { uk: "Рік", ru: "Год", en: "Yearly" },
   planMonthly: { uk: "Місяць", ru: "Месяц", en: "Monthly" },

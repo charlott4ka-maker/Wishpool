@@ -271,7 +271,7 @@
     $("stickerGrid").innerHTML = packOrder().map(function (id, i) {
       var p = packs[id];
       var tiles = packNames(id).map(function (n) { return { n: n, isNew: isExtra(n) }; });
-      return '<div class="pk" data-pack="' + id + '"><div class="pkh" draggable="true"><span class="grip">⠿</span><b>' + (i + 1) + ". " + esc(p.title) + "</b>" + (id === "party" ? ' <span class="soon">Premium · выйдет в 1.0.2</span>' : "") + "</div>" +
+      return '<div class="pk" data-pack="' + id + '"><div class="pkh" draggable="true"><span class="grip">⠿</span><b>' + (i + 1) + ". " + esc(p.title) + "</b>" + (["party", "cute", "letters"].includes(id) ? ' <span class="soon">Premium · выйдет в 1.0.2</span>' : "") + "</div>" +
         '<div class="stk">' + tiles.map(function (t) {
           var off = hidden.indexOf(t.n) >= 0;
           return '<div class="s' + (off ? " off" : "") + (t.isNew ? " new" : "") + '" draggable="true" data-n="' + t.n + '"><img src="' + stickerUrl(t.n) + '" alt="" draggable="false">' + esc(t.n) +
