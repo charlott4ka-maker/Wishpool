@@ -15,7 +15,7 @@ let santaRed = Color(red: 0x8F / 255, green: 0x2F / 255, blue: 0x3F / 255)
 
 struct Person: Codable { let name: String; let color: String; let initial: String }
 struct Bday: Codable { let roomId: String; let name: String; let md: String; let color: String; let initial: String; let sticker: String?; let photos: [String]? }
-struct Santa: Codable { let roomId: String; let room: String; let date: String; let drawn: Int; let target: Person?; let sticker: String? }
+struct Santa: Codable { let roomId: String; let room: String; let date: String; let drawn: Int; let target: Person?; let sticker: String?; let color: String?; let photos: [String]? }
 struct Payload: Codable {
   let premium: Int
   let lang: String
@@ -123,7 +123,7 @@ func loc(_ ru: String, _ uk: String, _ en: String) -> String {
   return l.hasPrefix("ru") ? ru : l.hasPrefix("uk") ? uk : en
 }
 
-struct Entry: TimelineEntry { let date: Date; let p: Payload?; var photos: [UIImage] = [] }
+struct Entry: TimelineEntry { let date: Date; let p: Payload?; var photos: [UIImage] = []; var santaPhotos: [UIImage] = [] }
 
 func fetchPhotos(_ urls: [String]) async -> [UIImage] {
   var out: [UIImage] = []
@@ -145,14 +145,14 @@ struct PhotoProvider: TimelineProvider {
   func placeholder(in context: Context) -> Entry { Entry(date: Date(), p: nil) }
   func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
     let p = load()
-    Task { completion(Entry(date: Date(), p: p, photos: await fetchPhotos(p?.bday?.photos ?? []))) }
+    Task { completion(Entry(date: Date(), p: p, photos: await fetchPhotos(p?.bday?.photos ?? []), santaPhotos: await fetchPhotos(p?.santa?.photos ?? []))) }
   }
   func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
     let p = load(), today = startOfToday()
     Task {
-      let photos = await fetchPhotos(p?.bday?.photos ?? [])
+      let photos = await fetchPhotos(p?.bday?.photos ?? []), santa = await fetchPhotos(p?.santa?.photos ?? [])
       let days = (0..<7).compactMap { i in Calendar.current.date(byAdding: .day, value: i, to: today) }
-      completion(Timeline(entries: [Entry(date: Date(), p: p, photos: photos)] + days.dropFirst().map { Entry(date: $0, p: p, photos: photos) }, policy: .atEnd))
+      completion(Timeline(entries: [Entry(date: Date(), p: p, photos: photos, santaPhotos: santa)] + days.dropFirst().map { Entry(date: $0, p: p, photos: photos, santaPhotos: santa) }, policy: .atEnd))
     }
   }
 }
@@ -361,6 +361,50 @@ struct Peeking: View {
   }
 }
 
+
+/// a folder filling the widget, like the app's folders: tall photo cards peeking out of the back,
+/// a frosted front in the room's colour with a bevel and a light lip, an optional snowfall,
+/// and a glass pill at the bottom
+struct FolderFace: View {
+  let tint: String; let photos: [UIImage]; let sticker: String?; let wide: Bool
+  let symbol: String; let line: String; var snow = false
+  var body: some View {
+    let c = rgb(tint)
+    ZStack(alignment: .bottom) {
+      Peeking(photos: photos, sticker: sticker, wide: wide)
+      ZStack {
+        mix(page, c, 0.32)
+        Peeking(photos: photos, sticker: sticker, wide: wide).blur(radius: 22).opacity(0.85)
+        Color.black.opacity(0.28)
+        LinearGradient(colors: [mix(page, c, 1).opacity(0.58), mix(page, c, 1).opacity(0.4)], startPoint: .top, endPoint: .bottom)
+      }
+      .clipShape(FullFront(wide: wide))
+      FullFront(wide: wide).stroke(Color.black.opacity(0.16), lineWidth: 14).clipShape(FullFront(wide: wide)).blur(radius: 4)
+      FullFront(wide: wide).stroke(Color.white.opacity(0.22), lineWidth: 1.2)
+      if snow {
+        GeometryReader { g in
+          ForEach(0..<folderFlakes.count, id: \.self) { i in
+            let f = folderFlakes[i]
+            Image(systemName: "snowflake").font(.system(size: f.2, weight: .light)).foregroundColor(.white.opacity(f.3))
+              .position(x: g.size.width * f.0, y: g.size.height * f.1)
+          }
+        }
+      }
+      HStack(spacing: wide ? 6 : 4) {
+        Image(systemName: symbol).font(.system(size: wide ? 14 : 11, weight: .semibold))
+        Text(line).font(.system(size: wide ? 15 : 11.5, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+      }
+      .foregroundColor(.white)
+      .padding(.horizontal, wide ? 14 : 9).frame(height: wide ? 36 : 30)
+      .background(Capsule().fill(Color.white.opacity(0.2)))
+      .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 0.5))
+      .padding(.bottom, wide ? 12 : 10).padding(.horizontal, 8)
+    }
+  }
+}
+/// snowflakes over the Santa folder: x, y (fractions), size, opacity
+let folderFlakes: [(Double, Double, Double, Double)] = [(0.08, 0.1, 14, 0.5), (0.92, 0.08, 12, 0.45), (0.15, 0.62, 10, 0.35), (0.86, 0.58, 13, 0.4), (0.5, 0.94, 8, 0.25), (0.33, 0.06, 9, 0.35), (0.7, 0.72, 9, 0.3)]
+
 struct BirthdayFolderView: View {
   @Environment(\.widgetFamily) var family
   let entry: Entry
@@ -370,32 +414,7 @@ struct BirthdayFolderView: View {
       if let p = entry.p, p.premium == 1 {
         if let b = p.bday, let n = daysToMonthDay(b.md, from: startOfToday()) {
           let when = n == 0 ? (p.s["today"] ?? "Today") : n == 1 ? (p.s["tomorrow"] ?? "Tomorrow") : "\(n) \(dayWord(n, p.lang))"
-          let c = rgb(b.color)
-          ZStack(alignment: .bottom) {
-            Peeking(photos: entry.photos, sticker: b.sticker, wide: wide)
-            // the front: the photos frosted through it, then the room colour over them
-            ZStack {
-              // the frost: what is behind, blurred hard and dimmed, then the room colour
-              mix(page, c, 0.32)
-              Peeking(photos: entry.photos, sticker: b.sticker, wide: wide).blur(radius: 22).opacity(0.85)
-              Color.black.opacity(0.28)
-              LinearGradient(colors: [mix(page, c, 1).opacity(0.58), mix(page, c, 1).opacity(0.4)], startPoint: .top, endPoint: .bottom)
-            }
-            .clipShape(FullFront(wide: wide))
-            // a soft bevel along the front's edge and a light lip on top, like the app's folders
-            FullFront(wide: wide).stroke(Color.black.opacity(0.16), lineWidth: 14).clipShape(FullFront(wide: wide)).blur(radius: 4)
-            FullFront(wide: wide).stroke(Color.white.opacity(0.22), lineWidth: 1.2)
-            // the glass pill: the cake, who, and when
-            HStack(spacing: wide ? 6 : 4) {
-              Image(systemName: "birthday.cake.fill").font(.system(size: wide ? 14 : 11, weight: .semibold))
-              Text("\(b.name) · \(when)").font(.system(size: wide ? 15 : 11.5, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
-            }
-            .foregroundColor(.white)
-            .padding(.horizontal, wide ? 14 : 9).frame(height: wide ? 36 : 30)
-            .background(Capsule().fill(Color.white.opacity(0.2)))
-            .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 0.5))
-            .padding(.bottom, wide ? 12 : 10).padding(.horizontal, 8)
-          }
+          FolderFace(tint: b.color, photos: entry.photos, sticker: b.sticker, wide: wide, symbol: "birthday.cake.fill", line: "\(b.name) · \(when)")
         } else {
           Empty(symbol: "gift", text: p.s["bdayEmpty"] ?? "No birthdays yet")
         }
@@ -420,6 +439,48 @@ struct BirthdayFolderWidget: Widget {
       .contentMarginsDisabled()
       .configurationDisplayName(loc("Папка дня рождения", "Тека дня народження", "Birthday folder"))
       .description(loc("Подарки из комнаты в папке и сколько дней осталось.", "Подарунки з кімнати в теці і скільки днів лишилось.", "The room's gifts in a folder and the days left."))
+      .supportedFamilies([.systemSmall, .systemMedium])
+  }
+}
+
+
+struct SantaFolderView: View {
+  @Environment(\.widgetFamily) var family
+  let entry: Entry
+  var body: some View {
+    let wide = family == .systemMedium
+    let tint = entry.p?.santa?.color ?? "#8F2F3F"
+    Group {
+      if let p = entry.p, p.premium == 1 {
+        if let s = p.santa {
+          let n = daysToDate(s.date, from: startOfToday())
+          let when: String? = n.flatMap { $0 < 0 ? nil : $0 == 0 ? (p.s["today"] ?? "Today") : "\($0) \(dayWord($0, p.lang))" }
+          let who = s.drawn == 1 ? (s.target?.name ?? "") : (p.s["notDrawn"] ?? "No draw yet")
+          let line = [wide && s.drawn == 1 ? "\(p.s["youGive"] ?? "You're giving") \(who)" : who, when].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+          FolderFace(tint: tint, photos: entry.santaPhotos, sticker: s.sticker, wide: wide, symbol: "gift.fill", line: line, snow: true)
+        } else {
+          Empty(symbol: "gift.fill", text: p.s["santaEmpty"] ?? "Make a Secret Santa room")
+        }
+      } else {
+        Locked(text: entry.p?.s["locked"] ?? "Premium")
+      }
+    }
+    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.santa.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new?preset=santa"))
+    .containerBackground(for: .widget) {
+      if entry.p?.premium == 1, entry.p?.santa != nil {
+        let c = rgb(tint)
+        LinearGradient(colors: [mix(page, c, 0.36), mix(page, c, 0.26)], startPoint: .top, endPoint: .bottom)
+      } else { GlowBackground(red: false) }
+    }
+  }
+}
+
+struct SantaFolderWidget: Widget {
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: "santaFolder", provider: PhotoProvider()) { SantaFolderView(entry: $0) }
+      .contentMarginsDisabled()
+      .configurationDisplayName(loc("Папка Тайного Санты", "Тека Таємного Санти", "Secret Santa folder"))
+      .description(loc("Желания того, кому ты даришь, и сколько до обмена.", "Бажання того, кому ти даруєш, і скільки до обміну.", "The wishes of who you're giving to and the swap countdown."))
       .supportedFamilies([.systemSmall, .systemMedium])
   }
 }
@@ -486,5 +547,6 @@ struct WishpoolWidgets: WidgetBundle {
     BirthdayWidget()
     BirthdayFolderWidget()
     SantaWidget()
+    SantaFolderWidget()
   }
 }

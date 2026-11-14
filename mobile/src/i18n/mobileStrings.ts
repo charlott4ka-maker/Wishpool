@@ -255,6 +255,7 @@ export const MOBILE_STRINGS = {
   wgHowText: { uk: "На екрані «Додому» натисни й утримуй порожнє місце, поки вгорі не з'явиться «Змінити». Натисни «Змінити» › «Додати віджет», знайди Wishpool, вибери розмір і натисни «Додати віджет».", ru: "На экране «Домой» нажми и подержи пустое место, пока вверху не появится «Изменить». Нажми «Изменить» › «Добавить виджет», найди Wishpool, выбери размер и нажми «Добавить виджет».", en: "On your Home Screen, touch and hold an empty spot until Edit appears at the top. Tap Edit › Add Widget, search for Wishpool, pick a size and tap Add Widget." },
   wgDemoBdayName: { uk: "Аня", ru: "Аня", en: "Anna" },
   wgDemoSantaName: { uk: "Макс", ru: "Макс", en: "Max" },
+  wgDemoSwapDays: { uk: "12 днів", ru: "12 дней", en: "12 days" },
   wgDemoDays: { uk: "днів", ru: "дней", en: "days" },
   wgDemoIn: { uk: "5 днів", ru: "5 дней", en: "5 days" },
   wgDemoSwapShort: { uk: "Обмін: 12 днів", ru: "Обмен: 12 дней", en: "Swap in 12 days" },
