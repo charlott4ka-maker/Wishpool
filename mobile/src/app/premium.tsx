@@ -4,7 +4,7 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { ChevronLeft, CreditCard } from "lucide-react-native";
+import { ChevronLeft, CreditCard, LayoutGrid } from "lucide-react-native";
 import { Linking, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -76,6 +76,7 @@ export default function PremiumScreen() {
           </View>
 
           <SettingsGroup>
+            <SettingsCell icon={LayoutGrid} tint="#FF3B30" label={t("wgHowRow")} onPress={() => router.push("/widgets")} />
             <SettingsCell icon={CreditCard} tint="#8E8E93" label={t("premiumManage")} onPress={() => Linking.openURL("https://apps.apple.com/account/subscriptions")} />
           </SettingsGroup>
           {/* small, at the very bottom: it's on, and the next payment (or, once cancelled, the last day) */}

@@ -113,6 +113,7 @@ function Gate() {
             <Stack.Screen name="news/index" />
             <Stack.Screen name="news/[id]" />
             <Stack.Screen name="faq" />
+            <Stack.Screen name="widgets" />
             <Stack.Screen name="support" />
             <Stack.Screen name="friends" />
             <Stack.Screen name="friends-guest" options={FIT_SHEET} />
