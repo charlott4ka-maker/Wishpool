@@ -142,9 +142,9 @@ struct RoomSticker: View {
   let id: String?
   var body: some View {
     if let id, id.hasPrefix("stk:"), let ui = UIImage(named: "stk_" + id.dropFirst(4)) {
-      Image(uiImage: ui).resizable().scaledToFit().frame(width: 92, height: 92).rotationEffect(.degrees(-6))
+      Image(uiImage: ui).resizable().scaledToFit().frame(width: 66, height: 66).rotationEffect(.degrees(-6))
     } else if let id, !id.isEmpty, !id.hasPrefix("stk:") {
-      Text(id).font(.system(size: 62))
+      Text(id).font(.system(size: 46))
     }
   }
 }
@@ -180,6 +180,64 @@ struct Empty: View {
   }
 }
 
+
+// MARK: - a real room folder (components/RoomFolder.tsx): a back sheet and a front
+// with the tab, in the room's colour over our page colour; the widget is the folder.
+
+func mix(_ a: [Double], _ b: [Double], _ k: Double) -> Color {
+  let c = (0..<3).map { (a[$0] + (b[$0] - a[$0]) * k) / 255 }
+  return Color(red: c[0], green: c[1], blue: c[2])
+}
+let page: [Double] = [0x15, 0x18, 0x1D]
+
+/// the folder geometry, as fractions of the widget (the same as the app's demo)
+struct FolderGeo { let x0, x1, yT, yB, y1, xt: Double }
+func folderGeo(wide: Bool) -> FolderGeo { FolderGeo(x0: 0.035, x1: 0.965, yT: 0.2, yB: 0.33, y1: 0.965, xt: wide ? 0.42 : 0.88) }
+
+struct FolderFront: Shape {
+  let g: FolderGeo
+  func path(in rect: CGRect) -> Path {
+    let w = rect.width, h = rect.height
+    let x0 = w * g.x0, x1 = w * g.x1, yT = h * g.yT, yB = h * g.yB, y1 = h * g.y1, xt = w * g.xt
+    let r = min(w, h) * 0.13, rt = min(w, h) * 0.09
+    var p = Path()
+    p.move(to: CGPoint(x: x0, y: yT + rt))
+    p.addQuadCurve(to: CGPoint(x: x0 + rt, y: yT), control: CGPoint(x: x0, y: yT))
+    p.addLine(to: CGPoint(x: xt - 10, y: yT))
+    p.addCurve(to: CGPoint(x: xt + 12, y: yB), control1: CGPoint(x: xt, y: yT), control2: CGPoint(x: xt, y: yB))
+    p.addLine(to: CGPoint(x: x1 - r, y: yB))
+    p.addQuadCurve(to: CGPoint(x: x1, y: yB + r), control: CGPoint(x: x1, y: yB))
+    p.addLine(to: CGPoint(x: x1, y: y1 - r))
+    p.addQuadCurve(to: CGPoint(x: x1 - r, y: y1), control: CGPoint(x: x1, y: y1))
+    p.addLine(to: CGPoint(x: x0 + r, y: y1))
+    p.addQuadCurve(to: CGPoint(x: x0, y: y1 - r), control: CGPoint(x: x0, y: y1))
+    p.closeSubpath()
+    return p
+  }
+}
+
+struct FolderBackground: View {
+  let tint: String
+  let wide: Bool
+  var body: some View {
+    let c = rgb(tint), g = folderGeo(wide: wide)
+    GeometryReader { geo in
+      let w = geo.size.width, h = geo.size.height
+      ZStack(alignment: .topLeading) {
+        Color(red: page[0] / 255, green: page[1] / 255, blue: page[2] / 255)
+        // the back sheet, a little in the shade
+        RoundedRectangle(cornerRadius: min(w, h) * 0.12, style: .continuous)
+          .fill(mix(page, c, 0.32))
+          .frame(width: w * 0.86, height: h * 0.86)
+          .offset(x: w * 0.07, y: h * 0.06)
+        // the front with its tab: lighter at the top, a soft light lip along the edge
+        FolderFront(g: g).fill(LinearGradient(colors: [mix(page, c, 0.62), mix(page, c, 0.42)], startPoint: .top, endPoint: .bottom))
+        FolderFront(g: g).stroke(Color.white.opacity(0.16), lineWidth: 1)
+      }
+    }
+  }
+}
+
 // MARK: - the nearest birthday
 
 struct BirthdayView: View {
@@ -187,23 +245,34 @@ struct BirthdayView: View {
   let entry: Entry
   var body: some View {
     let wide = family == .systemMedium
+    let g = folderGeo(wide: wide)
     Group {
       if let p = entry.p, p.premium == 1 {
         if let b = p.bday, let n = daysToMonthDay(b.md, from: startOfToday()) {
           let when = n == 0 ? (p.s["today"] ?? "Today") : n == 1 ? (p.s["tomorrow"] ?? "Tomorrow") : "\(n) \(dayWord(n, p.lang))"
-          HStack(spacing: 8) {
-          VStack(alignment: .leading, spacing: 0) {
-            Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
-            Spacer(minLength: 0)
-            HStack(spacing: 10) {
-              Avatar(initial: b.initial, tint: color(b.color), size: wide ? 46 : 32)
-              Text(b.name).font(.system(size: wide ? 20 : 15, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
+          GeometryReader { geo in
+            let w = geo.size.width, h = geo.size.height
+            ZStack(alignment: .topLeading) {
+              // the title on the folder's tab
+              Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: wide ? 11 : 10, weight: .bold)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
+                .frame(width: w * (g.xt - g.x0) - 16, height: h * (g.yB - g.yT), alignment: .leading)
+                .offset(x: w * g.x0 + 12, y: h * g.yT)
+              // on the front: who and when, the room's sticker on the right of a wide one
+              HStack(alignment: .center, spacing: 6) {
+                VStack(alignment: .leading, spacing: wide ? 6 : 4) {
+                  HStack(spacing: 8) {
+                    Avatar(initial: b.initial, tint: Color.white.opacity(0.22), size: wide ? 38 : 28)
+                    Text(b.name).font(.system(size: wide ? 18 : 14, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
+                  }
+                  Text(when).font(.system(size: wide ? 24 : 19, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.6)
+                }
+                Spacer(minLength: 0)
+                if wide { RoomSticker(id: b.sticker) }
+              }
+              .padding(.horizontal, 14)
+              .frame(width: w * (g.x1 - g.x0), height: h * (g.y1 - g.yB), alignment: .leading)
+              .offset(x: w * g.x0, y: h * g.yB)
             }
-            Spacer(minLength: 0)
-            Text(when).font(.system(size: wide ? 22 : 18, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.6)
-          }
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-          if wide { RoomSticker(id: b.sticker) }
           }
         } else {
           Empty(symbol: "gift", text: p.s["bdayEmpty"] ?? "No birthdays yet")
@@ -213,13 +282,16 @@ struct BirthdayView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
-    .containerBackground(for: .widget) { GlowBackground(red: false, tint: entry.p?.premium == 1 ? entry.p?.bday?.color : nil) }
+    .containerBackground(for: .widget) {
+      if entry.p?.premium == 1, let b = entry.p?.bday { FolderBackground(tint: b.color, wide: wide) } else { GlowBackground(red: false) }
+    }
   }
 }
 
 struct BirthdayWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "birthday", provider: Provider()) { BirthdayView(entry: $0) }
+      .contentMarginsDisabled()
       .configurationDisplayName(loc("День рождения", "День народження", "Birthday"))
       .description(loc("Ближайший день рождения в твоих комнатах.", "Найближчий день народження у твоїх кімнатах.", "The nearest birthday in your rooms."))
       .supportedFamilies([.systemSmall, .systemMedium])

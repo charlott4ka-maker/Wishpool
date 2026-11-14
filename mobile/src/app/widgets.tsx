@@ -8,6 +8,7 @@ import { SymbolView } from "expo-symbols";
 import { ChevronLeft, Snowflake } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
+import Svg, { Defs, LinearGradient as SvgGradient, Path, Rect, Stop } from "react-native-svg";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -15,7 +16,7 @@ import { EdgeGlow } from "../components/EdgeGlow";
 import { Sticker } from "../components/Sticker";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
-import { C } from "../theme/tokens";
+import { C, mixHex } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
 const SMALL = 132; // a small widget, the phone mockup's scale
@@ -43,42 +44,79 @@ function Avatar({ letter, tint, size }: { letter: string; tint: string; size: nu
   );
 }
 
+/** the folder geometry as fractions of the widget (the same as FolderGeo in Widgets.swift) */
+const geo = (wide: boolean) => ({ x0: 0.035, x1: 0.965, yT: 0.2, yB: 0.33, y1: 0.965, xt: wide ? 0.42 : 0.88 });
+function frontPath(w: number, h: number, wide: boolean) {
+  const g = geo(wide);
+  const x0 = w * g.x0, x1 = w * g.x1, yT = h * g.yT, yB = h * g.yB, y1 = h * g.y1, xt = w * g.xt;
+  const r = Math.min(w, h) * 0.13, rt = Math.min(w, h) * 0.09;
+  return `M ${x0} ${yT + rt} Q ${x0} ${yT} ${x0 + rt} ${yT} L ${xt - 10} ${yT} C ${xt} ${yT} ${xt} ${yB} ${xt + 12} ${yB} L ${x1 - r} ${yB} Q ${x1} ${yB} ${x1} ${yB + r} L ${x1} ${y1 - r} Q ${x1} ${y1} ${x1 - r} ${y1} L ${x0 + r} ${y1} Q ${x0} ${y1} ${x0} ${y1 - r} Z`;
+}
+
+/** the birthday widget: a real room folder in the room's colour, the title on its tab */
+function BdayFolder({ wide }: { wide: boolean }) {
+  const { t } = useT();
+  const w = wide ? MEDIUM : SMALL, h = H, g = geo(wide);
+  const name = t("wgDemoBdayName");
+  return (
+    <View style={{ width: w, height: h, backgroundColor: C.card }}>
+      <Svg width={w} height={h} style={{ position: "absolute" }}>
+        <Defs>
+          <SvgGradient id={`front-${wide}`} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={mixHex(C.card, BDAY_TINT, 0.62)} />
+            <Stop offset="1" stopColor={mixHex(C.card, BDAY_TINT, 0.42)} />
+          </SvgGradient>
+        </Defs>
+        <Rect x={w * 0.07} y={h * 0.06} width={w * 0.86} height={h * 0.86} rx={Math.min(w, h) * 0.12} fill={mixHex(C.card, BDAY_TINT, 0.32)} />
+        <Path d={frontPath(w, h, wide)} fill={`url(#front-${wide})`} />
+        <Path d={frontPath(w, h, wide)} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth={1} />
+      </Svg>
+      {/* the title on the tab */}
+      <View style={{ position: "absolute", left: w * g.x0 + 12, top: h * g.yT, height: h * (g.yB - g.yT), width: w * (g.xt - g.x0) - 16, justifyContent: "center" }}>
+        <Txt numberOfLines={1} className="font-m700 text-white" style={{ fontSize: wide ? 11 : 10 }}>{t("wgBday")}</Txt>
+      </View>
+      <View className="flex-row items-center" style={{ position: "absolute", left: w * g.x0, top: h * g.yB, width: w * (g.x1 - g.x0), height: h * (g.y1 - g.yB), paddingHorizontal: 14 }}>
+        <View className="flex-1" style={{ gap: wide ? 6 : 4 }}>
+          <View className="flex-row items-center gap-2">
+            <Avatar letter={name[0]} tint="rgba(255,255,255,0.22)" size={wide ? 38 : 28} />
+            <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 18 : 14, flexShrink: 1 }}>{name}</Txt>
+          </View>
+          <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 24 : 19 }}>{t("wgDemoIn")}</Txt>
+        </View>
+        {wide ? <Sticker emoji="stk:cake" size={62} rotate={-6} /> : null}
+      </View>
+    </View>
+  );
+}
+
 /** what the widget shows, small or wide (the same drawing as targets/widget/Widgets.swift):
- * the Premium card's look, our block with a glow rising from the bottom, blue for the
- * birthday and red for Secret Santa */
+ * the birthday as its room's folder; Secret Santa in the Premium card's look with a red glow */
 function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
   const { t } = useT();
-  const santa = kind === "santa";
-  const name = t(santa ? "wgDemoSantaName" : "wgDemoBdayName");
+  if (kind === "bday") return <BdayFolder wide={wide} />;
+  const name = t("wgDemoSantaName");
   return (
     <View className="flex-1" style={{ backgroundColor: C.raised }}>
-      {/* the birthday glows in its room's colour, Santa in red */}
-      <EdgeGlow side="bottom" tone="red" tint={santa ? undefined : BDAY_TINT} />
-      {santa
-        ? FLAKES.map(([x, y, size, o], i) => (
-            <View key={i} pointerEvents="none" style={{ position: "absolute", left: `${x * 100}%`, top: `${y * 100}%`, opacity: o, transform: [{ translateX: -size / 2 }] }}>
-              <Snowflake size={size} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
-            </View>
-          ))
-        : null}
+      <EdgeGlow side="bottom" tone="red" />
+      {FLAKES.map(([x, y, size, o], i) => (
+        <View key={i} pointerEvents="none" style={{ position: "absolute", left: `${x * 100}%`, top: `${y * 100}%`, opacity: o, transform: [{ translateX: -size / 2 }] }}>
+          <Snowflake size={size} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+        </View>
+      ))}
       <View className="flex-1 flex-row items-center p-3.5">
-      <View className="flex-1 self-stretch justify-between">
-        <View className="flex-row items-center gap-1.5">
-          <Txt className="font-m700 text-[12px] text-white">{t(santa ? "wgSanta" : "wgBday")}</Txt>
-        </View>
-        <View className={`flex-row items-center ${santa && !wide ? "gap-2" : "gap-2.5"}`}>
-          <Avatar letter={name[0]} tint={santa ? "#0A82F9" : "#AF52DE"} size={wide ? 46 : santa ? 26 : 32} />
-          <View className="flex-1">
-            {santa ? <Txt numberOfLines={1} className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.8)" }}>{t("wgYouGive")}</Txt> : null}
-            <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 20 : 15 }}>{name}</Txt>
+        <View className="flex-1 self-stretch justify-between">
+          <Txt className="font-m700 text-[12px] text-white">{t("wgSanta")}</Txt>
+          <View className={`flex-row items-center ${wide ? "gap-2.5" : "gap-2"}`}>
+            <Avatar letter={name[0]} tint="#0A82F9" size={wide ? 46 : 26} />
+            <View className="flex-1">
+              <Txt numberOfLines={1} className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.8)" }}>{t("wgYouGive")}</Txt>
+              <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 20 : 15 }}>{name}</Txt>
+            </View>
           </View>
+          <Txt numberOfLines={1} className="font-m800 text-[12px] text-white">{t(wide ? "wgDemoSwap" : "wgDemoSwapShort")}</Txt>
         </View>
-        <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: santa ? 12 : wide ? 22 : 18 }}>
-          {santa ? t(wide ? "wgDemoSwap" : "wgDemoSwapShort") : t("wgDemoIn")}
-        </Txt>
-      </View>
-      {/* the room's sticker on the right of a medium widget */}
-      {wide ? <Sticker emoji={santa ? "stk:santa" : "stk:cake"} size={88} rotate={-6} /> : null}
+        {/* the room's sticker on the right of a medium widget only */}
+        {wide ? <Sticker emoji="stk:santa" size={62} rotate={-6} /> : null}
       </View>
     </View>
   );
