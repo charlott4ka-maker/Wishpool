@@ -5,17 +5,18 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { ChevronLeft, Snowflake } from "lucide-react-native";
+import { Cake, ChevronLeft, Snowflake } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
+import Svg, { Defs, LinearGradient as SvgGradient, Path, Stop } from "react-native-svg";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { EdgeGlow, SantaGlow } from "../components/EdgeGlow";
+import { SantaGlow } from "../components/EdgeGlow";
 import { Sticker } from "../components/Sticker";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
-import { C } from "../theme/tokens";
+import { C, mixHex } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
 const SMALL = 132; // a small widget, the phone mockup's scale
@@ -43,44 +44,43 @@ function Avatar({ letter, tint, size }: { letter: string; tint: string; size: nu
   );
 }
 
-/** the counter like a flip / odometer board: dark box, one cell per digit, the next digit
- *  showing faded under each one (the same as Counter in Widgets.swift) */
-function Counter({ n, unit, wide }: { n: number; unit: string; wide: boolean }) {
-  const digits = String(n).split("");
-  const fs = wide ? 34 : 28;
-  return (
-    <View className="flex-row items-center self-start overflow-hidden" style={{ backgroundColor: "#0B0D11", borderRadius: 12, paddingHorizontal: 10, height: wide ? 50 : 42, gap: 6 }}>
-      {digits.map((d, i) => (
-        <View key={i} style={{ height: "100%", justifyContent: "center" }}>
-          <Txt className="text-white" style={{ fontFamily: "Menlo, ui-monospace, SFMono-Regular, monospace", fontWeight: "700", fontSize: fs, lineHeight: fs * 1.05 }}>{d}</Txt>
-          {/* the next digit rolling in under it */}
-          <Txt style={{ position: "absolute", top: "78%", fontFamily: "Menlo, ui-monospace, SFMono-Regular, monospace", fontWeight: "700", fontSize: fs, color: "rgba(255,255,255,0.18)" }}>{(Number(d) + 9) % 10}</Txt>
-          {/* a thin split line across the digit, like the flaps */}
-          <View pointerEvents="none" style={{ position: "absolute", left: -2, right: -2, top: "50%", height: 1.5, backgroundColor: "#0B0D11" }} />
-        </View>
-      ))}
-      <Txt className="font-m700" style={{ fontSize: wide ? 13 : 12, color: "rgba(255,255,255,0.6)", marginLeft: 2 }}>{unit}</Txt>
-      <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.08)", "rgba(255,255,255,0)"]} style={{ position: "absolute", left: 0, right: 0, top: 0, height: "50%" }} />
-    </View>
-  );
+/** the front of a folder filling the widget (FullFront in Widgets.swift) */
+function frontPath(w: number, h: number, wide: boolean) {
+  const yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5), rt = 22;
+  return `M 0 ${yT + rt} Q 0 ${yT} ${rt} ${yT} L ${xt - 18} ${yT} C ${xt + 4} ${yT} ${xt} ${yB} ${xt + 22} ${yB} L ${w} ${yB} L ${w} ${h} L 0 ${h} Z`;
 }
+// demo "gift photos": our stickers on light cards (the real widget shows the room's wish photos)
+const DEMO_GIFTS = ["stk:headphones", "stk:book", "stk:lipstick"];
 
-/** the birthday widget: the glow of the room's colour rising from the bottom, the name big
- *  and the days on a flip counter (her reference), the room sticker on the right of a wide one */
+/** the birthday widget, a folder filling the whole widget: its back in the room's colour,
+ *  gift photos peeking out, a frosted front, and a glass pill with who and when (her reference) */
 function BdayFolder({ wide }: { wide: boolean }) {
   const { t } = useT();
+  const w = wide ? MEDIUM : SMALL, h = H;
+  const cw = w * (wide ? 0.34 : 0.5), ch = h * 0.42;
+  const spots: [number, number, number][] = wide ? [[0.06, 0.16, -8], [0.33, 0.08, 3], [0.6, 0.15, 8]] : [[0.04, 0.18, -9], [0.4, 0.08, 6], [0.22, 0.26, -2]];
   return (
-    <View className="flex-1" style={{ backgroundColor: C.raised }}>
-      <EdgeGlow side="bottom" tint={BDAY_TINT} />
-      <View className="flex-1 flex-row items-center p-3.5">
-        <View className="flex-1 self-stretch justify-between">
-          <View>
-            <Txt numberOfLines={1} className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.65)" }}>{t("wgBday")}</Txt>
-            <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 22 : 18 }}>{t("wgDemoBdayName")}</Txt>
-          </View>
-          <Counter n={5} unit={t("wgDemoDays")} wide={wide} />
+    <View style={{ width: w, height: h }}>
+      <LinearGradient colors={[mixHex(C.card, BDAY_TINT, 0.5), mixHex(C.card, BDAY_TINT, 0.36)]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      {spots.map(([x, y, r], i) => (
+        <View key={i} style={{ position: "absolute", left: w * x, top: h * y, width: cw, height: ch, borderRadius: 14, borderWidth: 2, borderColor: "rgba(255,255,255,0.7)", overflow: "hidden", transform: [{ rotate: `${r}deg` }], alignItems: "center", justifyContent: "center" }}>
+          <LinearGradient colors={["#EEF2F8", "#D8DFEA"]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+          <Sticker emoji={DEMO_GIFTS[i]} size={ch * 0.8} />
         </View>
-        {wide ? <Sticker emoji="stk:cake" size={62} rotate={-6} /> : null}
+      ))}
+      <Svg width={w} height={h} style={{ position: "absolute" }}>
+        <Defs>
+          <SvgGradient id={`bf-${wide}`} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0.4" stopColor={mixHex(C.card, BDAY_TINT, 0.78)} stopOpacity={0.94} />
+            <Stop offset="1" stopColor={mixHex(C.card, BDAY_TINT, 0.55)} stopOpacity={1} />
+          </SvgGradient>
+        </Defs>
+        <Path d={frontPath(w, h, wide)} fill={`url(#bf-${wide})`} />
+      </Svg>
+      {/* the glass pill */}
+      <View className="absolute flex-row items-center self-center" style={{ bottom: wide ? 12 : 10, height: wide ? 36 : 30, paddingHorizontal: wide ? 14 : 9, gap: wide ? 6 : 4, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.2)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.25)", maxWidth: w - 20 }}>
+        <Cake size={wide ? 14 : 11} color="#fff" strokeWidth={2} />
+        <Txt numberOfLines={1} className="font-m700 text-white" style={{ fontSize: wide ? 15 : 11.5, flexShrink: 1 }}>{`${t("wgDemoBdayName")} · ${t("wgDemoIn")}`}</Txt>
       </View>
     </View>
   );

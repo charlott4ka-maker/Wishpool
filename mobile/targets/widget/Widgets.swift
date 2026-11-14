@@ -14,7 +14,7 @@ let blue = Color(red: 0x0A / 255, green: 0x82 / 255, blue: 0xF9 / 255)
 let santaRed = Color(red: 0x8F / 255, green: 0x2F / 255, blue: 0x3F / 255)
 
 struct Person: Codable { let name: String; let color: String; let initial: String }
-struct Bday: Codable { let roomId: String; let name: String; let md: String; let color: String; let initial: String; let sticker: String? }
+struct Bday: Codable { let roomId: String; let name: String; let md: String; let color: String; let initial: String; let sticker: String?; let photos: [String]? }
 struct Santa: Codable { let roomId: String; let room: String; let date: String; let drawn: Int; let target: Person?; let sticker: String? }
 struct Payload: Codable {
   let premium: Int
@@ -155,17 +155,40 @@ func loc(_ ru: String, _ uk: String, _ en: String) -> String {
   return l.hasPrefix("ru") ? ru : l.hasPrefix("uk") ? uk : en
 }
 
-struct Entry: TimelineEntry { let date: Date; let p: Payload? }
+struct Entry: TimelineEntry { let date: Date; let p: Payload?; var photos: [UIImage] = [] }
+
+func fetchPhotos(_ urls: [String]) async -> [UIImage] {
+  var out: [UIImage] = []
+  for u in urls.prefix(3) {
+    guard let url = URL(string: u), url.scheme == "https" else { continue }
+    var req = URLRequest(url: url); req.timeoutInterval = 8
+    guard let (data, _) = try? await URLSession.shared.data(for: req), let img = UIImage(data: data) else { continue }
+    // keep them small: a widget has a tight memory budget
+    let side: CGFloat = 360, k = min(1, side / max(img.size.width, img.size.height))
+    let size = CGSize(width: img.size.width * k, height: img.size.height * k)
+    let small = UIGraphicsImageRenderer(size: size).image { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
+    out.append(small)
+  }
+  return out
+}
 
 struct Provider: TimelineProvider {
   func placeholder(in context: Context) -> Entry { Entry(date: Date(), p: nil) }
-  func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) { completion(Entry(date: Date(), p: load())) }
+  func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
+    let p = load()
+    Task { completion(Entry(date: Date(), p: p, photos: await fetchPhotos(p?.bday?.photos ?? []))) }
+  }
   func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
     let p = load()
     let today = startOfToday()
-    // one entry per midnight for a week, so the countdown moves on its own
-    let entries = (0..<7).compactMap { i in Calendar.current.date(byAdding: .day, value: i, to: today) }.map { Entry(date: $0, p: p) }
-    completion(Timeline(entries: [Entry(date: Date(), p: p)] + entries.dropFirst(), policy: .atEnd))
+    // the gift photos of the birthday room, fetched here (small, at most three)
+    Task {
+      let photos = await fetchPhotos(p?.bday?.photos ?? [])
+      // one entry per midnight for a week, so the countdown moves on its own
+      let days = (0..<7).compactMap { i in Calendar.current.date(byAdding: .day, value: i, to: today) }
+      let entries = [Entry(date: Date(), p: p, photos: photos)] + days.dropFirst().map { Entry(date: $0, p: p, photos: photos) }
+      completion(Timeline(entries: entries, policy: .atEnd))
+    }
   }
 }
 
@@ -299,6 +322,55 @@ struct Counter: View {
 
 // MARK: - the nearest birthday
 
+/// the front of a folder filling the widget: a tab on the left, a step down, then flat
+struct FullFront: Shape {
+  let wide: Bool
+  func path(in rect: CGRect) -> Path {
+    let w = rect.width, h = rect.height
+    let yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5), rt: CGFloat = 22
+    var p = Path()
+    p.move(to: CGPoint(x: 0, y: yT + rt))
+    p.addQuadCurve(to: CGPoint(x: rt, y: yT), control: CGPoint(x: 0, y: yT))
+    p.addLine(to: CGPoint(x: xt - 18, y: yT))
+    p.addCurve(to: CGPoint(x: xt + 22, y: yB), control1: CGPoint(x: xt + 4, y: yT), control2: CGPoint(x: xt, y: yB))
+    p.addLine(to: CGPoint(x: w, y: yB))
+    p.addLine(to: CGPoint(x: w, y: h))
+    p.addLine(to: CGPoint(x: 0, y: h))
+    p.closeSubpath()
+    return p
+  }
+}
+
+/// the gift photos peeking out of the folder, or the room's sticker when there are none
+struct Peeking: View {
+  let photos: [UIImage]; let sticker: String?; let wide: Bool
+  var body: some View {
+    GeometryReader { g in
+      let w = g.size.width, h = g.size.height
+      let cw = w * (wide ? 0.34 : 0.5), ch = h * 0.42
+      let spots: [(CGFloat, CGFloat, Double)] = wide
+        ? [(0.06, 0.16, -8), (0.33, 0.08, 3), (0.6, 0.15, 8)]
+        : [(0.04, 0.18, -9), (0.4, 0.08, 6), (0.22, 0.26, -2)]
+      ZStack(alignment: .topLeading) {
+        if photos.isEmpty {
+          RoomSticker(id: sticker).scaleEffect(1.15).position(x: w * 0.62, y: h * 0.3)
+        } else {
+          ForEach(0..<min(photos.count, 3), id: \.self) { i in
+            let sp = spots[i]
+            Image(uiImage: photos[i]).resizable().scaledToFill()
+              .frame(width: cw, height: ch).clipped()
+              .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+              .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.white.opacity(0.7), lineWidth: 2))
+              .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+              .rotationEffect(.degrees(sp.2))
+              .offset(x: w * sp.0, y: h * sp.1)
+          }
+        }
+      }
+    }
+  }
+}
+
 struct BirthdayView: View {
   @Environment(\.widgetFamily) var family
   let entry: Entry
@@ -307,23 +379,27 @@ struct BirthdayView: View {
     Group {
       if let p = entry.p, p.premium == 1 {
         if let b = p.bday, let n = daysToMonthDay(b.md, from: startOfToday()) {
-          HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 0) {
-              Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.65)).lineLimit(1)
-              Text(b.name).font(.system(size: wide ? 22 : 18, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
-              Spacer(minLength: 0)
-              if n == 0 || n == 1 {
-                Text(n == 0 ? (p.s["today"] ?? "Today") : (p.s["tomorrow"] ?? "Tomorrow"))
-                  .font(.system(size: wide ? 22 : 18, weight: .heavy)).foregroundColor(.white)
-                  .padding(.horizontal, 12).frame(height: wide ? 50 : 42)
-                  .background(Color(red: 0x0B / 255, green: 0x0D / 255, blue: 0x11 / 255))
-                  .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-              } else {
-                Counter(n: n, unit: dayWord(n, p.lang), wide: wide)
-              }
+          let when = n == 0 ? (p.s["today"] ?? "Today") : n == 1 ? (p.s["tomorrow"] ?? "Tomorrow") : "\(n) \(dayWord(n, p.lang))"
+          let c = rgb(b.color)
+          ZStack(alignment: .bottom) {
+            Peeking(photos: entry.photos, sticker: b.sticker, wide: wide)
+            // the front: the photos frosted through it, then the room colour over them
+            ZStack {
+              Peeking(photos: entry.photos, sticker: b.sticker, wide: wide).blur(radius: 14)
+              LinearGradient(colors: [mix(page, c, 0.78).opacity(0.78), mix(page, c, 0.55).opacity(0.95)], startPoint: .top, endPoint: .bottom)
+              LinearGradient(colors: [.white.opacity(0.18), .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            if wide { RoomSticker(id: b.sticker) }
+            .clipShape(FullFront(wide: wide))
+            // the glass pill: the cake, who, and when
+            HStack(spacing: wide ? 6 : 4) {
+              Image(systemName: "birthday.cake.fill").font(.system(size: wide ? 14 : 11, weight: .semibold))
+              Text("\(b.name) · \(when)").font(.system(size: wide ? 15 : 11.5, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, wide ? 14 : 9).frame(height: wide ? 36 : 30)
+            .background(Capsule().fill(Color.white.opacity(0.2)))
+            .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 0.5))
+            .padding(.bottom, wide ? 12 : 10).padding(.horizontal, 8)
           }
         } else {
           Empty(symbol: "gift", text: p.s["bdayEmpty"] ?? "No birthdays yet")
@@ -333,13 +409,20 @@ struct BirthdayView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
-    .containerBackground(for: .widget) { GlowBackground(red: false, tint: entry.p?.premium == 1 ? entry.p?.bday?.color : nil) }
+    .containerBackground(for: .widget) {
+      if entry.p?.premium == 1, let b = entry.p?.bday {
+        // the back of the folder fills the whole widget
+        let c = rgb(b.color)
+        LinearGradient(colors: [mix(page, c, 0.5), mix(page, c, 0.36)], startPoint: .top, endPoint: .bottom)
+      } else { GlowBackground(red: false) }
+    }
   }
 }
 
 struct BirthdayWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "birthday", provider: Provider()) { BirthdayView(entry: $0) }
+      .contentMarginsDisabled()
       .configurationDisplayName(loc("День рождения", "День народження", "Birthday"))
       .description(loc("Ближайший день рождения в твоих комнатах.", "Найближчий день народження у твоїх кімнатах.", "The nearest birthday in your rooms."))
       .supportedFamilies([.systemSmall, .systemMedium])
