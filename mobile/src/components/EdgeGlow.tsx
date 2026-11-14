@@ -16,13 +16,19 @@ const DIR: Record<GlowSide, { x1: number; y1: number; x2: number; y2: number }> 
   corner: { x1: 1, y1: 1, x2: 0, y2: 0 },
 };
 
-const DEEP = [20, 76, 205], LIGHT = [102, 148, 255], EDGE = [200, 220, 255];
+// blue: the Premium glow; red: the same light for Secret Santa (its widget)
+const TONES = {
+  blue: { DEEP: [20, 76, 205], LIGHT: [102, 148, 255], EDGE: [200, 220, 255] },
+  red: { DEEP: [168, 28, 52], LIGHT: [255, 92, 110], EDGE: [255, 205, 210] },
+} as const;
+export type GlowTone = keyof typeof TONES;
 const smooth = (a: number, b: number, t: number) => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)));
   return x * x * (3 - 2 * x);
 };
 // the colour and opacity at t: the three layers blended, each eased in
-function at(t: number): [string, number] {
+function at(t: number, tone: GlowTone): [string, number] {
+  const { DEEP, LIGHT, EDGE } = TONES[tone];
   const deep = 0.95 * smooth(0.3, 1, t);
   const light = 0.4 * smooth(0.55, 1, t);
   // the light right at the edge: narrow and clear, like the first version
@@ -33,9 +39,10 @@ function at(t: number): [string, number] {
   const hex = "#" + [0, 1, 2].map((i) => mix(i).toString(16).padStart(2, "0")).join("");
   return [hex, a];
 }
-const STOPS = Array.from({ length: 41 }, (_, i) => i / 40).map((t) => [t, ...at(t)] as const);
+const stopsFor = (tone: GlowTone) => Array.from({ length: 41 }, (_, i) => i / 40).map((t) => [t, ...at(t, tone)] as const);
+const STOPS = { blue: stopsFor("blue"), red: stopsFor("red") };
 
-export function EdgeGlow({ side }: { side: GlowSide }) {
+export function EdgeGlow({ side, tone = "blue" }: { side: GlowSide; tone?: GlowTone }) {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const d = DIR[side];
   return (
@@ -43,11 +50,11 @@ export function EdgeGlow({ side }: { side: GlowSide }) {
       {size.w ? (
         <Svg width={size.w} height={size.h}>
           <Defs>
-            <LinearGradient id={`edge-${side}`} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2}>
-              {STOPS.map(([t, c, a]) => <Stop key={t} offset={t} stopColor={c} stopOpacity={a} />)}
+            <LinearGradient id={`edge-${side}-${tone}`} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2}>
+              {STOPS[tone].map(([t, c, a]) => <Stop key={t} offset={t} stopColor={c} stopOpacity={a} />)}
             </LinearGradient>
           </Defs>
-          <Rect width={size.w} height={size.h} fill={`url(#edge-${side})`} />
+          <Rect width={size.w} height={size.h} fill={`url(#edge-${side}-${tone})`} />
         </Svg>
       ) : null}
     </View>

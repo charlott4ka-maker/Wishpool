@@ -23,6 +23,30 @@ struct Payload: Codable {
   let s: [String: String]
 }
 
+
+/// The Premium card's glow (components/EdgeGlow.tsx): our block with a light rising
+/// from the bottom, deep, then lighter, then a soft lip; blue, or red for Santa.
+func smoothstep(_ a: Double, _ b: Double, _ t: Double) -> Double { let x = min(1, max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x) }
+func glowStops(red: Bool) -> [Gradient.Stop] {
+  let deep: [Double] = red ? [168, 28, 52] : [20, 76, 205]
+  let light: [Double] = red ? [255, 92, 110] : [102, 148, 255]
+  let edge: [Double] = red ? [255, 205, 210] : [200, 220, 255]
+  return (0...40).map { i -> Gradient.Stop in
+    let t = Double(i) / 40
+    let d = 0.95 * smoothstep(0.3, 1, t), l = 0.4 * smoothstep(0.55, 1, t), e = 0.6 * smoothstep(0.9, 1, t)
+    let a = 1 - (1 - d) * (1 - l) * (1 - e)
+    let w = max(d + l + e, 0.0001)
+    let c = (0..<3).map { (deep[$0] * d + light[$0] * l + edge[$0] * e) / w / 255 }
+    return Gradient.Stop(color: Color(red: c[0], green: c[1], blue: c[2]).opacity(a), location: t)
+  }
+}
+struct GlowBackground: View {
+  let red: Bool
+  var body: some View {
+    ZStack { raised; LinearGradient(gradient: Gradient(stops: glowStops(red: red)), startPoint: .top, endPoint: .bottom) }
+  }
+}
+
 func load() -> Payload? {
   guard let raw = UserDefaults(suiteName: appGroup)?.string(forKey: "wp_widget"), let data = raw.data(using: .utf8) else { return nil }
   return try? JSONDecoder().decode(Payload.self, from: data)
@@ -97,7 +121,7 @@ struct Locked: View {
   let text: String
   var body: some View {
     VStack(spacing: 8) {
-      Image(systemName: "crown.fill").font(.system(size: 22, weight: .semibold)).foregroundColor(blue)
+      Image(systemName: "crown.fill").font(.system(size: 22, weight: .semibold)).foregroundColor(.white)
       Text(text).font(.system(size: 13, weight: .semibold)).foregroundColor(.white).multilineTextAlignment(.center)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -121,29 +145,22 @@ struct BirthdayView: View {
   @Environment(\.widgetFamily) var family
   let entry: Entry
   var body: some View {
+    let wide = family == .systemMedium
     Group {
       if let p = entry.p, p.premium == 1 {
         if let b = p.bday, let n = daysToMonthDay(b.md, from: startOfToday()) {
           let when = n == 0 ? (p.s["today"] ?? "Today") : n == 1 ? (p.s["tomorrow"] ?? "Tomorrow") : "\(n) \(dayWord(n, p.lang))"
-          if family == .systemMedium {
-            HStack(spacing: 14) {
-              Avatar(initial: b.initial, tint: color(b.color), size: 64)
-              VStack(alignment: .leading, spacing: 4) {
-                Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: 13, weight: .semibold)).foregroundColor(t2)
-                Text(b.name).font(.system(size: 18, weight: .bold)).foregroundColor(.white).lineLimit(1)
-                Text(when).font(.system(size: 26, weight: .heavy)).foregroundColor(blue)
-              }
-              Spacer(minLength: 0)
+          VStack(alignment: .leading, spacing: 0) {
+            Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
+            Spacer(minLength: 0)
+            HStack(spacing: 10) {
+              Avatar(initial: b.initial, tint: color(b.color), size: wide ? 46 : 32)
+              Text(b.name).font(.system(size: wide ? 20 : 15, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
             }
-          } else {
-            VStack(alignment: .leading, spacing: 6) {
-              Avatar(initial: b.initial, tint: color(b.color), size: 40)
-              Spacer(minLength: 0)
-              Text(when).font(.system(size: 24, weight: .heavy)).foregroundColor(blue).minimumScaleFactor(0.6).lineLimit(1)
-              Text(b.name).font(.system(size: 14, weight: .semibold)).foregroundColor(.white).lineLimit(2)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 0)
+            Text(when).font(.system(size: wide ? 22 : 18, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.6)
           }
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         } else {
           Empty(symbol: "gift", text: p.s["bdayEmpty"] ?? "No birthdays yet")
         }
@@ -152,7 +169,7 @@ struct BirthdayView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
-    .containerBackground(for: .widget) { bg }
+    .containerBackground(for: .widget) { GlowBackground(red: false) }
   }
 }
 
@@ -171,28 +188,30 @@ struct SantaView: View {
   @Environment(\.widgetFamily) var family
   let entry: Entry
   var body: some View {
+    let wide = family == .systemMedium
     Group {
       if let p = entry.p, p.premium == 1 {
         if let s = p.santa {
           let n = daysToDate(s.date, from: startOfToday())
           let swap: String? = n.flatMap { $0 < 0 ? nil : $0 == 0 ? (p.s["swapToday"] ?? "Gift swap today") : "\(p.s["swapIn"] ?? "Gift swap in") \($0) \(dayWord($0, p.lang))" }
-          VStack(alignment: .leading, spacing: 6) {
-            Text(p.s["santaTitle"] ?? "Secret Santa").font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.75))
+          VStack(alignment: .leading, spacing: 0) {
+            Text(p.s["santaTitle"] ?? "Secret Santa").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
             Spacer(minLength: 0)
             if s.drawn == 1, let t = s.target {
               HStack(spacing: 10) {
-                Avatar(initial: t.initial, tint: color(t.color), size: family == .systemMedium ? 48 : 34)
-                VStack(alignment: .leading, spacing: 2) {
-                  Text(p.s["youGive"] ?? "You're giving").font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.75))
-                  Text(t.name).font(.system(size: family == .systemMedium ? 22 : 17, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
+                Avatar(initial: t.initial, tint: color(t.color), size: wide ? 46 : 32)
+                VStack(alignment: .leading, spacing: 1) {
+                  Text(p.s["youGive"] ?? "You're giving").font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.8))
+                  Text(t.name).font(.system(size: wide ? 20 : 15, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
                 }
               }
             } else {
               Text(p.s["notDrawn"] ?? "No draw yet").font(.system(size: 15, weight: .bold)).foregroundColor(.white).lineLimit(2)
             }
-            if let swap { Text(swap).font(.system(size: 12, weight: .semibold)).foregroundColor(.white.opacity(0.85)).lineLimit(1).minimumScaleFactor(0.7) }
+            Spacer(minLength: 0)
+            if let swap { Text(swap).font(.system(size: 12, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7) }
           }
-          .frame(maxWidth: .infinity, alignment: .leading)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         } else {
           Empty(symbol: "gift.fill", text: p.s["santaEmpty"] ?? "Make a Secret Santa room")
         }
@@ -201,11 +220,7 @@ struct SantaView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.santa.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new?preset=santa"))
-    .containerBackground(for: .widget) {
-      if entry.p?.premium == 1 && entry.p?.santa != nil {
-        LinearGradient(colors: [Color(red: 0x5E / 255, green: 0x1B / 255, blue: 0x2A / 255), santaRed], startPoint: .topLeading, endPoint: .bottomTrailing)
-      } else { bg }
-    }
+    .containerBackground(for: .widget) { GlowBackground(red: entry.p?.premium == 1 && entry.p?.santa != nil) }
   }
 }
 

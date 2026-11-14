@@ -11,6 +11,7 @@ import { ScrollView, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { EdgeGlow } from "../components/EdgeGlow";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { C } from "../theme/tokens";
@@ -36,42 +37,30 @@ function Avatar({ letter, tint, size }: { letter: string; tint: string; size: nu
   );
 }
 
-/** what the widget shows, small or wide (the same drawing as targets/widget/Widgets.swift) */
+/** what the widget shows, small or wide (the same drawing as targets/widget/Widgets.swift):
+ * the Premium card's look, our block with a glow rising from the bottom, blue for the
+ * birthday and red for Secret Santa */
 function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
   const { t } = useT();
-  if (kind === "bday") {
-    return wide ? (
-      <View className="flex-1 flex-row items-center gap-3.5 p-4">
-        <Avatar letter={t("wgDemoBdayName")[0]} tint="#FF4D8D" size={58} />
-        <View className="flex-1">
-          <Txt className="font-m600 text-[12px] text-t2">{t("wgBday")}</Txt>
-          <Txt numberOfLines={1} className="font-m700 text-[17px] text-white">{t("wgDemoBdayName")}</Txt>
-          <Txt className="font-m800 text-[24px]" style={{ color: C.blue }}>{t("wgDemoIn")}</Txt>
-        </View>
-      </View>
-    ) : (
-      <View className="flex-1 justify-between p-3.5">
-        <Avatar letter={t("wgDemoBdayName")[0]} tint="#FF4D8D" size={36} />
-        <View>
-          <Txt className="font-m800 text-[21px]" style={{ color: C.blue }}>{t("wgDemoIn")}</Txt>
-          <Txt numberOfLines={1} className="font-m600 text-[13px] text-white">{t("wgDemoBdayName")}</Txt>
-        </View>
-      </View>
-    );
-  }
+  const santa = kind === "santa";
+  const name = t(santa ? "wgDemoSantaName" : "wgDemoBdayName");
   return (
-    <View className="flex-1">
-      <LinearGradient colors={["#5E1B2A", "#8F2F3F"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+    <View className="flex-1" style={{ backgroundColor: C.raised }}>
+      <EdgeGlow side="bottom" tone={santa ? "red" : "blue"} />
       <View className="flex-1 justify-between p-3.5">
-        <Txt className="font-m600 text-[12px]" style={{ color: "rgba(255,255,255,0.75)" }}>{t("wgSanta")}</Txt>
+        <View className="flex-row items-center gap-1.5">
+          <Txt className="font-m700 text-[12px] text-white">{t(santa ? "wgSanta" : "wgBday")}</Txt>
+        </View>
         <View className="flex-row items-center gap-2.5">
-          <Avatar letter={t("wgDemoSantaName")[0]} tint="#0A82F9" size={wide ? 44 : 30} />
+          <Avatar letter={name[0]} tint={santa ? "#0A82F9" : "#FF4D8D"} size={wide ? 46 : 32} />
           <View className="flex-1">
-            <Txt className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.75)" }}>{t("wgYouGive")}</Txt>
-            <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 20 : 15 }}>{t("wgDemoSantaName")}</Txt>
+            {santa ? <Txt numberOfLines={1} className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.8)" }}>{t("wgYouGive")}</Txt> : null}
+            <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 20 : 15 }}>{name}</Txt>
           </View>
         </View>
-        <Txt numberOfLines={1} className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.85)" }}>{t(wide ? "wgDemoSwap" : "wgDemoSwapShort")}</Txt>
+        <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: santa ? 12 : wide ? 22 : 18 }}>
+          {santa ? t(wide ? "wgDemoSwap" : "wgDemoSwapShort") : t("wgDemoIn")}
+        </Txt>
       </View>
     </View>
   );
