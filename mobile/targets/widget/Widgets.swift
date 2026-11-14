@@ -14,7 +14,7 @@ let blue = Color(red: 0x0A / 255, green: 0x82 / 255, blue: 0xF9 / 255)
 let santaRed = Color(red: 0x8F / 255, green: 0x2F / 255, blue: 0x3F / 255)
 
 struct Person: Codable { let name: String; let color: String; let initial: String }
-struct Bday: Codable { let roomId: String; let name: String; let md: String; let color: String; let initial: String; let sticker: String?; let photos: [String]? }
+struct Bday: Codable { let roomId: String; let name: String; let md: String; let color: String; let initial: String; let sticker: String? }
 struct Santa: Codable { let roomId: String; let room: String; let date: String; let drawn: Int; let target: Person?; let sticker: String? }
 struct Payload: Codable {
   let premium: Int
@@ -123,40 +123,20 @@ func loc(_ ru: String, _ uk: String, _ en: String) -> String {
   return l.hasPrefix("ru") ? ru : l.hasPrefix("uk") ? uk : en
 }
 
-struct Entry: TimelineEntry { let date: Date; let p: Payload?; var photos: [UIImage] = [] }
-
-func fetchPhotos(_ urls: [String]) async -> [UIImage] {
-  var out: [UIImage] = []
-  for u in urls.prefix(3) {
-    guard let url = URL(string: u), url.scheme == "https" else { continue }
-    var req = URLRequest(url: url); req.timeoutInterval = 8
-    guard let (data, _) = try? await URLSession.shared.data(for: req), let img = UIImage(data: data) else { continue }
-    // keep them small: a widget has a tight memory budget
-    let side: CGFloat = 360, k = min(1, side / max(img.size.width, img.size.height))
-    let size = CGSize(width: img.size.width * k, height: img.size.height * k)
-    let small = UIGraphicsImageRenderer(size: size).image { _ in img.draw(in: CGRect(origin: .zero, size: size)) }
-    out.append(small)
-  }
-  return out
-}
+struct Entry: TimelineEntry { let date: Date; let p: Payload? }
 
 struct Provider: TimelineProvider {
   func placeholder(in context: Context) -> Entry { Entry(date: Date(), p: nil) }
   func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
-    let p = load()
-    Task { completion(Entry(date: Date(), p: p, photos: await fetchPhotos(p?.bday?.photos ?? []))) }
+    completion(Entry(date: Date(), p: load()))
   }
   func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
     let p = load()
     let today = startOfToday()
-    // the gift photos of the birthday room, fetched here (small, at most three)
-    Task {
-      let photos = await fetchPhotos(p?.bday?.photos ?? [])
-      // one entry per midnight for a week, so the countdown moves on its own
-      let days = (0..<7).compactMap { i in Calendar.current.date(byAdding: .day, value: i, to: today) }
-      let entries = [Entry(date: Date(), p: p, photos: photos)] + days.dropFirst().map { Entry(date: $0, p: p, photos: photos) }
-      completion(Timeline(entries: entries, policy: .atEnd))
-    }
+    // one entry per midnight for a week, so the countdown moves on its own
+    let days = (0..<7).compactMap { i in Calendar.current.date(byAdding: .day, value: i, to: today) }
+    let entries = [Entry(date: Date(), p: p)] + days.dropFirst().map { Entry(date: $0, p: p) }
+    completion(Timeline(entries: entries, policy: .atEnd))
   }
 }
 
@@ -204,140 +184,42 @@ struct Empty: View {
 }
 
 
-// MARK: - a real room folder (components/RoomFolder.tsx): a back sheet and a front
-// with the tab, in the room's colour over our page colour; the widget is the folder.
 
-func mix(_ a: [Double], _ b: [Double], _ k: Double) -> Color {
-  let c = (0..<3).map { (a[$0] + (b[$0] - a[$0]) * k) / 255 }
-  return Color(red: c[0], green: c[1], blue: c[2])
-}
-let page: [Double] = [0x15, 0x18, 0x1D]
-
-/// the folder geometry, as fractions of the widget (the same as the app's demo)
-struct FolderGeo { let x0, x1, yT, yB, y1, xt: Double }
-func folderGeo(wide: Bool) -> FolderGeo { FolderGeo(x0: 0.035, x1: 0.965, yT: 0.2, yB: 0.33, y1: 0.965, xt: wide ? 0.42 : 0.88) }
-
-struct FolderFront: Shape {
-  let g: FolderGeo
-  func path(in rect: CGRect) -> Path {
-    let w = rect.width, h = rect.height
-    let x0 = w * g.x0, x1 = w * g.x1, yT = h * g.yT, yB = h * g.yB, y1 = h * g.y1, xt = w * g.xt
-    let r = min(w, h) * 0.13, rt = min(w, h) * 0.09
-    var p = Path()
-    p.move(to: CGPoint(x: x0, y: yT + rt))
-    p.addQuadCurve(to: CGPoint(x: x0 + rt, y: yT), control: CGPoint(x: x0, y: yT))
-    p.addLine(to: CGPoint(x: xt - 10, y: yT))
-    p.addCurve(to: CGPoint(x: xt + 12, y: yB), control1: CGPoint(x: xt, y: yT), control2: CGPoint(x: xt, y: yB))
-    p.addLine(to: CGPoint(x: x1 - r, y: yB))
-    p.addQuadCurve(to: CGPoint(x: x1, y: yB + r), control: CGPoint(x: x1, y: yB))
-    p.addLine(to: CGPoint(x: x1, y: y1 - r))
-    p.addQuadCurve(to: CGPoint(x: x1 - r, y: y1), control: CGPoint(x: x1, y: y1))
-    p.addLine(to: CGPoint(x: x0 + r, y: y1))
-    p.addQuadCurve(to: CGPoint(x: x0, y: y1 - r), control: CGPoint(x: x0, y: y1))
-    p.closeSubpath()
-    return p
-  }
-}
-
-struct FolderBackground: View {
-  let tint: String
-  let wide: Bool
+/// a flip calendar card (her reference): a dark bezel, a grey card split across the middle
+/// with little hinges at the sides, a big light number and the unit under it
+let flipBezel = Color(red: 0x10 / 255, green: 0x11 / 255, blue: 0x14 / 255)
+struct FlipCard: View {
+  let big: String; let unit: String; let numberSize: CGFloat
   var body: some View {
-    let c = rgb(tint), g = folderGeo(wide: wide)
-    GeometryReader { geo in
-      let w = geo.size.width, h = geo.size.height
-      ZStack(alignment: .topLeading) {
-        Color(red: page[0] / 255, green: page[1] / 255, blue: page[2] / 255)
-        // the back sheet, a little in the shade
-        RoundedRectangle(cornerRadius: min(w, h) * 0.12, style: .continuous)
-          .fill(mix(page, c, 0.32))
-          .frame(width: w * 0.86, height: h * 0.86)
-          .offset(x: w * 0.07, y: h * 0.06)
-        // the front with its tab: lighter at the top, a soft light lip along the edge
-        FolderFront(g: g).fill(LinearGradient(colors: [mix(page, c, 0.62), mix(page, c, 0.42)], startPoint: .top, endPoint: .bottom))
-        FolderFront(g: g).stroke(Color.white.opacity(0.16), lineWidth: 1)
-      }
-    }
-  }
-}
-
-
-/// the days on a flip / odometer board (her reference): dark box, a cell per digit with the
-/// next digit rolling in faded under it, a split line across the middle, the unit after it
-struct Counter: View {
-  let n: Int; let unit: String; let wide: Bool
-  var body: some View {
-    let fs: CGFloat = wide ? 34 : 28
-    HStack(spacing: 6) {
-      ForEach(Array(String(n)).map { String($0) }.indices, id: \.self) { i in
-        let d = Array(String(n)).map { String($0) }[i]
-        ZStack(alignment: .top) {
-          Text(d).font(.system(size: fs, weight: .bold, design: .monospaced)).foregroundColor(.white)
-          Text(String(((Int(d) ?? 0) + 9) % 10)).font(.system(size: fs, weight: .bold, design: .monospaced))
-            .foregroundColor(.white.opacity(0.18)).blur(radius: 0.6).offset(y: fs * 0.82)
+    GeometryReader { g in
+      let h = g.size.height
+      ZStack {
+        RoundedRectangle(cornerRadius: 16, style: .continuous).fill(flipBezel)
+          .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        ZStack {
+          LinearGradient(colors: [Color(red: 0x3A / 255, green: 0x3C / 255, blue: 0x43 / 255), Color(red: 0x2B / 255, green: 0x2D / 255, blue: 0x33 / 255)], startPoint: .top, endPoint: .bottom)
+          VStack(spacing: 0) {
+            Text(big).font(.system(size: numberSize, weight: .heavy, design: .rounded)).foregroundColor(Color(red: 0xDA / 255, green: 0xDB / 255, blue: 0xDF / 255)).lineLimit(1).minimumScaleFactor(0.5)
+            Text(unit).font(.system(size: max(11, numberSize * 0.24), weight: .bold, design: .rounded)).foregroundColor(Color(red: 0xA9 / 255, green: 0xAB / 255, blue: 0xB0 / 255)).lineLimit(1).minimumScaleFactor(0.6)
+          }
+          // the fold across the middle, a little above the number's centre
+          Rectangle().fill(Color.black.opacity(0.55)).frame(height: 2).offset(y: -h * 0.08)
         }
-        .overlay(Rectangle().fill(Color(red: 0x0B / 255, green: 0x0D / 255, blue: 0x11 / 255)).frame(height: 1.5).padding(.horizontal, -2))
+        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .padding(6)
+        // the hinges
+        HStack {
+          Capsule().fill(LinearGradient(colors: [Color(white: 0.75), Color(white: 0.4)], startPoint: .top, endPoint: .bottom)).frame(width: 4, height: h * 0.16)
+          Spacer()
+          Capsule().fill(LinearGradient(colors: [Color(white: 0.75), Color(white: 0.4)], startPoint: .top, endPoint: .bottom)).frame(width: 4, height: h * 0.16)
+        }
+        .padding(.horizontal, 4).offset(y: -h * 0.08)
       }
-      Text(unit).font(.system(size: wide ? 13 : 12, weight: .bold)).foregroundColor(.white.opacity(0.6)).padding(.leading, 2)
     }
-    .padding(.horizontal, 10)
-    .frame(height: wide ? 50 : 42)
-    .background(Color(red: 0x0B / 255, green: 0x0D / 255, blue: 0x11 / 255))
-    .overlay(LinearGradient(colors: [.white.opacity(0.08), .clear], startPoint: .top, endPoint: .center))
-    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
   }
 }
 
 // MARK: - the nearest birthday
-
-/// the front of a folder filling the widget: a tab on the left, a step down, then flat
-struct FullFront: Shape {
-  let wide: Bool
-  func path(in rect: CGRect) -> Path {
-    let w = rect.width, h = rect.height
-    let yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5), rt: CGFloat = 22
-    var p = Path()
-    p.move(to: CGPoint(x: 0, y: yT + rt))
-    p.addQuadCurve(to: CGPoint(x: rt, y: yT), control: CGPoint(x: 0, y: yT))
-    p.addLine(to: CGPoint(x: xt - 18, y: yT))
-    p.addCurve(to: CGPoint(x: xt + 22, y: yB), control1: CGPoint(x: xt + 4, y: yT), control2: CGPoint(x: xt, y: yB))
-    p.addLine(to: CGPoint(x: w, y: yB))
-    p.addLine(to: CGPoint(x: w, y: h))
-    p.addLine(to: CGPoint(x: 0, y: h))
-    p.closeSubpath()
-    return p
-  }
-}
-
-/// the gift photos peeking out of the folder, or the room's sticker when there are none
-struct Peeking: View {
-  let photos: [UIImage]; let sticker: String?; let wide: Bool
-  var body: some View {
-    GeometryReader { g in
-      let w = g.size.width, h = g.size.height
-      let cw = w * (wide ? 0.34 : 0.5), ch = h * 0.42
-      let spots: [(CGFloat, CGFloat, Double)] = wide
-        ? [(0.06, 0.16, -8), (0.33, 0.08, 3), (0.6, 0.15, 8)]
-        : [(0.04, 0.18, -9), (0.4, 0.08, 6), (0.22, 0.26, -2)]
-      ZStack(alignment: .topLeading) {
-        if photos.isEmpty {
-          RoomSticker(id: sticker).scaleEffect(1.15).position(x: w * 0.62, y: h * 0.3)
-        } else {
-          ForEach(0..<min(photos.count, 3), id: \.self) { i in
-            let sp = spots[i]
-            Image(uiImage: photos[i]).resizable().scaledToFill()
-              .frame(width: cw, height: ch).clipped()
-              .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-              .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.white.opacity(0.7), lineWidth: 2))
-              .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
-              .rotationEffect(.degrees(sp.2))
-              .offset(x: w * sp.0, y: h * sp.1)
-          }
-        }
-      }
-    }
-  }
-}
 
 struct BirthdayView: View {
   @Environment(\.widgetFamily) var family
@@ -347,27 +229,23 @@ struct BirthdayView: View {
     Group {
       if let p = entry.p, p.premium == 1 {
         if let b = p.bday, let n = daysToMonthDay(b.md, from: startOfToday()) {
-          let when = n == 0 ? (p.s["today"] ?? "Today") : n == 1 ? (p.s["tomorrow"] ?? "Tomorrow") : "\(n) \(dayWord(n, p.lang))"
-          let c = rgb(b.color)
-          ZStack(alignment: .bottom) {
-            Peeking(photos: entry.photos, sticker: b.sticker, wide: wide)
-            // the front: the photos frosted through it, then the room colour over them
-            ZStack {
-              Peeking(photos: entry.photos, sticker: b.sticker, wide: wide).blur(radius: 14)
-              LinearGradient(colors: [mix(page, c, 0.78).opacity(0.78), mix(page, c, 0.55).opacity(0.95)], startPoint: .top, endPoint: .bottom)
-              LinearGradient(colors: [.white.opacity(0.18), .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
+          let big = n == 0 ? "🎂" : "\(n)"
+          let unit = n == 0 ? (p.s["today"] ?? "Today") : dayWord(n, p.lang)
+          let head = VStack(alignment: .leading, spacing: 0) {
+            Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.65)).lineLimit(1)
+            Text(b.name).font(.system(size: wide ? 22 : 16, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
+          }
+          if wide {
+            HStack(spacing: 14) {
+              VStack(alignment: .leading, spacing: 6) { head; Spacer(minLength: 0); RoomSticker(id: b.sticker).scaleEffect(0.8, anchor: .bottomLeading) }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+              FlipCard(big: big, unit: unit, numberSize: 64).frame(width: 150)
             }
-            .clipShape(FullFront(wide: wide))
-            // the glass pill: the cake, who, and when
-            HStack(spacing: wide ? 6 : 4) {
-              Image(systemName: "birthday.cake.fill").font(.system(size: wide ? 14 : 11, weight: .semibold))
-              Text("\(b.name) · \(when)").font(.system(size: wide ? 15 : 11.5, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+          } else {
+            VStack(alignment: .leading, spacing: 8) {
+              head
+              FlipCard(big: big, unit: unit, numberSize: 46).frame(maxWidth: .infinity)
             }
-            .foregroundColor(.white)
-            .padding(.horizontal, wide ? 14 : 9).frame(height: wide ? 36 : 30)
-            .background(Capsule().fill(Color.white.opacity(0.2)))
-            .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 0.5))
-            .padding(.bottom, wide ? 12 : 10).padding(.horizontal, 8)
           }
         } else {
           Empty(symbol: "gift", text: p.s["bdayEmpty"] ?? "No birthdays yet")
@@ -377,20 +255,13 @@ struct BirthdayView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
-    .containerBackground(for: .widget) {
-      if entry.p?.premium == 1, let b = entry.p?.bday {
-        // the back of the folder fills the whole widget
-        let c = rgb(b.color)
-        LinearGradient(colors: [mix(page, c, 0.5), mix(page, c, 0.36)], startPoint: .top, endPoint: .bottom)
-      } else { GlowBackground(red: false) }
-    }
+    .containerBackground(for: .widget) { GlowBackground(red: false, tint: entry.p?.premium == 1 ? entry.p?.bday?.color : nil) }
   }
 }
 
 struct BirthdayWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "birthday", provider: Provider()) { BirthdayView(entry: $0) }
-      .contentMarginsDisabled()
       .configurationDisplayName(loc("День рождения", "День народження", "Birthday"))
       .description(loc("Ближайший день рождения в твоих комнатах.", "Найближчий день народження у твоїх кімнатах.", "The nearest birthday in your rooms."))
       .supportedFamilies([.systemSmall, .systemMedium])
