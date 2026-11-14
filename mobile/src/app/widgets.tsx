@@ -5,7 +5,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, Snowflake } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
@@ -20,6 +20,10 @@ import { useAccent } from "../theme/accent";
 const SMALL = 132; // a small widget, the phone mockup's scale
 const MEDIUM = 288;
 const H = 132;
+// snowflakes on the Santa widget, as fractions of its box: x, y, size, opacity (the same in Widgets.swift)
+export const FLAKES: [number, number, number, number][] = [
+  [0.9, 0.1, 16, 0.35], [0.82, 0.34, 10, 0.22], [0.95, 0.5, 12, 0.26], [0.86, 0.72, 8, 0.18], [0.97, 0.28, 8, 0.18], [0.76, 0.12, 9, 0.2],
+];
 const EASE = Easing.bezier(0.3, 0, 0.2, 1);
 // the loop: birthday small, birthday medium, santa small, santa medium
 const STEPS: { kind: "bday" | "santa"; wide: boolean }[] = [
@@ -47,12 +51,19 @@ function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
   return (
     <View className="flex-1" style={{ backgroundColor: C.raised }}>
       <EdgeGlow side="bottom" tone={santa ? "red" : "blue"} />
+      {santa
+        ? FLAKES.map(([x, y, size, o], i) => (
+            <View key={i} pointerEvents="none" style={{ position: "absolute", left: `${x * 100}%`, top: `${y * 100}%`, opacity: o, transform: [{ translateX: -size / 2 }] }}>
+              <Snowflake size={size} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />
+            </View>
+          ))
+        : null}
       <View className="flex-1 justify-between p-3.5">
         <View className="flex-row items-center gap-1.5">
           <Txt className="font-m700 text-[12px] text-white">{t(santa ? "wgSanta" : "wgBday")}</Txt>
         </View>
-        <View className="flex-row items-center gap-2.5">
-          <Avatar letter={name[0]} tint={santa ? "#0A82F9" : "#FF4D8D"} size={wide ? 46 : 32} />
+        <View className={`flex-row items-center ${santa && !wide ? "gap-2" : "gap-2.5"}`}>
+          <Avatar letter={name[0]} tint={santa ? "#0A82F9" : "#FF4D8D"} size={wide ? 46 : santa ? 26 : 32} />
           <View className="flex-1">
             {santa ? <Txt numberOfLines={1} className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.8)" }}>{t("wgYouGive")}</Txt> : null}
             <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 20 : 15 }}>{name}</Txt>

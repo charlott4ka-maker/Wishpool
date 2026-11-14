@@ -40,10 +40,25 @@ func glowStops(red: Bool) -> [Gradient.Stop] {
     return Gradient.Stop(color: Color(red: c[0], green: c[1], blue: c[2]).opacity(a), location: t)
   }
 }
+/// snowflakes on the Santa widget: x, y (fractions of the box), size, opacity (same as the app's demo)
+let flakes: [(Double, Double, Double, Double)] = [(0.9, 0.1, 16, 0.35), (0.82, 0.34, 10, 0.22), (0.95, 0.5, 12, 0.26), (0.86, 0.72, 8, 0.18), (0.97, 0.28, 8, 0.18), (0.76, 0.12, 9, 0.2)]
+
 struct GlowBackground: View {
   let red: Bool
   var body: some View {
-    ZStack { raised; LinearGradient(gradient: Gradient(stops: glowStops(red: red)), startPoint: .top, endPoint: .bottom) }
+    ZStack {
+      raised
+      LinearGradient(gradient: Gradient(stops: glowStops(red: red)), startPoint: .top, endPoint: .bottom)
+      if red {
+        GeometryReader { g in
+          ForEach(0..<flakes.count, id: \.self) { i in
+            let f = flakes[i]
+            Image(systemName: "snowflake").font(.system(size: f.2, weight: .light)).foregroundColor(.white.opacity(f.3))
+              .position(x: g.size.width * f.0, y: g.size.height * f.1 + f.2 / 2)
+          }
+        }
+      }
+    }
   }
 }
 
@@ -198,8 +213,8 @@ struct SantaView: View {
             Text(p.s["santaTitle"] ?? "Secret Santa").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
             Spacer(minLength: 0)
             if s.drawn == 1, let t = s.target {
-              HStack(spacing: 10) {
-                Avatar(initial: t.initial, tint: color(t.color), size: wide ? 46 : 32)
+              HStack(spacing: wide ? 10 : 8) {
+                Avatar(initial: t.initial, tint: color(t.color), size: wide ? 46 : 26)
                 VStack(alignment: .leading, spacing: 1) {
                   Text(p.s["youGive"] ?? "You're giving").font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.8))
                   Text(t.name).font(.system(size: wide ? 20 : 15, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
