@@ -67,7 +67,7 @@ export function WidgetSync() {
       const payload = {
         premium: isPremium ? 1 : 0,
         lang,
-        bday: b ? { roomId: b.id, name: who, md: (b.eventDate || "").slice(5), color: b.tint, initial: initial(who), sticker: b.emoji } : null,
+        bday: b ? { roomId: b.id, name: who, md: (b.eventDate || "").slice(5), color: b.tint, initial: initial(who), sticker: b.emoji, photos: (b.photos || []).filter((u) => u.startsWith("https://")).slice(0, 3) } : null,
         santa: s ? { roomId: s.id, room: s.name, date: s.eventDate || "", drawn, target, sticker: s.emoji } : null,
         s: {
           bdayTitle: t("wgBday"), today: t("evToday"), tomorrow: t("evTomorrow"), bdayEmpty: t("wgBdayEmpty"),
