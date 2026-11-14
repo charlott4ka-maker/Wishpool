@@ -40,12 +40,14 @@ import type { Member, Wish } from "../../types";
 import { BOT_APP, IN_TG, tgShare } from "../../lib/telegram";
 import { useAccent } from "../../theme/accent";
 import { useFlag } from "../../lib/flags";
+import { maybeAskNotify } from "../../lib/notifyAsk";
+import { track } from "../../lib/track";
 
 type Detail = { lists: { member: Member; wishes: RoomWish[] }[]; mine: Wish[]; members?: (Member & { you?: boolean })[]; owner?: boolean };
 
 export default function RoomScreen() {
   useAccent(); // re-render in place when the app colour changes
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, src } = useLocalSearchParams<{ id: string; src?: string }>();
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -91,6 +93,16 @@ export default function RoomScreen() {
   useEffect(() => {
     if (santa && room && santaSnow) setSnow(true);
   }, [santa, room?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // opened from the home-screen widget: counted on the admin page (Аналитика)
+  useEffect(() => {
+    if (src === "widget") track("open_widget");
+  }, [src, id]);
+  // a date ahead and reminders off: ask once, after the room has settled in
+  useEffect(() => {
+    if (!room?.eventDate) return;
+    const timer = setTimeout(() => maybeAskNotify(router, room.eventDate), 900);
+    return () => clearTimeout(timer);
+  }, [room?.id, room?.eventDate]); // eslint-disable-line react-hooks/exhaustive-deps
   const snowDone = useCallback(() => setSnow(false), []);
 
   if (!room) return <Empty emoji="stk:ghost" title={t("roomGone")} action={<Pill onPress={goBack}>{t("back")}</Pill>} />;

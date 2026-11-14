@@ -286,7 +286,7 @@ struct BirthdayView: View {
         Locked(text: entry.p?.s["locked"] ?? "Premium")
       }
     }
-    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
+    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall?src=widget" : entry.p?.bday.map { "wishpool://room/\($0.roomId)?src=widget" } ?? "wishpool://room/new"))
     .containerBackground(for: .widget) { GlowBackground(red: false, tint: entry.p?.premium == 1 ? entry.p?.bday?.color : nil) }
   }
 }
@@ -422,7 +422,7 @@ struct BirthdayFolderView: View {
         Locked(text: entry.p?.s["locked"] ?? "Premium")
       }
     }
-    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
+    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall?src=widget" : entry.p?.bday.map { "wishpool://room/\($0.roomId)?src=widget" } ?? "wishpool://room/new"))
     .containerBackground(for: .widget) {
       if entry.p?.premium == 1, let b = entry.p?.bday {
         // the back of the folder fills the whole widget
@@ -465,7 +465,7 @@ struct SantaFolderView: View {
         Locked(text: entry.p?.s["locked"] ?? "Premium")
       }
     }
-    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.santa.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new?preset=santa"))
+    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall?src=widget" : entry.p?.santa.map { "wishpool://room/\($0.roomId)?src=widget" } ?? "wishpool://room/new?preset=santa"))
     .containerBackground(for: .widget) {
       if entry.p?.premium == 1, entry.p?.santa != nil {
         let c = rgb(tint)
@@ -525,7 +525,7 @@ struct SantaView: View {
         Locked(text: entry.p?.s["locked"] ?? "Premium")
       }
     }
-    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.santa.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new?preset=santa"))
+    .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall?src=widget" : entry.p?.santa.map { "wishpool://room/\($0.roomId)?src=widget" } ?? "wishpool://room/new?preset=santa"))
     .containerBackground(for: .widget) {
       GlowBackground(red: entry.p?.premium == 1 && entry.p?.santa != nil)
     }

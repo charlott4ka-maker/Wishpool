@@ -2,7 +2,7 @@
 // brand in the middle, plan cards at the bottom (the best one outlined, with a
 // "save N%" badge), one big button, and Terms | Privacy | Restore underneath.
 
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, useRouter, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Image } from "expo-image";
 import { Check, X } from "lucide-react-native";
@@ -38,7 +38,11 @@ export default function PaywallRoute() {
 }
 
 function Paywall() {
-  useEffect(() => track("paywall_open"), []);
+  const { src } = useLocalSearchParams<{ src?: string }>();
+  useEffect(() => {
+    track("paywall_open");
+    if (src === "widget") track("open_widget");
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { t, lang } = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();

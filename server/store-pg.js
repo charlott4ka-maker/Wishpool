@@ -96,7 +96,7 @@ export function createPgStore(q) {
         top(`SELECT emoji id, count(*) n FROM rooms WHERE emoji LIKE 'stk:%' AND created_at >= $1 GROUP BY 1 ORDER BY 2 DESC LIMIT 40`),
         top(`SELECT skin id, count(*) n FROM rooms WHERE skin IS NOT NULL AND skin <> '' AND created_at >= $1 GROUP BY 1 ORDER BY 2 DESC LIMIT 40`),
         top(`SELECT lower(tint) id, count(*) n FROM rooms WHERE tint IS NOT NULL AND tint <> '' AND created_at >= $1 GROUP BY 1 ORDER BY 2 DESC LIMIT 20`),
-        q(`SELECT name id, count(DISTINCT user_id) n FROM events WHERE (name LIKE 'accent\\_%' OR name LIKE 'icon\\_%' OR name LIKE 'paywall\\_%') AND at >= $1 GROUP BY 1 ORDER BY 2 DESC`, [since]),
+        q(`SELECT name id, count(DISTINCT user_id) n FROM events WHERE (name LIKE 'accent\\_%' OR name LIKE 'icon\\_%' OR name LIKE 'paywall\\_%' OR name LIKE 'open\\_%') AND at >= $1 GROUP BY 1 ORDER BY 2 DESC`, [since]),
       ]);
       return { wishStickers, roomStickers, folders, colors, picks: picks.rows.map(r => ({ id: r.id, n: Number(r.n) })) };
     },

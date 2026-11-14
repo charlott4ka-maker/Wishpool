@@ -27,7 +27,7 @@ export function createMemStore() {
     async popular(since) {
       const top = (list, key, max = 40) => { const c = {}; for (const x of list) { const k = key(x); if (k) c[k] = (c[k] || 0) + 1; } return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, max).map(([id, n]) => ({ id, n })); };
       const ws = Object.values(D.wishes).filter(w => w.createdAt >= since), rs = Object.values(D.rooms).filter(r => (r.createdAt || 0) >= since);
-      const picks = {}; for (const e of D.events) if (e.at >= since && /^(accent|icon|paywall)_/.test(e.name)) (picks[e.name] = picks[e.name] || new Set()).add(e.userId);
+      const picks = {}; for (const e of D.events) if (e.at >= since && /^(accent|icon|paywall|open)_/.test(e.name)) (picks[e.name] = picks[e.name] || new Set()).add(e.userId);
       return {
         wishStickers: top(ws, w => /^stk:/.test(w.emoji || "") && w.emoji), roomStickers: top(rs, r => /^stk:/.test(r.emoji || "") && r.emoji),
         folders: top(rs, r => r.skin || ""), colors: top(rs, r => (r.tint || "").toLowerCase(), 20),

@@ -13,6 +13,7 @@ import { useT } from "../i18n";
 import { useWishpool } from "../store/WishpoolContext";
 import { fromISODate } from "../components/DateRow";
 import { usePrefs } from "./prefs";
+import { track } from "../lib/track";
 
 
 Notifications.setNotificationHandler({
@@ -66,6 +67,7 @@ export function ReminderSync() {
     if (Platform.OS === "web") return;
     const sub = Notifications.addNotificationResponseReceivedListener((res) => {
       const roomId = res.notification.request.content.data?.roomId;
+      track("open_push");
       if (typeof roomId === "string") router.push({ pathname: "/room/[id]", params: { id: roomId } });
     });
     return () => sub.remove();
