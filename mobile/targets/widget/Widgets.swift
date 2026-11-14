@@ -56,6 +56,38 @@ func glowStops(red: Bool, tint: String? = nil) -> [Gradient.Stop] {
 /// snowflakes on the Santa widget: x, y (fractions of the box), size, opacity (same as the app's demo)
 let flakes: [(Double, Double, Double, Double)] = [(0.9, 0.1, 16, 0.35), (0.82, 0.34, 10, 0.22), (0.95, 0.5, 12, 0.26), (0.86, 0.72, 8, 0.18), (0.97, 0.28, 8, 0.18), (0.76, 0.12, 9, 0.2)]
 
+/// Secret Santa's background, like a "special offer" card: deep burgundy, a slanted beam of
+/// light from the top right, the red glow rising from the bottom, tiny star dots (= SantaGlow)
+let santaDots: [(Double, Double, Double)] = [(0.18, 0.2, 1.4), (0.42, 0.12, 1), (0.08, 0.55, 1.2), (0.55, 0.38, 1), (0.3, 0.62, 0.9), (0.66, 0.18, 1.2)]
+struct SantaBackground: View {
+  var body: some View {
+    GeometryReader { g in
+      let w = g.size.width, h = g.size.height
+      let beam = LinearGradient(colors: [Color(red: 1, green: 0.56, blue: 0.63).opacity(0), Color(red: 1, green: 0.77, blue: 0.8).opacity(0.32), Color(red: 1, green: 0.56, blue: 0.63).opacity(0)], startPoint: .leading, endPoint: .trailing)
+      ZStack(alignment: .topLeading) {
+        Color(red: 0x22 / 255, green: 0x07 / 255, blue: 0x0E / 255)
+        LinearGradient(gradient: Gradient(stops: glowStops(red: true)), startPoint: .top, endPoint: .bottom)
+        ZStack {
+          Rectangle().fill(beam).frame(width: w * 0.24, height: h * 1.1)
+          Rectangle().fill(beam).frame(width: w * 0.08, height: h * 0.9).frame(height: h * 1.1, alignment: .top)
+        }
+        .mask(LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.75)))
+        .rotationEffect(.degrees(28), anchor: .top)
+        .offset(x: w * 0.72 - w * 0.12, y: -h * 0.15)
+        ForEach(0..<santaDots.count, id: \.self) { i in
+          let d = santaDots[i]
+          Circle().fill(Color(red: 1, green: 0.85, blue: 0.87).opacity(0.7)).frame(width: d.2 * 2, height: d.2 * 2).position(x: w * d.0, y: h * d.1)
+        }
+        ForEach(0..<flakes.count, id: \.self) { i in
+          let f = flakes[i]
+          Image(systemName: "snowflake").font(.system(size: f.2, weight: .light)).foregroundColor(.white.opacity(f.3))
+            .position(x: w * f.0, y: h * f.1 + f.2 / 2)
+        }
+      }
+    }
+  }
+}
+
 struct GlowBackground: View {
   let red: Bool
   var tint: String? = nil
@@ -339,7 +371,9 @@ struct SantaView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.santa.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new?preset=santa"))
-    .containerBackground(for: .widget) { GlowBackground(red: entry.p?.premium == 1 && entry.p?.santa != nil) }
+    .containerBackground(for: .widget) {
+      if entry.p?.premium == 1 && entry.p?.santa != nil { SantaBackground() } else { GlowBackground(red: false) }
+    }
   }
 }
 

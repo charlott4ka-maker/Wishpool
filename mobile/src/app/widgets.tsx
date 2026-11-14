@@ -12,7 +12,7 @@ import Svg, { Defs, LinearGradient as SvgGradient, Path, Rect, Stop } from "reac
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { EdgeGlow } from "../components/EdgeGlow";
+import { SantaGlow } from "../components/EdgeGlow";
 import { Sticker } from "../components/Sticker";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
@@ -97,7 +97,7 @@ function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
   const name = t("wgDemoSantaName");
   return (
     <View className="flex-1" style={{ backgroundColor: C.raised }}>
-      <EdgeGlow side="bottom" tone="red" />
+      <SantaGlow />
       {FLAKES.map(([x, y, size, o], i) => (
         <View key={i} pointerEvents="none" style={{ position: "absolute", left: `${x * 100}%`, top: `${y * 100}%`, opacity: o, transform: [{ translateX: -size / 2 }] }}>
           <Snowflake size={size} color="#fff" strokeWidth={1.5} absoluteStrokeWidth />

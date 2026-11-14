@@ -5,7 +5,7 @@
 // gradients showed bands).
 import { useState } from "react";
 import { type LayoutChangeEvent, View } from "react-native";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import Svg, { Circle, Defs, G, LinearGradient, Rect, Stop } from "react-native-svg";
 
 export type GlowSide = "bottom" | "top" | "corner";
 
@@ -47,6 +47,44 @@ function at(t: number, layers: Layers): [string, number] {
 }
 const stopsFor = (layers: Layers) => Array.from({ length: 41 }, (_, i) => i / 40).map((t) => [t, ...at(t, layers)] as const);
 const STOPS = { blue: stopsFor(TONES.blue), red: stopsFor(TONES.red) };
+
+/** Secret Santa's card background, like a "special offer" card: a deep burgundy base, a slanted
+ *  beam of light from the top right, the red glow rising from the bottom with a bright lip,
+ *  and a few tiny star dots (the same in targets/widget/Widgets.swift `SantaBackground`) */
+export const SANTA_DOTS: [number, number, number][] = [[0.18, 0.2, 1.4], [0.42, 0.12, 1], [0.08, 0.55, 1.2], [0.55, 0.38, 1], [0.3, 0.62, 0.9], [0.66, 0.18, 1.2]];
+export function SantaGlow() {
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const { w, h } = size;
+  return (
+    <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#22070E" }} onLayout={(e: LayoutChangeEvent) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      {w ? (
+        <Svg width={w} height={h}>
+          <Defs>
+            <LinearGradient id="santa-edge" x1={0} y1={0} x2={0} y2={1}>
+              {STOPS.red.map(([t, c, a]) => <Stop key={t} offset={t} stopColor={c} stopOpacity={a} />)}
+            </LinearGradient>
+            <LinearGradient id="santa-beam" x1={0} y1={0} x2={1} y2={0}>
+              <Stop offset="0" stopColor="#FF8FA0" stopOpacity={0} />
+              <Stop offset="0.5" stopColor="#FFC4CC" stopOpacity={0.32} />
+              <Stop offset="1" stopColor="#FF8FA0" stopOpacity={0} />
+            </LinearGradient>
+            <LinearGradient id="santa-beamfade" x1={0} y1={0} x2={0} y2={1}>
+              <Stop offset="0" stopColor="#fff" stopOpacity={1} />
+              <Stop offset="0.75" stopColor="#fff" stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={w} height={h} fill="url(#santa-edge)" />
+          {/* the beam: a narrow band, slanted, fading towards the bottom */}
+          <G opacity={0.9} transform={`translate(${w * 0.72} ${-h * 0.15}) rotate(28)`}>
+            <Rect x={-w * 0.12} y={0} width={w * 0.24} height={h * 1.1} fill="url(#santa-beam)" opacity={1} />
+            <Rect x={-w * 0.04} y={0} width={w * 0.08} height={h * 0.9} fill="url(#santa-beam)" opacity={1} />
+          </G>
+          {SANTA_DOTS.map(([x, y, r], i) => <Circle key={i} cx={x * w} cy={y * h} r={r} fill="#FFD9DF" opacity={0.7} />)}
+        </Svg>
+      ) : null}
+    </View>
+  );
+}
 
 export function EdgeGlow({ side, tone = "blue", tint }: { side: GlowSide; tone?: GlowTone; /** a room colour instead of the tone */ tint?: string }) {
   const stops = tint ? stopsFor(fromTint(tint)) : STOPS[tone];
