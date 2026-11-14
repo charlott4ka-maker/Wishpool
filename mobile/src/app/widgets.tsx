@@ -2,10 +2,11 @@
 // phone in a card where a widget grows from small to medium and swaps between
 // Birthday and Secret Santa on a loop, and the steps under it.
 
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { ChevronLeft, Snowflake } from "lucide-react-native";
+import { Cake, ChevronLeft, Snowflake } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
@@ -15,7 +16,7 @@ import { EdgeGlow } from "../components/EdgeGlow";
 import { Sticker } from "../components/Sticker";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
-import { C } from "../theme/tokens";
+import { C, hex, mixHex } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
 const SMALL = 132; // a small widget, the phone mockup's scale
@@ -28,7 +29,11 @@ export const FLAKES: [number, number, number, number][] = [
 ];
 const EASE = Easing.bezier(0.3, 0, 0.2, 1);
 // the loop: birthday small, birthday medium, santa small, santa medium
-const STEPS: { kind: "bday" | "santa"; wide: boolean }[] = [
+type Kind = "bday" | "folder" | "santa";
+// TEMPORARY while she picks a birthday widget: the folder variant is in the loop too
+const STEPS: { kind: Kind; wide: boolean }[] = [
+  { kind: "folder", wide: false },
+  { kind: "folder", wide: true },
   { kind: "bday", wide: false },
   { kind: "bday", wide: true },
   { kind: "santa", wide: false },
@@ -92,11 +97,51 @@ function BdayFolder({ wide }: { wide: boolean }) {
   );
 }
 
+/** the birthday, variant 2 (BirthdayFolderView in Widgets.swift): a folder filling the widget
+ *  like the app's folders: tall gift cards with a white edge peeking out of the back, a frosted
+ *  front (a blur and the room colour), a soft bevel and a light lip, and a glass pill */
+const GIFT_CARDS = ["stk:headphones", "stk:lipstick", "stk:book"];
+function GiftFolder({ wide }: { wide: boolean }) {
+  const { t } = useT();
+  const w = wide ? MEDIUM : SMALL, h = H;
+  const ch = h * (wide ? 0.66 : 0.6), cw = ch * 0.82;
+  const spots: [number, number, number][] = wide ? [[0.22, 0.13, -10], [0.78, 0.11, 9], [0.5, 0.04, 0]] : [[0.3, 0.14, -10], [0.72, 0.12, 9], [0.5, 0.05, 0]];
+  const yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5);
+  const frost = (
+    <>
+      <BlurView intensity={40} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <LinearGradient colors={[hex(BDAY_TINT, 0.58), hex(BDAY_TINT, 0.4)]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+    </>
+  );
+  return (
+    <View style={{ width: w, height: h, overflow: "hidden" }}>
+      <LinearGradient colors={[mixHex(C.card, BDAY_TINT, 0.36), mixHex(C.card, BDAY_TINT, 0.26)]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      {spots.map(([x, y, r], i) => (
+        <View key={i} style={{ position: "absolute", left: w * x - cw / 2, top: h * y, width: cw, height: ch, padding: 3, borderRadius: 10, backgroundColor: "#fff", transform: [{ rotate: `${r}deg` }] }}>
+          <View className="flex-1 items-center justify-center overflow-hidden" style={{ borderRadius: 7 }}>
+            <LinearGradient colors={["#F1F4F9", "#D9E0EB"]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+            <Sticker emoji={GIFT_CARDS[i]} size={cw * 0.8} />
+          </View>
+        </View>
+      ))}
+      {/* the front: the tab, then the body, both frosted */}
+      <View style={{ position: "absolute", left: 0, top: yT, width: xt + 10, height: yB - yT + 24, borderTopRightRadius: 22, borderTopLeftRadius: 22, overflow: "hidden" }}>{frost}</View>
+      <View style={{ position: "absolute", left: 0, right: 0, top: yB, bottom: 0, borderTopRightRadius: 18, overflow: "hidden" }}>{frost}</View>
+      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: yB, height: 1.2, backgroundColor: "rgba(255,255,255,0.22)" }} />
+      <View className="absolute flex-row items-center self-center" style={{ bottom: wide ? 12 : 10, height: wide ? 36 : 30, paddingHorizontal: wide ? 14 : 9, gap: wide ? 6 : 4, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.2)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.25)", maxWidth: w - 16 }}>
+        <Cake size={wide ? 14 : 11} color="#fff" strokeWidth={2} />
+        <Txt numberOfLines={1} className="font-m700 text-white" style={{ fontSize: wide ? 15 : 11.5, flexShrink: 1 }}>{`${t("wgDemoBdayName")} · ${t("wgDemoIn")}`}</Txt>
+      </View>
+    </View>
+  );
+}
+
 /** what the widget shows, small or wide (the same drawing as targets/widget/Widgets.swift):
  * the birthday as its room's folder; Secret Santa in the Premium card's look with a red glow */
-function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
+function Face({ kind, wide }: { kind: Kind; wide: boolean }) {
   const { t } = useT();
   if (kind === "bday") return <BdayFolder wide={wide} />;
+  if (kind === "folder") return <GiftFolder wide={wide} />;
   const name = t("wgDemoSantaName");
   return (
     <View className="flex-1" style={{ backgroundColor: C.raised }}>

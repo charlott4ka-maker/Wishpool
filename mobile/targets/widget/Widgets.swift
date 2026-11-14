@@ -327,29 +327,33 @@ struct FullFront: Shape {
   }
 }
 
-/// the gift photos peeking out of the folder, or the room's sticker when there are none
+/// the gift photos peeking out of the folder, like the app's folders (RoomFolder PhotoCard): tall
+/// white cards (0.82 wide per tall, a 3pt white edge), tilted; the room's sticker when there are none
 struct Peeking: View {
   let photos: [UIImage]; let sticker: String?; let wide: Bool
   var body: some View {
     GeometryReader { g in
       let w = g.size.width, h = g.size.height
-      let cw = w * (wide ? 0.34 : 0.5), ch = h * 0.42
+      let ch = h * (wide ? 0.66 : 0.6), cw = ch * 0.82
+      // x of the card's centre, y of its top (fractions), rotation; the middle one in front
       let spots: [(CGFloat, CGFloat, Double)] = wide
-        ? [(0.06, 0.16, -8), (0.33, 0.08, 3), (0.6, 0.15, 8)]
-        : [(0.04, 0.18, -9), (0.4, 0.08, 6), (0.22, 0.26, -2)]
+        ? [(0.22, 0.13, -10), (0.78, 0.11, 9), (0.5, 0.04, 0)]
+        : [(0.3, 0.14, -10), (0.72, 0.12, 9), (0.5, 0.05, 0)]
+      let order = photos.count >= 3 ? [0, 1, 2] : Array(0..<photos.count)
       ZStack(alignment: .topLeading) {
         if photos.isEmpty {
-          RoomSticker(id: sticker).scaleEffect(1.15).position(x: w * 0.62, y: h * 0.3)
+          RoomSticker(id: sticker).scaleEffect(1.15).position(x: w * 0.5, y: h * 0.3)
         } else {
-          ForEach(0..<min(photos.count, 3), id: \.self) { i in
-            let sp = spots[i]
+          ForEach(order, id: \.self) { i in
+            let sp = spots[photos.count == 1 ? 2 : photos.count == 2 ? i : i]
             Image(uiImage: photos[i]).resizable().scaledToFill()
-              .frame(width: cw, height: ch).clipped()
-              .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-              .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.white.opacity(0.7), lineWidth: 2))
-              .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+              .frame(width: cw - 6, height: ch - 6).clipped()
+              .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+              .padding(3)
+              .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.white))
+              .shadow(color: .black.opacity(0.22), radius: 5, y: 2)
               .rotationEffect(.degrees(sp.2))
-              .offset(x: w * sp.0, y: h * sp.1)
+              .position(x: w * sp.0, y: h * sp.1 + ch / 2)
           }
         }
       }
@@ -371,11 +375,16 @@ struct BirthdayFolderView: View {
             Peeking(photos: entry.photos, sticker: b.sticker, wide: wide)
             // the front: the photos frosted through it, then the room colour over them
             ZStack {
-              Peeking(photos: entry.photos, sticker: b.sticker, wide: wide).blur(radius: 14)
-              LinearGradient(colors: [mix(page, c, 0.78).opacity(0.78), mix(page, c, 0.55).opacity(0.95)], startPoint: .top, endPoint: .bottom)
-              LinearGradient(colors: [.white.opacity(0.18), .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25))
+              // the frost: what is behind, blurred hard and dimmed, then the room colour
+              mix(page, c, 0.32)
+              Peeking(photos: entry.photos, sticker: b.sticker, wide: wide).blur(radius: 22).opacity(0.85)
+              Color.black.opacity(0.28)
+              LinearGradient(colors: [mix(page, c, 1).opacity(0.58), mix(page, c, 1).opacity(0.4)], startPoint: .top, endPoint: .bottom)
             }
             .clipShape(FullFront(wide: wide))
+            // a soft bevel along the front's edge and a light lip on top, like the app's folders
+            FullFront(wide: wide).stroke(Color.black.opacity(0.16), lineWidth: 14).clipShape(FullFront(wide: wide)).blur(radius: 4)
+            FullFront(wide: wide).stroke(Color.white.opacity(0.22), lineWidth: 1.2)
             // the glass pill: the cake, who, and when
             HStack(spacing: wide ? 6 : 4) {
               Image(systemName: "birthday.cake.fill").font(.system(size: wide ? 14 : 11, weight: .semibold))
@@ -399,7 +408,7 @@ struct BirthdayFolderView: View {
       if entry.p?.premium == 1, let b = entry.p?.bday {
         // the back of the folder fills the whole widget
         let c = rgb(b.color)
-        LinearGradient(colors: [mix(page, c, 0.5), mix(page, c, 0.36)], startPoint: .top, endPoint: .bottom)
+        LinearGradient(colors: [mix(page, c, 0.36), mix(page, c, 0.26)], startPoint: .top, endPoint: .bottom)
       } else { GlowBackground(red: false) }
     }
   }
