@@ -2,13 +2,13 @@
 // phone in a card where a widget grows from small to medium and swaps between
 // Birthday and Secret Santa on a loop, and the steps under it.
 
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { Cake, ChevronLeft, Gift, Snowflake } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
+import Svg, { Defs, LinearGradient as SvgGradient, Path, Stop } from "react-native-svg";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,7 +16,7 @@ import { EdgeGlow } from "../components/EdgeGlow";
 import { Sticker } from "../components/Sticker";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
-import { C, hex, mixHex } from "../theme/tokens";
+import { C, mixHex } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
 
 const SMALL = 132; // a small widget, the phone mockup's scale
@@ -112,13 +112,9 @@ function GiftFolder({ wide, santa }: { wide: boolean; santa?: boolean }) {
   const w = wide ? MEDIUM : SMALL, h = H;
   const ch = h * (wide ? 0.66 : 0.6), cw = ch * 0.82;
   const spots: [number, number, number][] = wide ? [[0.22, 0.13, -10], [0.78, 0.11, 9], [0.5, 0.04, 0]] : [[0.3, 0.14, -10], [0.72, 0.12, 9], [0.5, 0.05, 0]];
-  const yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5);
-  const frost = (
-    <>
-      <BlurView intensity={40} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-      <LinearGradient colors={[hex(tint, 0.58), hex(tint, 0.4)]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
-    </>
-  );
+  const yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5), rt = 22;
+  // the sides and the bottom run past the widget, so the shade and the lip only show along the top
+  const front = `M -20 ${yT} L ${xt - 18} ${yT} C ${xt + 4} ${yT} ${xt} ${yB} ${xt + 22} ${yB} L ${w + 20} ${yB} L ${w + 20} ${h + 20} L -20 ${h + 20} Z`;
   return (
     <View style={{ width: w, height: h, overflow: "hidden" }}>
       <LinearGradient colors={[mixHex(C.card, tint, 0.36), mixHex(C.card, tint, 0.26)]} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
@@ -130,10 +126,19 @@ function GiftFolder({ wide, santa }: { wide: boolean; santa?: boolean }) {
           </View>
         </View>
       ))}
-      {/* the front: the tab, then the body, both frosted */}
-      <View style={{ position: "absolute", left: 0, top: yT, width: xt + 10, height: yB - yT + 24, borderTopRightRadius: 22, borderTopLeftRadius: 22, overflow: "hidden" }}>{frost}</View>
-      <View style={{ position: "absolute", left: 0, right: 0, top: yB, bottom: 0, borderTopRightRadius: 18, overflow: "hidden" }}>{frost}</View>
-      <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: yB, height: 1.2, backgroundColor: "rgba(255,255,255,0.22)" }} />
+      {/* the front: one shape with its tab (FullFront in Widgets.swift), the room colour over the
+          cards so they show through faintly, a soft shade inside the edge and a light lip */}
+      <Svg width={w} height={h} style={{ position: "absolute" }}>
+        <Defs>
+          <SvgGradient id={`gf-${santa ? "s" : "b"}-${wide}`} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset={yT / h} stopColor={mixHex(C.card, tint, 0.62)} stopOpacity={0.9} />
+            <Stop offset="1" stopColor={mixHex(C.card, tint, 0.48)} stopOpacity={1} />
+          </SvgGradient>
+        </Defs>
+        <Path d={front} fill={`url(#gf-${santa ? "s" : "b"}-${wide})`} />
+        <Path d={front} fill="none" stroke="#000" strokeOpacity={0.12} strokeWidth={10} />
+        <Path d={front} fill="none" stroke="#fff" strokeOpacity={0.22} strokeWidth={1.2} />
+      </Svg>
       {santa
         ? FOLDER_FLAKES.map(([x, y, size, o], i) => (
             <View key={i} pointerEvents="none" style={{ position: "absolute", left: w * x - size / 2, top: h * y - size / 2, opacity: o }}>

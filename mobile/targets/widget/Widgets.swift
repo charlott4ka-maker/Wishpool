@@ -313,15 +313,15 @@ struct FullFront: Shape {
   let wide: Bool
   func path(in rect: CGRect) -> Path {
     let w = rect.width, h = rect.height
-    let yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5), rt: CGFloat = 22
+    let yT = h * 0.42, yB = h * (wide ? 0.52 : 0.54), xt = w * (wide ? 0.42 : 0.5)
+    // the sides and the bottom run past the widget, so the bevel and the lip only show along the top
     var p = Path()
-    p.move(to: CGPoint(x: 0, y: yT + rt))
-    p.addQuadCurve(to: CGPoint(x: rt, y: yT), control: CGPoint(x: 0, y: yT))
+    p.move(to: CGPoint(x: -20, y: yT))
     p.addLine(to: CGPoint(x: xt - 18, y: yT))
     p.addCurve(to: CGPoint(x: xt + 22, y: yB), control1: CGPoint(x: xt + 4, y: yT), control2: CGPoint(x: xt, y: yB))
-    p.addLine(to: CGPoint(x: w, y: yB))
-    p.addLine(to: CGPoint(x: w, y: h))
-    p.addLine(to: CGPoint(x: 0, y: h))
+    p.addLine(to: CGPoint(x: w + 20, y: yB))
+    p.addLine(to: CGPoint(x: w + 20, y: h + 20))
+    p.addLine(to: CGPoint(x: -20, y: h + 20))
     p.closeSubpath()
     return p
   }
