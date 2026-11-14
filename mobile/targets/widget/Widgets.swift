@@ -270,6 +270,33 @@ struct FolderBackground: View {
   }
 }
 
+
+/// the days on a flip / odometer board (her reference): dark box, a cell per digit with the
+/// next digit rolling in faded under it, a split line across the middle, the unit after it
+struct Counter: View {
+  let n: Int; let unit: String; let wide: Bool
+  var body: some View {
+    let fs: CGFloat = wide ? 34 : 28
+    HStack(spacing: 6) {
+      ForEach(Array(String(n)).map { String($0) }.indices, id: \.self) { i in
+        let d = Array(String(n)).map { String($0) }[i]
+        ZStack(alignment: .top) {
+          Text(d).font(.system(size: fs, weight: .bold, design: .monospaced)).foregroundColor(.white)
+          Text(String(((Int(d) ?? 0) + 9) % 10)).font(.system(size: fs, weight: .bold, design: .monospaced))
+            .foregroundColor(.white.opacity(0.18)).blur(radius: 0.6).offset(y: fs * 0.82)
+        }
+        .overlay(Rectangle().fill(Color(red: 0x0B / 255, green: 0x0D / 255, blue: 0x11 / 255)).frame(height: 1.5).padding(.horizontal, -2))
+      }
+      Text(unit).font(.system(size: wide ? 13 : 12, weight: .bold)).foregroundColor(.white.opacity(0.6)).padding(.leading, 2)
+    }
+    .padding(.horizontal, 10)
+    .frame(height: wide ? 50 : 42)
+    .background(Color(red: 0x0B / 255, green: 0x0D / 255, blue: 0x11 / 255))
+    .overlay(LinearGradient(colors: [.white.opacity(0.08), .clear], startPoint: .top, endPoint: .center))
+    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+  }
+}
+
 // MARK: - the nearest birthday
 
 struct BirthdayView: View {
@@ -277,34 +304,26 @@ struct BirthdayView: View {
   let entry: Entry
   var body: some View {
     let wide = family == .systemMedium
-    let g = folderGeo(wide: wide)
     Group {
       if let p = entry.p, p.premium == 1 {
         if let b = p.bday, let n = daysToMonthDay(b.md, from: startOfToday()) {
-          let when = n == 0 ? (p.s["today"] ?? "Today") : n == 1 ? (p.s["tomorrow"] ?? "Tomorrow") : "\(n) \(dayWord(n, p.lang))"
-          GeometryReader { geo in
-            let w = geo.size.width, h = geo.size.height
-            ZStack(alignment: .topLeading) {
-              // the title on the folder's tab
-              Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: wide ? 11 : 10, weight: .bold)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
-                .frame(width: w * (g.xt - g.x0) - 16, height: h * (g.yB - g.yT), alignment: .leading)
-                .offset(x: w * g.x0 + 12, y: h * g.yT)
-              // on the front: who and when, the room's sticker on the right of a wide one
-              HStack(alignment: .center, spacing: 6) {
-                VStack(alignment: .leading, spacing: wide ? 6 : 4) {
-                  HStack(spacing: 8) {
-                    Avatar(initial: b.initial, tint: Color.white.opacity(0.22), size: wide ? 38 : 28)
-                    Text(b.name).font(.system(size: wide ? 18 : 14, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
-                  }
-                  Text(when).font(.system(size: wide ? 24 : 19, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.6)
-                }
-                Spacer(minLength: 0)
-                if wide { RoomSticker(id: b.sticker) }
+          HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 0) {
+              Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: 11, weight: .semibold)).foregroundColor(.white.opacity(0.65)).lineLimit(1)
+              Text(b.name).font(.system(size: wide ? 22 : 18, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7)
+              Spacer(minLength: 0)
+              if n == 0 || n == 1 {
+                Text(n == 0 ? (p.s["today"] ?? "Today") : (p.s["tomorrow"] ?? "Tomorrow"))
+                  .font(.system(size: wide ? 22 : 18, weight: .heavy)).foregroundColor(.white)
+                  .padding(.horizontal, 12).frame(height: wide ? 50 : 42)
+                  .background(Color(red: 0x0B / 255, green: 0x0D / 255, blue: 0x11 / 255))
+                  .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+              } else {
+                Counter(n: n, unit: dayWord(n, p.lang), wide: wide)
               }
-              .padding(.horizontal, 14)
-              .frame(width: w * (g.x1 - g.x0), height: h * (g.y1 - g.yB), alignment: .leading)
-              .offset(x: w * g.x0, y: h * g.yB)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            if wide { RoomSticker(id: b.sticker) }
           }
         } else {
           Empty(symbol: "gift", text: p.s["bdayEmpty"] ?? "No birthdays yet")
@@ -314,16 +333,13 @@ struct BirthdayView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
-    .containerBackground(for: .widget) {
-      if entry.p?.premium == 1, let b = entry.p?.bday { FolderBackground(tint: b.color, wide: wide) } else { GlowBackground(red: false) }
-    }
+    .containerBackground(for: .widget) { GlowBackground(red: false, tint: entry.p?.premium == 1 ? entry.p?.bday?.color : nil) }
   }
 }
 
 struct BirthdayWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "birthday", provider: Provider()) { BirthdayView(entry: $0) }
-      .contentMarginsDisabled()
       .configurationDisplayName(loc("День рождения", "День народження", "Birthday"))
       .description(loc("Ближайший день рождения в твоих комнатах.", "Найближчий день народження у твоїх кімнатах.", "The nearest birthday in your rooms."))
       .supportedFamilies([.systemSmall, .systemMedium])
