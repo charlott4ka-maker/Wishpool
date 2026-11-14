@@ -16,6 +16,7 @@ import { DAY_FORMS, plural } from "../lib/dates";
 import { haptic } from "../lib/haptics";
 import { PREMIUM_ENABLED } from "../subscription/featureFlags";
 import type { PremiumPackage } from "../subscription/purchases";
+import { scheduleTrialReminder } from "../lib/trialReminder";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { EdgeGlow } from "../components/EdgeGlow";
 import { C } from "../theme/tokens";
@@ -70,6 +71,7 @@ function Paywall() {
       track("paywall_buy_" + (sel.kind || "plan"));
       if (await purchase(sel)) {
         haptic("success");
+        if (sel.trialDays) await scheduleTrialReminder(sel.trialDays, t("trialRemindTitle"), t("trialRemindBody"));
         Alert.alert(t("premiumThanks"));
         router.back();
       }

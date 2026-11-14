@@ -14,6 +14,7 @@ import { useWishpool } from "../store/WishpoolContext";
 import { fromISODate } from "../components/DateRow";
 import { usePrefs } from "./prefs";
 import { track } from "../lib/track";
+import { TRIAL_ID } from "../lib/trialReminder";
 
 
 Notifications.setNotificationHandler({
@@ -37,7 +38,10 @@ export function ReminderSync() {
     if (Platform.OS === "web") return;
     let live = true;
     (async () => {
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      // the room reminders only: the trial reminder (lib/trialReminder) stays
+      for (const n of await Notifications.getAllScheduledNotificationsAsync()) {
+        if (n.identifier !== TRIAL_ID) await Notifications.cancelScheduledNotificationAsync(n.identifier);
+      }
       if (!prefs.notifications || !live) return;
       if (!(await Notifications.getPermissionsAsync()).granted) return;
       const now = Date.now();
@@ -52,6 +56,7 @@ export function ReminderSync() {
           const when = at10(day, before);
           if (!on || when.getTime() <= now) continue;
           await Notifications.scheduleNotificationAsync({
+            identifier: `room_${r.id}_${before}`,
             content: { title: t(title, { name: r.name }), body: t(body), data: { roomId: r.id } },
             trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when },
           });
@@ -66,7 +71,9 @@ export function ReminderSync() {
   useEffect(() => {
     if (Platform.OS === "web") return;
     const sub = Notifications.addNotificationResponseReceivedListener((res) => {
-      const roomId = res.notification.request.content.data?.roomId;
+      const data = res.notification.request.content.data || {};
+      const roomId = data.roomId;
+      if (typeof data.route === "string") return router.push(data.route as never);
       track("open_push");
       if (typeof roomId === "string") router.push({ pathname: "/room/[id]", params: { id: roomId } });
     });

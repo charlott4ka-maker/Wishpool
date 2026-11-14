@@ -585,7 +585,7 @@
   document.querySelectorAll("#insDays button").forEach(function (b) {
     b.onclick = function () { insDays = +b.dataset.d; document.querySelectorAll("#insDays button").forEach(function (x) { x.classList.toggle("on", x === b); }); loadInsights(); };
   });
-  var PICK = { paywall_open: "Открыли экран оплаты", open_push: "Открыли из напоминания", open_widget: "Открыли из виджета" };
+  var PICK = { paywall_open: "Открыли экран оплаты", open_push: "Открыли из напоминания", open_widget: "Открыли из виджета", open_folder_tag: "Тапнули «Папка Premium» в комнате" };
   function pickName(id) {
     if (PICK[id]) return PICK[id];
     if (id.indexOf("accent_") === 0) return "Цвет приложения: " + id.slice(7);
