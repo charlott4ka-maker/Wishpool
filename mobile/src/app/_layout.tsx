@@ -17,6 +17,7 @@ import { AccentGuard } from "../components/AccentPicker";
 import { ShareIntentHandler } from "../components/ShareIntentHandler";
 import { LangProvider } from "../i18n";
 import { ReminderSync } from "../settings/ReminderSync";
+import { WidgetSync } from "../settings/WidgetSync";
 import { ToastHost } from "../components/Toast";
 import { UploadBarHost } from "../components/UploadBar";
 import { IconSplash, releaseSplash } from "../components/IconSplash";
@@ -99,6 +100,7 @@ function Gate() {
         <ShareIntentHandler ready={inside} />
         <AccentGuard />
         {inside ? <ReminderSync /> : null}
+        {inside ? <WidgetSync /> : null}
         {/* the accent: CSS variables for the classes (screens refresh their raw colours themselves) */}
         <View style={[{ flex: 1 }, vars(accentVars(acc))]}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>

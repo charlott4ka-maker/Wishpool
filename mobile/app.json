@@ -32,7 +32,8 @@
       },
       "associatedDomains": [
         "applinks:wishpool.clickbrickk.com"
-      ]
+      ],
+      "appleTeamId": "5LA5WMXQUM"
     },
     "android": {
       "package": "app.wishpool.android",
@@ -116,7 +117,8 @@
             "text/*"
           ]
         }
-      ]
+      ],
+      "@bacons/apple-targets"
     ],
     "experiments": {
       "typedRoutes": true
