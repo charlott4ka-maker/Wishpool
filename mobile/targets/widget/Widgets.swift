@@ -3,6 +3,7 @@
 // (src/settings/WidgetSync.tsx); days are counted here, so the countdown moves
 // at midnight without the app being opened.
 import SwiftUI
+import UIKit
 import WidgetKit
 
 let appGroup = "group.app.wishpool.ios"
@@ -13,8 +14,8 @@ let blue = Color(red: 0x0A / 255, green: 0x82 / 255, blue: 0xF9 / 255)
 let santaRed = Color(red: 0x8F / 255, green: 0x2F / 255, blue: 0x3F / 255)
 
 struct Person: Codable { let name: String; let color: String; let initial: String }
-struct Bday: Codable { let roomId: String; let name: String; let md: String; let color: String; let initial: String }
-struct Santa: Codable { let roomId: String; let room: String; let date: String; let drawn: Int; let target: Person? }
+struct Bday: Codable { let roomId: String; let name: String; let md: String; let color: String; let initial: String; let sticker: String? }
+struct Santa: Codable { let roomId: String; let room: String; let date: String; let drawn: Int; let target: Person?; let sticker: String? }
 struct Payload: Codable {
   let premium: Int
   let lang: String
@@ -27,10 +28,22 @@ struct Payload: Codable {
 /// The Premium card's glow (components/EdgeGlow.tsx): our block with a light rising
 /// from the bottom, deep, then lighter, then a soft lip; blue, or red for Santa.
 func smoothstep(_ a: Double, _ b: Double, _ t: Double) -> Double { let x = min(1, max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x) }
-func glowStops(red: Bool) -> [Gradient.Stop] {
-  let deep: [Double] = red ? [168, 28, 52] : [20, 76, 205]
-  let light: [Double] = red ? [255, 92, 110] : [102, 148, 255]
-  let edge: [Double] = red ? [255, 205, 210] : [200, 220, 255]
+func rgb(_ hex: String) -> [Double] {
+  var v: UInt64 = 0
+  Scanner(string: hex.replacingOccurrences(of: "#", with: "")).scanHexInt64(&v)
+  return [Double((v >> 16) & 255), Double((v >> 8) & 255), Double(v & 255)]
+}
+/// the three layers from one colour: a deeper shade, a lighter one, and a soft light lip
+func glowStops(red: Bool, tint: String? = nil) -> [Gradient.Stop] {
+  var deep: [Double] = red ? [168, 28, 52] : [20, 76, 205]
+  var light: [Double] = red ? [255, 92, 110] : [102, 148, 255]
+  var edge: [Double] = red ? [255, 205, 210] : [200, 220, 255]
+  if let tint, !red {
+    let c = rgb(tint)
+    deep = c.map { $0 * 0.82 }
+    light = c.map { $0 + (255 - $0) * 0.4 }
+    edge = c.map { $0 + (255 - $0) * 0.8 }
+  }
   return (0...40).map { i -> Gradient.Stop in
     let t = Double(i) / 40
     let d = 0.95 * smoothstep(0.3, 1, t), l = 0.4 * smoothstep(0.55, 1, t), e = 0.6 * smoothstep(0.9, 1, t)
@@ -45,10 +58,11 @@ let flakes: [(Double, Double, Double, Double)] = [(0.9, 0.1, 16, 0.35), (0.82, 0
 
 struct GlowBackground: View {
   let red: Bool
+  var tint: String? = nil
   var body: some View {
     ZStack {
       raised
-      LinearGradient(gradient: Gradient(stops: glowStops(red: red)), startPoint: .top, endPoint: .bottom)
+      LinearGradient(gradient: Gradient(stops: glowStops(red: red, tint: tint)), startPoint: .top, endPoint: .bottom)
       if red {
         GeometryReader { g in
           ForEach(0..<flakes.count, id: \.self) { i in
@@ -123,6 +137,18 @@ struct Provider: TimelineProvider {
   }
 }
 
+/// the room's sticker on the right of a medium widget ("stk:<name>" from the app, bundled as stk_<name>)
+struct RoomSticker: View {
+  let id: String?
+  var body: some View {
+    if let id, id.hasPrefix("stk:"), let ui = UIImage(named: "stk_" + id.dropFirst(4)) {
+      Image(uiImage: ui).resizable().scaledToFit().frame(width: 92, height: 92).rotationEffect(.degrees(-6))
+    } else if let id, !id.isEmpty, !id.hasPrefix("stk:") {
+      Text(id).font(.system(size: 62))
+    }
+  }
+}
+
 struct Avatar: View {
   let initial: String; let tint: Color; let size: CGFloat
   var body: some View {
@@ -165,6 +191,7 @@ struct BirthdayView: View {
       if let p = entry.p, p.premium == 1 {
         if let b = p.bday, let n = daysToMonthDay(b.md, from: startOfToday()) {
           let when = n == 0 ? (p.s["today"] ?? "Today") : n == 1 ? (p.s["tomorrow"] ?? "Tomorrow") : "\(n) \(dayWord(n, p.lang))"
+          HStack(spacing: 8) {
           VStack(alignment: .leading, spacing: 0) {
             Text(p.s["bdayTitle"] ?? "Birthday").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
             Spacer(minLength: 0)
@@ -176,6 +203,8 @@ struct BirthdayView: View {
             Text(when).font(.system(size: wide ? 22 : 18, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.6)
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+          if wide { RoomSticker(id: b.sticker) }
+          }
         } else {
           Empty(symbol: "gift", text: p.s["bdayEmpty"] ?? "No birthdays yet")
         }
@@ -184,7 +213,7 @@ struct BirthdayView: View {
       }
     }
     .widgetURL(URL(string: entry.p?.premium != 1 ? "wishpool://paywall" : entry.p?.bday.map { "wishpool://room/\($0.roomId)" } ?? "wishpool://room/new"))
-    .containerBackground(for: .widget) { GlowBackground(red: false) }
+    .containerBackground(for: .widget) { GlowBackground(red: false, tint: entry.p?.premium == 1 ? entry.p?.bday?.color : nil) }
   }
 }
 
@@ -209,6 +238,7 @@ struct SantaView: View {
         if let s = p.santa {
           let n = daysToDate(s.date, from: startOfToday())
           let swap: String? = n.flatMap { $0 < 0 ? nil : $0 == 0 ? (p.s["swapToday"] ?? "Gift swap today") : "\(p.s["swapIn"] ?? "Gift swap in") \($0) \(dayWord($0, p.lang))" }
+          HStack(spacing: 8) {
           VStack(alignment: .leading, spacing: 0) {
             Text(p.s["santaTitle"] ?? "Secret Santa").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
             Spacer(minLength: 0)
@@ -227,6 +257,8 @@ struct SantaView: View {
             if let swap { Text(swap).font(.system(size: 12, weight: .heavy)).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.7) }
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+          if wide { RoomSticker(id: s.sticker) }
+          }
         } else {
           Empty(symbol: "gift.fill", text: p.s["santaEmpty"] ?? "Make a Secret Santa room")
         }

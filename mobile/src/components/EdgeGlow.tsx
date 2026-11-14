@@ -22,13 +22,19 @@ const TONES = {
   red: { DEEP: [168, 28, 52], LIGHT: [255, 92, 110], EDGE: [255, 205, 210] },
 } as const;
 export type GlowTone = keyof typeof TONES;
+type Layers = { DEEP: readonly number[]; LIGHT: readonly number[]; EDGE: readonly number[] };
+// any colour (a room's tint): a deeper shade, a lighter one, and a soft light lip
+const fromTint = (hex: string): Layers => {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return { DEEP: c.map((v) => v * 0.82), LIGHT: c.map((v) => v + (255 - v) * 0.4), EDGE: c.map((v) => v + (255 - v) * 0.8) };
+};
 const smooth = (a: number, b: number, t: number) => {
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)));
   return x * x * (3 - 2 * x);
 };
 // the colour and opacity at t: the three layers blended, each eased in
-function at(t: number, tone: GlowTone): [string, number] {
-  const { DEEP, LIGHT, EDGE } = TONES[tone];
+function at(t: number, layers: Layers): [string, number] {
+  const { DEEP, LIGHT, EDGE } = layers;
   const deep = 0.95 * smooth(0.3, 1, t);
   const light = 0.4 * smooth(0.55, 1, t);
   // the light right at the edge: narrow and clear, like the first version
@@ -39,10 +45,12 @@ function at(t: number, tone: GlowTone): [string, number] {
   const hex = "#" + [0, 1, 2].map((i) => mix(i).toString(16).padStart(2, "0")).join("");
   return [hex, a];
 }
-const stopsFor = (tone: GlowTone) => Array.from({ length: 41 }, (_, i) => i / 40).map((t) => [t, ...at(t, tone)] as const);
-const STOPS = { blue: stopsFor("blue"), red: stopsFor("red") };
+const stopsFor = (layers: Layers) => Array.from({ length: 41 }, (_, i) => i / 40).map((t) => [t, ...at(t, layers)] as const);
+const STOPS = { blue: stopsFor(TONES.blue), red: stopsFor(TONES.red) };
 
-export function EdgeGlow({ side, tone = "blue" }: { side: GlowSide; tone?: GlowTone }) {
+export function EdgeGlow({ side, tone = "blue", tint }: { side: GlowSide; tone?: GlowTone; /** a room colour instead of the tone */ tint?: string }) {
+  const stops = tint ? stopsFor(fromTint(tint)) : STOPS[tone];
+  const key = tint ? tint.slice(1) : tone;
   const [size, setSize] = useState({ w: 0, h: 0 });
   const d = DIR[side];
   return (
@@ -50,11 +58,11 @@ export function EdgeGlow({ side, tone = "blue" }: { side: GlowSide; tone?: GlowT
       {size.w ? (
         <Svg width={size.w} height={size.h}>
           <Defs>
-            <LinearGradient id={`edge-${side}-${tone}`} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2}>
-              {STOPS[tone].map(([t, c, a]) => <Stop key={t} offset={t} stopColor={c} stopOpacity={a} />)}
+            <LinearGradient id={`edge-${side}-${key}`} x1={d.x1} y1={d.y1} x2={d.x2} y2={d.y2}>
+              {stops.map(([t, c, a]) => <Stop key={t} offset={t} stopColor={c} stopOpacity={a} />)}
             </LinearGradient>
           </Defs>
-          <Rect width={size.w} height={size.h} fill={`url(#edge-${side}-${tone})`} />
+          <Rect width={size.w} height={size.h} fill={`url(#edge-${side}-${key})`} />
         </Svg>
       ) : null}
     </View>

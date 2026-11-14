@@ -12,6 +12,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { EdgeGlow } from "../components/EdgeGlow";
+import { Sticker } from "../components/Sticker";
 import { GlassCircle, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { C } from "../theme/tokens";
@@ -20,6 +21,7 @@ import { useAccent } from "../theme/accent";
 const SMALL = 132; // a small widget, the phone mockup's scale
 const MEDIUM = 288;
 const H = 132;
+const BDAY_TINT = "#FF4D8D"; // the demo birthday room's colour
 // snowflakes on the Santa widget, as fractions of its box: x, y, size, opacity (the same in Widgets.swift)
 export const FLAKES: [number, number, number, number][] = [
   [0.9, 0.1, 16, 0.35], [0.82, 0.34, 10, 0.22], [0.95, 0.5, 12, 0.26], [0.86, 0.72, 8, 0.18], [0.97, 0.28, 8, 0.18], [0.76, 0.12, 9, 0.2],
@@ -50,7 +52,8 @@ function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
   const name = t(santa ? "wgDemoSantaName" : "wgDemoBdayName");
   return (
     <View className="flex-1" style={{ backgroundColor: C.raised }}>
-      <EdgeGlow side="bottom" tone={santa ? "red" : "blue"} />
+      {/* the birthday glows in its room's colour, Santa in red */}
+      <EdgeGlow side="bottom" tone="red" tint={santa ? undefined : BDAY_TINT} />
       {santa
         ? FLAKES.map(([x, y, size, o], i) => (
             <View key={i} pointerEvents="none" style={{ position: "absolute", left: `${x * 100}%`, top: `${y * 100}%`, opacity: o, transform: [{ translateX: -size / 2 }] }}>
@@ -58,12 +61,13 @@ function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
             </View>
           ))
         : null}
-      <View className="flex-1 justify-between p-3.5">
+      <View className="flex-1 flex-row items-center p-3.5">
+      <View className="flex-1 self-stretch justify-between">
         <View className="flex-row items-center gap-1.5">
           <Txt className="font-m700 text-[12px] text-white">{t(santa ? "wgSanta" : "wgBday")}</Txt>
         </View>
         <View className={`flex-row items-center ${santa && !wide ? "gap-2" : "gap-2.5"}`}>
-          <Avatar letter={name[0]} tint={santa ? "#0A82F9" : "#FF4D8D"} size={wide ? 46 : santa ? 26 : 32} />
+          <Avatar letter={name[0]} tint={santa ? "#0A82F9" : "#AF52DE"} size={wide ? 46 : santa ? 26 : 32} />
           <View className="flex-1">
             {santa ? <Txt numberOfLines={1} className="font-m600 text-[11px]" style={{ color: "rgba(255,255,255,0.8)" }}>{t("wgYouGive")}</Txt> : null}
             <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: wide ? 20 : 15 }}>{name}</Txt>
@@ -72,6 +76,9 @@ function Face({ kind, wide }: { kind: "bday" | "santa"; wide: boolean }) {
         <Txt numberOfLines={1} className="font-m800 text-white" style={{ fontSize: santa ? 12 : wide ? 22 : 18 }}>
           {santa ? t(wide ? "wgDemoSwap" : "wgDemoSwapShort") : t("wgDemoIn")}
         </Txt>
+      </View>
+      {/* the room's sticker on the right of a medium widget */}
+      {wide ? <Sticker emoji={santa ? "stk:santa" : "stk:cake"} size={88} rotate={-6} /> : null}
       </View>
     </View>
   );
