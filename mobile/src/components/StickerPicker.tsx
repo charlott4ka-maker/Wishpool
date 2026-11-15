@@ -78,7 +78,7 @@ export function StickerPicker({ sections, value, onChange, size = 28, onLocked, 
               const e = stickerId(n as StickerName);
               const on = value === e;
               return (
-                <View key={n} style={{ width: `${100 / 7}%`, padding: 4 }}>
+                <View key={n} style={{ width: "14.28%", padding: 4 }} /* a hair under 1/7: rounding up wrapped the 7th onto a new line on an XS Max */>
                   <Press
                     scaleTo={0.85}
                     onPress={() => {
