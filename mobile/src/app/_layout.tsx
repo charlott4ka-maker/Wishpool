@@ -18,6 +18,7 @@ import { ShareIntentHandler } from "../components/ShareIntentHandler";
 import { LangProvider } from "../i18n";
 import { ReminderSync } from "../settings/ReminderSync";
 import { ToastHost } from "../components/Toast";
+import { WebAlertHost } from "../components/WebAlert";
 import { UploadBarHost } from "../components/UploadBar";
 import { IconSplash, releaseSplash } from "../components/IconSplash";
 import { joinSheet, takePendingJoin } from "../lib/pendingJoin";
@@ -159,6 +160,7 @@ export default function RootLayout() {
             <Gate />
             <UploadBarHost />
             <ToastHost />
+            <WebAlertHost />
             <IconSplash />
           </AuthProvider>
         </LangProvider>
