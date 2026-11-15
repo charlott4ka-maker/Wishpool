@@ -62,7 +62,8 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
     if (cur !== "recent") setRecent(next);
   };
 
-  const cell = w ? (w - GAP * (COLS - 1)) / COLS : 0;
+  // rounded down: a fraction over the row width wraps the 7th sticker onto a new line (seen on an XS Max)
+  const cell = w ? Math.floor((w - GAP * (COLS - 1)) / COLS) : 0;
   const boxH = cell ? cell * 2.5 + GAP * 2 : 0;
   const rows = Math.ceil(names.length / COLS);
   const scrolls = rows > 2;

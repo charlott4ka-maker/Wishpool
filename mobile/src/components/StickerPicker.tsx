@@ -53,7 +53,7 @@ export function StickerPicker({ value, onChange, size = 28, pack: only, onLocked
                 const e = stickerId(n as StickerName);
                 const on = value === e;
                 return (
-                  <View key={n} style={{ width: `${100 / 7}%`, padding: 4 }}>
+                  <View key={n} style={{ width: "14.28%", padding: 4 }}>
                     <Press
                       scaleTo={0.85}
                       onPress={() => {
