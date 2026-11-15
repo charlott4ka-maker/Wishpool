@@ -18,6 +18,7 @@ import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { C } from "../../theme/tokens";
 import { useAccent } from "../../theme/accent";
+import { SheetBody } from "../../components/SheetBody";
 
 export default function AddFriendsToRoom() {
   useAccent(); // re-render in place when the app colour changes
@@ -55,7 +56,7 @@ export default function AddFriendsToRoom() {
   };
 
   return (
-    <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
+    <SheetBody>
       <SheetHeader title={t("addFriendsToRoom")} />
       {left && left.length === 0 ? (
         <View className="items-center pb-4">
@@ -74,6 +75,6 @@ export default function AddFriendsToRoom() {
         </>
       )}
       <ToastHost inSheet />
-    </View>
+    </SheetBody>
   );
 }

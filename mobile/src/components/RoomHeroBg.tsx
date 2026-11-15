@@ -5,7 +5,7 @@
 
 import { Image, type ImageSource } from "expo-image";
 import { useState } from "react";
-import { LayoutChangeEvent, View } from "react-native";
+import { LayoutChangeEvent, View, Platform } from "react-native";
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from "react-native-svg";
 
 import { mixHex } from "../theme/tokens";
@@ -53,6 +53,9 @@ export function RoomHeroBg({ tint, look }: { tint: string; /** the folder's mate
   return <MeshBg tint={tint} />;
 }
 
+// react-native-svg on the web ignores rx/ry on a radial gradient (r falls back to 50%): a hard ring in Telegram
+const radius = (rx: string, ry: string, r: string) => (Platform.OS === "web" ? { r } : { rx, ry });
+
 function MeshBg({ tint }: { tint: string }) {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const cool = hueOf(tint) >= 180;
@@ -64,20 +67,20 @@ function MeshBg({ tint }: { tint: string }) {
       {size.w ? (
         <Svg width={size.w} height={size.h}>
           <Defs>
-            <RadialGradient id="base" cx="50%" cy="30%" rx="120%" ry="90%" fx="50%" fy="30%">
+            <RadialGradient id="base" cx="50%" cy="30%" {...radius("120%", "90%", "120%")} fx="50%" fy="30%">
               <Stop offset="0" stopColor={tint} stopOpacity={0.9} />
               <Stop offset="0.55" stopColor={tint} stopOpacity={0.6} />
               <Stop offset="1" stopColor={tint} stopOpacity={0.35} />
             </RadialGradient>
-            <RadialGradient id="tl" cx="0%" cy="10%" rx="70%" ry="60%" fx="0%" fy="10%">
+            <RadialGradient id="tl" cx="0%" cy="10%" {...radius("70%", "60%", "70%")} fx="0%" fy="10%">
               <Stop offset="0" stopColor={a} stopOpacity={0.75} />
               <Stop offset="1" stopColor={a} stopOpacity={0} />
             </RadialGradient>
-            <RadialGradient id="br" cx="100%" cy="95%" rx="75%" ry="65%" fx="100%" fy="95%">
+            <RadialGradient id="br" cx="100%" cy="95%" {...radius("75%", "65%", "75%")} fx="100%" fy="95%">
               <Stop offset="0" stopColor={b} stopOpacity={0.7} />
               <Stop offset="1" stopColor={b} stopOpacity={0} />
             </RadialGradient>
-            <RadialGradient id="light" cx="50%" cy="30%" rx="42%" ry="34%" fx="50%" fy="30%">
+            <RadialGradient id="light" cx="50%" cy="30%" {...radius("42%", "34%", "42%")} fx="50%" fy="30%">
               <Stop offset="0" stopColor="#ffffff" stopOpacity={0.2} />
               <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
             </RadialGradient>

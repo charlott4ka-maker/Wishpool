@@ -12,6 +12,7 @@ import { useT } from "../../i18n";
 import { haptic } from "../../lib/haptics";
 import { useWishpool } from "../../store/WishpoolContext";
 import { useAccent } from "../../theme/accent";
+import { SheetBody } from "../../components/SheetBody";
 
 export default function WishScreen() {
   useAccent(); // re-render in place when the app colour changes
@@ -22,7 +23,7 @@ export default function WishScreen() {
   const { wishes, rooms, toggleWishRoom, setGifted, deleteWish, addWish } = useWishpool();
   const w = wishes.find((x) => x.id === id);
   return (
-    <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
+    <SheetBody>
       {/* like the Mini App: an untitled header row with the close button, photos below */}
       <SheetHeader />
       {w ? (
@@ -45,6 +46,6 @@ export default function WishScreen() {
           }}
         />
       ) : null}
-    </View>
+    </SheetBody>
   );
 }

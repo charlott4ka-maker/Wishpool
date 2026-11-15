@@ -17,6 +17,7 @@ import { api } from "../../services/api";
 import { useWishpool } from "../../store/WishpoolContext";
 import { C } from "../../theme/tokens";
 import { useAccent } from "../../theme/accent";
+import { SheetBody } from "../../components/SheetBody";
 
 type State = "loading" | "none" | "sent" | "friends";
 
@@ -64,7 +65,7 @@ export default function RoomMember() {
   );
 
   return (
-    <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
+    <SheetBody>
       <SheetHeader />
       <View className="items-center pb-6" style={{ marginTop: -40 }}>
         <Avatar m={m} size={88} />
@@ -81,6 +82,6 @@ export default function RoomMember() {
         <Pill full loading={busy} icon={<UserPlus size={18} color="#fff" />} onPress={add}>{t("addFriend")}</Pill>
       )}
       <ToastHost inSheet />
-    </View>
+    </SheetBody>
   );
 }

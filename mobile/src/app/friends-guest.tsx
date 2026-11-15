@@ -10,6 +10,7 @@ import { Sticker } from "../components/Sticker";
 import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { useAccent } from "../theme/accent";
+import { SheetBody } from "../components/SheetBody";
 
 export default function FriendsGuest() {
   useAccent(); // re-render in place when the app colour changes
@@ -17,13 +18,13 @@ export default function FriendsGuest() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   return (
-    <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
+    <SheetBody>
       <SheetHeader title={t("friendsTitle")} />
       <View className="items-center pb-6">
         <Sticker emoji="stk:envelope" size={64} />
         <Txt className="mt-4 text-center text-[14.5px] leading-5 text-t2">{t("friendsSignIn")}</Txt>
       </View>
       <Pill full onPress={() => router.replace("/sign-in-options")}>{t("signInLogin")}</Pill>
-    </View>
+    </SheetBody>
   );
 }

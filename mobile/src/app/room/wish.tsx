@@ -21,6 +21,7 @@ import { askReport } from "../../lib/report";
 import { api } from "../../services/api";
 import { C } from "../../theme/tokens";
 import { useAccent } from "../../theme/accent";
+import { SheetBody } from "../../components/SheetBody";
 
 export default function FriendWish() {
   useAccent(); // re-render in place when the app colour changes
@@ -52,7 +53,7 @@ export default function FriendWish() {
     ]);
 
   return (
-    <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
+    <SheetBody>
       <SheetHeader />
       <WishInfo w={w} />
       <View className="mt-6">
@@ -80,6 +81,6 @@ export default function FriendWish() {
         <Txt className="font-m600 text-[13.5px] text-t3">{t("reportWish")}</Txt>
       </Pressable>
       <ToastHost inSheet />
-    </View>
+    </SheetBody>
   );
 }
