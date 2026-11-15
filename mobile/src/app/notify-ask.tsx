@@ -12,6 +12,7 @@ import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
 import { setPref } from "../settings/prefs";
 import { useAccent } from "../theme/accent";
+import { SheetBody } from "../components/SheetBody";
 
 export default function NotifyAsk() {
   useAccent(); // re-render in place when the app colour changes
@@ -29,7 +30,7 @@ export default function NotifyAsk() {
     router.back();
   };
   return (
-    <View className="bg-card px-4 pt-6" style={{ paddingBottom: insets.bottom + 16 }}>
+    <SheetBody>
       <SheetHeader title={t("notifyAskTitle")} />
       <View className="items-center pb-6">
         <Sticker emoji="stk:cake" size={64} />
@@ -39,6 +40,6 @@ export default function NotifyAsk() {
         <Pill full onPress={yes}>{t("notifyAskYes")}</Pill>
         <Pill full kind="ghost" onPress={() => router.back()}>{t("notifyAskLater")}</Pill>
       </View>
-    </View>
+    </SheetBody>
   );
 }
