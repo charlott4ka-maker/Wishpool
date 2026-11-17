@@ -4,6 +4,7 @@
 // with an e-mail, and waits in the app with a red count on the Support row.
 import { mailSupport } from "./moderation.js";
 import { uid } from "./util.js";
+import { notifyUser } from "./bot.js";
 
 const REPLY_MAIL = {
   uk: { subject: "Відповідь підтримки Wishpool", foot: "Відповісти можна в застосунку: Налаштування › Підтримка." },
@@ -74,6 +75,7 @@ export function supportRoutes(api, store, isAdmin) {
       await store.setSupportStatus(id, "done");
       const [emails, lang] = await Promise.all([store.userEmails(id), store.userLang(id)]);
       if (emails[0]) await mailUser(emails[0], lang, text);
+      await notifyUser(store, id, "support", [], { route: "/support" });
       res.json({ message: m, mailed: !!emails[0] });
     } catch (e) { next(e); }
   });

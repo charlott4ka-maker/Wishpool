@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api, AuthUser, setAuthToken } from "../services/api";
 import { IN_TG, tgUser } from "../lib/telegram";
 import { secureStorage } from "./secureStorage";
+import { dropPushTokenOnSignOut } from "../settings/PushSync";
 
 const TOKEN_KEY = "wp_token";
 const USER_KEY = "wp_user";
@@ -116,7 +117,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    if (status === "signedIn") await api.signOut().catch(() => {}); // the session dies on the server too
+    if (status === "signedIn") {
+      await dropPushTokenOnSignOut(); // no more pushes for this account on this phone
+      await api.signOut().catch(() => {}); // the session dies on the server too
+    }
     await Promise.all([TOKEN_KEY, USER_KEY, GUEST_KEY].map((k) => secureStorage.remove(k)));
     setAuthToken(null);
     setUser(null);

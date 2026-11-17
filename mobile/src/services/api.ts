@@ -152,6 +152,9 @@ export const api = {
   sendSupport: (text: string, meta: string) => req<{ message: SupportMsg }>("POST", "/support", { text, meta }),
   // a few picks for the admin page's «Популярное» (app colour, icon, paywall)
   ev: (names: string[]) => req("POST", "/ev", { names }),
+  /** this phone's push address (server/push.js): set while notifications are on */
+  pushToken: (token: string, lang: string) => req("POST", "/push-token", { token, lang }),
+  dropPushToken: (token: string) => req("DELETE", "/push-token", { token }),
   unblock: (userId: string) => req("DELETE", "/blocks/" + encodeURIComponent(userId)),
   /** Name / photo from the profile editor (photo: a JPEG data URL, an unchanged https URL, or null). */
   updateMe: (b: { name?: string; photo?: string | null }) => req<{ user: AuthUser }>("PATCH", "/me", b),

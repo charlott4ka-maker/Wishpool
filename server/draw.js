@@ -1,3 +1,4 @@
+import { notifyUser } from "./bot.js";
 // The gift draw (Secret Santa) in a friends room. Everyone stands in one ring
 // and gives to the next person, so nobody gets themselves and everyone gives
 // and gets exactly once. Rules:
@@ -118,6 +119,8 @@ export function drawRoutes(api, store, { pubUser, withReservations }) {
     if (!map) return res.status(422).json({ error: "impossible" });
     const budget = typeof (req.body && req.body.budget) === "string" ? req.body.budget.trim().slice(0, 40) : "";
     await store.setDraw(r.id, map, budget || null, exclusions);
+    // everyone but the owner (who just ran it): "see who you're giving to"
+    await Promise.all(ids.filter((id) => id !== req.user.id).map((id) => notifyUser(store, id, "draw", [r.name], { roomId: r.id })));
     res.json({ ok: true });
   });
 

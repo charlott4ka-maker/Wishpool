@@ -1,6 +1,7 @@
 import crypto from "crypto";
 
 import { pubUser } from "./util.js";
+import { notifyUser } from "./bot.js";
 
 // Friends, without public IDs or search: you add someone you share a room with
 // (they get a request to accept), or send your personal link (whoever opens it
@@ -54,6 +55,7 @@ export function friendRoutes(api, store) {
       if (!(await shareRoom(me, id))) return res.status(403).json({ error: "no_shared_room" });
       if ((await store.blockedIds(id)).includes(me)) return res.json({ status: "requested" }); // quietly nothing
       await store.addFriendRequest(me, id);
+      await notifyUser(store, id, "friendReq", [req.user.name], { route: "/friends" });
       res.json({ status: "requested" });
     } catch (e) { next(e); }
   });
@@ -61,6 +63,7 @@ export function friendRoutes(api, store) {
     const me = req.user.id, id = req.params.id;
     if (!(await store.hasFriendRequest(id, me))) return res.status(404).json({ error: "no_request" });
     await store.addFriends(me, id);
+    await notifyUser(store, id, "friendOk", [req.user.name], { route: "/friends" });
     res.json({ ok: true });
   });
   api.post("/friends/:id/decline", async (req, res) => {
@@ -132,6 +135,10 @@ export function friendRoutes(api, store) {
           invited.push(id);
         }
       }
+      await Promise.all([
+        ...added.map((id) => notifyUser(store, id, "joined", [req.user.name, r.name], { roomId: r.id })),
+        ...invited.map((id) => notifyUser(store, id, "invite", [req.user.name, r.name], { route: "/friends" })),
+      ]);
       res.json({ added, invited });
     } catch (e) { next(e); }
   });

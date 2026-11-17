@@ -53,6 +53,9 @@ export function createPgStore(q) {
       await q(`CREATE TABLE IF NOT EXISTS friends(user_id text, friend_id text, created_at bigint, primary key(user_id, friend_id))`);
       await q(`CREATE TABLE IF NOT EXISTS friend_requests(from_id text, to_id text, created_at bigint, primary key(from_id, to_id))`);
       await q(`CREATE TABLE IF NOT EXISTS friend_codes(code text primary key, user_id text unique)`);
+      // push addresses of the iPhone app (server/push.js), one per phone
+      await q(`CREATE TABLE IF NOT EXISTS push_tokens(token text primary key, user_id text, lang text, at bigint)`);
+      await q(`CREATE INDEX IF NOT EXISTS push_tokens_user ON push_tokens(user_id)`);
       await q(`CREATE TABLE IF NOT EXISTS room_invites(room_id text, user_id text, inviter_id text, created_at bigint, primary key(room_id, user_id))`);
       await q(`ALTER TABLE users ADD COLUMN IF NOT EXISTS room_add text`);
       // Premium: gifts from the admin page, and RevenueCat's webhook events (server/premium.js)
@@ -196,6 +199,7 @@ export function createPgStore(q) {
       await q(`DELETE FROM members WHERE user_id=$1`, [id]);
       await q(`DELETE FROM invites WHERE inviter_id=$1 OR invitee_id=$1`, [id]);
       await q(`DELETE FROM events WHERE user_id=$1`, [id]);
+      await q(`DELETE FROM push_tokens WHERE user_id=$1`, [id]);
       await q(`DELETE FROM sessions WHERE user_id=$1`, [id]);
       await q(`DELETE FROM identities WHERE user_id=$1`, [id]);
       const { rows: u } = await q(`SELECT photo FROM users WHERE id=$1`, [id]);
@@ -263,6 +267,9 @@ export function createPgStore(q) {
     // birthdays falling on MM-DD (stored as YYYY-MM-DD)
     async usersWithBirthday(mmdd) { const { rows } = await q(`SELECT id,name FROM users WHERE substr(birthday,6,5)=$1`, [mmdd]); return rows; },
     // true at most once per `gapMs` for the same key (bot notifications must not spam)
+    async setPushToken(userId, token, lang) { await q(`INSERT INTO push_tokens(token,user_id,lang,at) VALUES($1,$2,$3,$4) ON CONFLICT(token) DO UPDATE SET user_id=EXCLUDED.user_id, lang=COALESCE(EXCLUDED.lang, push_tokens.lang), at=EXCLUDED.at`, [token, userId, lang, Date.now()]); },
+    async dropPushToken(token, userId) { await q(userId ? `DELETE FROM push_tokens WHERE token=$1 AND user_id=$2` : `DELETE FROM push_tokens WHERE token=$1`, userId ? [token, userId] : [token]); },
+    async pushTokens(userId) { const { rows } = await q(`SELECT t.token, COALESCE(t.lang, u.lang) lang FROM push_tokens t LEFT JOIN users u ON u.id=t.user_id WHERE t.user_id=$1`, [userId]); return rows; },
     async noticeOnce(key, gapMs) {
       const now = Date.now();
       const { rows } = await q(`INSERT INTO notices(key,at) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET at=EXCLUDED.at WHERE notices.at < $3 RETURNING key`, [key, now, now - gapMs]);

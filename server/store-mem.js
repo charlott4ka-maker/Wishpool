@@ -2,7 +2,7 @@
 import { colorFor } from "./util.js";
 
 export function createMemStore() {
-  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [], friends: [], friendRequests: [], friendCodes: {}, roomInvites: [], roomAdd: {}, grants: {}, subEvents: [], support: [], threads: {} };
+  const D = { users: {}, rooms: {}, members: [], wishes: {}, wishRooms: [], reservations: {}, draws: {}, invites: [], chips: [], reminders: new Set(), notices: {}, events: [], identities: {}, sessions: {}, emailCodes: {}, config: {}, blocks: [], reports: [], friends: [], friendRequests: [], friendCodes: {}, roomInvites: [], roomAdd: {}, grants: {}, subEvents: [], support: [], threads: {}, pushTokens: {} };
   return {
     async init() {},
     async premiumGrant(id) { return D.grants[id] ? { ...D.grants[id] } : null; },
@@ -99,7 +99,11 @@ export function createMemStore() {
     async bumpEmailCode(email) { if (D.emailCodes[email]) D.emailCodes[email].attempts++; },
     async dropEmailCode(email) { delete D.emailCodes[email]; },
     async updateProfile(id, { name, photo }) { const u = D.users[id]; if (!u) return; if (name != null) u.name = name; if (photo !== undefined) u.photo = photo; },
+    async setPushToken(userId, token, lang) { const old = D.pushTokens[token]; D.pushTokens[token] = { userId, lang: lang || (old && old.lang) || null }; },
+    async dropPushToken(token, userId) { if (D.pushTokens[token] && (!userId || D.pushTokens[token].userId === userId)) delete D.pushTokens[token]; },
+    async pushTokens(userId) { return Object.entries(D.pushTokens).filter(([, v]) => v.userId === userId).map(([token, v]) => ({ token, lang: v.lang || (D.users[userId] && D.users[userId].lang) || null })); },
     async deleteUser(id) {
+      for (const [t, v] of Object.entries(D.pushTokens)) if (v.userId === id) delete D.pushTokens[t];
       for (const r of Object.values(D.rooms).filter(r => r.ownerId === id)) {
         const next = D.members.find(m => m.roomId === r.id && m.userId !== id);
         if (next) r.ownerId = next.userId; else await this.deleteRoom(r.id);

@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { pushTo } from "./push.js";
 
 // Telegram bot side: answers /start with a short hello and a button that opens
 // the Mini App. Updates arrive on POST /api/tg-webhook; the webhook registers
@@ -235,6 +236,12 @@ const NOTE = {
     picked: (r) => `Хтось із кімнати «${r}» уже обрав тобі подарунок 🤫\nЩо саме і хто, не скажемо.`,
     bdayWeek: (n) => `${n} святкує день народження через тиждень 🎂\nЗазирни у вішлист і обери подарунок.`,
     bdayDay: (n) => `${n} святкує день народження вже завтра 🎉\nПодарунок уже є?`,
+    draw: (r) => `Жеребкування в кімнаті «${r}» відбулося 🎁\nДізнайся, кому даруєш.`,
+    invite: (n, r) => `${n} кличе тебе в кімнату «${r}»`,
+    joined: (n, r) => `${n}: тепер ти в кімнаті «${r}»`,
+    friendReq: (n) => `${n} хоче додати тебе в друзі`,
+    friendOk: (n) => `${n} тепер у тебе в друзях`,
+    support: () => `Підтримка Wishpool відповіла на твоє повідомлення`,
     open: "Відкрити Wishpool",
   },
   ru: {
@@ -242,6 +249,12 @@ const NOTE = {
     picked: (r) => `Кто-то из комнаты «${r}» уже выбрал тебе подарок 🤫\nЧто именно и кто, не скажем.`,
     bdayWeek: (n) => `${n} празднует день рождения через неделю 🎂\nЗагляни в вишлист и выбери подарок.`,
     bdayDay: (n) => `${n} празднует день рождения уже завтра 🎉\nПодарок уже есть?`,
+    draw: (r) => `Жеребьёвка в комнате «${r}» прошла 🎁\nУзнай, кому даришь.`,
+    invite: (n, r) => `${n} зовёт тебя в комнату «${r}»`,
+    joined: (n, r) => `${n}: теперь ты в комнате «${r}»`,
+    friendReq: (n) => `${n} хочет добавить тебя в друзья`,
+    friendOk: (n) => `${n} теперь у тебя в друзьях`,
+    support: () => `Поддержка Wishpool ответила на твоё сообщение`,
     open: "Открыть Wishpool",
   },
   en: {
@@ -249,19 +262,38 @@ const NOTE = {
     picked: (r) => `Someone in «${r}» has already picked a gift for you 🤫\nWhat and who stays a secret.`,
     bdayWeek: (n) => `${n}'s birthday is in a week 🎂\nPeek at the wishlist and pick a gift.`,
     bdayDay: (n) => `${n}'s birthday is tomorrow 🎉\nGot a gift yet?`,
+    draw: (r) => `The draw in «${r}» is done 🎁\nSee who you're giving to.`,
+    invite: (n, r) => `${n} invites you to «${r}»`,
+    joined: (n, r) => `${n}: you're in «${r}» now`,
+    friendReq: (n) => `${n} wants to add you as a friend`,
+    friendOk: (n) => `${n} is your friend now`,
+    support: () => `Wishpool support answered your message`,
     open: "Open Wishpool",
   },
 };
-async function sendNote(token, store, userId, make, startapp) {
-  if (!token) return false;
-  try {
-    const L = NOTE[pickLang(await store.userLang(userId))];
-    const out = await tg(token, "sendMessage", {
-      chat_id: userId, text: make(L),
-      reply_markup: { inline_keyboard: [[{ text: L.open, url: startapp ? `${APP_LINK}?startapp=${startapp}` : APP_LINK }]] },
-    });
-    return !!(out && out.ok);
-  } catch (e) { return false; } // never started the bot, or blocked it
+// One note to a person: the Telegram bot (people from Telegram) and a push to
+// the iPhone app (people with push on); whoever has neither simply gets nothing.
+// `data` tells the app what to open: { roomId } or { route }.
+async function sendNote(token, store, userId, make, startapp, data) {
+  const push = pushTo(store, userId, (lang) => make(NOTE[pickLang(lang)]).replace(/\n/g, " "), data || (startapp ? { roomId: startapp } : {}));
+  const bot = (async () => {
+    if (!token) return false;
+    try {
+      const L = NOTE[pickLang(await store.userLang(userId))];
+      const out = await tg(token, "sendMessage", {
+        chat_id: userId, text: make(L),
+        reply_markup: { inline_keyboard: [[{ text: L.open, url: startapp ? `${APP_LINK}?startapp=${startapp}` : APP_LINK }]] },
+      });
+      return !!(out && out.ok);
+    } catch (e) { return false; } // never started the bot, or blocked it
+  })();
+  const [p, b] = await Promise.all([push, bot]);
+  return p > 0 || b;
+}
+
+/** A note about something that happened to this person (the draw, an invitation, a friend, support). */
+export function notifyUser(store, userId, kind, args = [], open = {}) {
+  return within(sendNote(process.env.BOT_TOKEN || "", store, userId, (L) => L[kind](...args), open.roomId || "", open));
 }
 // Bounded wait so a slow Telegram never holds up the API response.
 const within = (p, ms = 2500) => Promise.race([p.catch(() => {}), new Promise(r => setTimeout(r, ms))]);

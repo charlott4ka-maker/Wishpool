@@ -4,6 +4,7 @@ import cors from "cors";
 import { getStore } from "./store.js";
 import { authMiddleware } from "./auth.js";
 import { uid, cleanImages, pubUser, cleanEvent, cleanNote, cleanStickerPos, cleanSkin, cleanCharms, cleanTag } from "./util.js";
+import { pushRoutes } from "./push.js";
 import { botRoute, ensureWebhook, ensureBotMenu, remindRoute, telegramBirthdate, notifyWishShared, notifyGiftPicked } from "./bot.js";
 import { previewLink, probe } from "./preview.js";
 import { storageOn, storeImages, storeImage, dropImages } from "./storage.js";
@@ -290,6 +291,8 @@ export async function createApp() {
   supportRoutes(api, store, (req) => isAdmin(req.user.id));
   insightsRoutes(api, store, (req) => isAdmin(req.user.id));
   friendRoutes(api, store);
+  // push addresses of the iPhone app (server/push.js)
+  pushRoutes(api, store);
   reviewDemoRoutes(api, store);
   moderationRoutes(api, store, {
     isAdmin: (req) => isAdmin(req.user.id),

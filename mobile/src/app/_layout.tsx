@@ -32,6 +32,7 @@ import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
 import { accentVars, loadAccent, useAccent } from "../theme/accent";
 import { WIDGETS_ENABLED } from "../subscription/featureFlags";
+import { PushSync } from "../settings/PushSync";
 
 // The share extension's native module isn't in Expo Go.
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -102,6 +103,7 @@ function Gate() {
         <ShareIntentHandler ready={inside} />
         <AccentGuard />
         {inside ? <ReminderSync /> : null}
+        {inside ? <PushSync /> : null}
         {inside && WIDGETS_ENABLED ? <WidgetSync /> : null}
         {/* the accent: CSS variables for the classes (screens refresh their raw colours themselves) */}
         <View style={[{ flex: 1 }, vars(accentVars(acc))]}>
