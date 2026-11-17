@@ -29,7 +29,17 @@ import { folderSkin } from "../lib/folderSkins";
 // stacked inner strokes (clipped to the shape, so only the inside half shows):
 // a shade that fades in from the edge, like the bevel on the made folders
 // she preferred the earlier, clearer edge (with the back sheet blurred)
-const BEVEL: [number, number][] = [[22, 0.05], [14, 0.07], [8, 0.09], [4, 0.12]];
+// The photo folder's edge shade: darkest at the edge, fading inward. Four wide strokes
+// showed as steps (waves); now 22 thin ones, each opacity worked out so the summed shade
+// falls off smoothly (eased) over the same 11pt as before, to the same 0.29 at the edge.
+const BEVEL: [number, number][] = (() => {
+  const N = 22; // strokes 1..22pt wide: band i covers 0.5pt steps from the edge
+  const at = (i: number) => (i > N ? 0 : 0.29 * Math.pow(1 - (i - 1) / N, 1.5)); // summed shade of band i
+  return Array.from({ length: N }, (_, k) => {
+    const i = k + 1;
+    return [i, 1 - (1 - at(i)) / (1 - at(i + 1))] as [number, number];
+  }).reverse();
+})();
 
 export function folderPaths(w: number, h: number) {
   const R0 = Math.round;
