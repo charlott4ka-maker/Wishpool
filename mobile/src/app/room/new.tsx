@@ -15,7 +15,7 @@ import Svg, { Circle, Rect } from "react-native-svg";
 import { Check, Crown, ImagePlus, Lock, Paintbrush, Plus, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Modal, PanResponder, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
-import Animated, { Easing, runOnJS, SlideInDown, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, SlideInDown, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateRow } from "../../components/DateRow";
@@ -141,9 +141,10 @@ export default function CreateRoomScreen() {
         const h = lookFrom.current - g.dy;
         const up = g.vy < -0.5 || (g.vy <= 0.5 && h > (lookLow + lookHigh) / 2);
         if (!up && (g.vy > 0.8 || h < lookLow * 0.8)) {
-          lookH.value = withTiming(0, lookEase, (done) => {
-            if (done) runOnJS(setLookOpen)(false);
-          });
+          // slide it away, then close the Modal from here: the animation's own callback
+          // didn't always fire, which left an invisible sheet open over the form
+          lookH.value = withTiming(0, lookEase);
+          setTimeout(() => setLookOpen(false), 270);
           return;
         }
         if ((up ? lookHigh : lookLow) !== lookFrom.current) haptic("light");
@@ -267,7 +268,7 @@ export default function CreateRoomScreen() {
       <Txt className="mt-2 text-center text-[12.5px] text-t3">{t("stickerDragHint")}</Txt>
       {/* sticker, colour and premium folders live in a sheet: the form stays about the room */}
       <View className="mb-6 mt-3 items-center">
-        <Pill size="sm" kind="ghost" px={16} icon={<Paintbrush size={16} color={C.t1} strokeWidth={1.5} absoluteStrokeWidth />} onPress={() => { haptic("light"); setLookOpen(true); }}>
+        <Pill size="sm" kind="ghost" px={16} icon={<Paintbrush size={16} color={C.t1} strokeWidth={1.5} absoluteStrokeWidth />} onPress={() => { haptic("light"); lookH.value = lookLow; setLookOpen(true); }}>
           {t("changeLook")}
         </Pill>
       </View>
