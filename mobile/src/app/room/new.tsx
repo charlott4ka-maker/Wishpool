@@ -125,7 +125,12 @@ export default function CreateRoomScreen() {
   const lookStyle = useAnimatedStyle(() => ({ height: lookH.value }));
   const lookPan = useRef(
     PanResponder.create({
+      // the top of the sheet (grabber, title, tabs, slot tiles): a touch on an empty spot is
+      // ours at once; a vertical drag that starts on a tab or tile is taken from it
+      onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dy) > 8 && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
+      onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
         lookFrom.current = lookH.value;
       },
@@ -349,7 +354,7 @@ export default function CreateRoomScreen() {
             <SheetHeader title={t("roomLook")} onClose={() => setLookOpen(false)} />
           </View>
         </View>
-        <View className="px-4">
+        <View className="px-4" {...lookPan.panHandlers}>
           <LookTabs
             options={showSkins ? [["sticker", t("lookSticker")], ["color", t("lookColor")], ["folders", t("lookFolders")]] : [["sticker", t("lookSticker")], ["color", t("lookColor")]]}
             value={lookTab}
