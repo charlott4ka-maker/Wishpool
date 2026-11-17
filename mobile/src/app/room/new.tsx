@@ -14,8 +14,8 @@ import { SymbolView } from "expo-symbols";
 import Svg, { Circle, Rect } from "react-native-svg";
 import { Check, Crown, ImagePlus, Lock, Paintbrush, Plus, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
-import Animated, { SlideInDown } from "react-native-reanimated";
+import { Modal, PanResponder, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import Animated, { Easing, runOnJS, SlideInDown, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DateRow } from "../../components/DateRow";
@@ -108,7 +108,41 @@ export default function CreateRoomScreen() {
   const [lookScrolled, setLookScrolled] = useState(false);
   // the look sheet is an RN Modal: a screen pushed over it (the paywall) left it
   // stuck on top after closing, so close the sheet first, then open the paywall
-  const { width: screenW } = useWindowDimensions();
+  const { width: screenW, height: screenH } = useWindowDimensions();
+  // the look sheet opens at 62% of the screen; pulled up by its top it opens to the
+  // full height (like iOS sheets), pulled down it goes back, and from 62% it closes
+  const lookLow = Math.round(screenH * 0.62);
+  const lookHigh = screenH - insets.top - 8;
+  const lookH = useSharedValue(lookLow);
+  const lookFrom = useRef(lookLow);
+  const lookEase = { duration: 260, easing: Easing.out(Easing.cubic) };
+  useEffect(() => {
+    if (lookOpen) lookH.value = lookLow;
+  }, [lookOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  const lookStyle = useAnimatedStyle(() => ({ height: lookH.value }));
+  const lookPan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderGrant: () => {
+        lookFrom.current = lookH.value;
+      },
+      onPanResponderMove: (_, g) => {
+        lookH.value = Math.max(lookLow * 0.5, Math.min(lookHigh, lookFrom.current - g.dy));
+      },
+      onPanResponderRelease: (_, g) => {
+        const h = lookFrom.current - g.dy;
+        const up = g.vy < -0.5 || (g.vy <= 0.5 && h > (lookLow + lookHigh) / 2);
+        if (!up && (g.vy > 0.8 || h < lookLow * 0.8)) {
+          lookH.value = withTiming(0, lookEase, (done) => {
+            if (done) runOnJS(setLookOpen)(false);
+          });
+          return;
+        }
+        if ((up ? lookHigh : lookLow) !== lookFrom.current) haptic("light");
+        lookH.value = withTiming(up ? lookHigh : lookLow, lookEase);
+      },
+    }),
+  ).current;
   const foldersLocked = !isPremium;
   // the locked Folders grid: three and a half rows of tiles (1.12 wide per tall, 8pt gaps)
   const lockedGridH = Math.round((((screenW - 32 + 8) / 3 - 8) / 1.12 + 8) * 3.5);
@@ -304,10 +338,15 @@ export default function CreateRoomScreen() {
     {/* the look sheet: Sticker / Colour / Folders over the form, the preview still visible above */}
     <Modal visible={lookOpen} transparent animationType="fade" onRequestClose={() => setLookOpen(false)}>
       <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }} onPress={() => setLookOpen(false)} />
-      <Animated.View entering={SlideInDown.duration(260)} style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "62%", backgroundColor: C.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingTop: 8 }}>
-        <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.18)", marginBottom: 12 }} />
+      <Animated.View entering={SlideInDown.duration(260)} style={[{ position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: C.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: "hidden" }, lookStyle]}>
+        {/* the grabber and the title: pull up for the full height, down to go back or close */}
+        <View {...lookPan.panHandlers} style={{ paddingTop: 8 }}>
+          <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.18)", marginBottom: 12 }} />
+          <View className="px-4">
+            <SheetHeader title={t("roomLook")} onClose={() => setLookOpen(false)} />
+          </View>
+        </View>
         <View className="px-4">
-          <SheetHeader title={t("roomLook")} onClose={() => setLookOpen(false)} />
           <LookTabs
             options={showSkins ? [["sticker", t("lookSticker")], ["color", t("lookColor")], ["folders", t("lookFolders")]] : [["sticker", t("lookSticker")], ["color", t("lookColor")]]}
             value={lookTab}
