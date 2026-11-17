@@ -82,6 +82,9 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
   );
 }
 
+/** a room name fits two lines under its folder and the room hero */
+const ROOM_NAME_MAX = 30;
+
 export default function CreateRoomScreen() {
   useAccent(); // re-render in place when the app colour changes
   const { t } = useT();
@@ -265,7 +268,7 @@ export default function CreateRoomScreen() {
       </View>
 
       {/* the name first, then the type */}
-      <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} />
+      <Field label={t("name")} value={name} onChangeText={setName} placeholder={autoName} maxLength={ROOM_NAME_MAX} />
 
       {/* the type is set when the room is made */}
       {!editing ? (

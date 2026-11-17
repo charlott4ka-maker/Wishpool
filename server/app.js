@@ -392,12 +392,14 @@ export async function createApp() {
     res.json({ rooms: roomsNow });
   });
 
+  // room names: the app caps them at 30; older apps and Telegram had no cap, so the server keeps 40
+  const roomName = (n) => (typeof n === "string" ? n.trim().slice(0, 40) : "");
   api.post("/rooms", async (req, res) => {
     const { name, type, emoji, tint, eventTitle, eventDate, bdayMode, celebrantName, stickerPos, skin } = req.body || {};
     const t = ["friends", "couple", "birthday"].includes(type) ? type : "friends";
     const mode = t === "birthday" ? (bdayMode === "other" ? "other" : "self") : "";
     const r = {
-      id: uid("r"), name: name || "Room", type: t, emoji: emoji || "🎁", tint: tint || "#2E7DF6", ownerId: req.user.id, createdAt: Date.now(),
+      id: uid("r"), name: roomName(name) || "Room", type: t, emoji: emoji || "🎁", tint: tint || "#2E7DF6", ownerId: req.user.id, createdAt: Date.now(),
       // birthday rooms carry a date; friends rooms may too (a Secret Santa swap date)
       ...(t === "birthday" || t === "friends" ? cleanEvent(eventTitle, eventDate) : {}),
       bdayMode: mode, celebrantName: mode === "other" ? cleanName(celebrantName) : (mode === "self" ? cleanName(req.user.name) : ""),
@@ -443,7 +445,7 @@ export async function createApp() {
     const okTint = typeof tint === "string" && /^#[0-9a-fA-F]{6}$/.test(tint) ? tint : r.tint;
     // event fields are optional; sending them (even empty) sets/clears the event
     const ev = (r.type === "birthday" || r.type === "friends") && ("eventTitle" in body || "eventDate" in body) ? cleanEvent(body.eventTitle, body.eventDate) : {};
-    await store.updateRoom(r.id, { name: name.trim(), emoji: emoji || r.emoji, tint: okTint, ...ev, ...("stickerPos" in body ? { stickerPos: cleanStickerPos(body.stickerPos) } : {}), ...("skin" in body ? { skin: cleanSkin(body.skin) } : {}) });
+    await store.updateRoom(r.id, { name: roomName(name), emoji: emoji || r.emoji, tint: okTint, ...ev, ...("stickerPos" in body ? { stickerPos: cleanStickerPos(body.stickerPos) } : {}), ...("skin" in body ? { skin: cleanSkin(body.skin) } : {}) });
     if (r.type === "birthday" && r.bdayMode === "other" && "celebrantName" in body) await store.setCelebrantName(r.id, cleanName(body.celebrantName));
     if ("charms" in body || "tag" in body) await store.setRoomDecor(r.id, "charms" in body ? cleanCharms(body.charms) : r.charms, "tag" in body ? cleanTag(body.tag) : r.tag);
     res.json({ ok: true });

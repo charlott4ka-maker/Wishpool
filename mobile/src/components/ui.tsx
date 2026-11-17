@@ -267,7 +267,7 @@ export function Empty({ emoji, title, sub, action, compact, fill, tilt = -8 }: {
 }
 
 export function Field({
-  label, value, onChangeText, placeholder, multiline, keyboardType, autoCapitalize, autoFocus, error, textContentType,
+  label, value, onChangeText, placeholder, multiline, keyboardType, autoCapitalize, autoFocus, error, textContentType, maxLength,
 }: {
   label?: string; value: string; onChangeText: (v: string) => void; placeholder?: string; multiline?: boolean;
   keyboardType?: "default" | "email-address" | "url" | "number-pad" | "decimal-pad"; autoCapitalize?: "none" | "sentences"; autoFocus?: boolean;
@@ -275,13 +275,22 @@ export function Field({
   error?: string | false;
   /** iOS autofill, e.g. "oneTimeCode" to offer the code from Mail. */
   textContentType?: "oneTimeCode" | "emailAddress" | "name";
+  /** a cap on the length; a "27/30" count shows by the label once it's close */
+  maxLength?: number;
 }) {
   const [focus, setFocus] = useState(false);
+  const count = maxLength && value.length >= maxLength - 10 ? `${value.length}/${maxLength}` : null;
   return (
     <View className="mb-4">
-      {label ? <Txt className="mb-2 font-m600 text-[13px] text-t2">{label}</Txt> : null}
+      {label ? (
+        <View className="mb-2 flex-row items-center justify-between">
+          <Txt className="font-m600 text-[13px] text-t2">{label}</Txt>
+          {count ? <Txt className={`font-m500 text-[12.5px] ${value.length >= (maxLength || 0) ? "text-t2" : "text-t3"}`}>{count}</Txt> : null}
+        </View>
+      ) : null}
       <TextInput
         value={value}
+        maxLength={maxLength}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={C.hint}
