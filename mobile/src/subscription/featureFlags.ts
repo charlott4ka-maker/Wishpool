@@ -8,6 +8,10 @@ import type { StickerName } from "../components/stickerAssets";
 // The TestFlight test build turns it on with EXPO_PUBLIC_PREMIUM=1 (eas.json
 // profile "testflight", and in `eas update --channel testflight`).
 export const PREMIUM_ENABLED = process.env.EXPO_PUBLIC_PREMIUM === "1";
+/** Home-screen widgets (targets/widget, WidgetSync, app/widgets.tsx) are built but put off (2026-11-17):
+ *  off, nothing syncs, the Premium page has no "How to add a widget" row, the perks list skips them,
+ *  and app.json has no @bacons/apple-targets plugin, so the build has no widget extension. */
+export const WIDGETS_ENABLED = false;
 
 export type PremiumFeature = "stickerPacks" | "extraPhotos" | "appIcons";
 

@@ -1,5 +1,6 @@
 // What Premium gives, in one place: the Premium page lists them with a line
 // each, the paywall as short rows.
+import { WIDGETS_ENABLED } from "../subscription/featureFlags";
 import { Folder, ImagePlus, LayoutGrid, type LucideIcon, Palette, Smartphone, Sticker, Wallpaper } from "lucide-react-native";
 
 export const PERKS: { icon: LucideIcon; tint: string; title: string; sub: string }[] = [
@@ -10,4 +11,4 @@ export const PERKS: { icon: LucideIcon; tint: string; title: string; sub: string
   { icon: Palette, tint: "#AF52DE", title: "perkAccent", sub: "perkAccentSub" },
   { icon: Smartphone, tint: "#34C759", title: "perkIcon", sub: "perkIconSub" },
   { icon: LayoutGrid, tint: "#FF3B30", title: "perkWidgets", sub: "perkWidgetsSub" },
-];
+].filter((p) => WIDGETS_ENABLED || p.title !== "perkWidgets");

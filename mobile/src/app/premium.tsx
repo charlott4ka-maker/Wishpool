@@ -26,6 +26,7 @@ import { useEffect, useState } from "react";
 const fmt = (d: Date) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 import { C } from "../theme/tokens";
 import { useAccent } from "../theme/accent";
+import { WIDGETS_ENABLED } from "../subscription/featureFlags";
 
 
 export default function PremiumScreen() {
@@ -76,7 +77,7 @@ export default function PremiumScreen() {
           </View>
 
           <SettingsGroup>
-            <SettingsCell icon={LayoutGrid} tint="#FF3B30" label={t("wgHowRow")} onPress={() => router.push("/widgets")} />
+            {WIDGETS_ENABLED ? <SettingsCell icon={LayoutGrid} tint="#FF3B30" label={t("wgHowRow")} onPress={() => router.push("/widgets")} /> : null}
             <SettingsCell icon={CreditCard} tint="#8E8E93" label={t("premiumManage")} onPress={() => Linking.openURL("https://apps.apple.com/account/subscriptions")} />
           </SettingsGroup>
           {/* small, at the very bottom: it's on, and the next payment (or, once cancelled, the last day) */}

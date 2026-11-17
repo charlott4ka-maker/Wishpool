@@ -31,6 +31,7 @@ import { WishpoolProvider } from "../store/WishpoolContext";
 import { SubscriptionProvider } from "../subscription/SubscriptionContext";
 import { C } from "../theme/tokens";
 import { accentVars, loadAccent, useAccent } from "../theme/accent";
+import { WIDGETS_ENABLED } from "../subscription/featureFlags";
 
 // The share extension's native module isn't in Expo Go.
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -101,7 +102,7 @@ function Gate() {
         <ShareIntentHandler ready={inside} />
         <AccentGuard />
         {inside ? <ReminderSync /> : null}
-        {inside ? <WidgetSync /> : null}
+        {inside && WIDGETS_ENABLED ? <WidgetSync /> : null}
         {/* the accent: CSS variables for the classes (screens refresh their raw colours themselves) */}
         <View style={[{ flex: 1 }, vars(accentVars(acc))]}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
