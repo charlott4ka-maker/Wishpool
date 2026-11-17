@@ -12,21 +12,66 @@
 <link rel="icon" href="/about/logo.png" />
 <link rel="stylesheet" href="/pages.css" />
 <style>
-body{min-height:100vh;display:flex;align-items:center}
-.wrap{width:100%;max-width:420px}
-.card{text-align:center;padding:32px 24px}
-.card img{width:96px;height:96px;margin:0 auto 16px}
-.card p{color:var(--t2)}
-.card p.small{margin-top:16px;font-size:14px}
-.card p.small a{color:var(--t2);text-decoration:underline}
+body{padding:0 0 140px}
+.wrap{max-width:560px;gap:4px}
+/* the room's head: its colour (or folder material) like the app's room hero */
+.hero{position:relative;overflow:hidden;border-radius:0 0 32px 32px;padding:56px 24px 32px;text-align:center;background:#15181D}
+.hero .bg{position:absolute;inset:0;z-index:0}
+.hero .bg.tex{background-size:115% auto;background-repeat:repeat-y;filter:blur(4px);transform:scale(1.08)}
+.hero .shade{position:absolute;inset:0;background:rgba(0,0,0,.28);z-index:0}
+.hero>*:not(.bg):not(.shade){position:relative;z-index:1}
+.stk{width:96px;height:96px;margin:0 auto 4px;display:block;transform:rotate(-8deg)}
+.emo{font-size:56px;line-height:96px;height:96px;display:block}
+.hero h1{font-size:28px;margin:4px 0 8px;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.25)}
+.chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.18);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px;color:#fff}
+.avs{display:flex;justify-content:center;margin-top:16px}
+.av{width:36px;height:36px;border-radius:50%;margin-left:-8px;border:2px solid rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background-size:cover;background-position:center}
+.av:first-child{margin-left:0}
+.invite{color:rgba(255,255,255,.85);font-size:15px;margin-top:16px}
+.list{background:var(--block);border-radius:32px;padding:16px}
+.who{display:flex;align-items:center;gap:8px;margin:4px 4px 12px;font-weight:700;font-size:17px}
+.who .av{width:28px;height:28px;font-size:12px;margin:0;border:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--raised);border-radius:24px;padding:8px;display:flex;flex-direction:column;color:var(--t1)}
+.pic{aspect-ratio:1;border-radius:16px;background:#252B36 center/cover no-repeat;display:flex;align-items:center;justify-content:center}
+.pic img.s{width:62%;height:62%;object-fit:contain}
+.pic .e{font-size:48px}
+.card .t{font-weight:700;font-size:15px;line-height:1.3;margin:8px 4px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.card .p{font-weight:700;font-size:14px;color:#7FB0FF;margin:2px 4px 0;min-height:1.4em}
+.card .n{font-size:12.5px;color:var(--t2);margin:4px 4px 0;line-height:1.35}
+.card .shop{margin:8px 4px 4px;font-weight:700;font-size:13.5px;color:var(--blue)}
+.empty{text-align:center;color:var(--t2);padding:24px}
+.empty img{width:72px;height:72px;margin-bottom:8px}
+/* the action stays at hand: a dark fade and the buttons pinned to the bottom */
+.bar{position:fixed;left:0;right:0;bottom:0;padding:24px 16px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(rgba(34,40,49,0),#222831 32%);z-index:5}
+.bar .in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.bar .small{text-align:center;font-size:14px}
+.bar .small a{color:var(--t2);text-decoration:underline}
+.old{display:none;min-height:100vh;align-items:center;padding:16px}
+.old .block{text-align:center;padding:32px 24px;max-width:420px;margin:0 auto}
+.old img{width:96px;height:96px;margin:0 auto 16px}
+.old p{color:var(--t2)}
+.top{position:absolute;top:12px;left:16px;right:16px;z-index:2;display:flex;justify-content:space-between;align-items:center}
+.logo{color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
-<!-- https://<domain>/join/<roomId>?from=<inviterId>
-     With the iOS app installed this address opens the app (universal link) and the page is never seen.
-     Everyone else lands here: the same room opens in the Telegram Mini App, or in the app by its scheme. -->
-<div class="wrap">
-  <div class="block card">
+<div class="wrap" id="page" style="display:none">
+  <div class="hero" id="hero">
+    <div class="top"><a class="logo" href="/about"><img src="/about/logo.png" alt="" />Wishpool</a></div>
+    <div id="head"></div>
+    <p class="invite">
+      <span data-l="uk">Тебе запрошують у кімнату. Обери подарунок без повторів.</span>
+      <span data-l="ru">Тебя зовут в комнату. Выбери подарок без повторов.</span>
+      <span data-l="en">You're invited to this room. Pick a gift nobody else is giving.</span>
+    </p>
+  </div>
+  <div id="lists"></div>
+</div>
+
+<!-- no room data (an old link, or offline): the plain invite card -->
+<div class="old" id="old">
+  <div class="block">
     <img src="/about/star.png" alt="" />
     <h1 data-l="uk">Тебе запрошують у кімнату</h1>
     <h1 data-l="ru">Тебя зовут в комнату</h1>
@@ -34,17 +79,17 @@ body{min-height:100vh;display:flex;align-items:center}
     <p data-l="uk">Вішлисти друзів і подарунки без повторів у Wishpool.</p>
     <p data-l="ru">Вишлисты друзей и подарки без повторов в Wishpool.</p>
     <p data-l="en">Your friends' wishlists and gifts without duplicates, in Wishpool.</p>
-    <div class="btns">
-      <a class="btn" id="open">
-        <span data-l="uk">Відкрити в Wishpool</span><span data-l="ru">Открыть в Wishpool</span><span data-l="en">Open in Wishpool</span>
-      </a>
-      <a class="btn ghost" id="store" href="https://apps.apple.com/app/id6825104468">
-        <span data-l="uk">Завантажити в App Store</span><span data-l="ru">Скачать в App Store</span><span data-l="en">Get it on the App Store</span>
-      </a>
-      <a class="btn" id="tg">
-        <span data-l="uk">Відкрити в Telegram</span><span data-l="ru">Открыть в Telegram</span><span data-l="en">Open in Telegram</span>
-      </a>
-    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="in">
+    <a class="btn" id="open">
+      <span data-l="uk">Хочу подарувати</span><span data-l="ru">Хочу подарить</span><span data-l="en">I want to give a gift</span>
+    </a>
+    <a class="btn" id="tg">
+      <span data-l="uk">Хочу подарувати (Telegram)</span><span data-l="ru">Хочу подарить (Telegram)</span><span data-l="en">I want to give a gift (Telegram)</span>
+    </a>
     <p class="small"><a id="tgSmall">
       <span data-l="uk">або відкрити в Telegram</span><span data-l="ru">или открыть в Telegram</span><span data-l="en">or open in Telegram</span>
     </a></p>
@@ -53,8 +98,12 @@ body{min-height:100vh;display:flex;align-items:center}
 <script src="/pages.js"></script>
 <script>
 (function () {
+  // /join/<room>?from=<inviter> (or /join/index.html?room=<room> when the server page wasn't there)
+  var qs = new URLSearchParams(location.search);
   var id = (location.pathname.match(/^\/join\/([\w-]{1,64})/) || [])[1] || "";
-  var from = new URLSearchParams(location.search).get("from") || "";
+  if (!id || id === "index.html" || id === "index") id = qs.get("room") || "";
+  if (!/^[\w-]{0,64}$/.test(id)) id = "";
+  var from = qs.get("from") || "";
   if (!/^[\w-]{0,64}$/.test(from)) from = "";
   // the Mini App reads "<room>__<inviter>" from startapp
   var tail = id ? (from ? id + "__" + from : id) : "";
@@ -63,8 +112,8 @@ body{min-height:100vh;display:flex;align-items:center}
   var $ = function (x) { return document.getElementById(x); };
   $("tg").href = tg; $("tgSmall").href = tg;
   if (iphone) {
-    // the iPhone app first: these links come from it. With the app installed the
-    // scheme opens the room; without it the page stays, and the App Store opens.
+    // the iPhone app first. With it installed the scheme opens the room; without it
+    // the page stays, and the App Store opens.
     $("tg").style.display = "none";
     $("open").onclick = function (e) {
       e.preventDefault();
@@ -75,8 +124,64 @@ body{min-height:100vh;display:flex;align-items:center}
     };
   } else {
     // no app for Android or a computer: the Mini App works everywhere
-    $("open").style.display = "none"; $("store").style.display = "none"; $("tgSmall").parentNode.style.display = "none";
+    $("open").style.display = "none"; $("tgSmall").parentNode.style.display = "none";
   }
+
+  var lang = function () { return document.documentElement.lang || "en"; };
+  var L = {
+    uk: { days: function (n) { return n === 0 ? "Сьогодні" : n === 1 ? "Завтра" : "Через " + n + " " + pl(n, ["день", "дні", "днів"]); }, shop: "Де купити", none: "Тут поки немає бажань. Відкрий кімнату й додай своє." },
+    ru: { days: function (n) { return n === 0 ? "Сегодня" : n === 1 ? "Завтра" : "Через " + n + " " + pl(n, ["день", "дня", "дней"]); }, shop: "Где купить", none: "Здесь пока нет желаний. Открой комнату и добавь своё." },
+    en: { days: function (n) { return n === 0 ? "Today" : n === 1 ? "Tomorrow" : "In " + n + " days"; }, shop: "Where to buy", none: "No wishes here yet. Open the room and add yours." },
+  };
+  function pl(n, f) { var a = n % 10, b = n % 100; return a === 1 && b !== 11 ? f[0] : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? f[1] : f[2]; }
+  function T() { return L[lang()] || L.en; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function sticker(e, cls) {
+    if (e && e.indexOf("stk:") === 0) return '<img class="' + cls + '" src="/stickers/' + encodeURIComponent(e.slice(4)) + '.webp" alt="" />';
+    if (!e || e.indexOf("utya:") === 0) return '<img class="' + cls + '" src="/stickers/gift.webp" alt="" />';
+    return '<span class="emo">' + esc(e) + "</span>";
+  }
+  function av(m) {
+    var bg = m.photo ? "background-image:url(" + esc(m.photo) + ")" : "background-color:" + esc(m.color || "#353C49");
+    return '<div class="av" style="' + bg + '">' + (m.photo ? "" : esc((m.name || "?").charAt(0).toUpperCase())) + "</div>";
+  }
+  function daysTo(iso) {
+    var p = String(iso).split("-"); if (p.length < 3) return null;
+    var d = new Date(+p[0], +p[1] - 1, +p[2]), t = new Date(); t.setHours(0, 0, 0, 0);
+    var n = Math.round((d - t) / 864e5); return n >= 0 ? n : null;
+  }
+  function safeUrl(u) { return /^https:\/\//.test(u || "") ? u : ""; }
+  var data = null;
+  function render() {
+    if (!data) return;
+    var r = data.room, t = T(), n = r.eventDate ? daysTo(r.eventDate) : null;
+    // the head: the room colour as a soft glow, or the folder's own material
+    var hero = $("hero"), bg = '<div class="bg" style="background:radial-gradient(120% 90% at 50% 30%,' + esc(r.tint) + 'E6,' + esc(r.tint) + '99 55%,' + esc(r.tint) + '59),#0d0d10"></div>';
+    if (r.cover) bg = '<div class="bg tex" style="background-image:url(' + esc(r.cover) + ');background-size:cover"></div><div class="shade"></div>';
+    else if (r.skin) bg = '<div class="bg tex" style="background-image:url(/admin/folders/' + esc(r.skin) + '_tex.webp)"></div><div class="shade"></div>';
+    hero.querySelectorAll(".bg,.shade").forEach(function (x) { x.remove(); });
+    hero.insertAdjacentHTML("afterbegin", bg);
+    $("head").innerHTML = sticker(r.emoji, "stk") + "<h1>" + esc(r.name) + "</h1>" +
+      (n != null ? '<span class="chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + esc([r.eventTitle, t.days(n)].filter(Boolean).join(" · ")) + "</span>" : "") +
+      '<div class="avs">' + data.members.slice(0, 8).map(av).join("") + "</div>";
+    $("lists").innerHTML = data.lists.length ? data.lists.map(function (l) {
+      return '<div class="list"><div class="who">' + av(l.member) + esc(l.member.name) + '</div><div class="grid">' + l.wishes.map(function (w) {
+        var img = w.image ? '<div class="pic" style="background-image:url(' + esc(w.image) + ')"></div>' : '<div class="pic">' + sticker(w.emoji, "s") + "</div>";
+        var shop = safeUrl(w.link);
+        return '<div class="card">' + img + '<div class="t">' + esc(w.title) + '</div><div class="p">' + esc(w.price || "") + "</div>" +
+          (w.note ? '<div class="n">' + esc(w.note) + "</div>" : "") +
+          (shop ? '<a class="shop" href="' + esc(shop) + '" target="_blank" rel="noopener nofollow">' + t.shop + " ›</a>" : "") + "</div>";
+      }).join("") + "</div></div>";
+    }).join("") : '<div class="list empty"><img src="/stickers/bear.webp" alt="" /><p>' + t.none + "</p></div>";
+  }
+  // the language switch (pages.js) re-renders the parts made here
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+  function plain() { $("old").style.display = "flex"; }
+  if (!id) return plain();
+  fetch("/api/public/rooms/" + encodeURIComponent(id))
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(function (d) { data = d; $("page").style.display = "flex"; render(); })
+    .catch(plain);
 })();
 </script>
 </body>

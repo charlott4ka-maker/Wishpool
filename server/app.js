@@ -207,6 +207,55 @@ export async function createApp() {
   // Sign-in for the iOS app (Apple, e-mail code), before the auth below.
   app.use("/api/auth", nativeAuthRoutes(store));
   app.use("/api/admin-login", adminLoginRoute(store));
+  // The room page behind an invite link (/join/<room>) for people without the app:
+  // the room and everyone's wishes shared into it, read only. Never who took what
+  // (the page can't tell who is looking, and the birthday person might be),
+  // never gift ideas of a birthday room, never e-mails or ids; first names only.
+  app.get("/api/public/rooms/:id", async (req, res) => {
+    const r = /^[\w-]{1,64}$/.test(req.params.id) ? await store.getRoom(req.params.id) : null;
+    if (!r) return res.status(404).json({ error: "not_found" });
+    const members = await store.roomMembers(r.id);
+    const first = (n) => String(n || "").trim().split(/\s+/)[0].slice(0, 24);
+    const person = (u) => ({ name: first(u.name), color: u.color, photo: u.photo || null });
+    // a birthday room shows only the birthday person's list; the others' lists
+    const owners = r.type === "birthday" ? members.filter(u => u.id === r.celebrantId) : members;
+    const lists = (await Promise.all(owners.map(async u => ({
+      member: person(u),
+      wishes: (await store.wishesSharedTo(u.id, r.id)).filter(w => !w.giftedAt && !w.roomOnly).slice(0, 60).map(w => {
+        const x = pubWish(w);
+        return { title: x.title, price: x.price, image: x.image, link: x.link || null, emoji: x.emoji, note: x.note };
+      }),
+    })))).filter(l => l.wishes.length);
+    res.set("Cache-Control", "public, max-age=60");
+    res.json({
+      room: { name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, skin: r.skin || "", cover: r.cover ? toPublic(r.cover) : "", eventDate: r.eventDate || "", eventTitle: r.eventTitle || "", celebrantName: r.celebrantName || "" },
+      members: members.map(person),
+      lists,
+    });
+  });
+
+  // The invite page with a preview that names the room ("ДР Макса · Wishpool"),
+  // for messengers; the page itself is the static /join/index.html.
+  app.get("/join/:id", async (req, res) => {
+    const host = `https://${req.get("host")}`;
+    let html = "";
+    try { html = await (await fetch(`${host}/join/index.html`)).text(); } catch (e) { /* below */ }
+    if (!html) return res.redirect(302, `/join/index.html?room=${encodeURIComponent(req.params.id)}`);
+    try {
+      const r = /^[\w-]{1,64}$/.test(req.params.id) ? await store.getRoom(req.params.id) : null;
+      if (r) {
+        const esc = (x) => String(x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+        const count = (await Promise.all((await store.roomMembers(r.id)).map(u => store.wishesSharedTo(u.id, r.id)))).flat().filter(w => !w.giftedAt && !w.roomOnly).length;
+        const title = esc(`${r.name} · Wishpool`);
+        const desc = esc(count ? `${count} 🎁 · Wishpool` : "Wishpool");
+        html = html.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
+          .replace(/(<meta property="og:title" content=")[^"]*/, `$1${title}`)
+          .replace(/(<meta property="og:description" content=")[^"]*/, `$1${desc}`);
+      }
+    } catch (e) { /* the plain page still works */ }
+    res.set("Content-Type", "text/html; charset=utf-8").set("Cache-Control", "public, max-age=60").send(html);
+  });
+
   // Texts, banners and stickers from the admin page (public, cached a minute).
   app.get("/api/config", publicConfigRoute(store));
   // RevenueCat's webhook: purchases, renewals, cancellations (server/premium.js)

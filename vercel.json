@@ -16,7 +16,7 @@
     },
     {
       "source": "/join/:id",
-      "destination": "/join/index.html"
+      "destination": "/api/index"
     },
     {
       "source": "/friend/:code",
