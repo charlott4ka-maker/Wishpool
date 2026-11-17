@@ -273,7 +273,7 @@ export default function RoomScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: room.skin ? "#0d0d10" : heroTop(room.tint) }}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 40, overflow: "hidden" }}>
-        <RoomHeroBg tint={room.tint} look={room.skin === "photo" ? room.cover || null : folderSkin(room.skin)?.tex || null} />
+        <RoomHeroBg tint={room.tint} look={room.skin === "photo" ? room.cover || null : folderSkin(room.skin)?.tex || null} tile={room.skin !== "photo"} />
         <View className="flex-row items-center justify-between" style={{ height: H.sm }}>
           <GlassCircle onPress={goBack} label={t("back")}>
             <SymbolView name="chevron.left" size={19} weight="semibold" tintColor="#fff" fallback={<ChevronLeft size={20} color="#fff" />} />

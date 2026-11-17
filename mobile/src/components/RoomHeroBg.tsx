@@ -39,17 +39,34 @@ const hueOf = (c: string) => {
 // A room dressed in a custom folder (or your own photo) gets that material
 // (the bare texture, not the folder) behind the hero, lightly blurred like an iPhone wallpaper,
 // with a little shade so the white name and buttons stay readable.
-function BlurredLook({ source }: { source: ImageSource | number | string }) {
+function BlurredLook({ source, tile }: { source: ImageSource | number | string; tile?: boolean }) {
+  const [{ w, h }, setSize] = useState({ w: 0, h: 0 });
+  // a folder material at about twice smaller than a cover fit (one picture across the
+  // whole hero showed a tiny piece, far too close): the strip a bit wider than the
+  // screen, stacked down the hero, every other one flipped so the joins meet themselves
+  // (flipping sideways too looked like a kaleidoscope). A cover photo still fills the hero.
+  const tw = w * 1.15, th = (tw * 174) / 398; // the _tex pictures are 398x174
+  const rows = Math.ceil(h / th) + 1;
   return (
-    <View pointerEvents="none" style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, overflow: "hidden", backgroundColor: "#0d0d10" }}>
-      <Image source={source} blurRadius={6} contentFit="cover" style={{ position: "absolute", left: "-4%", top: "-4%", width: "108%", height: "108%" }} />
+    <View pointerEvents="none" onLayout={(e: LayoutChangeEvent) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, overflow: "hidden", backgroundColor: "#0d0d10" }}>
+      {tile ? (
+        w ? (
+          <View style={{ position: "absolute", left: -(tw - w) / 2, top: -th * 0.15 }}>
+            {Array.from({ length: rows }, (_, r) => (
+              <Image key={r} source={source} blurRadius={4} contentFit="fill" style={{ width: tw, height: th, transform: [{ scaleY: r % 2 ? -1 : 1 }] }} />
+            ))}
+          </View>
+        ) : null
+      ) : (
+        <Image source={source} blurRadius={6} contentFit="cover" style={{ position: "absolute", left: "-4%", top: "-4%", width: "108%", height: "108%" }} />
+      )}
       <View style={{ position: "absolute", left: 0, top: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.28)" }} />
     </View>
   );
 }
 
-export function RoomHeroBg({ tint, look }: { tint: string; /** the folder's material or cover photo */ look?: ImageSource | number | string | null }) {
-  if (look) return <BlurredLook source={look} />;
+export function RoomHeroBg({ tint, look, tile }: { tint: string; /** the folder's material or cover photo */ look?: ImageSource | number | string | null; /** a folder material: tiled at the folder's size */ tile?: boolean }) {
+  if (look) return <BlurredLook source={look} tile={tile} />;
   return <MeshBg tint={tint} />;
 }
 
