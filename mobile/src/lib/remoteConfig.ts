@@ -12,7 +12,10 @@ import { API_URL } from "../services/api";
 import { ADMIN_PREVIEW } from "./previewFlag";
 
 type L = { uk?: string; ru?: string; en?: string };
+export type BannerScreens = "wishes" | "rooms" | "both";
 export type RemoteBanner = {
+  /** which tab: Wishes, Rooms or both (missing: Wishes) */
+  screens?: BannerScreens;
   id: string;
   audience: "all" | "signedIn" | "guest";
   text: L;
@@ -50,7 +53,7 @@ export type RemoteConfig = {
   /** premium folders: order and hidden ones, set on the admin page */
   folders: { order: string[]; hidden: string[] };
   /** seasonal things, switched on the admin page (Banners › Season) */
-  season: { newYear: boolean };
+  season: { newYear: boolean; /** where the built-in Secret Santa banner shows */ santaScreens?: BannerScreens };
   /** feature switches (lib/flags.ts): on/off and the share of people */
   flags?: Record<string, { on: boolean; percent: number }>;
   /** in-app notifications (Profile › bell), made on the admin page */

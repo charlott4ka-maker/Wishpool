@@ -50,6 +50,8 @@ export function cleanBanners(v) {
     action: ["none", "link", "signin", "santa"].includes(b?.action) ? b.action : "none",
     url: typeof b?.url === "string" && /^https:\/\/\S{1,500}$/.test(b.url) ? b.url : "",
     dismissible: b?.dismissible !== false,
+    // which tab it shows on: Wishes, Rooms or both (app 1.0.2; older apps show it on Wishes only)
+    screens: ["wishes", "rooms", "both"].includes(b?.screens) ? b.screens : "wishes",
     // a schedule: shown from / until these days (inclusive), empty = no limit
     from: day(b?.from),
     until: day(b?.until),
@@ -75,7 +77,7 @@ export function cleanFolders(v) {
 
 // seasonal things in the app, switched on and off on the admin page
 export function cleanSeason(v) {
-  return { newYear: v?.newYear !== false };
+  return { newYear: v?.newYear !== false, santaScreens: ["wishes", "rooms", "both"].includes(v?.santaScreens) ? v.santaScreens : "both" };
 }
 
 // in-app notifications (Profile › bell), made on the admin page: a list row
@@ -123,7 +125,7 @@ export function cleanFlags(v) {
 }
 
 const CLEAN = { flags: cleanFlags, strings: cleanStrings, banners: cleanBanners, stickers: cleanStickers, folders: cleanFolders, season: cleanSeason, news: cleanNews };
-const EMPTY = { flags: {}, strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true }, news: [] };
+const EMPTY = { flags: {}, strings: {}, banners: [], stickers: { hidden: [], extra: [] }, folders: { order: [], hidden: [] }, season: { newYear: true, santaScreens: "both" }, news: [] };
 
 /** GET /api/config: what the app reads on start (only active banners). */
 export function publicConfigRoute(store) {

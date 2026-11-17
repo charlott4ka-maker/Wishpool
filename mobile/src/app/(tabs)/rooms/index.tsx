@@ -10,6 +10,8 @@ import { useGridColumns } from "../../../lib/gridColumns";
 import { usePullRefresh } from "../../../lib/pullRefresh";
 import { RoomFolder } from "../../../components/RoomFolder";
 import { NewYearCountdown } from "../../../components/NewYearCountdown";
+import { RemoteBanner, useRemoteBanner } from "../../../components/RemoteBanner";
+import { GUEST_OVERLAP } from "../../../components/GuestBanner";
 import { RoomGridSkeleton } from "../../../components/Skeleton";
 import { Empty, HeaderAdd, Pill } from "../../../components/ui";
 import { TabBarFade } from "../../../components/TabBarFade";
@@ -29,6 +31,8 @@ export default function RoomsScreen() {
   const { rooms, wishes, ready, refresh } = useWishpool();
   const pull = usePullRefresh(refresh);
   const create = () => router.push("/room/new");
+  // a banner the admin page sends to Rooms (or to both tabs), peeking out from behind the block like on Wishes
+  const { banner, close: closeBanner } = useRemoteBanner("rooms");
   const cols = useGridColumns();
   const rows: (typeof rooms)[] = [];
   for (let i = 0; i < rooms.length; i += cols) rows.push(rooms.slice(i, i + cols));
@@ -36,8 +40,9 @@ export default function RoomsScreen() {
   return (
     <View className="flex-1 bg-bg">
       <TabHeader title={t("roomsTitle")} right={<HeaderAdd onPress={create} label={t("createRoom")} />} />
+      {banner ? <RemoteBanner banner={banner} onClose={() => closeBanner(banner.id)} /> : null}
       {/* fixed content frame (see Wishes): the gap under the header and the fill under the tab bar stay put */}
-      <View style={{ flex: 1, marginTop: BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}>
+      <View style={{ flex: 1, marginTop: banner ? -GUEST_OVERLAP : BLOCK_GAP, backgroundColor: C.card, borderTopLeftRadius: BLOCK_R, borderTopRightRadius: BLOCK_R, overflow: "hidden" }}>
       <ScrollView showsVerticalScrollIndicator={false}
         key={rooms.length ? "list" : "empty"}
         className="flex-1"

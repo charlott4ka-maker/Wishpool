@@ -22,6 +22,12 @@ import { BLOCK_GAP, BLOCK_R } from "./TabHeader";
 import { Txt } from "./ui";
 
 const KEY = "wp_banners_closed";
+let closedNow: string[] | null = null;
+const closedSubs = new Set<(v: string[]) => void>();
+const setAllClosed = (v: string[]) => {
+  closedNow = v;
+  closedSubs.forEach((cb) => cb(v));
+};
 
 // the built-in Secret Santa banner (signed-in people: the draw needs friends in
 // a room); opens New room as a Santa room. Closed for good with its ×.
@@ -45,20 +51,26 @@ export const SANTA_BANNER: Banner = {
 };
 
 /** The banner to show now, if any: active, for this kind of user, with text in this language, not closed. */
-export function useRemoteBanner(): { banner: Banner | null; close: (id: string) => void } {
+export function useRemoteBanner(screen: "wishes" | "rooms" = "wishes"): { banner: Banner | null; close: (id: string) => void } {
   const { banners, previewBanner, season } = useRemoteConfig();
   const { status } = useAuth();
   const { lang } = useT();
   const demo = usePrefs().demo;
-  const [closed, setClosed] = useState<string[] | null>(null);
+  // shared by both tabs: a banner closed on Wishes is gone on Rooms at once
+  const [closed, setClosed] = useState<string[] | null>(closedNow);
   useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then((raw) => setClosed(raw ? JSON.parse(raw) : []))
-      .catch(() => setClosed([]));
+    closedSubs.add(setClosed);
+    if (!closedNow)
+      AsyncStorage.getItem(KEY)
+        .then((raw) => setAllClosed(raw ? JSON.parse(raw) : []))
+        .catch(() => setAllClosed([]));
+    return () => {
+      closedSubs.delete(setClosed);
+    };
   }, []);
   const close = (id: string) => {
-    const next = [...(closed || []), id];
-    setClosed(next);
+    const next = [...(closedNow || []), id];
+    setAllClosed(next);
     AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
   };
   // the admin preview shows the banner being edited, whoever it's meant for
@@ -66,10 +78,11 @@ export function useRemoteBanner(): { banner: Banner | null; close: (id: string) 
   if (forced) return { banner: forced, close: () => {} };
   if (!closed || demo) return { banner: null, close };
   const who = status === "signedIn" ? "signedIn" : "guest";
+  const here = (sc?: string) => (sc || "wishes") === "both" || (sc || "wishes") === screen;
   const banner =
-    banners.find((b) => (b.audience === "all" || b.audience === who) && onToday(b.from, b.until) && !closed.includes(b.id) && (b.text[lang] || b.text.en || b.text.uk || b.text.ru)) ||
+    banners.find((b) => here(b.screens) && (b.audience === "all" || b.audience === who) && onToday(b.from, b.until) && !closed.includes(b.id) && (b.text[lang] || b.text.en || b.text.uk || b.text.ru)) ||
     // our own seasonal one when the admin page has none: Secret Santa till Christmas
-    (season.newYear && who === "signedIn" && Date.now() < SANTA_UNTIL && !closed.includes(SANTA_BANNER.id) ? SANTA_BANNER : null);
+    (season.newYear && here(season.santaScreens || "both") && who === "signedIn" && Date.now() < SANTA_UNTIL && !closed.includes(SANTA_BANNER.id) ? SANTA_BANNER : null);
   return { banner, close };
 }
 

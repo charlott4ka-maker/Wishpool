@@ -81,12 +81,15 @@
 
   function renderAll() { renderFlags(); renderBanners(); renderNews(); renderSeason(); renderStrings(); renderStickers(); renderFolders(); updateBar(); }
 
+  var SCREENS = [["wishes", "На «Желаниях»"], ["rooms", "На «Комнатах»"], ["both", "На обеих вкладках"]];
   // ---------- the season (New Year) ----------
   function renderSeason() {
     var on = draft.season.newYear !== false;
     $("seasonNY").checked = on;
+    $("seasonSantaScreens").innerHTML = SCREENS.map(function (o) { return '<option value="' + o[0] + '"' + ((draft.season.santaScreens || "both") === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("");
   }
-  $("seasonNY").onchange = function () { draft.season = { newYear: $("seasonNY").checked }; updateBar(); };
+  $("seasonNY").onchange = function () { draft.season = Object.assign({}, draft.season, { newYear: $("seasonNY").checked }); updateBar(); };
+  $("seasonSantaScreens").onchange = function () { draft.season = Object.assign({}, draft.season, { santaScreens: $("seasonSantaScreens").value }); updateBar(); };
 
   // ---------- schedules (banners, notifications) ----------
   function today() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
@@ -113,6 +116,8 @@
       '<label class="hint">Показывать с <input type="date" data-b="' + i + '" data-k="from" value="' + esc(b.from || "") + '"></label>' +
       '<label class="hint">по <input type="date" data-b="' + i + '" data-k="until" value="' + esc(b.until || "") + '"></label>' +
       '<span class="hint">пусто = без ограничения, включается и выключается сам</span></div>' +
+      '<label class="f">Где показывать <span class="soon" title="Старые версии приложения показывают баннер только на «Желаниях»">Выйдет в 1.0.2</span></label><select data-b="' + i + '" data-k="screens">' +
+      SCREENS.map(function (o) { return '<option value="' + o[0] + '"' + ((b.screens || "wishes") === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       '<label class="f">Кому показывать</label><select data-b="' + i + '" data-k="audience">' +
       [["signedIn", "Только вошедшим в аккаунт"], ["guest", "Только гостям (вместо плашки «Войти»)"], ["all", "Всем"]].map(function (o) { return '<option value="' + o[0] + '"' + (b.audience === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select>" +
       '<div class="grid3">' + texts + "</div>" +
@@ -133,7 +138,7 @@
   $("addBanner").onclick = function () {
     var id = "b" + Date.now().toString(36);
     focusBanner = id;
-    draft.banners.push({ id: id, active: false, audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true, from: "", until: "" });
+    draft.banners.push({ id: id, active: false, screens: "wishes", audience: "signedIn", text: { uk: "", ru: "", en: "" }, color1: "#047DFB", color2: "#2290F6", textColor: "#FFFFFF", sticker: "", action: "none", url: "", dismissible: true, from: "", until: "" });
     renderBanners(); updateBar();
   };
   $("bannerList").addEventListener("input", onBannerEdit);
