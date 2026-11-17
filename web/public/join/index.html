@@ -94,6 +94,9 @@ body{padding:0 0 140px}
     <a class="btn" id="tg">
       <span data-l="uk">Відкрити в Telegram</span><span data-l="ru">Открыть в Telegram</span><span data-l="en">Open in Telegram</span>
     </a>
+    <p class="small" id="iosNote"><a href="https://apps.apple.com/app/id6825104468" target="_blank" rel="noopener">
+      <span data-l="uk">Є застосунок для iPhone в App Store</span><span data-l="ru">Есть приложение для iPhone в App Store</span><span data-l="en">There's an iPhone app on the App Store</span>
+    </a></p>
     <p class="small"><a id="tgSmall">
       <span data-l="uk">або відкрити в Telegram</span><span data-l="ru">или открыть в Telegram</span><span data-l="en">or open in Telegram</span>
     </a></p>
@@ -118,7 +121,7 @@ body{padding:0 0 140px}
   if (iphone) {
     // the iPhone app first. With it installed the scheme opens the room; without it
     // the page stays, and the App Store opens.
-    $("tg").style.display = "none";
+    $("tg").style.display = "none"; $("iosNote").style.display = "none";
     $("open").onclick = function (e) {
       e.preventDefault();
       var left = false;
