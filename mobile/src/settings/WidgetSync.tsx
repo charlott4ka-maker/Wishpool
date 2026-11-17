@@ -2,7 +2,6 @@
 // (targets/widget/Widgets.swift). The app writes one JSON string into the App
 // Group whenever rooms, Premium or the language change; the widget counts the
 // days itself, so it moves at midnight without the app being opened.
-import { ExtensionStorage } from "@bacons/apple-targets";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 
@@ -17,7 +16,12 @@ import type { Room } from "../types";
 import { getPrefs } from "./prefs";
 
 export const APP_GROUP = "group.app.wishpool.ios";
-const store = new ExtensionStorage(APP_GROUP);
+// loaded only when the widgets run: a build without the widget module (they're off,
+// WIDGETS_ENABLED) must not touch it, or the app fails at start
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const lib = () => require("@bacons/apple-targets") as typeof import("@bacons/apple-targets");
+let storeInst: InstanceType<ReturnType<typeof lib>["ExtensionStorage"]> | null = null;
+const store = () => (storeInst ??= new (lib().ExtensionStorage)(APP_GROUP));
 
 const initial = (name: string) => (name.trim()[0] || "?").toUpperCase();
 
@@ -78,8 +82,8 @@ export function WidgetSync() {
           santaEmpty: t("wgSantaEmpty"), locked: t("wgLocked"),
         },
       };
-      store.set("wp_widget", JSON.stringify(payload));
-      ExtensionStorage.reloadWidget();
+      store().set("wp_widget", JSON.stringify(payload));
+      lib().ExtensionStorage.reloadWidget();
     })().catch(() => {});
     return () => {
       live = false;
