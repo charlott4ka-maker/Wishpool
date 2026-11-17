@@ -227,7 +227,8 @@ export async function createApp() {
         return { title: x.title, price: x.price, image: x.image, link: x.link || null, emoji: x.emoji, note: x.note };
       }),
     })))).filter(l => l.wishes.length);
-    res.set("Cache-Control", "public, max-age=60");
+    // never cached: a wish just added should show on the next refresh
+    res.set("Cache-Control", "no-store");
     res.json({
       room: { name: r.name, type: r.type, emoji: r.emoji, tint: r.tint, skin: r.skin || "", cover: r.cover ? toPublic(r.cover) : "", eventDate: r.eventDate || "", eventTitle: r.eventTitle || "", celebrantName: r.celebrantName || "" },
       members: members.map(person),
@@ -254,7 +255,7 @@ export async function createApp() {
           .replace(/(<meta property="og:description" content=")[^"]*/, `$1${desc}`);
       }
     } catch (e) { /* the plain page still works */ }
-    res.set("Content-Type", "text/html; charset=utf-8").set("Cache-Control", "public, max-age=60").send(html);
+    res.set("Content-Type", "text/html; charset=utf-8").set("Cache-Control", "no-cache").send(html);
   });
 
   // Texts, banners and stickers from the admin page (public, cached a minute).

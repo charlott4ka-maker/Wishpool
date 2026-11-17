@@ -181,7 +181,7 @@ body{padding:0 0 140px}
   new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
   function plain() { $("old").style.display = "flex"; }
   if (!id) return plain();
-  fetch("/api/public/rooms/" + encodeURIComponent(id))
+  fetch("/api/public/rooms/" + encodeURIComponent(id), { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw 0; return r.json(); })
     .then(function (d) { data = d; $("page").style.display = "flex"; render(); })
     .catch(plain);
