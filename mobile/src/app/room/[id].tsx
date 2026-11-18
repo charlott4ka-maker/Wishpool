@@ -7,7 +7,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView } from "expo-symbols";
-import { CalendarDays, Check, Crown, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
+import { CalendarDays, Check, ChevronLeft, Ellipsis, Gift, Lock, Pencil, Plus, Share2, X } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Platform, Pressable, RefreshControl, ScrollView, Share, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -34,8 +34,7 @@ import { usePullRefresh } from "../../lib/pullRefresh";
 import { askReport } from "../../lib/report";
 import { openedWish, type RoomWish } from "../../lib/openedWish";
 import { useWishpool } from "../../store/WishpoolContext";
-import { NEW_YEAR_STICKERS, PREMIUM_ENABLED } from "../../subscription/featureFlags";
-import { useSubscription } from "../../subscription/SubscriptionContext";
+import { NEW_YEAR_STICKERS } from "../../subscription/featureFlags";
 import { C, H, hex } from "../../theme/tokens";
 import type { Member, Wish } from "../../types";
 import { BOT_APP, IN_TG, tgShare } from "../../lib/telegram";
@@ -56,7 +55,6 @@ export default function RoomScreen() {
   const { user } = useAuth();
   const me = useMe();
   const room = rooms.find((r) => r.id === id);
-  const { isPremium } = useSubscription();
   const [seg, setSeg] = useState<"lists" | "mine">("lists");
   const [scrolled, setScrolled] = useState(false);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -278,22 +276,6 @@ export default function RoomScreen() {
           <GlassCircle onPress={goBack} label={t("back")}>
             <SymbolView name="chevron.left" size={19} weight="semibold" tintColor="#fff" fallback={<ChevronLeft size={20} color="#fff" />} />
           </GlassCircle>
-          {/* a dressed room tells whoever hasn't got Premium where the look comes from */}
-          {room.skin && PREMIUM_ENABLED && !isPremium && !IN_TG ? (
-            <Pressable
-              onPress={() => {
-                haptic("select");
-                track("open_folder_tag");
-                router.push("/paywall");
-              }}
-              accessibilityRole="button"
-              className="flex-row items-center gap-1.5 rounded-full px-3"
-              style={{ height: 30, backgroundColor: "rgba(0,0,0,0.28)" }}
-            >
-              <Crown size={12} color="#fff" fill="#fff" strokeWidth={1.5} />
-              <Txt className="font-m600 text-[12.5px] text-white">{t("premiumFolderTag")}</Txt>
-            </Pressable>
-          ) : null}
           {/* ⋯ menu: edit / delete for the owner, leave for everyone else */}
           <GlassCircle onPress={openMenu} label={t("more")}>
             <SymbolView name="ellipsis" size={19} weight="semibold" tintColor="#fff" fallback={<Ellipsis size={20} color="#fff" />} />
