@@ -33,6 +33,7 @@ import { C } from "../theme/tokens";
 import { accentVars, loadAccent, useAccent } from "../theme/accent";
 import { WIDGETS_ENABLED } from "../subscription/featureFlags";
 import { PushSync } from "../settings/PushSync";
+import { FirstPaywall } from "../components/FirstPaywall";
 
 // The share extension's native module isn't in Expo Go.
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
@@ -104,6 +105,7 @@ function Gate() {
         <AccentGuard />
         {inside ? <ReminderSync /> : null}
         {inside ? <PushSync /> : null}
+        {inside ? <FirstPaywall /> : null}
         {inside && WIDGETS_ENABLED ? <WidgetSync /> : null}
         {/* the accent: CSS variables for the classes (screens refresh their raw colours themselves) */}
         <View style={[{ flex: 1 }, vars(accentVars(acc))]}>

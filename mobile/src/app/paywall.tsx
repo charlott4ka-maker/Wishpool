@@ -43,6 +43,7 @@ function Paywall() {
   useEffect(() => {
     track("paywall_open");
     if (src === "widget") track("open_widget");
+    if (src === "onboarding") track("paywall_onboarding");
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { t, lang } = useT();
   const router = useRouter();
