@@ -63,16 +63,16 @@ export function IconSplash() {
       onLayout={() => SplashScreen.hideAsync().catch(() => {})}
     >
       {/* the soft blue glow rising behind the star */}
-      <Animated.View style={[{ position: "absolute", width: 420, height: 420 }, halo]}>
-        <Svg width={420} height={420}>
+      <Animated.View style={[{ position: "absolute", width: 300, height: 300 }, halo]}>
+        <Svg width={300} height={300}>
           <Defs>
             <RadialGradient id="splashGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor="#0A82F9" stopOpacity={0.55} />
-              <Stop offset="0.45" stopColor="#0A6BE0" stopOpacity={0.22} />
+              <Stop offset="0" stopColor="#0A82F9" stopOpacity={0.32} />
+              <Stop offset="0.5" stopColor="#0A6BE0" stopOpacity={0.1} />
               <Stop offset="1" stopColor="#0A6BE0" stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Rect width={420} height={420} fill="url(#splashGlow)" />
+          <Rect width={300} height={300} fill="url(#splashGlow)" />
         </Svg>
       </Animated.View>
       <View style={size}>
