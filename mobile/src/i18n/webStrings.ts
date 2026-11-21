@@ -907,9 +907,9 @@ export const WEB_STRINGS = {
     "en": "Emoji"
   },
   "uploadPhoto": {
-    "uk": "Завантажити фото з телефона",
-    "ru": "Загрузить фото с телефона",
-    "en": "Upload a photo from your phone"
+    "uk": "Завантажити фото",
+    "ru": "Загрузить фото",
+    "en": "Upload a photo"
   },
   "replace": {
     "uk": "Замінити",
