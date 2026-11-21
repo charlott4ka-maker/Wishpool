@@ -107,6 +107,7 @@
 - Business: she stays a private person (no FOP) and pays Ukrainian tax by the yearly declaration. W-8BEN filled (treaty Art. 7(1), 0%). Still to do: the EU DSA trader status (SMS code didn't come, attempts ran out; retry with +380 or a call; e-mail her Gmail or support@clickbrickk.com), the Paid Apps Agreement's bank account (Monobank USD), delete the duplicate tax form row.
 - Mail: `support@clickbrickk.com` reaches her through Cloudflare Email Routing; `support@wishpool.clickbrickk.com` receives nothing (send-only). Cloudflare account = the one holding clickbrickk.com (and R2).
 - Cloudflare for Startups: applied 2026-11-21 (bootstrapped, $0 raised; expect the lowest tier or a no).
+- Image generation money (her rule, 2026-11-21): she no longer tops up OpenAI. For new stickers / folders / icons try free options first (Cloudflare Workers AI, Figma generate_image), ask before spending. Microsoft for Startups (Azure sponsorship) refused her account ("not eligible"); never sign her up for Azure pay-as-you-go.
 
 ## Later (agreed, not started)
 - Room inside backdrop (she asked to remember, 2026-11-17): let the owner choose what the room screen's hero shows, separately from the folder: a custom folder material, their own photo, or just a colour.
