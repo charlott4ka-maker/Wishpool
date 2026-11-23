@@ -14,7 +14,6 @@ import { useWishpool } from "../store/WishpoolContext";
 import { fromISODate } from "../components/DateRow";
 import { usePrefs } from "./prefs";
 import { track } from "../lib/track";
-import { TRIAL_ID } from "../lib/trialReminder";
 
 
 Notifications.setNotificationHandler({
@@ -38,10 +37,7 @@ export function ReminderSync() {
     if (Platform.OS === "web") return;
     let live = true;
     (async () => {
-      // the room reminders only: the trial reminder (lib/trialReminder) stays
-      for (const n of await Notifications.getAllScheduledNotificationsAsync()) {
-        if (n.identifier !== TRIAL_ID) await Notifications.cancelScheduledNotificationAsync(n.identifier);
-      }
+      await Notifications.cancelAllScheduledNotificationsAsync();
       if (!prefs.notifications || !live) return;
       if (!(await Notifications.getPermissionsAsync()).granted) return;
       const now = Date.now();
