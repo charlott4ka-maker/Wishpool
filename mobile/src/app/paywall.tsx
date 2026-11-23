@@ -61,7 +61,17 @@ function Paywall() {
   const save = annual && monthly && monthly.price > 0 ? Math.round((1 - annual.price / (monthly.price * 12)) * 100) : 0;
 
   const days = (n: number) => (lang === "en" ? `${n}-day` : `${n} ${plural(lang, n, DAY_FORMS[lang])}`);
-  const perMonth = (p: PremiumPackage) => (p.kind === "monthly" ? p.priceString : p.pricePerMonthString);
+  // the yearly plan's price a month, written the same way as the store's own price ("12,99 USD"
+  // gives "1,08 USD"; the store's per-month string came back as "1,08 $" next to "12,99 USD")
+  const perMonth = (p: PremiumPackage) => {
+    if (p.kind === "monthly") return p.priceString;
+    if (p.kind !== "annual" || !p.price) return p.pricePerMonthString;
+    const num = /\d[\d\s.,\u00a0\u202f]*\d|\d/.exec(p.priceString);
+    if (!num) return p.pricePerMonthString;
+    const comma = /\d,\d{1,2}$/.test(num[0]);
+    const m = (Math.floor((p.price / 12) * 100) / 100).toFixed(2);
+    return p.priceString.replace(num[0], comma ? m.replace(".", ",") : m);
+  };
   const planName = (p: PremiumPackage) => (p.kind === "annual" ? t("planYearly") : p.kind === "monthly" ? t("planMonthly") : p.title);
 
   const buy = async () => {
