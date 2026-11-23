@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /tg/
+Disallow: /join/
+Disallow: /friend/
+
+Sitemap: https://wishpool.clickbrickk.com/sitemap.xml

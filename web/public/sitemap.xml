@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://wishpool.clickbrickk.com/about</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="uk" href="https://wishpool.clickbrickk.com/about?lang=uk"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://wishpool.clickbrickk.com/about?lang=ru"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wishpool.clickbrickk.com/about?lang=en"/>
+  </url>
+  <url><loc>https://wishpool.clickbrickk.com/about?lang=uk</loc><lastmod>2026-11-23</lastmod></url>
+  <url><loc>https://wishpool.clickbrickk.com/about?lang=ru</loc><lastmod>2026-11-23</lastmod></url>
+  <url><loc>https://wishpool.clickbrickk.com/about?lang=en</loc><lastmod>2026-11-23</lastmod></url>
+  <url><loc>https://wishpool.clickbrickk.com/support</loc></url>
+  <url><loc>https://wishpool.clickbrickk.com/privacy</loc></url>
+  <url><loc>https://wishpool.clickbrickk.com/terms</loc></url>
+</urlset>
