@@ -388,10 +388,7 @@ export default function AddWishScreen() {
               </Chip>
             ))}
           </View>
-          <View className="mb-6 flex-row items-center gap-2">
-            <Lock size={13} color={C.t3} />
-            <Txt className="text-[12.5px] text-t3">{t("nothingSelectedPrivate")}</Txt>
-          </View>
+          <View className="h-4" />
         </>
       ) : (
         <View className="h-2" />
