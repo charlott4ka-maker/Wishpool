@@ -1,6 +1,6 @@
 // The wish form's stickers, like Telegram's: chips on top (Recent, then each
-// pack; Premium with a crown) and one pack's grid under them, in a box two and
-// a half rows tall, so the half row shows there's more to scroll, with a soft
+// pack; Premium with a crown) and one pack's grid under them, in a box
+// three and a half rows tall, so the half row shows there's more to scroll, with a soft
 // fade at the bottom while there is.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -63,9 +63,9 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
 
   // rounded down: a fraction over the row width wraps the 7th sticker onto a new line (seen on an XS Max)
   const cell = w ? Math.floor((w - GAP * (COLS - 1)) / COLS) : 0;
-  const boxH = cell ? cell * 2.5 + GAP * 2 : 0;
+  const boxH = cell ? cell * 3.5 + GAP * 3 : 0;
   const rows = Math.ceil(names.length / COLS);
-  const scrolls = rows > 2;
+  const scrolls = rows > 3;
 
   return (
     <View onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}>
@@ -100,7 +100,7 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
           );
         })}
       </ScrollView>
-      {/* the grid: two and a half rows, the rest scrolls */}
+      {/* the grid: three full rows and half of the fourth under the fade, the rest scrolls */}
       {cell ? (
         <View style={{ height: scrolls ? boxH : rows * cell + Math.max(0, rows - 1) * GAP }}>
           <ScrollView
