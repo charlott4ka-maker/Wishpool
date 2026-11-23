@@ -108,6 +108,7 @@
 - Mail: `support@clickbrickk.com` reaches her through Cloudflare Email Routing; `support@wishpool.clickbrickk.com` receives nothing (send-only). Cloudflare account = the one holding clickbrickk.com (and R2).
 - Cloudflare for Startups: applied 2026-11-21 (bootstrapped, $0 raised; expect the lowest tier or a no).
 - Google for Startups Cloud (2026-11-21): applying from a new Google account on support@clickbrickk.com (2-step on). Billing setup keeps failing at "Start free" (error OR-CBAT-14, Mastercard ..6873), so the form says the billing account (018715-D92010-5A882B / 015E28-C7B9BD-B4E9B1) is not active. Stopped; retry in a few days or with another card, don't create more billing accounts.
+- App Store featuring nomination sent 2026-11-23 ("Wishpool up", App Enhancements, Secret Santa + Premium looks in December, publish date 2026-12-14, 1 in-app event linked). Apple gives no promise or reply; nominate again for each notable release 3+ weeks ahead.
 - Image generation money (her rule, 2026-11-21): she no longer tops up OpenAI. For new stickers / folders / icons try free options first (Cloudflare Workers AI, Figma generate_image), ask before spending. Microsoft for Startups (Azure sponsorship) refused her account ("not eligible"); never sign her up for Azure pay-as-you-go.
 
 ## Later (agreed, not started)
