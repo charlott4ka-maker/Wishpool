@@ -118,9 +118,12 @@ export default function CreateRoomScreen() {
   const lookHigh = screenH - insets.top - 8;
   const lookH = useSharedValue(lookLow);
   const lookFrom = useRef(lookLow);
+  // pulled up to the full height: the locked Folders grid grows to fill it (no empty space under it)
+  const [lookUp, setLookUp] = useState(false);
   const lookEase = { duration: 260, easing: Easing.out(Easing.cubic) };
   useEffect(() => {
     if (lookOpen) lookH.value = lookLow;
+    setLookUp(false);
   }, [lookOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   const lookStyle = useAnimatedStyle(() => ({ height: lookH.value }));
   const lookPan = useRef(
@@ -149,12 +152,14 @@ export default function CreateRoomScreen() {
         }
         if ((up ? lookHigh : lookLow) !== lookFrom.current) haptic("light");
         lookH.value = withTiming(up ? lookHigh : lookLow, lookEase);
+        setLookUp(up);
       },
     }),
   ).current;
   const foldersLocked = !isPremium;
   // the locked Folders grid: three and a half rows of tiles (1.12 wide per tall, 8pt gaps)
-  const lockedGridH = Math.round((((screenW - 32 + 8) / 3 - 8) / 1.12 + 8) * 3.5);
+  // (pulled up to the full height it takes the extra height too, so the grid runs to the bottom)
+  const lockedGridH = Math.round((((screenW - 32 + 8) / 3 - 8) / 1.12 + 8) * 3.5) + (lookUp ? lookHigh - lookLow : 0);
   const openPaywall = () => {
     setLookOpen(false);
     setTimeout(() => router.push("/paywall"), 300);
@@ -498,7 +503,7 @@ export default function CreateRoomScreen() {
                   {!coverShown ? <Txt className="mt-1 font-m600 text-[11.5px] text-t2">{t("ownPhoto")}</Txt> : null}
                 </Pressable>
               </View>
-              {(isPremium ? skins : skins.slice(0, 14)).map((k) => {
+              {(isPremium || lookUp ? skins : skins.slice(0, 14)).map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (
