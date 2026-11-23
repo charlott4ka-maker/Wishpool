@@ -72,5 +72,8 @@
     "admin-preview": "node scripts/build-admin-preview.mjs",
     "tg-build": "node scripts/build-tg.mjs"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "@expo/require-utils": "57.0.7"
+  }
 }
