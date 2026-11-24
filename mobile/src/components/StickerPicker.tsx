@@ -20,7 +20,7 @@ import { Press } from "./Press";
 import { Sticker } from "./Sticker";
 import { PremiumBadge, Txt } from "./ui";
 
-import { RECENT_KEY } from "../lib/recentStickers";
+import { RECENT_KEY, uniqueStickers } from "../lib/recentStickers";
 
 export type StickerSection = { id: string; title: string; premium: boolean; locked: boolean; names: string[] };
 
@@ -33,7 +33,7 @@ export function useStickerSections(only?: string): { sections: StickerSection[] 
   const [recent, setRecent] = useState<string[]>([]);
   useEffect(() => {
     AsyncStorage.getItem(RECENT_KEY)
-      .then((raw) => setRecent(raw ? JSON.parse(raw) : []))
+      .then((raw) => setRecent(raw ? uniqueStickers(JSON.parse(raw)) : []))
       .catch(() => {});
   }, []);
   const hidden = new Set(stickers.hidden);

@@ -21,7 +21,7 @@ import { Sticker } from "./Sticker";
 import type { StickerName } from "./stickerAssets";
 import { Txt } from "./ui";
 
-import { RECENT_KEY } from "../lib/recentStickers";
+import { RECENT_KEY, uniqueStickers } from "../lib/recentStickers";
 const COLS = 7;
 const GAP = 8;
 
@@ -40,7 +40,7 @@ export function StickerTabs({ value, onChange }: { value: string; onChange: (emo
 
   useEffect(() => {
     AsyncStorage.getItem(RECENT_KEY)
-      .then((raw) => setRecent(raw ? JSON.parse(raw) : []))
+      .then((raw) => setRecent(raw ? uniqueStickers(JSON.parse(raw)) : []))
       .catch(() => setRecent([]));
   }, []);
 
