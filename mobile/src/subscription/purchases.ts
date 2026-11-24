@@ -49,7 +49,17 @@ export interface PurchasesAdapter {
 }
 
 const IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || "";
-const FORCE_MOCK = process.env.EXPO_PUBLIC_REVENUECAT_MOCK === "1";
+// The store build (channel "production") never uses the pretend store, even if an update was
+// published with EXPO_PUBLIC_REVENUECAT_MOCK left on in the shell (2026-11-24: that showed the
+// test prices 24,99 $ / 4,99 $ in the real 1.0.2 build).
+const STORE_BUILD = (() => {
+  try {
+    return (require("expo-updates") as typeof import("expo-updates")).channel === "production";
+  } catch {
+    return false;
+  }
+})();
+const FORCE_MOCK = process.env.EXPO_PUBLIC_REVENUECAT_MOCK === "1" && !STORE_BUILD;
 const IN_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 const MOCK_KEY = "wp_mock_premium";
