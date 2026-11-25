@@ -74,6 +74,10 @@ function Paywall() {
   };
   const planName = (p: PremiumPackage) => (p.kind === "annual" ? t("planYearly") : p.kind === "monthly" ? t("planMonthly") : p.title);
 
+  const [viewH, setViewH] = useState(0);
+  const [contentH, setContentH] = useState(0);
+  const fits = viewH && contentH ? contentH <= viewH + 1 : null;
+
   const buy = async () => {
     if (!sel || busy) return;
     setBusy(true);
@@ -109,7 +113,15 @@ function Paywall() {
       {/* the Profile card's glow, coming down from the top edge */}
       <EdgeGlow side="top" />
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      {/* no scrolling when it fits (every phone but the smallest); then it scrolls, so nothing is cut off */}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={fits === false}
+        bounces={fits === false}
+        onLayout={(e) => setViewH(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => setContentH(h)}
+      >
         <Pressable onPress={() => router.back()} className="h-sm w-sm items-center justify-center rounded-full bg-white/15" accessibilityLabel={t("back")}>
           <X size={20} color="#fff" />
         </Pressable>
