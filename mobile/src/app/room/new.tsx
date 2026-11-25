@@ -159,7 +159,10 @@ export default function CreateRoomScreen() {
   const foldersLocked = !isPremium;
   // the locked Folders grid: three and a half rows of tiles (1.12 wide per tall, 8pt gaps)
   // (pulled up to the full height it takes the extra height too, so the grid runs to the bottom)
-  const lockedGridH = Math.round((((screenW - 32 + 8) / 3 - 8) / 1.12 + 8) * 3.5) + (lookUp ? lookHigh - lookLow : 0);
+  // 2026-11-25: every folder is always drawn and the grid runs to the sheet's bottom edge
+  // (no scrolling), at either height; the lock sits in the middle of what you see.
+  // 150pt = the sheet's top (grabber, title, tabs) above the grid.
+  const lockedGridH = Math.max(200, (lookUp ? lookHigh : lookLow) - 150);
   const openPaywall = () => {
     setLookOpen(false);
     setTimeout(() => router.push("/paywall"), 300);
@@ -485,7 +488,7 @@ export default function CreateRoomScreen() {
             </View>
           ) : (
             <View>
-            {/* locked: three and a half rows, so the next row peeks out (there are more than nine) */}
+            {/* locked: all the folders, cut by the sheet's bottom edge, nothing scrolls */}
             <View className="mb-4" style={foldersLocked ? { height: lockedGridH, overflow: "hidden" } : undefined}>
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
               {/* your own photo on the folder */}
@@ -503,7 +506,7 @@ export default function CreateRoomScreen() {
                   {!coverShown ? <Txt className="mt-1 font-m600 text-[11.5px] text-t2">{t("ownPhoto")}</Txt> : null}
                 </Pressable>
               </View>
-              {(isPremium || lookUp ? skins : skins.slice(0, 14)).map((k) => {
+              {skins.map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (
