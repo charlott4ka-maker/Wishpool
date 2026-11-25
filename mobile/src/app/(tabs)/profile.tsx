@@ -46,8 +46,10 @@ export default function ProfileScreen() {
   const [viewH, setViewH] = useState(0);
   const [contentH, setContentH] = useState(0);
   const [scrolled, setScrolled] = useState(false);
-  // the bottom padding is room for the tab bar: it fits if the rest does
-  const fits = viewH && contentH ? contentH - insets.bottom - 120 + 24 <= viewH - insets.bottom - 90 : null;
+  // the bottom padding (insets.bottom + 120) is room for the tab bar: it fits when the
+  // real content ends above the floating tab bar (about 64pt over the home indicator).
+  // The old check kept a 114pt margin, so with the Premium card it scrolled for nothing.
+  const fits = viewH && contentH ? contentH - insets.bottom - 120 <= viewH - insets.bottom - 64 : null;
   const shared = wishes.reduce((n, w) => n + w.rooms.length, 0);
   const gifting = rooms.reduce((n, r) => n + (r.demoLists || []).reduce((k, l) => k + l.wishes.filter((x) => x.reservedByMe).length, 0), 0);
 

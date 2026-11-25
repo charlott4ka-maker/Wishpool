@@ -20,7 +20,7 @@
     },
     {
       "source": "/friend/:code",
-      "destination": "/friend/index.html"
+      "destination": "/api/index"
     },
     {
       "source": "/privacy",

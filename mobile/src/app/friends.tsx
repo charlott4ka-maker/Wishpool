@@ -2,6 +2,7 @@
 // you, your personal link to add friends, and the friends themselves. No search
 // and no public IDs: friends come from a room (⋯ › Add friend) or from your link.
 
+import { shareIconParam } from "../subscription/appIcon";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { Check, ChevronLeft, Ellipsis, UserPlus, X } from "lucide-react-native";
@@ -97,7 +98,9 @@ export default function FriendsScreen() {
   const shareLink = async () => {
     haptic("light");
     try {
-      const { url, code } = await api.friendLink();
+      const { url: base, code } = await api.friendLink();
+      const ip = shareIconParam();
+      const url = ip ? `${base}${base.includes("?") ? "&" : "?"}${ip}` : base;
       // in Telegram the link opens the Mini App on the friend screen
       if (IN_TG) tgShare(`${BOT_APP}?startapp=fr_${code}`, t("inviteFriendText"));
       else await Share.share({ message: `${t("inviteFriendText")}\n${url}`, url });

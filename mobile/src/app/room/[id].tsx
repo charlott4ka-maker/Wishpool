@@ -4,6 +4,7 @@
 // "I'll get it" (Даруй таємно): a gift taken by someone shows as "Taken" to the
 // other gifters, while the wish owner never sees it (the backend hides it).
 
+import { shareIconParam } from "../../subscription/appIcon";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { SymbolView } from "expo-symbols";
@@ -120,7 +121,8 @@ export default function RoomScreen() {
   // people on to the Telegram Mini App. A guest room only exists on this
   // phone, so then it's an invite to Wishpool itself.
   const invite = () => {
-    const link = online ? `${SITE_URL}/join/${room.id}${user?.id ? "?from=" + encodeURIComponent(user.id) : ""}` : "https://t.me/wishpool_bot/app";
+    const q = [user?.id ? "from=" + encodeURIComponent(user.id) : "", shareIconParam()].filter(Boolean).join("&");
+    const link = online ? `${SITE_URL}/join/${room.id}${q ? "?" + q : ""}` : "https://t.me/wishpool_bot/app";
     const text = online ? t("inviteText", { name: room.name }) : t("inviteAppText");
     // in Telegram: Telegram's picker, and the link opens the Mini App straight into the room
     if (IN_TG && online) return tgShare(`${BOT_APP}?startapp=${room.id}${user?.id ? "__" + user.id : ""}`, text);

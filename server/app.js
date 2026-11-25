@@ -236,6 +236,16 @@ export async function createApp() {
     });
   });
 
+  // iOS's share sheet and link previews show the page's touch icon: give it the
+  // icon the sharer uses (Premium icons), not always the classic star.
+  const SHARE_ICONS = { classic: "icon-classic", glow: "icon-glow", newyear: "icon-newyear" };
+  const withShareIcon = (html, which) => {
+    const name = SHARE_ICONS[String(which || "").toLowerCase()] || SHARE_ICONS.classic;
+    const tag = `<link rel="apple-touch-icon" href="/about/${name}.png" />`;
+    const cleaned = html.replace(/<link rel="apple-touch-icon"[^>]*>\s*/g, "");
+    return cleaned.replace(/(<link rel="icon"[^>]*>)/, `$1\n${tag}`);
+  };
+
   // The invite page with a preview that names the room ("ДР Макса · Wishpool"),
   // for messengers; the page itself is the static /join/index.html.
   app.get("/join/:id", async (req, res) => {
@@ -255,7 +265,17 @@ export async function createApp() {
           .replace(/(<meta property="og:description" content=")[^"]*/, `$1${desc}`);
       }
     } catch (e) { /* the plain page still works */ }
-    res.set("Content-Type", "text/html; charset=utf-8").set("Cache-Control", "no-cache").send(html);
+    res.set("Content-Type", "text/html; charset=utf-8").set("Cache-Control", "no-cache").send(withShareIcon(html, req.query.i));
+  });
+
+  // A friend link (/friend/<code>): the static page, with the sharer's app icon
+  // in the link preview (?i=glow|newyear, the icon they picked in the app).
+  app.get("/friend/:code", async (req, res) => {
+    const host = `https://${req.get("host")}`;
+    let html = "";
+    try { html = await (await fetch(`${host}/friend/index.html`)).text(); } catch (e) { /* below */ }
+    if (!html) return res.redirect(302, `/friend/index.html?code=${encodeURIComponent(req.params.code)}`);
+    res.set("Content-Type", "text/html; charset=utf-8").set("Cache-Control", "no-cache").send(withShareIcon(html, req.query.i));
   });
 
   // Texts, banners and stickers from the admin page (public, cached a minute).

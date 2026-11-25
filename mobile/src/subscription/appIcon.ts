@@ -54,3 +54,10 @@ export async function changeAppIcon(name: AppIconOption["name"], isPremium: bool
   await icons()!.setAlternateAppIcon(name);
   return true;
 }
+
+/** "?i=glow" for links people share, so the link preview shows the icon they use
+ *  (the server puts it in the page's touch icon); empty for the classic one. */
+export function shareIconParam(): string {
+  const name = currentAppIcon();
+  return name ? `i=${name.toLowerCase()}` : "";
+}
