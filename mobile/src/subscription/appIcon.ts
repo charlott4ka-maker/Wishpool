@@ -7,7 +7,7 @@ import type { ImageSourcePropType } from "react-native";
 
 export type AppIconOption = {
   /** null = the default icon. */
-  name: "Glow" | null;
+  name: "Glow" | "NewYear" | null;
   titleKey: string;
   image: ImageSourcePropType;
 };
@@ -16,6 +16,8 @@ export type AppIconOption = {
 export const APP_ICONS: AppIconOption[] = [
   { name: null, titleKey: "iconClassic", image: require("../../assets/icon.png") },
   { name: "Glow", titleKey: "iconGlow", image: require("../../assets/icons/glow.png") },
+  // New Year: our star in a Santa hat with a garland, on the Premium glow in red
+  { name: "NewYear", titleKey: "iconNewYear", image: require("../../assets/icons/newyear.png") },
 ];
 
 // The native module isn't in Expo Go or on web. Importing the package there
