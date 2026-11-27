@@ -6,10 +6,11 @@ import { Redirect, useRouter, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Image } from "expo-image";
 import { Check, X } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { toast } from "../components/Toast";
 import { Pill, Txt } from "../components/ui";
 import { useT } from "../i18n";
 import { DAY_FORMS, plural } from "../lib/dates";
@@ -64,18 +65,30 @@ function Paywall() {
   const perMonth = (p: PremiumPackage) => (p.kind === "monthly" ? p.priceString : p.pricePerMonthString);
   const planName = (p: PremiumPackage) => (p.kind === "annual" ? t("planYearly") : p.kind === "monthly" ? t("planMonthly") : p.title);
 
+  // The App Store takes the money at once, but the store SDK can need a few
+  // more seconds to hand the purchase back. The button spins meanwhile, and
+  // the screen closes on whichever comes first: the purchase, or Premium
+  // turning on (the store tells us that on its own).
+  const done = useRef(false);
+  const finish = () => {
+    if (done.current) return;
+    done.current = true;
+    haptic("success");
+    toast.success(t("premiumThanks"));
+    router.back();
+  };
+  useEffect(() => {
+    if (busy && isPremium) finish();
+  }, [busy, isPremium]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const buy = async () => {
     if (!sel || busy) return;
     setBusy(true);
     try {
       track("paywall_buy_" + (sel.kind || "plan"));
-      if (await purchase(sel)) {
-        haptic("success");
-        Alert.alert(t("premiumThanks"));
-        router.back();
-      }
+      if (await purchase(sel)) finish();
     } catch {
-      Alert.alert(t("premiumUnavailable"));
+      toast.error(t("premiumUnavailable"));
     } finally {
       setBusy(false);
     }
@@ -85,9 +98,14 @@ function Paywall() {
     if (busy) return;
     setBusy(true);
     try {
-      Alert.alert((await restore()) ? t("premiumRestored") : t("premiumNothing"));
+      if (await restore()) {
+        haptic("success");
+        toast.success(t("premiumRestored"));
+      } else {
+        toast.info(t("premiumNothing"));
+      }
     } catch {
-      Alert.alert(t("premiumUnavailable"));
+      toast.error(t("premiumUnavailable"));
     } finally {
       setBusy(false);
     }
@@ -151,7 +169,8 @@ function Paywall() {
             </View>
 
             <View className="mt-6">
-              <Pill full disabled={!sel || busy} onPress={buy}>
+              {/* no greyed-out button: it spins while the store is working */}
+              <Pill full disabled={!sel} loading={busy} onPress={buy}>
                 {!sel ? t("premiumUnavailable") : sel.trialDays ? t("trialCta", { days: days(sel.trialDays) }) : t("premiumBuy", { price: sel.priceString })}
               </Pill>
             </View>
