@@ -13,7 +13,30 @@ import { Image, StyleSheet, View } from "react-native";
 import Animated, { Easing, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
-import { currentAppIcon } from "../subscription/appIcon";
+import { currentAppIcon, type AppIconName } from "../subscription/appIcon";
+
+// every icon brings its own star and its own glow behind it
+const LOOK: Record<string, { size: { width: number; height: number }; glow: [string, string]; sharp: number; blur: number }> = {
+  Glow: {
+    size: { width: 176, height: 168 },
+    glow: ["#0A82F9", "#0A6BE0"],
+    sharp: require("../../assets/premium-star.png"),
+    blur: require("../../assets/premium-star-blur.png"),
+  },
+  NewYear: {
+    size: { width: 176, height: 171 },
+    glow: ["#D22A42", "#B02438"],
+    sharp: require("../../assets/newyear-star.png"),
+    blur: require("../../assets/newyear-star-blur.png"),
+  },
+  classic: {
+    size: { width: 200, height: 200 },
+    glow: ["#0A82F9", "#0A6BE0"],
+    sharp: require("../../assets/splash-icon.png"),
+    blur: require("../../assets/splash-icon-blur.png"),
+  },
+};
+const look = (icon: AppIconName) => LOOK[icon || "classic"] || LOOK.classic;
 
 let release: (() => void) | null = null;
 let released = false;
@@ -28,7 +51,7 @@ const ease = Easing.out(Easing.cubic);
 
 export function IconSplash() {
   const [shown, setShown] = useState(!released);
-  const glow = currentAppIcon() === "Glow";
+  const art = look(currentAppIcon());
   const born = useRef(Date.now());
   const p = useSharedValue(0); // 0 blurred and hidden, 1 sharp
   const g = useSharedValue(0); // the glow behind
@@ -53,7 +76,7 @@ export function IconSplash() {
   const halo = useAnimatedStyle(() => ({ opacity: 0.85 * g.value, transform: [{ scale: 0.8 + 0.2 * g.value }] }));
 
   if (!shown) return null;
-  const size = glow ? { width: 176, height: 168 } : { width: 200, height: 200 };
+  const size = art.size;
   return (
     <Animated.View
       exiting={FadeOut.duration(220)}
@@ -67,9 +90,9 @@ export function IconSplash() {
         <Svg width={360} height={360}>
           <Defs>
             <RadialGradient id="splashGlow" cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor="#0A82F9" stopOpacity={0.42} />
-              <Stop offset="0.5" stopColor="#0A6BE0" stopOpacity={0.15} />
-              <Stop offset="1" stopColor="#0A6BE0" stopOpacity={0} />
+              <Stop offset="0" stopColor={art.glow[0]} stopOpacity={0.42} />
+              <Stop offset="0.5" stopColor={art.glow[1]} stopOpacity={0.15} />
+              <Stop offset="1" stopColor={art.glow[1]} stopOpacity={0} />
             </RadialGradient>
           </Defs>
           <Rect width={360} height={360} fill="url(#splashGlow)" />
@@ -78,11 +101,11 @@ export function IconSplash() {
       <View style={size}>
         {/* first a blurred star (the blurred picture is 1.5x wider: room for the blur) */}
         <Animated.View style={[{ position: "absolute", left: -size.width * 0.25, top: -size.height * 0.25, width: size.width * 1.5, height: size.height * 1.5 }, soft]}>
-          <Image source={glow ? require("../../assets/premium-star-blur.png") : require("../../assets/splash-icon-blur.png")} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+          <Image source={art.blur} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
         </Animated.View>
         {/* then the sharp one over it */}
         <Animated.View style={[StyleSheet.absoluteFill, sharp]}>
-          <Image source={glow ? require("../../assets/premium-star.png") : require("../../assets/splash-icon.png")} style={size} resizeMode="contain" />
+          <Image source={art.sharp} style={size} resizeMode="contain" />
         </Animated.View>
       </View>
     </Animated.View>

@@ -1,5 +1,6 @@
-// Settings › App icon: the default star or the Premium glass one. Going back
-// to the default is always allowed, with or without Premium.
+// Premium › App icon: the default star, the Premium glass one, or the New Year
+// one (only in the season, or while it is the icon you are on). Going back to
+// the default is always allowed, with or without Premium.
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
@@ -8,7 +9,9 @@ import { Pressable, View } from "react-native";
 
 import { useT } from "../i18n";
 import { haptic } from "../lib/haptics";
-import { APP_ICONS, changeAppIcon, currentAppIcon, type AppIconOption } from "../subscription/appIcon";
+import { nySeason } from "../lib/dates";
+import { useRemoteConfig } from "../lib/remoteConfig";
+import { APP_ICONS, changeAppIcon, currentAppIcon, type AppIconName } from "../subscription/appIcon";
 import { C } from "../theme/tokens";
 import { Txt } from "./ui";
 import { track } from "../lib/track";
@@ -16,8 +19,10 @@ import { track } from "../lib/track";
 export function IconPicker({ unlocked }: { unlocked: boolean }) {
   const { t } = useT();
   const router = useRouter();
-  const [icon, setIcon] = useState<AppIconOption["name"]>(currentAppIcon());
-  const pick = async (name: AppIconOption["name"]) => {
+  const [icon, setIcon] = useState<AppIconName>(currentAppIcon());
+  const { season } = useRemoteConfig();
+  const icons = APP_ICONS.filter((o) => !o.season || o.name === icon || (season.newYear && nySeason()));
+  const pick = async (name: AppIconName) => {
     if (name === icon) return;
     if (name && !unlocked) return router.push("/paywall");
     haptic("select");
@@ -30,7 +35,7 @@ export function IconPicker({ unlocked }: { unlocked: boolean }) {
     <View className="mb-8">
       <Txt className="mb-3 px-4 font-m600 text-[13px] uppercase text-t2" style={{ letterSpacing: 0.4 }}>{t("appIcon")}</Txt>
       <View className="flex-row gap-4 rounded-card bg-raised p-4">
-        {APP_ICONS.map((o) => {
+        {icons.map((o) => {
           const on = icon === o.name;
           return (
             <Pressable key={o.name || "default"} onPress={() => pick(o.name)} className="items-center" accessibilityLabel={t(o.titleKey)}>

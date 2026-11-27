@@ -93,6 +93,14 @@
               "foregroundImage": "./assets/icons/glow-fg.png",
               "backgroundColor": "#0E163A"
             }
+          },
+          {
+            "name": "NewYear",
+            "ios": "./assets/icons/newyear.png",
+            "android": {
+              "foregroundImage": "./assets/icons/newyear-fg.png",
+              "backgroundColor": "#3A0E17"
+            }
           }
         ]
       ],

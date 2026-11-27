@@ -27,3 +27,6 @@ export function countdownLabel(lang: Lang, t: (k: string, p?: Record<string, str
   if (n === 1) return t("evTomorrow");
   return t("evIn", { n, unit: plural(lang, n, DAY_FORMS[lang]) });
 }
+
+/** The New Year season: mid-November to 7 January. */
+export const nySeason = (d = new Date()) => (d.getMonth() === 10 && d.getDate() >= 10) || d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 7);

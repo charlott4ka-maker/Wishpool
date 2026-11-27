@@ -5,17 +5,23 @@ import { requireOptionalNativeModule } from "expo";
 
 import type { ImageSourcePropType } from "react-native";
 
+export type AppIconName = "Glow" | "NewYear" | null;
+
 export type AppIconOption = {
   /** null = the default icon. */
-  name: "Glow" | null;
+  name: AppIconName;
   titleKey: string;
   image: ImageSourcePropType;
+  /** only in the New Year season */
+  season?: "newYear";
 };
 
-// the default star, and the Premium one: a glass star glowing on our dark blue
+// the default star; the Premium one (a glass star glowing on our dark blue);
+// and the same icon in burgundy with the New Year star
 export const APP_ICONS: AppIconOption[] = [
   { name: null, titleKey: "iconClassic", image: require("../../assets/icon.png") },
   { name: "Glow", titleKey: "iconGlow", image: require("../../assets/icons/glow.png") },
+  { name: "NewYear", titleKey: "iconNewYear", image: require("../../assets/icons/newyear.png"), season: "newYear" },
 ];
 
 // The native module isn't in Expo Go or on web. Importing the package there
@@ -38,15 +44,15 @@ export const appIconsSupported = (): boolean => {
   }
 };
 
-export function currentAppIcon(): AppIconOption["name"] {
+export function currentAppIcon(): AppIconName {
   try {
-    return (icons()?.getAppIconName() as AppIconOption["name"]) || null;
+    return (icons()?.getAppIconName() as AppIconName) || null;
   } catch {
     return null;
   }
 }
 
-export async function changeAppIcon(name: AppIconOption["name"], isPremium: boolean): Promise<boolean> {
+export async function changeAppIcon(name: AppIconName, isPremium: boolean): Promise<boolean> {
   if (name && !isPremium) return false; // going back to the default icon is always allowed
   if (!appIconsSupported()) return false;
   await icons()!.setAlternateAppIcon(name);

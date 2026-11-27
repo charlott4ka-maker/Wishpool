@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../auth/AuthContext";
 import { toast } from "../components/Toast";
+import { nySeason } from "../lib/dates";
 import { actionSheet } from "../lib/actionSheet";
 import { haptic } from "../lib/haptics";
 import { clearDemo, fillDemo } from "../lib/demo";
@@ -27,8 +28,6 @@ import { setPref, usePrefs } from "../settings/prefs";
 import { useWishpool } from "../store/WishpoolContext";
 import { useRemoteConfig } from "../lib/remoteConfig";
 
-// the New Year season: mid-November to 7 January
-const nySeason = (d = new Date()) => (d.getMonth() === 10 && d.getDate() >= 10) || d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 7);
 import { purchases } from "../subscription/purchases";
 import { useSubscription } from "../subscription/SubscriptionContext";
 import { C, hex } from "../theme/tokens";
