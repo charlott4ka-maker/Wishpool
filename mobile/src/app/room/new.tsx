@@ -153,8 +153,18 @@ export default function CreateRoomScreen() {
     }),
   ).current;
   const foldersLocked = !isPremium;
-  // the locked Folders grid: three and a half rows of tiles (1.12 wide per tall, 8pt gaps)
-  const lockedGridH = Math.round((((screenW - 32 + 8) / 3 - 8) / 1.12 + 8) * 3.5);
+  // The locked Folders grid (tiles 1.12 wide per tall, 8pt gaps). It fills
+  // whatever the sheet shows, so pulling the sheet up uncovers more folders
+  // instead of leaving a gap or cutting a row off at the screen edge; the
+  // lock, the title and the button keep the place they have at the sheet's
+  // own height, so they don't travel down as it opens.
+  const rowH = ((screenW - 32 + 8) / 3 - 8) / 1.12 + 8;
+  const [lookTop, setLookTop] = useState({ head: 0, tabs: 0 });
+  // everything above the list: the sheet's top and the list's own padding
+  const gridTop = lookTop.head + lookTop.tabs + 16 + 16 + insets.bottom + 24;
+  const gridSpace = (h: number) => Math.max(rowH * 1.5, h - gridTop);
+  const lockedGridH = Math.round(Math.min(rowH * 3.5, gridSpace(lookLow)));
+  const gridStyle = useAnimatedStyle(() => ({ height: Math.round(Math.max(lockedGridH, rowH * 1.5, lookH.value - gridTop)) }));
   const openPaywall = () => {
     setLookOpen(false);
     setTimeout(() => router.push("/paywall"), 300);
@@ -349,13 +359,13 @@ export default function CreateRoomScreen() {
       <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }} onPress={() => setLookOpen(false)} />
       <Animated.View entering={SlideInDown.duration(260)} style={[{ position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: C.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: "hidden" }, lookStyle]}>
         {/* the grabber and the title: pull up for the full height, down to go back or close */}
-        <View {...lookPan.panHandlers} style={{ paddingTop: 8 }}>
+        <View {...lookPan.panHandlers} style={{ paddingTop: 8 }} onLayout={(e) => { const head = Math.round(e.nativeEvent.layout.height); setLookTop((v) => (v.head === head ? v : { ...v, head })); }}>
           <View style={{ alignSelf: "center", width: 36, height: 5, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.18)", marginBottom: 12 }} />
           <View className="px-4">
             <SheetHeader title={t("roomLook")} onClose={() => setLookOpen(false)} />
           </View>
         </View>
-        <View className="px-4" {...lookPan.panHandlers}>
+        <View className="px-4" {...lookPan.panHandlers} onLayout={(e) => { const tabs = Math.round(e.nativeEvent.layout.height); setLookTop((v) => (v.tabs === tabs ? v : { ...v, tabs })); }}>
           <LookTabs
             options={showSkins ? [["sticker", t("lookSticker")], ["color", t("lookColor")], ["folders", t("lookFolders")]] : [["sticker", t("lookSticker")], ["color", t("lookColor")]]}
             value={lookTab}
@@ -480,8 +490,8 @@ export default function CreateRoomScreen() {
             </View>
           ) : (
             <View>
-            {/* locked: three and a half rows, so the next row peeks out (there are more than nine) */}
-            <View className="mb-4" style={foldersLocked ? { height: lockedGridH, overflow: "hidden" } : undefined}>
+            {/* locked: as many rows as the sheet shows, the last one cut and faded out */}
+            <Animated.View style={foldersLocked ? [{ marginBottom: 16, overflow: "hidden" as const }, gridStyle] : { marginBottom: 16 }}>
             <View className="flex-row flex-wrap" style={{ marginHorizontal: -4 }}>
               {/* your own photo on the folder */}
               <View style={{ width: "33.333%", padding: 4 }}>
@@ -498,7 +508,7 @@ export default function CreateRoomScreen() {
                   {!coverShown ? <Txt className="mt-1 font-m600 text-[11.5px] text-t2">{t("ownPhoto")}</Txt> : null}
                 </Pressable>
               </View>
-              {(isPremium ? skins : skins.slice(0, 14)).map((k) => {
+              {skins.map((k) => {
                 const on = skin === k.id;
                 const locked = !isPremium;
                 return (
@@ -525,8 +535,9 @@ export default function CreateRoomScreen() {
                 a line and a button to the paywall over it (the folders still open it too) */}
             {!isPremium ? (
               <View pointerEvents="box-none" style={{ position: "absolute", left: -4, right: -4, top: 0, bottom: 0 }}>
-                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0.2), hex(C.card, 0.88), hex(C.card, 0.82)]} locations={[0, 0.3, 1]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
-                <View pointerEvents="box-none" className="flex-1 items-center justify-center px-4">
+                <LinearGradient pointerEvents="none" colors={[hex(C.card, 0.2), hex(C.card, 0.88), hex(C.card, 0.84), C.card]} locations={[0, 0.3, 0.86, 1]} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
+                {/* the height the sheet opens at, so this block stays put while it is pulled up */}
+                <View pointerEvents="box-none" className="items-center justify-center px-4" style={{ height: lockedGridH }}>
                   {/* a frosted round behind the lock */}
                   <View className="mb-3 h-12 w-12 items-center justify-center overflow-hidden rounded-full">
                     <BlurView intensity={30} tint="dark" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
@@ -543,7 +554,7 @@ export default function CreateRoomScreen() {
                 </View>
               </View>
             ) : null}
-            </View>
+            </Animated.View>
             </View>
           )}
         </ScrollView>
