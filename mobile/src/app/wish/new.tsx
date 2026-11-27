@@ -9,7 +9,7 @@ import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Check, ClipboardPaste, Crown, ImageIcon, Lock, Plus, RefreshCw, X } from "lucide-react-native";
+import { Check, ClipboardPaste, ImageIcon, Lock, Plus, RefreshCw, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import Animated, { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
@@ -293,20 +293,12 @@ export default function AddWishScreen() {
               <Press scaleTo={0.97} onPress={pickPhotos} className="items-center gap-2 rounded-card bg-card2 p-6">
                 <ImageIcon size={26} color={C.t2} />
                 <Txt className="font-m600 text-sm text-t2">{t("uploadPhoto")}</Txt>
-                <Txt className="text-[12.5px] text-t3">{t("photosHint")}</Txt>
+                {/* how many photos you get: the box's own line says it, so there is no second line under the box */}
+                <Txt className="text-[12.5px] text-t3">{PREMIUM_ENABLED && !isPremium ? t("photosHintFree", { n: PLAN_LIMITS.premium.photosPerWish }) : t("photosHint")}</Txt>
               </Press>
             </Animated.View>
           )}
-          {PREMIUM_ENABLED ? (
-          <View className="mt-2 flex-row items-center gap-1">
-            {!isPremium ? <Crown size={12} color={C.t3} /> : null}
-            <Txt className="text-[12.5px] text-t3">
-              {isPremium ? `${t("photosHint")} · ${images.length}/${photoLimit}` : t("photosLimitFree", { n: PLAN_LIMITS.premium.photosPerWish })}
-            </Txt>
-          </View>
-          ) : images.length ? (
-            <Txt className="mt-2 text-[12.5px] text-t3">{images.length > 1 ? `${t("photosDragHint")} · ${images.length}/${photoLimit}` : `${t("photosHint")} · ${images.length}/${photoLimit}`}</Txt>
-          ) : null}
+          {images.length > 1 ? <Txt className="mt-2 text-[12.5px] text-t3">{t("photosDragHint")}</Txt> : null}
         </View>
       ) : (
         <View className="mb-4">

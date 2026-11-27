@@ -185,11 +185,13 @@ export const MOBILE_STRINGS = {
   perMonth: { uk: "на місяць", ru: "в месяц", en: "per month" },
   perYear: { uk: "на рік", ru: "в год", en: "per year" },
   premiumOnly: { uk: "Лише в Premium", ru: "Только в Premium", en: "Premium only" },
-  photosLimitFree: { uk: "1 фото. До {n} з Premium", ru: "1 фото. До {n} с Premium", en: "1 photo. Up to {n} with Premium" },
+  // in the empty photo box, instead of a second line under it
+  photosHintFree: { uk: "1 фото, до {n} з Premium", ru: "1 фото, до {n} с Premium", en: "1 photo, up to {n} with Premium" },
 
   appIcon: { uk: "Іконка застосунку", ru: "Иконка приложения", en: "App icon" },
   iconClassic: { uk: "Класика", ru: "Классика", en: "Classic" },
   iconGlow: { uk: "Сяйво", ru: "Сияние", en: "Glow" },
+  iconNewYear: { uk: "Новий рік", ru: "Новый год", en: "New Year" },
   packClassic: { uk: "Класичні", ru: "Классические", en: "Classic" },
   packNewYear: { uk: "Новий рік", ru: "Новый год", en: "New Year" },
   packParty: { uk: "Естетика", ru: "Эстетика", en: "Aesthetic" },
